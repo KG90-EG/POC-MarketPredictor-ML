@@ -299,7 +299,12 @@ function AppContent() {
       
       {/* Market View Selector */}
       <div className="card">
-        <div className="card-title">🌍 Market View - Select a Region</div>
+        <div className="card-title">
+          🌍 Market View - {selectedView}
+          {!loading && results.length > 0 && (
+            <span style={{marginLeft: '8px', color: '#667eea', fontWeight: 'bold'}}>({results.length})</span>
+          )}
+        </div>
         <div style={{display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px'}}>
           {['Global', 'United States', 'Switzerland', 'Germany', 'United Kingdom', 'France', 'Japan', 'Canada'].map(view => (
             <button
@@ -362,14 +367,10 @@ function AppContent() {
             )}
           </div>
         ) : results.length > 0 ? (
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px'}}>
-            <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-              <p style={{margin: 0, color: '#666', fontWeight: '600'}}>
-                📊 {selectedCountry === 'All' 
-                  ? `${results.length} stocks ranked from ${selectedView}` 
-                  : `${results.filter(r => tickerDetails[r.ticker]?.country === selectedCountry).length} stocks filtered by ${selectedCountry}`}
-              </p>
-              {Object.keys(tickerDetails).length > 0 && (
+          <div style={{marginBottom: '16px'}}>
+            {Object.keys(tickerDetails).length > 0 && (
+              <div style={{marginBottom: '12px'}}>
+                <label style={{marginRight: '8px', color: '#666', fontWeight: '500'}}>Filter by Country:</label>
                 <select 
                   value={selectedCountry} 
                   onChange={(e) => { setSelectedCountry(e.target.value); setCurrentPage(1); }}
@@ -392,11 +393,8 @@ function AppContent() {
                     ))
                   })()}
                 </select>
-              )}
-            </div>
-            <button onClick={() => fetchRanking(selectedView)} style={{padding: '8px 16px'}}>
-              🔄 Refresh
-            </button>
+              </div>
+            )}
           </div>
         ) : (
           <p style={{color: '#666', fontSize: '0.9rem', margin: '0'}}>
