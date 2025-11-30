@@ -103,41 +103,84 @@ export default function App() {
     return `$${num.toFixed(2)}`
   }
 
+  function getRankBadgeClass(rank) {
+    if (rank === 1) return 'rank-badge gold'
+    if (rank === 2) return 'rank-badge silver'
+    if (rank === 3) return 'rank-badge bronze'
+    return 'rank-badge'
+  }
+
+  function handleKeyPress(e, action) {
+    if (e.key === 'Enter') {
+      action()
+    }
+  }
+
   return (
     <div className="container">
-      <h1>📈 Trading Fun — AI-Powered Ranking</h1>
+      <div className="header">
+        <h1><span className="emoji">📈</span> Trading Fun</h1>
+        <p>AI-Powered Stock Ranking & Analysis</p>
+      </div>
       
-      <div className="controls">
-        <label>
-          <strong>Tickers (comma-separated):</strong>
-          <input 
-            value={tickers} 
-            onChange={(e) => setTickers(e.target.value)}
-            placeholder="AAPL,MSFT,NVDA"
-          />
-        </label>
-        <button onClick={fetchRanking} disabled={loading}>
-          {loading ? 'Loading...' : 'Get Ranking'}
-        </button>
+      {/* Ranking Section */}
+      <div className="card">
+        <div className="card-title">📊 Stock Ranking</div>
+        <div className="controls">
+          <label>
+            Enter stock tickers (comma-separated)
+            <div className="input-group">
+              <input 
+                value={tickers} 
+                onChange={(e) => setTickers(e.target.value)}
+                onKeyPress={(e) => handleKeyPress(e, fetchRanking)}
+                placeholder="AAPL,MSFT,NVDA,GOOGL,TSLA"
+              />
+              <button onClick={fetchRanking} disabled={loading}>
+                {loading ? (
+                  <>
+                    <span className="spinner"></span>
+                    Loading...
+                  </>
+                ) : (
+                  '🚀 Get Ranking'
+                )}
+              </button>
+            </div>
+          </label>
+        </div>
       </div>
 
-      <div className="search-controls" style={{ marginTop: 16 }}>
-        <label>
-          <strong>Search Ticker:</strong>
-          <input
-            value={searchTicker}
-            onChange={(e) => setSearchTicker(e.target.value)}
-            placeholder="e.g., AMD"
-          />
-        </label>
-        <button onClick={performSearch} disabled={searchLoading}>
-          {searchLoading ? 'Searching...' : 'Search'}
-        </button>
+      {/* Search Section */}
+      <div className="card">
+        <div className="card-title">🔍 Search Individual Ticker</div>
+        <div className="search-controls">
+          <label>
+            Ticker symbol
+            <input
+              value={searchTicker}
+              onChange={(e) => setSearchTicker(e.target.value)}
+              onKeyPress={(e) => handleKeyPress(e, performSearch)}
+              placeholder="e.g., AMD, META, NFLX"
+            />
+          </label>
+          <button onClick={performSearch} disabled={searchLoading}>
+            {searchLoading ? (
+              <>
+                <span className="spinner"></span>
+                Searching...
+              </>
+            ) : (
+              '🔎 Search'
+            )}
+          </button>
+        </div>
       </div>
 
+      {/* Search Result */}
       {searchResult && (
-        <div className="search-result" style={{ marginTop: 12 }}>
-          <h2>Search Result</h2>
+        <div className="search-result">
+          <h2>🎯 Search Result</h2>
           <table>
             <thead>
               <tr>
@@ -152,12 +195,18 @@ export default function App() {
             </thead>
             <tbody>
               <tr>
-                <td><strong>{searchResult.ticker}</strong></td>
+                <td><span className="ticker-symbol">{searchResult.ticker}</span></td>
                 <td>{searchResult.name}</td>
-                <td>{searchResult.prob != null ? `${(searchResult.prob * 100).toFixed(2)}%` : 'N/A'}</td>
+                <td>
+                  <span className={searchResult.prob > 0.6 ? 'high-prob' : ''}>
+                    {searchResult.prob != null ? `${(searchResult.prob * 100).toFixed(2)}%` : 'N/A'}
+                  </span>
+                </td>
                 <td>{searchResult.price != null ? `$${searchResult.price.toFixed(2)}` : 'N/A'}</td>
-                <td className={searchResult.change > 0 ? 'positive' : searchResult.change < 0 ? 'negative' : ''}>
-                  {searchResult.change != null ? `${searchResult.change > 0 ? '+' : ''}${searchResult.change.toFixed(2)}%` : 'N/A'}
+                <td>
+                  <span className={searchResult.change > 0 ? 'positive' : searchResult.change < 0 ? 'negative' : ''}>
+                    {searchResult.change != null ? `${searchResult.change > 0 ? '+' : ''}${searchResult.change.toFixed(2)}%` : 'N/A'}
+                  </span>
                 </td>
                 <td>{searchResult.volume != null ? searchResult.volume.toLocaleString() : 'N/A'}</td>
                 <td>{formatNumber(searchResult.market_cap)}</td>
@@ -167,30 +216,41 @@ export default function App() {
         </div>
       )}
 
+      {/* Results Section */}
       {results.length > 0 && (
         <>
+          {/* AI Analysis Section */}
           <div className="analysis-section">
             <label>
-              <strong>Optional context for LLM analysis:</strong>
+              <strong>🤖 Optional context for AI analysis</strong>
               <textarea 
                 value={userContext}
                 onChange={(e) => setUserContext(e.target.value)}
-                placeholder="e.g., I'm interested in tech stocks with growth potential..."
+                placeholder="e.g., I'm interested in tech stocks with growth potential, looking for long-term investments..."
                 rows={3}
               />
             </label>
             <button onClick={requestAnalysis} disabled={analyzing}>
-              {analyzing ? 'Analyzing...' : '🤖 Get AI Recommendations'}
+              {analyzing ? (
+                <>
+                  <span className="spinner"></span>
+                  Analyzing...
+                </>
+              ) : (
+                '✨ Get AI Recommendations'
+              )}
             </button>
           </div>
 
+          {/* AI Analysis Result */}
           {analysis && (
             <div className="analysis-result">
               <h3>💡 AI Analysis & Recommendations</h3>
-              <p style={{ whiteSpace: 'pre-wrap' }}>{analysis}</p>
+              <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>{analysis}</p>
             </div>
           )}
 
+          {/* Ranked Stocks Table */}
           <h2>Ranked Stocks</h2>
           <table>
             <thead>
@@ -211,13 +271,21 @@ export default function App() {
                 const changeClass = detail.change > 0 ? 'positive' : detail.change < 0 ? 'negative' : ''
                 return (
                   <tr key={r.ticker}>
-                    <td>{idx + 1}</td>
-                    <td><strong>{r.ticker}</strong></td>
+                    <td>
+                      <span className={getRankBadgeClass(idx + 1)}>{idx + 1}</span>
+                    </td>
+                    <td><span className="ticker-symbol">{r.ticker}</span></td>
                     <td>{detail.name || 'N/A'}</td>
-                    <td className={r.prob > 0.6 ? 'high-prob' : ''}>{(r.prob * 100).toFixed(2)}%</td>
+                    <td>
+                      <span className={r.prob > 0.6 ? 'high-prob' : ''}>
+                        {(r.prob * 100).toFixed(2)}%
+                      </span>
+                    </td>
                     <td>{detail.price ? `$${detail.price.toFixed(2)}` : 'N/A'}</td>
-                    <td className={changeClass}>
-                      {detail.change ? `${detail.change > 0 ? '+' : ''}${detail.change.toFixed(2)}%` : 'N/A'}
+                    <td>
+                      <span className={changeClass}>
+                        {detail.change ? `${detail.change > 0 ? '+' : ''}${detail.change.toFixed(2)}%` : 'N/A'}
+                      </span>
                     </td>
                     <td>{detail.volume ? detail.volume.toLocaleString() : 'N/A'}</td>
                     <td>{formatNumber(detail.market_cap)}</td>
@@ -227,6 +295,14 @@ export default function App() {
             </tbody>
           </table>
         </>
+      )}
+
+      {/* Empty State */}
+      {results.length === 0 && !loading && (
+        <div className="empty-state">
+          <div className="empty-state-icon">📊</div>
+          <p>Enter stock tickers above and click "Get Ranking" to see AI-powered predictions</p>
+        </div>
       )}
     </div>
   )

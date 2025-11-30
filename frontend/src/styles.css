@@ -1,114 +1,425 @@
+* {
+  box-sizing: border-box;
+}
+
 body { 
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
   padding: 24px;
-  background: #f5f7fa;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
   color: #2c3e50;
+  margin: 0;
 }
+
 .container { 
   max-width: 1200px;
   margin: 0 auto;
   background: white;
-  padding: 32px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
 }
+
+/* Header Styles */
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 8px 0;
+  display: inline-block;
+}
+
+.header .emoji {
+  font-size: 2.5rem;
+  margin-right: 12px;
+  -webkit-text-fill-color: initial;
+  background: none;
+}
+
+.header p {
+  color: #666;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
 h1 {
   color: #2c3e50;
   margin-bottom: 24px;
 }
+
 h2 {
   color: #34495e;
   margin-top: 32px;
   margin-bottom: 16px;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+
+h2::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+}
+
+/* Card Layout */
+.card {
+  background: #ffffff;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Controls Section */
 .controls { 
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 16px;
 }
+
 .controls label {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  font-weight: 500;
+  color: #555;
 }
+
+.input-group {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.input-group input {
+  flex: 1;
+}
+
+/* Form Elements */
 input, textarea { 
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 14px 16px;
+  border: 2px solid #e8e8e8;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #fafafa;
 }
+
 input:focus, textarea:focus {
   outline: none;
-  border-color: #3498db;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  background: white;
 }
+
+input::placeholder, textarea::placeholder {
+  color: #aaa;
+}
+
+/* Buttons */
 button { 
-  padding: 12px 24px;
-  background: #3498db;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  transition: background 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
+
 button:hover:not(:disabled) {
-  background: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
+
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
 button:disabled {
-  background: #95a5a6;
+  background: linear-gradient(135deg, #a8a8a8 0%, #888888 100%);
   cursor: not-allowed;
+  opacity: 0.7;
 }
+
+button.secondary {
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+button.secondary:hover:not(:disabled) {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+/* Search Controls */
+.search-controls {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.search-controls label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 500;
+  color: #555;
+}
+
+/* Analysis Section */
 .analysis-section {
-  background: #ecf0f1;
-  padding: 20px;
-  border-radius: 8px;
+  background: linear-gradient(135deg, #f6f8fc 0%, #f0f4f8 100%);
+  padding: 24px;
+  border-radius: 12px;
   margin-bottom: 24px;
+  border: 1px solid #e8e8e8;
 }
+
+.analysis-section label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 16px;
+}
+
 .analysis-section textarea {
   width: 100%;
   resize: vertical;
+  min-height: 100px;
 }
+
 .analysis-result {
-  background: #e8f5e9;
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
   border-left: 4px solid #4caf50;
-  padding: 20px;
+  padding: 24px;
   margin-bottom: 24px;
-  border-radius: 6px;
+  border-radius: 12px;
 }
+
 .analysis-result h3 {
   margin-top: 0;
   color: #2e7d32;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+
+/* Search Result Card */
+.search-result {
+  background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+  border: 1px solid #ffe69c;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 20px;
+}
+
+.search-result h2 {
+  margin-top: 0;
+  color: #856404;
+}
+
+.search-result h2::before {
+  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+}
+
+/* Table Styles */
 table { 
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   margin-top: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
+
 td, th { 
-  padding: 12px;
-  border: 1px solid #e0e0e0;
+  padding: 16px;
   text-align: left;
+  border-bottom: 1px solid #f0f0f0;
 }
+
 th {
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   font-weight: 600;
-  color: #495057;
+  color: white;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
 }
-tr:hover {
-  background: #f8f9fa;
+
+tbody tr {
+  transition: background 0.2s;
 }
+
+tbody tr:hover {
+  background: #f8f9ff;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+td:first-child {
+  font-weight: 600;
+  color: #667eea;
+}
+
+/* Status Colors */
 .positive {
   color: #27ae60;
   font-weight: 600;
+  background: rgba(39, 174, 96, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
 }
+
 .negative {
   color: #e74c3c;
   font-weight: 600;
+  background: rgba(231, 76, 60, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
 }
+
 .high-prob {
   color: #27ae60;
   font-weight: 600;
+  background: rgba(39, 174, 96, 0.1);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+/* Loading Spinner */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #888;
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  body {
+    padding: 12px;
+  }
+  
+  .container {
+    padding: 20px;
+  }
+  
+  .header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .search-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-controls button {
+    width: 100%;
+  }
+  
+  table {
+    font-size: 14px;
+  }
+  
+  td, th {
+    padding: 10px 8px;
+  }
+}
+
+/* Rank Badge */
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.rank-badge.gold {
+  background: linear-gradient(135deg, #f5af19 0%, #f12711 100%);
+}
+
+.rank-badge.silver {
+  background: linear-gradient(135deg, #bdc3c7 0%, #7f8c8d 100%);
+}
+
+.rank-badge.bronze {
+  background: linear-gradient(135deg, #cd7f32 0%, #8b4513 100%);
+}
+
+/* Ticker Symbol */
+.ticker-symbol {
+  font-weight: 700;
+  color: #333;
+  font-size: 1rem;
 }
 
