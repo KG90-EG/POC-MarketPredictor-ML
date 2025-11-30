@@ -7,7 +7,8 @@ This repository contains a small machine learning pipeline and a reference front
 - 🤖 **ML-Powered Stock Ranking** - RandomForest/XGBoost models predict stock performance
 - 📊 **Real-Time Market Data** - Live prices, volume, market cap via yfinance
 - 🧠 **AI Analysis** - OpenAI-powered recommendations with retry logic and caching
-- ⚛️ **Modern React UI** - Real-time updates with color-coded indicators
+- ⚛️ **Modern React UI** - Real-time updates with color-coded indicators and dark/light theme toggle
+- 🌓 **Dark Mode Support** - Persistent theme toggle with smooth transitions
 - 🔄 **CI/CD Pipeline** - Automated testing, linting, Docker builds
 - 📈 **MLflow Integration** - Model tracking, versioning, and promotion
 - 🐳 **Docker Support** - Multi-stage builds with frontend and backend
@@ -151,6 +152,17 @@ The `/analyze` endpoint accepts ranking data and optional user context to provid
 	- `GET /predict_ticker/{ticker}`: model probability for the ticker
 - Results render in a panel showing all the above plus probability.
 - Use this to explore tickers outside the ranking list.
+
+## UI Features
+- **Gradient Theme Design**: Purple gradient background with clean, modern card-based layout
+- **Dark/Light Mode Toggle**: Click the sun/moon icon in the header to switch themes
+  - Theme preference is automatically saved to localStorage
+  - Smooth transitions between themes
+  - Optimized color schemes for both modes
+- **Rank Badges**: Top 3 stocks get special gold/silver/bronze styling
+- **Real-Time Updates**: Live market data with color-coded positive/negative indicators
+- **Search Functionality**: Quick ticker lookup with Enter key support
+- **Loading States**: Animated spinners for better user experience
 
 ## Integration Tests
 Added `test_integration_server.py` to validate `/health` and `/models` using a temporary dummy model.
