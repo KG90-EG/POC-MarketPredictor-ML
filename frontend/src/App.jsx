@@ -47,7 +47,12 @@ export default function App() {
       setAnalysis(resp.data.analysis)
     } catch (e) {
       console.error(e)
-      alert(e.response?.data?.detail || 'Analysis failed. Ensure OPENAI_API_KEY is set.')
+      const errorDetail = e.response?.data?.detail || 'Analysis failed.'
+      if (e.response?.status === 429) {
+        alert('⏱️ Rate limit reached. Please wait 30-60 seconds and try again.\n\n' + errorDetail)
+      } else {
+        alert(errorDetail + '\n\nMake sure OPENAI_API_KEY is set correctly.')
+      }
     } finally {
       setAnalyzing(false)
     }

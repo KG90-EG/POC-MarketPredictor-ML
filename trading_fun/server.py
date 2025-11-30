@@ -204,13 +204,35 @@ Provide:
 Keep your response concise (200-300 words)."""
     
     try:
-        response = OPENAI_CLIENT.chat.completions.create(
-            model=os.environ.get('OPENAI_MODEL', 'gpt-4o-mini'),
-            messages=[{'role': 'user', 'content': prompt}],
-            max_tokens=500,
-            temperature=0.7
-        )
-        analysis = response.choices[0].message.content
-        return {'analysis': analysis, 'model': response.model}
+        import time
+        max_retries = 3
+        retry_delay = 1
+        
+        for attempt in range(max_retries):
+            try:
+                response = OPENAI_CLIENT.chat.completions.create(
+                    model=os.environ.get('OPENAI_MODEL', 'gpt-4o-mini'),
+                    messages=[{'role': 'user', 'content': prompt}],
+                    max_tokens=500,
+                    temperature=0.7
+                )
+                analysis = response.choices[0].message.content
+                return {'analysis': analysis, 'model': response.model}
+            except Exception as e:
+                error_str = str(e)
+                # Check if it's a rate limit error
+                if '429' in error_str or 'rate_limit' in error_str.lower():
+                    if attempt < max_retries - 1:
+                        time.sleep(retry_delay * (attempt + 1))
+                        continue
+                    else:
+                        raise HTTPException(
+                            status_code=429, 
+                            detail='OpenAI rate limit exceeded. Please wait a moment and try again.'
+                        )
+                else:
+                    raise
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'LLM analysis failed: {str(e)}')
