@@ -3,6 +3,15 @@ Support Trading Decision
 
 This repository contains a small machine learning pipeline and a reference frontend to generate a ranked list of tickers based on a model's probability of outperformance.
 
+## Features
+- 🤖 **ML-Powered Stock Ranking** - RandomForest/XGBoost models predict stock performance
+- 📊 **Real-Time Market Data** - Live prices, volume, market cap via yfinance
+- 🧠 **AI Analysis** - OpenAI-powered recommendations with retry logic and caching
+- ⚛️ **Modern React UI** - Real-time updates with color-coded indicators
+- 🔄 **CI/CD Pipeline** - Automated testing, linting, Docker builds
+- 📈 **MLflow Integration** - Model tracking, versioning, and promotion
+- 🐳 **Docker Support** - Multi-stage builds with frontend and backend
+
 Quick summary:
 - `trading_fun/` — Python package implementing data loading, features, model training, prediction, and a FastAPI server.
 - `training/` — Retrain scripts, trainer and utilities (MLflow integration, drift-check, promotion)
@@ -107,6 +116,11 @@ The UI now includes AI-powered recommendations using OpenAI's API. To enable:
 export OPENAI_API_KEY='your-api-key-here'
 ```
 
+Or add it to `.env` file in the project root:
+```
+OPENAI_API_KEY=sk-proj-your-key-here
+```
+
 2. (Optional) Choose a different model:
 ```bash
 export OPENAI_MODEL='gpt-4o'  # or gpt-3.5-turbo, etc.
@@ -118,6 +132,12 @@ The `/analyze` endpoint accepts ranking data and optional user context to provid
 - Summary of top opportunities
 - Risk considerations
 - Actionable recommendations
+
+**Features:**
+- **Automatic retry logic**: Retries up to 3 times with exponential backoff on failures
+- **Rate limit handling**: Returns clear error messages for OpenAI 429 errors
+- **5-minute caching**: Identical requests within 5 minutes use cached results (reduces API calls)
+- **User context**: Add custom context like "focus on tech stocks" or "conservative portfolio"
 
 ## Additional Endpoints
 - `/models` — Lists available model artifact files and indicates the current production model
