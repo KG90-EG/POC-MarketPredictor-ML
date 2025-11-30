@@ -35,6 +35,42 @@ DEFAULT_STOCKS = [
     'QCOM', 'UPS', 'HON', 'BA', 'GE'
 ]
 
+# Country-specific stock lists for diversified portfolio analysis
+COUNTRY_STOCKS = {
+    'Global': DEFAULT_STOCKS,  # US-dominated global view
+    'United States': DEFAULT_STOCKS,
+    'Switzerland': [
+        'NESN.SW', 'NOVN.SW', 'ROG.SW', 'UBSG.SW', 'ZURN.SW',  # Nestle, Novartis, Roche, UBS, Zurich Insurance
+        'ABBN.SW', 'SREN.SW', 'GIVN.SW', 'LONN.SW', 'SLHN.SW',  # ABB, Sika, Givaudan, Lonza, Swiss Life
+        'SCMN.SW', 'ADEN.SW', 'GEBN.SW', 'PGHN.SW', 'SGSN.SW'   # Swisscom, Adecco, Geberit, Partners Group, SGS
+    ],
+    'Germany': [
+        'SAP', 'SIE.DE', 'ALV.DE', 'DTE.DE', 'VOW3.DE',  # SAP, Siemens, Allianz, Deutsche Telekom, VW
+        'MBG.DE', 'BMW.DE', 'BAS.DE', 'ADS.DE', 'MUV2.DE',  # Mercedes, BMW, BASF, Adidas, Munich Re
+        'BAYN.DE', 'EOAN.DE', 'DB1.DE', 'HEN3.DE', 'IFX.DE'  # Bayer, E.ON, Deutsche Boerse, Henkel, Infineon
+    ],
+    'United Kingdom': [
+        'SHEL.L', 'AZN.L', 'HSBA.L', 'ULVR.L', 'DGE.L',  # Shell, AstraZeneca, HSBC, Unilever, Diageo
+        'BP.L', 'GSK.L', 'RIO.L', 'LSEG.L', 'NG.L',  # BP, GSK, Rio Tinto, LSEG, National Grid
+        'REL.L', 'BARC.L', 'LLOY.L', 'VOD.L', 'PRU.L'  # RELX, Barclays, Lloyds, Vodafone, Prudential
+    ],
+    'France': [
+        'MC.PA', 'OR.PA', 'SAN.PA', 'TTE.PA', 'AIR.PA',  # LVMH, L'Oreal, Sanofi, TotalEnergies, Airbus
+        'BNP.PA', 'SU.PA', 'AI.PA', 'CA.PA', 'EN.PA',  # BNP Paribas, Schneider, Air Liquide, Carrefour, Bouygues
+        'SGO.PA', 'DG.PA', 'CS.PA', 'BN.PA', 'KER.PA'  # Saint-Gobain, Vinci, AXA, Danone, Kering
+    ],
+    'Japan': [
+        'TM', '7203.T', '6758.T', '8306.T', '6861.T',  # Toyota, Sony, MUFG, Keyence
+        '9984.T', '6902.T', '9432.T', '8035.T', '7974.T',  # SoftBank, Denso, NTT, Tokyo Electron, Nintendo
+        '4063.T', '4502.T', '6501.T', '4503.T', '6954.T'  # Shin-Etsu, Takeda, Hitachi, Astellas, Fanuc
+    ],
+    'Canada': [
+        'SHOP.TO', 'TD.TO', 'RY.TO', 'BNS.TO', 'ENB.TO',  # Shopify, TD Bank, Royal Bank, Scotiabank, Enbridge
+        'CNR.TO', 'CP.TO', 'BMO.TO', 'CNQ.TO', 'TRP.TO',  # CN Rail, CP Rail, BMO, Canadian Natural, TC Energy
+        'CM.TO', 'SU.TO', 'WCN.TO', 'MFC.TO', 'BAM.TO'  # CIBC, Suncor, Waste Connections, Manulife, Brookfield
+    ]
+}
+
 app = FastAPI()
 
 # Enable CORS for local frontend development

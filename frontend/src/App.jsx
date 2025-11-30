@@ -18,6 +18,7 @@ export default function App() {
   const [showHelp, setShowHelp] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [selectedCountry, setSelectedCountry] = useState('All')
+  const [selectedView, setSelectedView] = useState('Global')
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode')
     return saved ? JSON.parse(saved) : false
@@ -37,13 +38,13 @@ export default function App() {
     setDarkMode(!darkMode)
   }
 
-  async function fetchRanking() {
+  async function fetchRanking(view = selectedView) {
     setLoading(true)
     setAnalysis(null)
     setCurrentPage(1)
     try {
-      // Empty tickers parameter uses backend default list
-      const url = `http://localhost:8000/ranking`
+      // Empty tickers parameter uses backend country-specific list
+      const url = `http://localhost:8000/ranking?country=${encodeURIComponent(view)}`
       const resp = await axios.get(url)
       setResults(resp.data.ranking)
       // Fetch details for each ticker
@@ -192,13 +193,52 @@ export default function App() {
         <p>AI-Powered Stock Ranking & Analysis</p>
       </div>
       
+      {/* View Selector */}
+      <div className="card">
+        <div className="card-title">🌍 Market View</div>
+        <div style={{display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '8px'}}>
+          {['Global', 'United States', 'Switzerland', 'Germany', 'United Kingdom', 'France', 'Japan', 'Canada'].map(view => (
+            <button
+              key={view}
+              onClick={() => {
+                setSelectedView(view)
+                setSelectedCountry('All')
+                fetchRanking(view)
+              }}
+              style={{
+                padding: '10px 20px',
+                background: selectedView === view ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f0f0f0',
+                color: selectedView === view ? 'white' : '#333',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: selectedView === view ? '600' : '400',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              {view === 'Global' ? '🌐' : 
+               view === 'United States' ? '🇺🇸' : 
+               view === 'Switzerland' ? '🇨🇭' : 
+               view === 'Germany' ? '🇩🇪' : 
+               view === 'United Kingdom' ? '🇬🇧' : 
+               view === 'France' ? '🇫🇷' : 
+               view === 'Japan' ? '🇯🇵' : 
+               view === 'Canada' ? '🇨🇦' : '🌎'} {view}
+            </button>
+          ))}
+        </div>
+        <p style={{color: '#666', fontSize: '0.9rem', margin: '8px 0 0 0'}}>
+          Select a market view to analyze top performers from different regions for a diversified portfolio
+        </p>
+      </div>
+
       {/* Ranking Section */}
       <div className="card">
-        <div className="card-title">📊 Top Stock Rankings</div>
+        <div className="card-title">📊 Top Stock Rankings - {selectedView}</div>
         {loading ? (
           <div style={{textAlign: 'center', padding: '40px'}}>
             <span className="spinner"></span>
-            <p>Loading rankings from 50 popular stocks...</p>
+            <p>Loading {selectedView} market rankings...</p>
           </div>
         ) : (
           <>
@@ -206,8 +246,8 @@ export default function App() {
               <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
                 <p style={{margin: 0, color: '#666'}}>
                   {selectedCountry === 'All' 
-                    ? `Showing ${results.length} stocks ranked globally` 
-                    : `Top performers in ${selectedCountry}: ${results.filter(r => tickerDetails[r.ticker]?.country === selectedCountry).length} stocks`}
+                    ? `Showing ${results.length} stocks from ${selectedView}` 
+                    : `Filtered by ${selectedCountry}: ${results.filter(r => tickerDetails[r.ticker]?.country === selectedCountry).length} stocks`}
                 </p>
                 <select 
                   value={selectedCountry} 
@@ -233,7 +273,7 @@ export default function App() {
                   })()}
                 </select>
               </div>
-              <button onClick={fetchRanking} style={{padding: '8px 16px'}}>
+              <button onClick={() => fetchRanking(selectedView)} style={{padding: '8px 16px'}}>
                 🔄 Refresh Rankings
               </button>
             </div>
