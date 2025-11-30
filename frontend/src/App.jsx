@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import { api, handleApiError } from './api'
 import './styles.css'
 
 export default function App() {
@@ -8,6 +8,7 @@ export default function App() {
   const [analysis, setAnalysis] = useState(null)
   const [userContext, setUserContext] = useState('')
   const [loading, setLoading] = useState(false)
+  const [loadingProgress, setLoadingProgress] = useState({ current: 0, total: 0 })
   const [analyzing, setAnalyzing] = useState(false)
   const [searchTicker, setSearchTicker] = useState('')
   const [searchLoading, setSearchLoading] = useState(false)
@@ -42,47 +43,72 @@ export default function App() {
     setLoading(true)
     setAnalysis(null)
     setCurrentPage(1)
+    setLoadingProgress({ current: 0, total: 0 })
+    
     try {
-      // Empty tickers parameter uses backend country-specific list
-      const url = `http://localhost:8000/ranking?country=${encodeURIComponent(view)}`
-      const resp = await axios.get(url)
-      setResults(resp.data.ranking)
-      // Fetch details for each ticker
-      const details = {}
-      for (const r of resp.data.ranking) {
-        try {
-          const infoResp = await axios.get(`http://localhost:8000/ticker_info/${r.ticker}`)
-          details[r.ticker] = infoResp.data
-        } catch (e) {
-          console.error(`Failed to fetch info for ${r.ticker}`, e)
+      // Fetch ranking
+      const resp = await api.getRanking(view)
+      const ranking = resp.data.ranking
+      setResults(ranking)
+      
+      // Batch fetch ticker details (much faster than sequential)
+      const tickers = ranking.map(r => r.ticker)
+      setLoadingProgress({ current: 0, total: tickers.length })
+      
+      try {
+        const batchResp = await api.getTickerInfoBatch(tickers)
+        const { results: batchResults, errors } = batchResp.data
+        
+        // Log any errors but don't fail the whole operation
+        if (Object.keys(errors).length > 0) {
+          console.warn('Some tickers failed to load:', errors)
         }
+        
+        setTickerDetails(batchResults || {})
+        setLoadingProgress({ current: Object.keys(batchResults || {}).length, total: tickers.length })
+      } catch (batchError) {
+        console.error('Batch fetch failed, falling back to sequential', batchError)
+        // Fallback to sequential if batch fails
+        await fetchDetailsSequential(ranking)
       }
-      setTickerDetails(details)
     } catch (e) {
-      console.error(e)
-      alert('Error fetching ranking')
+      const error = handleApiError(e, 'Error fetching ranking')
+      alert(`Error: ${error.message}`)
     } finally {
       setLoading(false)
+      setLoadingProgress({ current: 0, total: 0 })
     }
+  }
+  
+  // Fallback method for sequential fetching
+  async function fetchDetailsSequential(ranking) {
+    const details = {}
+    for (let i = 0; i < ranking.length; i++) {
+      const r = ranking[i]
+      setLoadingProgress({ current: i + 1, total: ranking.length })
+      try {
+        const infoResp = await api.getTickerInfo(r.ticker)
+        details[r.ticker] = infoResp.data
+      } catch (e) {
+        console.error(`Failed to fetch info for ${r.ticker}`, e)
+      }
+    }
+    setTickerDetails(details)
   }
 
   async function requestAnalysis() {
     if (results.length === 0) return
     setAnalyzing(true)
     try {
-      const resp = await axios.post('http://localhost:8000/analyze', {
-        ranking: results,
-        user_context: userContext || null
-      })
+      const resp = await api.analyze(results, userContext || null)
       const cachedNote = resp.data.cached ? ' (cached result)' : ''
       setAnalysis(resp.data.analysis + cachedNote)
     } catch (e) {
-      console.error(e)
-      const errorDetail = e.response?.data?.detail || 'Analysis failed.'
-      if (e.response?.status === 429) {
-        alert('⏱️ Rate limit reached. Please wait 30-60 seconds and try again.\n\n' + errorDetail)
+      const error = handleApiError(e, 'Analysis failed')
+      if (error.isRateLimit) {
+        alert('⏱️ Rate limit reached. Please wait 30-60 seconds and try again.\n\n' + error.message)
       } else {
-        alert(errorDetail + '\n\nMake sure OPENAI_API_KEY is set correctly.')
+        alert(`Error: ${error.message}\n\nMake sure OPENAI_API_KEY is set correctly.`)
       }
     } finally {
       setAnalyzing(false)
@@ -100,8 +126,8 @@ export default function App() {
     setSearchResultDetails(null)
     try {
       const [infoResp, predResp] = await Promise.all([
-        axios.get(`http://localhost:8000/ticker_info/${t}`),
-        axios.get(`http://localhost:8000/predict_ticker/${t}`)
+        api.getTickerInfo(t),
+        api.predictTicker(t)
       ])
       const info = infoResp.data || {}
       const prob = predResp.data?.prob || null
@@ -120,9 +146,8 @@ export default function App() {
         }
       })
     } catch (e) {
-      console.error('Search error', e)
-      const detail = e.response?.data?.detail || 'Failed to fetch stock info.'
-      alert(detail)
+      const error = handleApiError(e, 'Search failed')
+      alert(`Error: ${error.message}`)
     } finally {
       setSearchLoading(false)
     }
@@ -153,8 +178,8 @@ export default function App() {
     setSelectedCompany({ ticker, loading: true })
     try {
       const [infoResp, predResp] = await Promise.all([
-        axios.get(`http://localhost:8000/ticker_info/${ticker}`),
-        axios.get(`http://localhost:8000/predict_ticker/${ticker}`)
+        api.getTickerInfo(ticker),
+        api.predictTicker(ticker)
       ])
       const info = infoResp.data || {}
       const prob = predResp.data?.prob || null
@@ -175,8 +200,8 @@ export default function App() {
         loading: false
       })
     } catch (e) {
-      console.error('Failed to load company details', e)
-      setSelectedCompany({ ticker, error: 'Failed to load details', loading: false })
+      const error = handleApiError(e, 'Failed to load company details')
+      setSelectedCompany({ ticker, error: error.message, loading: false })
     }
   }
 
@@ -233,6 +258,29 @@ export default function App() {
           <div style={{textAlign: 'center', padding: '40px'}}>
             <span className="spinner"></span>
             <p>Loading {selectedView} market rankings...</p>
+            {loadingProgress.total > 0 && (
+              <div style={{marginTop: '16px'}}>
+                <div style={{
+                  width: '100%',
+                  maxWidth: '400px',
+                  margin: '0 auto',
+                  background: '#e0e0e0',
+                  borderRadius: '8px',
+                  height: '8px',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    width: `${(loadingProgress.current / loadingProgress.total) * 100}%`,
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    height: '100%',
+                    transition: 'width 0.3s ease'
+                  }}></div>
+                </div>
+                <p style={{fontSize: '0.9rem', color: '#666', marginTop: '8px'}}>
+                  Loading details: {loadingProgress.current} / {loadingProgress.total}
+                </p>
+              </div>
+            )}
           </div>
         ) : results.length > 0 ? (
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px'}}>

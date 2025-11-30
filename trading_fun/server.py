@@ -57,6 +57,7 @@ def get_top_stocks_from_index(index_symbol: str, limit: int = 30) -> List[str]:
 
 def get_stocks_by_country(country: str, limit: int = 30) -> List[str]:
     """Get top stocks for a country, using curated lists with dynamic validation."""
+    import concurrent.futures
     
     # Curated seed lists - these get validated and ranked dynamically
     country_seeds = {
@@ -97,9 +98,8 @@ def get_stocks_by_country(country: str, limit: int = 30) -> List[str]:
     
     seed_list = country_seeds.get(country, DEFAULT_STOCKS)
     
-    # Validate and rank by market cap
-    validated_stocks = []
-    for ticker in seed_list[:limit * 2]:  # Check more than needed
+    # Validate and rank by market cap in parallel
+    def validate_ticker(ticker: str):
         try:
             stock = yf.Ticker(ticker)
             info = stock.info
@@ -108,13 +108,23 @@ def get_stocks_by_country(country: str, limit: int = 30) -> List[str]:
             
             # Only include if has market cap data
             if market_cap and market_cap > 0:
-                validated_stocks.append({
+                return {
                     'ticker': ticker,
                     'market_cap': market_cap,
                     'country': country_match
-                })
+                }
         except Exception:
-            continue
+            pass
+        return None
+    
+    validated_stocks = []
+    # Parallel validation with thread pool (max 15 concurrent to avoid rate limits)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+        futures = [executor.submit(validate_ticker, t) for t in seed_list[:limit * 2]]
+        for future in concurrent.futures.as_completed(futures):
+            result = future.result()
+            if result:
+                validated_stocks.append(result)
     
     # Sort by market cap and return top tickers
     validated_stocks.sort(key=lambda x: x['market_cap'], reverse=True)
@@ -319,6 +329,48 @@ def ticker_info(ticker: str) -> Dict[str, Any]:
         }
     except Exception as e:
         raise HTTPException(status_code=404, detail=f'Unable to fetch info: {str(e)}')
+
+
+@app.post('/ticker_info_batch')
+def ticker_info_batch(tickers: List[str]) -> Dict[str, Any]:
+    """Batch fetch ticker information for multiple stocks in parallel.
+    Returns dict mapping ticker to info, with errors for failed tickers.
+    """
+    import concurrent.futures
+    
+    results = {}
+    errors = {}
+    
+    def fetch_single(ticker: str):
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            return ticker, {
+                'ticker': ticker,
+                'price': info.get('currentPrice', info.get('regularMarketPrice')),
+                'change': info.get('regularMarketChangePercent'),
+                'volume': info.get('volume'),
+                'market_cap': info.get('marketCap'),
+                'name': info.get('longName', ticker),
+                'pe_ratio': info.get('trailingPE'),
+                'fifty_two_week_high': info.get('fiftyTwoWeekHigh'),
+                'fifty_two_week_low': info.get('fiftyTwoWeekLow'),
+                'country': info.get('country', 'Unknown')
+            }, None
+        except Exception as e:
+            return ticker, None, str(e)
+    
+    # Fetch in parallel with thread pool (max 10 concurrent)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(fetch_single, t) for t in tickers]
+        for future in concurrent.futures.as_completed(futures):
+            ticker, data, error = future.result()
+            if error:
+                errors[ticker] = error
+            else:
+                results[ticker] = data
+    
+    return {'results': results, 'errors': errors}
 
 
 class AnalysisRequest(BaseModel):
