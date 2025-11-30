@@ -5,6 +5,10 @@ from datetime import datetime
 from trading_fun.trading import build_dataset, train_model
 import mlflow
 import os
+try:
+    import boto3  # optional
+except ImportError:  # pragma: no cover
+    boto3 = None
 
 # Setup mlflow tracking if env var set
 MLFLOW_TRACKING_URI = os.environ.get('MLFLOW_TRACKING_URI', 'file:./mlruns')
@@ -24,6 +28,19 @@ def main():
                 mlflow.log_metric(k, v)
         mlflow.sklearn.log_model(model, 'model')
         print('Model saved to', model_path, 'metrics=', metrics)
+
+    # Optional S3 upload
+    bucket = os.environ.get('S3_BUCKET')
+    if bucket and boto3:
+        try:
+            s3 = boto3.client('s3')
+            key = f"models/{os.path.basename(model_path)}"
+            s3.upload_file(model_path, bucket, key)
+            print(f'Uploaded model to s3://{bucket}/{key}')
+        except Exception as e:  # pragma: no cover
+            print('S3 upload failed:', e)
+    elif bucket and not boto3:
+        print('boto3 not installed; skipping S3 upload')
 
 if __name__ == '__main__':
     main()

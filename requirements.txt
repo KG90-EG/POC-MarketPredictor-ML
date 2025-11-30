@@ -1,0 +1,18 @@
+yfinance==0.2.66
+pandas==2.3.3
+numpy==2.3.5
+scikit-learn==1.7.2
+xgboost==3.1.2
+mlflow==2.10.0
+joblib==1.5.2
+fastapi==0.95.1
+uvicorn==0.22.0
+pytest==8.4.0
+flake8==6.0.0
+black==24.3.0
+boto3==1.35.67
+openai==1.57.4
+python-dotenv==1.0.0
+
+# Optional: xgboost & pyarrow may require system deps (libomp, cmake) on macOS. If installing on macOS, run
+# `brew install libomp cmake` or use a container with wheels available. If you prefer to avoid compilation, comment out xgboost and pyarrow.

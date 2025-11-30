@@ -13,4 +13,10 @@ dependencies = [
     "numpy",
     "scikit-learn",
     "xgboost",
+    "mlflow",
+    "joblib",
+    "fastapi",
+    "uvicorn",
+    "boto3",
+    "openai",
 ]
