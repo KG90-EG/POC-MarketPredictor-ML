@@ -25,6 +25,16 @@ except Exception:
 ANALYSIS_CACHE = {}
 CACHE_TTL = 300  # seconds
 
+# Default popular stocks for automatic ranking
+DEFAULT_STOCKS = [
+    'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'BRK.B',
+    'UNH', 'JNJ', 'V', 'WMT', 'JPM', 'MA', 'PG', 'XOM', 'HD', 'CVX',
+    'LLY', 'ABBV', 'MRK', 'KO', 'PEP', 'COST', 'AVGO', 'TMO', 'BAC',
+    'CSCO', 'MCD', 'ACN', 'AMD', 'NFLX', 'ADBE', 'DIS', 'NKE', 'INTC',
+    'CRM', 'TXN', 'ORCL', 'ABT', 'CMCSA', 'VZ', 'WFC', 'PM', 'IBM',
+    'QCOM', 'UPS', 'HON', 'BA', 'GE'
+]
+
 app = FastAPI()
 
 # Enable CORS for local frontend development
@@ -106,10 +116,19 @@ def predict_ticker(ticker: str):
 
 
 @app.get('/ranking')
-def ranking(tickers: str = "AAPL,MSFT,NVDA"):
+def ranking(tickers: str = ""):
+    """Rank stocks by ML prediction probability.
+    If no tickers provided, uses default list of popular stocks.
+    """
     if MODEL is None:
         raise HTTPException(status_code=503, detail='No model available')
-    chosen = [t.strip().upper() for t in tickers.split(',') if t.strip()]
+    
+    # Use default stocks if no tickers provided
+    if not tickers.strip():
+        chosen = DEFAULT_STOCKS
+    else:
+        chosen = [t.strip().upper() for t in tickers.split(',') if t.strip()]
+    
     result = []
     for t in chosen:
         try:

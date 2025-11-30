@@ -3,7 +3,6 @@ import axios from 'axios'
 import './styles.css'
 
 export default function App() {
-  const [tickers, setTickers] = useState('AAPL,MSFT,NVDA,GOOGL,TSLA')
   const [results, setResults] = useState([])
   const [tickerDetails, setTickerDetails] = useState({})
   const [analysis, setAnalysis] = useState(null)
@@ -13,6 +12,8 @@ export default function App() {
   const [searchTicker, setSearchTicker] = useState('')
   const [searchLoading, setSearchLoading] = useState(false)
   const [searchResult, setSearchResult] = useState(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode')
     return saved ? JSON.parse(saved) : false
@@ -23,6 +24,11 @@ export default function App() {
     localStorage.setItem('darkMode', JSON.stringify(darkMode))
   }, [darkMode])
 
+  // Auto-load ranking on mount
+  useEffect(() => {
+    fetchRanking()
+  }, [])
+
   function toggleDarkMode() {
     setDarkMode(!darkMode)
   }
@@ -30,8 +36,10 @@ export default function App() {
   async function fetchRanking() {
     setLoading(true)
     setAnalysis(null)
+    setCurrentPage(1)
     try {
-      const url = `http://localhost:8000/ranking?tickers=${encodeURIComponent(tickers)}`
+      // Empty tickers parameter uses backend default list
+      const url = `http://localhost:8000/ranking`
       const resp = await axios.get(url)
       setResults(resp.data.ranking)
       // Fetch details for each ticker
@@ -142,30 +150,20 @@ export default function App() {
       
       {/* Ranking Section */}
       <div className="card">
-        <div className="card-title">📊 Stock Ranking</div>
-        <div className="controls">
-          <label>
-            Enter stock tickers (comma-separated)
-            <div className="input-group">
-              <input 
-                value={tickers} 
-                onChange={(e) => setTickers(e.target.value)}
-                onKeyPress={(e) => handleKeyPress(e, fetchRanking)}
-                placeholder="AAPL,MSFT,NVDA,GOOGL,TSLA"
-              />
-              <button onClick={fetchRanking} disabled={loading}>
-                {loading ? (
-                  <>
-                    <span className="spinner"></span>
-                    Loading...
-                  </>
-                ) : (
-                  '🚀 Get Ranking'
-                )}
-              </button>
-            </div>
-          </label>
-        </div>
+        <div className="card-title">📊 Top Stock Rankings</div>
+        {loading ? (
+          <div style={{textAlign: 'center', padding: '40px'}}>
+            <span className="spinner"></span>
+            <p>Loading rankings from 50 popular stocks...</p>
+          </div>
+        ) : (
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'}}>
+            <p style={{margin: 0, color: '#666'}}>Showing {results.length} stocks ranked by AI prediction</p>
+            <button onClick={fetchRanking} style={{padding: '8px 16px'}}>
+              🔄 Refresh Rankings
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Search Section */}
@@ -283,13 +281,16 @@ export default function App() {
               </tr>
             </thead>
             <tbody>
-              {results.map((r, idx) => {
+              {results
+                .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                .map((r, idx) => {
+                const rank = (currentPage - 1) * itemsPerPage + idx + 1
                 const detail = tickerDetails[r.ticker] || {}
                 const changeClass = detail.change > 0 ? 'positive' : detail.change < 0 ? 'negative' : ''
                 return (
                   <tr key={r.ticker}>
                     <td>
-                      <span className={getRankBadgeClass(idx + 1)}>{idx + 1}</span>
+                      <span className={getRankBadgeClass(rank)}>{rank}</span>
                     </td>
                     <td><span className="ticker-symbol">{r.ticker}</span></td>
                     <td>{detail.name || 'N/A'}</td>
@@ -311,15 +312,28 @@ export default function App() {
               })}
             </tbody>
           </table>
-        </>
-      )}
 
-      {/* Empty State */}
-      {results.length === 0 && !loading && (
-        <div className="empty-state">
-          <div className="empty-state-icon">📊</div>
-          <p>Enter stock tickers above and click "Get Ranking" to see AI-powered predictions</p>
-        </div>
+          {/* Pagination Controls */}
+          {results.length > itemsPerPage && (
+            <div className="pagination">
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+                disabled={currentPage === 1}
+              >
+                ← Previous
+              </button>
+              <span className="page-info">
+                Page {currentPage} of {Math.ceil(results.length / itemsPerPage)}
+              </span>
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(Math.ceil(results.length / itemsPerPage), p + 1))} 
+                disabled={currentPage >= Math.ceil(results.length / itemsPerPage)}
+              >
+                Next →
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
