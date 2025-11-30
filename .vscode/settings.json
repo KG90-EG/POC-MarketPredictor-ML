@@ -1,7 +1,4 @@
 {
-    "python.testing.pytestArgs": [
-        "trading_fun"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python-envs.pythonProjects": []
 }
