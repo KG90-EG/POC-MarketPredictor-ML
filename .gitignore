@@ -1,7 +1,10 @@
 venv/
+.venv/
 __pycache__/
 *.pyc
 models/
 mlruns/
 *.log
 .DS_Store
+.env
+node_modules/

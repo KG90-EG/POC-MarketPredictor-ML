@@ -5,9 +5,14 @@ from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 import joblib
 import os
+from dotenv import load_dotenv
 from .trading import features, compute_rsi, compute_macd, compute_bollinger, compute_momentum
 import pandas as pd
 import yfinance as yf
+
+# Load environment variables from .env file
+load_dotenv()
+
 try:
     from openai import OpenAI
     OPENAI_CLIENT = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
