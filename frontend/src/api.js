@@ -15,7 +15,16 @@ const apiClient = axios.create({
 // API methods
 export const api = {
   // Health check
-  health: () => apiClient.get('/health'),
+  health: async () => {
+    const response = await apiClient.get('/health');
+    return response.data;
+  },
+
+  // Metrics
+  metrics: async () => {
+    const response = await apiClient.get('/metrics');
+    return response.data;
+  },
 
   // Ranking endpoints
   getRanking: (country = 'Global', tickers = '') => {

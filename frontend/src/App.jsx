@@ -1,8 +1,22 @@
 import React, { useState, useEffect } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { api, handleApiError } from './api'
+import ErrorBoundary from './components/ErrorBoundary'
+import HealthCheck from './components/HealthCheck'
 import './styles.css'
 
-export default function App() {
+// Create a React Query client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 2,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+})
+
+function AppContent() {
   const [results, setResults] = useState([])
   const [tickerDetails, setTickerDetails] = useState({})
   const [analysis, setAnalysis] = useState(null)
@@ -62,18 +76,33 @@ export default function App() {
         // Log any errors but don't fail the whole operation
         if (Object.keys(errors).length > 0) {
           console.warn('Some tickers failed to load:', errors)
+          const failedCount = Object.keys(errors).length
+          if (failedCount > tickers.length / 2) {
+            console.warn(`High failure rate: ${failedCount}/${tickers.length} tickers failed`)
+          }
         }
         
         setTickerDetails(batchResults || {})
         setLoadingProgress({ current: Object.keys(batchResults || {}).length, total: tickers.length })
       } catch (batchError) {
         console.error('Batch fetch failed, falling back to sequential', batchError)
+        const error = handleApiError(batchError)
+        if (error.isNetworkError) {
+          alert('⚠️ Network error: Please check your connection and try again.')
+        }
         // Fallback to sequential if batch fails
         await fetchDetailsSequential(ranking)
       }
     } catch (e) {
       const error = handleApiError(e, 'Error fetching ranking')
-      alert(`Error: ${error.message}`)
+      let errorMessage = `Failed to load rankings: ${error.message}`
+      if (error.isNetworkError) {
+        errorMessage = '⚠️ Network error: Unable to connect to the backend. Please ensure the server is running.'
+      } else if (error.isRateLimit) {
+        errorMessage = '⏱️ Rate limit exceeded. Please wait a moment and try again.'
+      }
+      alert(errorMessage)
+      console.error('Ranking fetch error:', error)
     } finally {
       setLoading(false)
       setLoadingProgress({ current: 0, total: 0 })
@@ -147,7 +176,18 @@ export default function App() {
       })
     } catch (e) {
       const error = handleApiError(e, 'Search failed')
-      alert(`Error: ${error.message}`)
+      let errorMessage = `Unable to find ticker ${t}`
+      if (error.isNetworkError) {
+        errorMessage = '⚠️ Network error: Please check your connection.'  
+      } else if (error.status === 404) {
+        errorMessage = `❌ Ticker "${t}" not found. Please check the symbol and try again.`
+      } else if (error.isRateLimit) {
+        errorMessage = '⏱️ Rate limit exceeded. Please wait a moment and try again.'
+      } else {
+        errorMessage = `Search failed: ${error.message}`
+      }
+      alert(errorMessage)
+      console.error('Search error:', error)
     } finally {
       setSearchLoading(false)
     }
@@ -201,7 +241,14 @@ export default function App() {
       })
     } catch (e) {
       const error = handleApiError(e, 'Failed to load company details')
-      setSelectedCompany({ ticker, error: error.message, loading: false })
+      let errorMessage = error.message
+      if (error.isNetworkError) {
+        errorMessage = '⚠️ Network error: Unable to load company details.'
+      } else if (error.isRateLimit) {
+        errorMessage = '⏱️ Rate limit exceeded. Please wait a moment.'
+      }
+      setSelectedCompany({ ticker, error: errorMessage, loading: false })
+      console.error('Company detail error:', error)
     }
   }
 
@@ -214,9 +261,12 @@ export default function App() {
         <button className="help-button" onClick={() => setShowHelp(true)} title="Help & Guide">
           ❓
         </button>
-        <h1><span className="emoji">📈</span> Trading Fun</h1>
+        <h1><span className="emoji">📈</span> POC Trading Overview</h1>
         <p>AI-Powered Stock Ranking & Analysis</p>
       </div>
+      
+      {/* Health Check Section */}
+      <HealthCheck />
       
       {/* Market View Selector */}
       <div className="card">
@@ -669,5 +719,16 @@ export default function App() {
         </>
       )}
     </div>
+  )
+}
+
+// Wrap with providers and error boundary
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AppContent />
+      </QueryClientProvider>
+    </ErrorBoundary>
   )
 }
