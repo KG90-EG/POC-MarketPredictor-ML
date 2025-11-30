@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
+import './index.css'
 
 export default function App() {
   const [tickers, setTickers] = useState('AAPL,MSFT,NVDA,GOOGL,TSLA')
@@ -105,9 +106,12 @@ export default function App() {
 
   return (
     <div className="container">
-      <h1>📈 Trading Fun — AI-Powered Ranking</h1>
+      <header className="app-header">
+        <h1>📈 Trading Fun — AI-Powered Ranking</h1>
+        <p className="subtitle">Insights, ranking, and quick search powered by ML + LLM</p>
+      </header>
       
-      <div className="controls">
+      <div className="controls card">
         <label>
           <strong>Tickers (comma-separated):</strong>
           <input 
@@ -116,12 +120,12 @@ export default function App() {
             placeholder="AAPL,MSFT,NVDA"
           />
         </label>
-        <button onClick={fetchRanking} disabled={loading}>
+        <button className="btn primary" onClick={fetchRanking} disabled={loading}>
           {loading ? 'Loading...' : 'Get Ranking'}
         </button>
       </div>
 
-      <div className="search-controls" style={{ marginTop: 16 }}>
+      <div className="search-controls card">
         <label>
           <strong>Search Ticker:</strong>
           <input
@@ -130,13 +134,13 @@ export default function App() {
             placeholder="e.g., AMD"
           />
         </label>
-        <button onClick={performSearch} disabled={searchLoading}>
+        <button className="btn" onClick={performSearch} disabled={searchLoading}>
           {searchLoading ? 'Searching...' : 'Search'}
         </button>
       </div>
 
       {searchResult && (
-        <div className="search-result" style={{ marginTop: 12 }}>
+        <div className="search-result card">
           <h2>Search Result</h2>
           <table>
             <thead>
@@ -156,7 +160,7 @@ export default function App() {
                 <td>{searchResult.name}</td>
                 <td>{searchResult.prob != null ? `${(searchResult.prob * 100).toFixed(2)}%` : 'N/A'}</td>
                 <td>{searchResult.price != null ? `$${searchResult.price.toFixed(2)}` : 'N/A'}</td>
-                <td className={searchResult.change > 0 ? 'positive' : searchResult.change < 0 ? 'negative' : ''}>
+                <td className={searchResult.change > 0 ? 'positive badge' : searchResult.change < 0 ? 'negative badge' : 'badge'}>
                   {searchResult.change != null ? `${searchResult.change > 0 ? '+' : ''}${searchResult.change.toFixed(2)}%` : 'N/A'}
                 </td>
                 <td>{searchResult.volume != null ? searchResult.volume.toLocaleString() : 'N/A'}</td>
@@ -169,7 +173,7 @@ export default function App() {
 
       {results.length > 0 && (
         <>
-          <div className="analysis-section">
+          <div className="analysis-section card">
             <label>
               <strong>Optional context for LLM analysis:</strong>
               <textarea 
@@ -179,20 +183,20 @@ export default function App() {
                 rows={3}
               />
             </label>
-            <button onClick={requestAnalysis} disabled={analyzing}>
+            <button className="btn accent" onClick={requestAnalysis} disabled={analyzing}>
               {analyzing ? 'Analyzing...' : '🤖 Get AI Recommendations'}
             </button>
           </div>
 
           {analysis && (
-            <div className="analysis-result">
+            <div className="analysis-result card">
               <h3>💡 AI Analysis & Recommendations</h3>
               <p style={{ whiteSpace: 'pre-wrap' }}>{analysis}</p>
             </div>
           )}
 
           <h2>Ranked Stocks</h2>
-          <table>
+          <table className="table">
             <thead>
               <tr>
                 <th>Rank</th>
@@ -214,9 +218,9 @@ export default function App() {
                     <td>{idx + 1}</td>
                     <td><strong>{r.ticker}</strong></td>
                     <td>{detail.name || 'N/A'}</td>
-                    <td className={r.prob > 0.6 ? 'high-prob' : ''}>{(r.prob * 100).toFixed(2)}%</td>
+                    <td className={r.prob > 0.6 ? 'high-prob badge' : 'badge'}>{(r.prob * 100).toFixed(2)}%</td>
                     <td>{detail.price ? `$${detail.price.toFixed(2)}` : 'N/A'}</td>
-                    <td className={changeClass}>
+                    <td className={`${changeClass} badge`}>
                       {detail.change ? `${detail.change > 0 ? '+' : ''}${detail.change.toFixed(2)}%` : 'N/A'}
                     </td>
                     <td>{detail.volume ? detail.volume.toLocaleString() : 'N/A'}</td>
