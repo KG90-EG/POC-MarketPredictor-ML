@@ -32,7 +32,6 @@ function AppContent() {
   const [itemsPerPage] = useState(10)
   const [showHelp, setShowHelp] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState(null)
-  const [selectedCountry, setSelectedCountry] = useState('All')
   const [selectedView, setSelectedView] = useState('Global')
   const [showHealthPanel, setShowHealthPanel] = useState(false)
   const [healthStatus, setHealthStatus] = useState('loading')
@@ -311,7 +310,6 @@ function AppContent() {
               key={view}
               onClick={() => {
                 setSelectedView(view)
-                setSelectedCountry('All')
                 fetchRanking(view)
               }}
               style={{
@@ -368,33 +366,6 @@ function AppContent() {
           </div>
         ) : results.length > 0 ? (
           <div style={{marginBottom: '16px'}}>
-            {Object.keys(tickerDetails).length > 0 && (
-              <div style={{marginBottom: '12px'}}>
-                <label style={{marginRight: '8px', color: '#666', fontWeight: '500'}}>Filter by Country:</label>
-                <select 
-                  value={selectedCountry} 
-                  onChange={(e) => { setSelectedCountry(e.target.value); setCurrentPage(1); }}
-                  style={{padding: '6px 12px', borderRadius: '6px', border: '2px solid #667eea', background: 'white', cursor: 'pointer'}}
-                >
-                  <option value="All">All Countries</option>
-                  {(() => {
-                    const countries = [...new Set(Object.values(tickerDetails).map(d => d.country).filter(Boolean))]
-                    return countries.sort().map(country => (
-                      <option key={country} value={country}>
-                        {country === 'United States' ? '🇺🇸' : 
-                         country === 'China' ? '🇨🇳' : 
-                         country === 'United Kingdom' ? '🇬🇧' : 
-                         country === 'Germany' ? '🇩🇪' : 
-                         country === 'France' ? '🇫🇷' : 
-                         country === 'Japan' ? '🇯🇵' : 
-                         country === 'Switzerland' ? '🇨🇭' : 
-                         country === 'Canada' ? '🇨🇦' : '🌎'} {country}
-                      </option>
-                    ))
-                  })()}
-                </select>
-              </div>
-            )}
           </div>
         ) : (
           <p style={{color: '#666', fontSize: '0.9rem', margin: '0'}}>
@@ -528,10 +499,9 @@ function AppContent() {
             </thead>
             <tbody>
               {results
-                .filter(r => selectedCountry === 'All' || tickerDetails[r.ticker]?.country === selectedCountry)
                 .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                 .map((r, idx) => {
-                const rank = results.filter(item => selectedCountry === 'All' || tickerDetails[item.ticker]?.country === selectedCountry).indexOf(r) + 1
+                const rank = results.indexOf(r) + 1
                 const detail = tickerDetails[r.ticker] || {}
                 const changeClass = detail.change > 0 ? 'positive' : detail.change < 0 ? 'negative' : ''
                 return (
@@ -569,7 +539,7 @@ function AppContent() {
           </table>
 
           {/* Pagination Controls */}
-          {results.filter(r => selectedCountry === 'All' || tickerDetails[r.ticker]?.country === selectedCountry).length > itemsPerPage && (
+          {results.length > itemsPerPage && (
             <div className="pagination">
               <button 
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
@@ -584,15 +554,15 @@ function AppContent() {
                   onChange={(e) => setCurrentPage(Number(e.target.value))}
                   className="page-dropdown"
                 >
-                  {Array.from({ length: Math.ceil(results.filter(r => selectedCountry === 'All' || tickerDetails[r.ticker]?.country === selectedCountry).length / itemsPerPage) }, (_, i) => i + 1).map(pageNum => (
+                  {Array.from({ length: Math.ceil(results.length / itemsPerPage) }, (_, i) => i + 1).map(pageNum => (
                     <option key={pageNum} value={pageNum}>{pageNum}</option>
                   ))}
                 </select>
-                <span className="page-info">of {Math.ceil(results.filter(r => selectedCountry === 'All' || tickerDetails[r.ticker]?.country === selectedCountry).length / itemsPerPage)}</span>
+                <span className="page-info">of {Math.ceil(results.length / itemsPerPage)}</span>
               </div>
               <button 
-                onClick={() => setCurrentPage(p => Math.min(Math.ceil(results.filter(r => selectedCountry === 'All' || tickerDetails[r.ticker]?.country === selectedCountry).length / itemsPerPage), p + 1))} 
-                disabled={currentPage >= Math.ceil(results.filter(r => selectedCountry === 'All' || tickerDetails[r.ticker]?.country === selectedCountry).length / itemsPerPage)}
+                onClick={() => setCurrentPage(p => Math.min(Math.ceil(results.length / itemsPerPage), p + 1))} 
+                disabled={currentPage >= Math.ceil(results.length / itemsPerPage)}
               >
                 Next →
               </button>
