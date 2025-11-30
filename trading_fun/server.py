@@ -21,11 +21,9 @@ try:
 except Exception:
     OPENAI_CLIENT = None
 
-# Simple cache for LLM responses (TTL: 5 minutes) and cooldown to avoid rate limits
+# Simple cache for LLM responses (TTL: 5 minutes)
 ANALYSIS_CACHE = {}
 CACHE_TTL = 300  # seconds
-LAST_ANALYZE_TS = 0.0
-ANALYZE_COOLDOWN = int(os.environ.get('ANALYZE_COOLDOWN_SEC', '20'))  # seconds
 
 app = FastAPI()
 
@@ -71,7 +69,10 @@ def predict_raw(payload: FeaturePayload):
     if MODEL is None:
         raise HTTPException(status_code=503, detail='No model available')
     row = row_from_features(payload.features)
-    prob = MODEL.predict_proba(row.values)[0][1] if hasattr(MODEL, 'predict_proba') else float(MODEL.predict(row.values)[0])
+    if hasattr(MODEL, 'predict_proba'):
+        prob = MODEL.predict_proba(row.values)[0][1]
+    else:
+        prob = float(MODEL.predict(row.values)[0])
     return {'prob': float(prob)}
 
 
@@ -193,55 +194,41 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
     """Use LLM to analyze ranking and provide recommendations."""
     if not OPENAI_CLIENT:
         raise HTTPException(status_code=503, detail='LLM not configured (set OPENAI_API_KEY)')
-    
-    # Cooldown to reduce rate limits: if last call was too recent, serve cache or instruct user to wait
-    global LAST_ANALYZE_TS
-    now = time.time()
-    if now - LAST_ANALYZE_TS < ANALYZE_COOLDOWN:
-        # If we have a cached result for the same input, return it; else return 429 with remaining seconds
-        cache_key_try = hashlib.md5(
-            f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()
-        ).hexdigest()
-        if cache_key_try in ANALYSIS_CACHE:
-            cached_data, timestamp = ANALYSIS_CACHE[cache_key_try]
-            cached_data['cached'] = True
-            return cached_data
-        remaining = int(ANALYZE_COOLDOWN - (now - LAST_ANALYZE_TS))
-        raise HTTPException(status_code=429, detail=f"Please wait {remaining}s before requesting analysis again.")
-    
+
     # Create cache key from ranking + context
-    # Normalize ranking probs to reduce cache misses (round to 2 decimals)
-    norm_ranking = [(r['ticker'], round(float(r.get('prob', 0.0)), 2)) for r in request.ranking[:10]]
-    cache_key = hashlib.md5(f"{norm_ranking}{request.user_context}".encode()).hexdigest()
-    
+    cache_key = hashlib.md5(
+        f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()
+    ).hexdigest()
+
     # Check cache
     if cache_key in ANALYSIS_CACHE:
         cached_data, timestamp = ANALYSIS_CACHE[cache_key]
         if time.time() - timestamp < CACHE_TTL:
             cached_data['cached'] = True
             return cached_data
-    
+
     # Build prompt
-    ranking_text = '\n'.join([f"{i+1}. {r['ticker']}: {r['prob']*100:.2f}% probability" 
-                              for i, r in enumerate(request.ranking[:10])])
-    
-    prompt = f"""You are a financial analysis assistant. Analyze the following stock ranking based on ML model predictions:
+    ranking_text = '\n'.join(
+        [f"{i+1}. {r['ticker']}: {r['prob']*100:.2f}% probability"
+         for i, r in enumerate(request.ranking[:10])]
+    )
 
-{ranking_text}
+    user_ctx = request.user_context or 'No additional context provided'
+    prompt = (
+        f"You are a financial analysis assistant. Analyze the following "
+        f"stock ranking based on ML model predictions:\\n\\n{ranking_text}\\n\\n"
+        f"User context: {user_ctx}\\n\\n"
+        "Provide:\\n"
+        "1. A brief summary of the top opportunities\\n"
+        "2. Key considerations and risks\\n"
+        "3. Actionable recommendations\\n\\n"
+        "Keep your response concise (200-300 words)."
+    )
 
-User context: {request.user_context or 'No additional context provided'}
-
-Provide:
-1. A brief summary of the top opportunities
-2. Key considerations and risks
-3. Actionable recommendations
-
-Keep your response concise (200-300 words)."""
-    
     try:
         max_retries = 3
         retry_delay = 1
-        
+
         for attempt in range(max_retries):
             try:
                 response = OPENAI_CLIENT.chat.completions.create(
@@ -252,11 +239,10 @@ Keep your response concise (200-300 words)."""
                 )
                 analysis = response.choices[0].message.content
                 result = {'analysis': analysis, 'model': response.model, 'cached': False}
-                
+
                 # Cache the result
                 ANALYSIS_CACHE[cache_key] = (result, time.time())
-                LAST_ANALYZE_TS = time.time()
-                
+
                 return result
             except Exception as e:
                 error_str = str(e)
@@ -267,8 +253,9 @@ Keep your response concise (200-300 words)."""
                         continue
                     else:
                         raise HTTPException(
-                            status_code=429, 
-                            detail='OpenAI rate limit exceeded. Please wait a moment and try again.'
+                            status_code=429,
+                            detail='OpenAI rate limit exceeded. '
+                                   'Please wait a moment and try again.'
                         )
                 else:
                     raise

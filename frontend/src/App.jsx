@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import axios from 'axios'
 import './index.css'
 
@@ -21,7 +21,6 @@ export default function App() {
       const url = `http://localhost:8000/ranking?tickers=${encodeURIComponent(tickers)}`
       const resp = await axios.get(url)
       setResults(resp.data.ranking)
-      // Fetch details for each ticker
       const details = {}
       for (const r of resp.data.ranking) {
         try {
@@ -158,7 +157,9 @@ export default function App() {
               <tr>
                 <td><strong>{searchResult.ticker}</strong></td>
                 <td>{searchResult.name}</td>
-                <td>{searchResult.prob != null ? `${(searchResult.prob * 100).toFixed(2)}%` : 'N/A'}</td>
+                <td className={searchResult.prob > 0.6 ? 'high-prob badge' : 'badge'}>
+                  {searchResult.prob != null ? `${(searchResult.prob * 100).toFixed(2)}%` : 'N/A'}
+                </td>
                 <td>{searchResult.price != null ? `$${searchResult.price.toFixed(2)}` : 'N/A'}</td>
                 <td className={searchResult.change > 0 ? 'positive badge' : searchResult.change < 0 ? 'negative badge' : 'badge'}>
                   {searchResult.change != null ? `${searchResult.change > 0 ? '+' : ''}${searchResult.change.toFixed(2)}%` : 'N/A'}
@@ -231,6 +232,12 @@ export default function App() {
             </tbody>
           </table>
         </>
+      )}
+
+      {results.length === 0 && !loading && (
+        <div className="empty-state card">
+          <p>Enter stock tickers above and click "Get Ranking" to see AI-powered predictions</p>
+        </div>
       )}
     </div>
   )
