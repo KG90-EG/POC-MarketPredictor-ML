@@ -27,13 +27,14 @@ jobs:
         npm ci
         cd ..
         python -m pip install -r training/requirements.txt || true
+        python -m pip install flake8 black
     - name: Run tests
       run: |
         python -m pytest -q
-    - name: Lint
+    - name: Lint & Format Check
       run: |
-        python -m pip install flake8
-        flake8 . --max-line-length=120 || true
+        flake8 . --max-line-length=120
+        black --check .
     - name: Build Docker image
       run: |
         docker build -t trading_fun:latest .

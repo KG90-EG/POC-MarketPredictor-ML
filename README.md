@@ -30,3 +30,34 @@ Deployment tips:
 - Add GitHub secrets: `MLFLOW_TRACKING_URI`, `CR_PAT`, and `S3_BUCKET` if you wish to upload models.
 - Configure your production environment to use `models/prod_model.bin` as the production model.
 
+## Lint & Format
+Run lint and format checks locally (CI enforces these):
+```bash
+python -m pip install flake8 black
+flake8 . --max-line-length=120
+black --check .
+```
+Auto-format:
+```bash
+black .
+```
+
+## Static Frontend Serving
+After building the React app, the FastAPI server will serve it automatically if `frontend/dist` exists.
+Build frontend:
+```bash
+cd frontend
+npm ci
+npm run build
+```
+Run API (serves static files):
+```bash
+uvicorn trading_fun.server:app --reload
+```
+
+Access in browser at `http://127.0.0.1:8000` (index served) or development mode via Vite `npm run dev` at `http://localhost:5173`.
+
+## PR Template
+A reusable PR template lives at `.github/PULL_REQUEST_TEMPLATE.md`.
+
+

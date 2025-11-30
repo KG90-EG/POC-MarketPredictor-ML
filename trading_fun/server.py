@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any
@@ -23,6 +24,11 @@ MODEL_PATH = os.environ.get('PROD_MODEL_PATH', 'models/prod_model.bin')
 MODEL = None
 if os.path.exists(MODEL_PATH):
     MODEL = joblib.load(MODEL_PATH)
+
+# Optional: mount built frontend if available (expects Vite build in frontend/dist)
+FRONTEND_DIST = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist'))
+if os.path.isdir(FRONTEND_DIST):
+    app.mount('/', StaticFiles(directory=FRONTEND_DIST, html=True), name='frontend')
 
 
 class FeaturePayload(BaseModel):
