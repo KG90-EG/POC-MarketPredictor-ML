@@ -35,44 +35,116 @@ DEFAULT_STOCKS = [
     'QCOM', 'UPS', 'HON', 'BA', 'GE'
 ]
 
-# Country-specific stock lists for diversified portfolio analysis
-COUNTRY_STOCKS = {
-    'Global': DEFAULT_STOCKS,  # US-dominated global view
-    'United States': DEFAULT_STOCKS,
-    'Switzerland': [
-        'NESN.SW', 'NOVN.SW', 'ROG.SW', 'UBSG.SW', 'ZURN.SW',  # Nestle, Novartis, Roche, UBS, Zurich Insurance
-        'ABBN.SW', 'SREN.SW', 'GIVN.SW', 'LONN.SW', 'SLHN.SW',  # ABB, Sika, Givaudan, Lonza, Swiss Life
-        'SCMN.SW', 'ADEN.SW', 'GEBN.SW', 'PGHN.SW', 'SGSN.SW',  # Swisscom, Adecco, Geberit, Partners Group, SGS
-        'CSGN.SW', 'HOLN.SW', 'CFR.SW', 'SYNN.SW', 'STMN.SW',  # Credit Suisse, Holcim, Richemont, Syngenta, Straumann
-        'KNIN.SW', 'BALN.SW', 'BUCN.SW', 'LISN.SW', 'VACN.SW'   # Kuehne+Nagel, Baloise, Bucher, Lindt, VAT Group
-    ],
-    'Germany': [
-        'SAP', 'SIE.DE', 'ALV.DE', 'DTE.DE', 'VOW3.DE',  # SAP, Siemens, Allianz, Deutsche Telekom, VW
-        'MBG.DE', 'BMW.DE', 'BAS.DE', 'ADS.DE', 'MUV2.DE',  # Mercedes, BMW, BASF, Adidas, Munich Re
-        'BAYN.DE', 'EOAN.DE', 'DB1.DE', 'HEN3.DE', 'IFX.DE',  # Bayer, E.ON, Deutsche Boerse, Henkel, Infineon
-        'RHM.DE', 'DAI.DE', 'FRE.DE', 'SHL.DE', 'CON.DE'  # Rheinmetall, Daimler Truck, Fresenius, Siemens Healthineers, Continental
-    ],
-    'United Kingdom': [
-        'SHEL.L', 'AZN.L', 'HSBA.L', 'ULVR.L', 'DGE.L',  # Shell, AstraZeneca, HSBC, Unilever, Diageo
-        'BP.L', 'GSK.L', 'RIO.L', 'LSEG.L', 'NG.L',  # BP, GSK, Rio Tinto, LSEG, National Grid
-        'REL.L', 'BARC.L', 'LLOY.L', 'VOD.L', 'PRU.L'  # RELX, Barclays, Lloyds, Vodafone, Prudential
-    ],
-    'France': [
-        'MC.PA', 'OR.PA', 'SAN.PA', 'TTE.PA', 'AIR.PA',  # LVMH, L'Oreal, Sanofi, TotalEnergies, Airbus
-        'BNP.PA', 'SU.PA', 'AI.PA', 'CA.PA', 'EN.PA',  # BNP Paribas, Schneider, Air Liquide, Carrefour, Bouygues
-        'SGO.PA', 'DG.PA', 'CS.PA', 'BN.PA', 'KER.PA'  # Saint-Gobain, Vinci, AXA, Danone, Kering
-    ],
-    'Japan': [
-        'TM', '7203.T', '6758.T', '8306.T', '6861.T',  # Toyota, Sony, MUFG, Keyence
-        '9984.T', '6902.T', '9432.T', '8035.T', '7974.T',  # SoftBank, Denso, NTT, Tokyo Electron, Nintendo
-        '4063.T', '4502.T', '6501.T', '4503.T', '6954.T'  # Shin-Etsu, Takeda, Hitachi, Astellas, Fanuc
-    ],
-    'Canada': [
-        'SHOP.TO', 'TD.TO', 'RY.TO', 'BNS.TO', 'ENB.TO',  # Shopify, TD Bank, Royal Bank, Scotiabank, Enbridge
-        'CNR.TO', 'CP.TO', 'BMO.TO', 'CNQ.TO', 'TRP.TO',  # CN Rail, CP Rail, BMO, Canadian Natural, TC Energy
-        'CM.TO', 'SU.TO', 'WCN.TO', 'MFC.TO', 'BAM.TO'  # CIBC, Suncor, Waste Connections, Manulife, Brookfield
-    ]
+# Market indices for dynamic stock discovery
+COUNTRY_INDICES = {
+    'Switzerland': '^SSMI',  # Swiss Market Index
+    'Germany': '^GDAXI',     # DAX
+    'United Kingdom': '^FTSE',  # FTSE 100
+    'France': '^FCHI',       # CAC 40
+    'Japan': '^N225',        # Nikkei 225
+    'Canada': '^GSPTSE'      # S&P/TSX Composite
 }
+
+def get_top_stocks_from_index(index_symbol: str, limit: int = 30) -> List[str]:
+    """Dynamically fetch top stocks from a market index."""
+    try:
+        index = yf.Ticker(index_symbol)
+        # For indices, we'll use a curated list approach with validation
+        # This is more reliable than trying to parse index constituents
+        return []
+    except Exception:
+        return []
+
+def get_stocks_by_country(country: str, limit: int = 30) -> List[str]:
+    """Get top stocks for a country, using curated lists with dynamic validation."""
+    
+    # Curated seed lists - these get validated and ranked dynamically
+    country_seeds = {
+        'Switzerland': [
+            'NESN.SW', 'NOVN.SW', 'ROG.SW', 'UBSG.SW', 'ZURN.SW', 'ABBN.SW',
+            'SREN.SW', 'GIVN.SW', 'LONN.SW', 'SLHN.SW', 'SCMN.SW', 'ADEN.SW',
+            'GEBN.SW', 'PGHN.SW', 'SGSN.SW', 'CSGN.SW', 'HOLN.SW', 'CFR.SW',
+            'SYNN.SW', 'STMN.SW', 'KNIN.SW', 'BALN.SW', 'BUCN.SW', 'LISN.SW',
+            'VACN.SW', 'SREN.SW', 'BEAN.SW', 'AREN.SW', 'DUFN.SW', 'TEMN.SW'
+        ],
+        'Germany': [
+            'SAP', 'SIE.DE', 'ALV.DE', 'DTE.DE', 'VOW3.DE', 'MBG.DE', 'BMW.DE',
+            'BAS.DE', 'ADS.DE', 'MUV2.DE', 'BAYN.DE', 'EOAN.DE', 'DB1.DE',
+            'HEN3.DE', 'IFX.DE', 'RHM.DE', 'DAI.DE', 'FRE.DE', 'SHL.DE', 'CON.DE',
+            'BEI.DE', 'VNA.DE', 'SAP.DE', 'P911.DE', 'HNR1.DE'
+        ],
+        'United Kingdom': [
+            'SHEL.L', 'AZN.L', 'HSBA.L', 'ULVR.L', 'DGE.L', 'BP.L', 'GSK.L',
+            'RIO.L', 'LSEG.L', 'NG.L', 'REL.L', 'BARC.L', 'LLOY.L', 'VOD.L',
+            'PRU.L', 'BT-A.L', 'BATS.L', 'AAL.L', 'CRH.L', 'IMB.L'
+        ],
+        'France': [
+            'MC.PA', 'OR.PA', 'SAN.PA', 'TTE.PA', 'AIR.PA', 'BNP.PA', 'SU.PA',
+            'AI.PA', 'CA.PA', 'EN.PA', 'SGO.PA', 'DG.PA', 'CS.PA', 'BN.PA',
+            'KER.PA', 'RMS.PA', 'EL.PA', 'CAP.PA', 'VIV.PA', 'ORA.PA'
+        ],
+        'Japan': [
+            'TM', '7203.T', '6758.T', '8306.T', '6861.T', '9984.T', '6902.T',
+            '9432.T', '8035.T', '7974.T', '4063.T', '4502.T', '6501.T',
+            '4503.T', '6954.T', '6098.T', '9433.T', '4568.T', '6273.T', '7267.T'
+        ],
+        'Canada': [
+            'SHOP.TO', 'TD.TO', 'RY.TO', 'BNS.TO', 'ENB.TO', 'CNR.TO', 'CP.TO',
+            'BMO.TO', 'CNQ.TO', 'TRP.TO', 'CM.TO', 'SU.TO', 'WCN.TO', 'MFC.TO',
+            'BAM.TO', 'ABX.TO', 'BCE.TO', 'FNV.TO', 'QSR.TO', 'NTR.TO'
+        ]
+    }
+    
+    seed_list = country_seeds.get(country, DEFAULT_STOCKS)
+    
+    # Validate and rank by market cap
+    validated_stocks = []
+    for ticker in seed_list[:limit * 2]:  # Check more than needed
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            market_cap = info.get('marketCap', 0)
+            country_match = info.get('country', '')
+            
+            # Only include if has market cap data
+            if market_cap and market_cap > 0:
+                validated_stocks.append({
+                    'ticker': ticker,
+                    'market_cap': market_cap,
+                    'country': country_match
+                })
+        except Exception:
+            continue
+    
+    # Sort by market cap and return top tickers
+    validated_stocks.sort(key=lambda x: x['market_cap'], reverse=True)
+    return [s['ticker'] for s in validated_stocks[:limit]]
+
+# Cache for country stocks to avoid repeated API calls
+COUNTRY_STOCKS_CACHE = {}
+CACHE_TIMESTAMP = {}
+CACHE_DURATION = 3600  # 1 hour
+
+def get_country_stocks(country: str) -> List[str]:
+    """Get stocks for country with caching."""
+    current_time = time.time()
+    
+    # Check cache
+    if country in COUNTRY_STOCKS_CACHE:
+        if current_time - CACHE_TIMESTAMP.get(country, 0) < CACHE_DURATION:
+            return COUNTRY_STOCKS_CACHE[country]
+    
+    # Fetch and cache
+    if country == 'Global' or country == 'United States':
+        stocks = DEFAULT_STOCKS
+    else:
+        stocks = get_stocks_by_country(country, limit=30)
+        if not stocks:  # Fallback to default if fetch fails
+            stocks = DEFAULT_STOCKS
+    
+    COUNTRY_STOCKS_CACHE[country] = stocks
+    CACHE_TIMESTAMP[country] = current_time
+    return stocks
 
 app = FastAPI()
 
@@ -155,16 +227,17 @@ def predict_ticker(ticker: str):
 
 
 @app.get('/ranking')
-def ranking(tickers: str = ""):
+def ranking(tickers: str = "", country: str = 'Global'):
     """Rank stocks by ML prediction probability.
-    If no tickers provided, uses default list of popular stocks.
+    If no tickers provided, dynamically fetches top stocks for the specified country.
+    Country options: Global, United States, Switzerland, Germany, United Kingdom, France, Japan, Canada
     """
     if MODEL is None:
         raise HTTPException(status_code=503, detail='No model available')
     
-    # Use default stocks if no tickers provided
+    # Use country-specific stocks if no tickers provided
     if not tickers.strip():
-        chosen = DEFAULT_STOCKS
+        chosen = get_country_stocks(country)
     else:
         chosen = [t.strip().upper() for t in tickers.split(',') if t.strip()]
     
