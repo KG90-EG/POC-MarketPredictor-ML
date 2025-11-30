@@ -215,15 +215,22 @@ export default function App() {
                   style={{padding: '6px 12px', borderRadius: '6px', border: '2px solid #667eea', background: 'white', cursor: 'pointer'}}
                 >
                   <option value="All">🌐 Global Rankings</option>
-                  <option value="United States">🇺🇸 United States</option>
-                  <option value="China">🇨🇳 China</option>
-                  <option value="United Kingdom">🇬🇧 United Kingdom</option>
-                  <option value="Germany">🇩🇪 Germany</option>
-                  <option value="France">🇫🇷 France</option>
-                  <option value="Japan">🇯🇵 Japan</option>
-                  <option value="Switzerland">🇨🇭 Switzerland</option>
-                  <option value="Canada">🇨🇦 Canada</option>
-                  <option value="Other">🌎 Other</option>
+                  {/* Only show countries that have stocks in current dataset */}
+                  {(() => {
+                    const countries = [...new Set(Object.values(tickerDetails).map(d => d.country).filter(Boolean))]
+                    return countries.sort().map(country => (
+                      <option key={country} value={country}>
+                        {country === 'United States' ? '🇺🇸' : 
+                         country === 'China' ? '🇨🇳' : 
+                         country === 'United Kingdom' ? '🇬🇧' : 
+                         country === 'Germany' ? '🇩🇪' : 
+                         country === 'France' ? '🇫🇷' : 
+                         country === 'Japan' ? '🇯🇵' : 
+                         country === 'Switzerland' ? '🇨🇭' : 
+                         country === 'Canada' ? '🇨🇦' : '🌎'} {country}
+                      </option>
+                    ))
+                  })()}
                 </select>
               </div>
               <button onClick={fetchRanking} style={{padding: '8px 16px'}}>
