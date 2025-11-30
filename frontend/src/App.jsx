@@ -9,6 +9,9 @@ export default function App() {
   const [userContext, setUserContext] = useState('')
   const [loading, setLoading] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
+  const [searchTicker, setSearchTicker] = useState('')
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [searchResult, setSearchResult] = useState(null)
 
   async function fetchRanking() {
     setLoading(true)
@@ -59,6 +62,39 @@ export default function App() {
     }
   }
 
+  async function performSearch() {
+    const t = (searchTicker || '').trim().toUpperCase()
+    if (!t) {
+      alert('Please enter a ticker to search.')
+      return
+    }
+    setSearchLoading(true)
+    setSearchResult(null)
+    try {
+      const [infoResp, predResp] = await Promise.all([
+        axios.get(`http://localhost:8000/ticker_info/${t}`),
+        axios.get(`http://localhost:8000/predict_ticker/${t}`)
+      ])
+      const info = infoResp.data || {}
+      const prob = predResp.data?.prob || null
+      setSearchResult({
+        ticker: t,
+        name: info.name || 'N/A',
+        price: info.price || null,
+        change: info.change || null,
+        volume: info.volume || null,
+        market_cap: info.market_cap || null,
+        prob
+      })
+    } catch (e) {
+      console.error('Search error', e)
+      const detail = e.response?.data?.detail || 'Failed to fetch ticker info.'
+      alert(detail)
+    } finally {
+      setSearchLoading(false)
+    }
+  }
+
   function formatNumber(num) {
     if (!num) return 'N/A'
     if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`
@@ -84,6 +120,52 @@ export default function App() {
           {loading ? 'Loading...' : 'Get Ranking'}
         </button>
       </div>
+
+      <div className="search-controls" style={{ marginTop: 16 }}>
+        <label>
+          <strong>Search Ticker:</strong>
+          <input
+            value={searchTicker}
+            onChange={(e) => setSearchTicker(e.target.value)}
+            placeholder="e.g., AMD"
+          />
+        </label>
+        <button onClick={performSearch} disabled={searchLoading}>
+          {searchLoading ? 'Searching...' : 'Search'}
+        </button>
+      </div>
+
+      {searchResult && (
+        <div className="search-result" style={{ marginTop: 12 }}>
+          <h2>Search Result</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th>Name</th>
+                <th>Probability</th>
+                <th>Price</th>
+                <th>Change %</th>
+                <th>Volume</th>
+                <th>Market Cap</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>{searchResult.ticker}</strong></td>
+                <td>{searchResult.name}</td>
+                <td>{searchResult.prob != null ? `${(searchResult.prob * 100).toFixed(2)}%` : 'N/A'}</td>
+                <td>{searchResult.price != null ? `$${searchResult.price.toFixed(2)}` : 'N/A'}</td>
+                <td className={searchResult.change > 0 ? 'positive' : searchResult.change < 0 ? 'negative' : ''}>
+                  {searchResult.change != null ? `${searchResult.change > 0 ? '+' : ''}${searchResult.change.toFixed(2)}%` : 'N/A'}
+                </td>
+                <td>{searchResult.volume != null ? searchResult.volume.toLocaleString() : 'N/A'}</td>
+                <td>{formatNumber(searchResult.market_cap)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {results.length > 0 && (
         <>
