@@ -193,10 +193,10 @@ export default function App() {
         <p>AI-Powered Stock Ranking & Analysis</p>
       </div>
       
-      {/* View Selector */}
+      {/* Market View Selector */}
       <div className="card">
-        <div className="card-title">🌍 Market View</div>
-        <div style={{display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '8px'}}>
+        <div className="card-title">🌍 Market View - Select a Region</div>
+        <div style={{display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px'}}>
           {['Global', 'United States', 'Switzerland', 'Germany', 'United Kingdom', 'France', 'Japan', 'Canada'].map(view => (
             <button
               key={view}
@@ -213,7 +213,8 @@ export default function App() {
                 borderRadius: '8px',
                 cursor: 'pointer',
                 fontWeight: selectedView === view ? '600' : '400',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                boxShadow: selectedView === view ? '0 4px 12px rgba(102, 126, 234, 0.4)' : 'none'
               }}
             >
               {view === 'Global' ? '🌐' : 
@@ -227,35 +228,27 @@ export default function App() {
             </button>
           ))}
         </div>
-        <p style={{color: '#666', fontSize: '0.9rem', margin: '8px 0 0 0'}}>
-          Select a market view to analyze top performers from different regions for a diversified portfolio
-        </p>
-      </div>
-
-      {/* Ranking Section */}
-      <div className="card">
-        <div className="card-title">📊 Top Stock Rankings - {selectedView}</div>
+        
         {loading ? (
           <div style={{textAlign: 'center', padding: '40px'}}>
             <span className="spinner"></span>
             <p>Loading {selectedView} market rankings...</p>
           </div>
-        ) : (
-          <>
-            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px'}}>
-              <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-                <p style={{margin: 0, color: '#666'}}>
-                  {selectedCountry === 'All' 
-                    ? `Showing ${results.length} stocks from ${selectedView}` 
-                    : `Filtered by ${selectedCountry}: ${results.filter(r => tickerDetails[r.ticker]?.country === selectedCountry).length} stocks`}
-                </p>
+        ) : results.length > 0 ? (
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px'}}>
+            <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+              <p style={{margin: 0, color: '#666', fontWeight: '600'}}>
+                📊 {selectedCountry === 'All' 
+                  ? `${results.length} stocks ranked from ${selectedView}` 
+                  : `${results.filter(r => tickerDetails[r.ticker]?.country === selectedCountry).length} stocks filtered by ${selectedCountry}`}
+              </p>
+              {Object.keys(tickerDetails).length > 0 && (
                 <select 
                   value={selectedCountry} 
                   onChange={(e) => { setSelectedCountry(e.target.value); setCurrentPage(1); }}
                   style={{padding: '6px 12px', borderRadius: '6px', border: '2px solid #667eea', background: 'white', cursor: 'pointer'}}
                 >
-                  <option value="All">🌐 Global Rankings</option>
-                  {/* Only show countries that have stocks in current dataset */}
+                  <option value="All">All Countries</option>
                   {(() => {
                     const countries = [...new Set(Object.values(tickerDetails).map(d => d.country).filter(Boolean))]
                     return countries.sort().map(country => (
@@ -272,12 +265,16 @@ export default function App() {
                     ))
                   })()}
                 </select>
-              </div>
-              <button onClick={() => fetchRanking(selectedView)} style={{padding: '8px 16px'}}>
-                🔄 Refresh Rankings
-              </button>
+              )}
             </div>
-          </>
+            <button onClick={() => fetchRanking(selectedView)} style={{padding: '8px 16px'}}>
+              🔄 Refresh
+            </button>
+          </div>
+        ) : (
+          <p style={{color: '#666', fontSize: '0.9rem', margin: '0'}}>
+            Select a market view above to analyze top performers for a diversified portfolio
+          </p>
         )}
       </div>
 
