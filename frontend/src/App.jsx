@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import './styles.css'
 
@@ -13,6 +13,19 @@ export default function App() {
   const [searchTicker, setSearchTicker] = useState('')
   const [searchLoading, setSearchLoading] = useState(false)
   const [searchResult, setSearchResult] = useState(null)
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode')
+    return saved ? JSON.parse(saved) : false
+  })
+
+  useEffect(() => {
+    document.body.classList.toggle('dark-mode', darkMode)
+    localStorage.setItem('darkMode', JSON.stringify(darkMode))
+  }, [darkMode])
+
+  function toggleDarkMode() {
+    setDarkMode(!darkMode)
+  }
 
   async function fetchRanking() {
     setLoading(true)
@@ -120,6 +133,9 @@ export default function App() {
   return (
     <div className="container">
       <div className="header">
+        <button className="theme-toggle" onClick={toggleDarkMode} title="Toggle theme">
+          {darkMode ? '☀️' : '🌙'}
+        </button>
         <h1><span className="emoji">📈</span> Trading Fun</h1>
         <p>AI-Powered Stock Ranking & Analysis</p>
       </div>
@@ -154,10 +170,10 @@ export default function App() {
 
       {/* Search Section */}
       <div className="card">
-        <div className="card-title">🔍 Search Individual Ticker</div>
+        <div className="card-title">🔍 Search Individual Stock</div>
         <div className="search-controls">
           <label>
-            Ticker symbol
+            Stock symbol
             <input
               value={searchTicker}
               onChange={(e) => setSearchTicker(e.target.value)}
@@ -185,7 +201,7 @@ export default function App() {
           <table>
             <thead>
               <tr>
-                <th>Ticker</th>
+                <th>Stock</th>
                 <th>Name</th>
                 <th>Probability</th>
                 <th>Price</th>
@@ -257,7 +273,7 @@ export default function App() {
             <thead>
               <tr>
                 <th>Rank</th>
-                <th>Ticker</th>
+                <th>Stock</th>
                 <th>Name</th>
                 <th>Probability</th>
                 <th>Price</th>

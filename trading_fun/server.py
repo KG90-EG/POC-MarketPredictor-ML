@@ -191,7 +191,7 @@ class AnalysisRequest(BaseModel):
 
 @app.post('/analyze')
 def analyze(request: AnalysisRequest) -> Dict[str, Any]:
-    """Use LLM to analyze ranking and provide recommendations."""
+    """Use LLM to analyze ranking and provide buy/sell recommendations."""
     if not OPENAI_CLIENT:
         raise HTTPException(status_code=503, detail='LLM not configured (set OPENAI_API_KEY)')
 
@@ -207,22 +207,71 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
             cached_data['cached'] = True
             return cached_data
 
-    # Build prompt
-    ranking_text = '\n'.join(
-        [f"{i+1}. {r['ticker']}: {r['prob']*100:.2f}% probability"
-         for i, r in enumerate(request.ranking[:10])]
-    )
+    # Fetch detailed market data for top stocks
+    enriched_data = []
+    for rank, r in enumerate(request.ranking[:10], 1):
+        try:
+            stock = yf.Ticker(r['ticker'])
+            info = stock.info
+            
+            # Get recommendation signal
+            prob = r['prob']
+            if prob >= 0.65:
+                signal = 'STRONG BUY'
+            elif prob >= 0.55:
+                signal = 'BUY'
+            elif prob >= 0.45:
+                signal = 'HOLD'
+            elif prob >= 0.35:
+                signal = 'CONSIDER SELLING'
+            else:
+                signal = 'SELL'
+            
+            enriched_data.append({
+                'rank': rank,
+                'ticker': r['ticker'],
+                'name': info.get('longName', r['ticker']),
+                'prob': prob,
+                'signal': signal,
+                'price': info.get('currentPrice', info.get('regularMarketPrice')),
+                'change': info.get('regularMarketChangePercent'),
+                'volume': info.get('volume'),
+                'market_cap': info.get('marketCap'),
+                'pe_ratio': info.get('trailingPE'),
+                'fifty_two_week_high': info.get('fiftyTwoWeekHigh'),
+                'fifty_two_week_low': info.get('fiftyTwoWeekLow')
+            })
+        except Exception:
+            # Fallback to basic data if fetch fails
+            enriched_data.append({
+                'rank': rank,
+                'ticker': r['ticker'],
+                'prob': r['prob'],
+                'signal': 'BUY' if r['prob'] >= 0.55 else 'HOLD' if r['prob'] >= 0.45 else 'SELL'
+            })
 
-    user_ctx = request.user_context or 'No additional context provided'
+    # Build enhanced prompt with market data
+    ranking_text = '\n'.join([
+        f"{d['rank']}. {d['ticker']} - {d.get('name', 'N/A')}: "
+        f"Probability: {d['prob']*100:.1f}% | Signal: {d['signal']} | "
+        f"Price: ${d.get('price', 'N/A')} | Change: {d.get('change', 'N/A')}% | "
+        f"P/E: {d.get('pe_ratio', 'N/A')}"
+        for d in enriched_data
+    ])
+
+    user_ctx = request.user_context or 'General investment strategy'
     prompt = (
-        f"You are a financial analysis assistant. Analyze the following "
-        f"stock ranking based on ML model predictions:\\n\\n{ranking_text}\\n\\n"
-        f"User context: {user_ctx}\\n\\n"
-        "Provide:\\n"
-        "1. A brief summary of the top opportunities\\n"
-        "2. Key considerations and risks\\n"
-        "3. Actionable recommendations\\n\\n"
-        "Keep your response concise (200-300 words)."
+        "You are an expert trading analyst. Based on ML model predictions and market data, "
+        "provide actionable BUY/SELL recommendations.\n\n"
+        f"RANKED STOCKS (Top 10):\n{ranking_text}\n\n"
+        f"USER CONTEXT: {user_ctx}\n\n"
+        "Provide:\n"
+        "1. TOP 3 BUY RECOMMENDATIONS - Which stocks to buy NOW and why\n"
+        "2. SELL/AVOID - Any stocks to sell or avoid and why\n"
+        "3. KEY RISKS - Important market risks to watch\n"
+        "4. ACTION PLAN - Clear next steps for the investor\n\n"
+        "Be specific, direct, and actionable. Focus on concrete buy/sell decisions. "
+        "Use the Signal column (STRONG BUY, BUY, HOLD, SELL) as guidance. 250-350 words."
     )
 
     try:
