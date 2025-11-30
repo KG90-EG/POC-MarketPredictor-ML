@@ -35,3 +35,22 @@ def test_health_and_predict_raw(monkeypatch, tmp_path):
     r2 = client.post('/predict_raw', json=payload)
     assert r2.status_code == 200
     assert 'prob' in r2.json()
+
+
+def test_ranking_endpoint(monkeypatch, tmp_path):
+    class DummyModel:
+        def predict_proba(self, X):
+            # assign a probability that increases with ticker name length
+            return [[1.0 - 0.1, 0.1] for _ in X]
+
+    dummy = DummyModel()
+    models_dir = tmp_path / 'models'
+    models_dir.mkdir()
+    model_path = models_dir / 'prod_model.bin'
+    import joblib
+    joblib.dump(dummy, str(model_path))
+    monkeypatch.setenv('PROD_MODEL_PATH', str(model_path))
+    client = TestClient(server.app)
+    r = client.get('/ranking?tickers=AAPL,MSFT')
+    assert r.status_code == 200
+    assert 'ranking' in r.json()

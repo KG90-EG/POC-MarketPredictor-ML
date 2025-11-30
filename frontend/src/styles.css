@@ -1,0 +1,7 @@
+body { font-family: Arial, sans-serif; padding: 16px; }
+.container { max-width: 800px; margin: 0 auto; }
+.controls { display:flex; gap:8px; margin-bottom:8px; }
+input { flex:1; padding:8px; }
+button { padding:8px 12px; }
+table { width:100%; border-collapse: collapse; }
+td, th { padding:8px; border:1px solid #ddd; }
