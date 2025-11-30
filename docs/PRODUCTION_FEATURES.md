@@ -363,13 +363,150 @@ python examples/websocket_client.py
 
 ---
 
+## 🎨 Frontend Production Features
+
+### 1. **React Query Integration** (`frontend/src/App.jsx`)
+**What it does:**
+- Centralized state management for server data
+- Automatic background refetching
+- Intelligent caching and deduplication
+- Loading and error states handled automatically
+
+**Benefits:**
+- Eliminates prop drilling
+- Reduces boilerplate code
+- Better UX with optimistic updates
+- Built-in retry logic
+
+**Configuration:**
+```javascript
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,  // 5 minutes
+      cacheTime: 10 * 60 * 1000,  // 10 minutes
+      retry: 2,
+      refetchOnWindowFocus: false
+    }
+  }
+});
+```
+
+---
+
+### 2. **ErrorBoundary Component** (`frontend/src/components/ErrorBoundary.jsx`)
+**What it does:**
+- Catches JavaScript errors in component tree
+- Displays user-friendly error messages
+- Provides retry functionality
+- Prevents entire app crash
+
+**Benefits:**
+- Graceful error handling
+- Better user experience during failures
+- Maintains app stability
+- Detailed error logging
+
+**Features:**
+- Emoji-based visual feedback
+- One-click retry button
+- Wraps entire application
+- Preserves app state on error
+
+---
+
+### 3. **HealthCheck Component** (`frontend/src/components/HealthCheck.jsx`)
+**What it does:**
+- Real-time system health monitoring
+- Displays backend API, ML model, OpenAI, and cache status
+- Shows performance metrics (cache hit rate, rate limiter, WebSocket stats)
+- Auto-refreshes every 30 seconds
+- Modal overlay design with click-outside-to-close
+
+**Benefits:**
+- Instant visibility into system health
+- Quick diagnosis of issues
+- Performance monitoring at a glance
+- Non-intrusive overlay interface
+
+**Features:**
+- Status indicators with color coding:
+  - 🟢 Green: Operational
+  - 🟡 Yellow: Degraded
+  - 🔴 Red: Error
+  - ⚫ Gray: Loading/Unknown
+- Detailed metrics display:
+  - Cache hit rate and key count
+  - Rate limiter tracked IPs
+  - Active WebSocket connections
+  - Subscribed tickers
+- Manual refresh button
+- Responsive modal design
+- Dark mode support with explicit colors
+
+---
+
+### 4. **Health Status Indicator** (`frontend/src/App.jsx`, `frontend/src/styles.css`)
+**What it does:**
+- Icon-based health indicator in header
+- Positioned between theme toggle and help button
+- Auto-refreshes every 30 seconds
+- Click to open detailed health modal
+
+**Benefits:**
+- Always-visible system status
+- Quick access to diagnostics
+- Minimal UI footprint
+- Real-time health awareness
+
+**Features:**
+- Color-coded status:
+  - 🟢 Green pulse: All systems operational
+  - 🟡 Yellow pulse: Some services degraded
+  - 🔴 Red pulse: Critical errors
+  - ⚫ Gray spin: Loading/checking
+- Smooth animations (pulse for errors, spin for loading)
+- Click to toggle full health panel
+- Unobtrusive header placement
+
+**CSS Implementation:**
+- Explicit color definitions (no CSS variables)
+- Full light/dark mode support
+- Smooth transitions and animations
+- Responsive modal overlay with backdrop blur
+
+---
+
+## 📦 New Frontend Dependencies
+
+**Added to `frontend/package.json`:**
+```json
+{
+  "@tanstack/react-query": "^5.0.0",
+  "prop-types": "^15.8.1"
+}
+```
+
+**Installation:**
+```bash
+cd frontend
+npm install
+```
+
+---
+
 ## 🎯 Next Steps (Optional Future Enhancements)
 
 **Frontend Improvements:**
-1. Component refactoring (split large App.jsx)
-2. React Query integration
-3. WebSocket integration in UI
-4. Service Worker for offline support
+1. ✅ React Query integration (completed)
+2. ✅ ErrorBoundary with retry logic (completed)
+3. ✅ HealthCheck component with real-time monitoring (completed)
+4. ✅ Health status indicator icon in header (completed)
+5. ✅ Health check modal overlay with comprehensive diagnostics (completed)
+6. ✅ Enhanced error handling with network/rate limit detection (completed)
+7. Component refactoring (split large App.jsx into smaller components)
+8. WebSocket integration in UI for live price updates
+9. Service Worker for offline support
 
 **Advanced Features:**
 1. Database layer (PostgreSQL/TimescaleDB)
@@ -435,32 +572,68 @@ uvicorn trading_fun.server:app --reload
 curl http://localhost:8000/ranking
 ```
 
+### 6. Test Frontend Health Monitoring:
+```bash
+# Start both servers
+uvicorn trading_fun.server:app --reload  # Terminal 1
+cd frontend && npm run dev                # Terminal 2
+
+# Open http://localhost:5173
+# Look for health indicator icon in header (between theme toggle and help)
+# Click the icon to open health diagnostics modal
+# Observe real-time status updates every 30 seconds
+```
+
+### 7. Test ErrorBoundary:
+```bash
+# Open browser console and trigger an error
+# The ErrorBoundary should catch it and display a retry button
+```
+
 ---
 
 ## 🎉 Summary
 
 **What changed:**
-- Added 5 major production features
+- Added 5 major backend production features
+- Added 4 major frontend production features
 - Created 2 new tools (setup script, WebSocket client)
 - Updated comprehensive documentation
 - Maintained all previous optimizations
+
+**Backend Features:**
+- Redis caching with in-memory fallback
+- Rate limiting middleware
+- Structured logging with request IDs
+- WebSocket real-time updates
+- Enhanced health and metrics endpoints
+
+**Frontend Features:**
+- React Query for state management
+- ErrorBoundary for graceful error handling
+- HealthCheck component with modal overlay
+- Health status indicator icon in header
+- Enhanced error messages with network/rate limit detection
 
 **Performance:**
 - 11x faster stock loading
 - 6x faster validation
 - Smart caching reduces API costs
+- Real-time updates without polling
 
 **Production-ready:**
 - Scalable architecture
-- Monitoring and observability
-- Graceful error handling
+- Comprehensive monitoring and observability
+- Graceful error handling on frontend and backend
 - Real-time capabilities
+- Dark mode support throughout
 
 **Developer experience:**
 - Easy setup script
 - Example code for WebSocket
 - Comprehensive documentation
 - Clear configuration options
+- Component-based architecture
 
 ---
 

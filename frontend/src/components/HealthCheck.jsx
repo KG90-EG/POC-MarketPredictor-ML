@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { api } from '../api';
 import './HealthCheck.css';
 
-function HealthCheck() {
+function HealthCheck({ isOpen, onClose }) {
+  if (!isOpen) return null;
   const [health, setHealth] = useState(null);
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -51,10 +52,13 @@ function HealthCheck() {
 
   if (loading && !health) {
     return (
-      <div className="health-check">
-        <div className="health-loading">
-          <div className="spinner"></div>
-          <span>Checking system health...</span>
+      <div className="health-overlay" onClick={onClose}>
+        <div className="health-modal" onClick={(e) => e.stopPropagation()}>
+          <button className="health-close" onClick={onClose}>✕</button>
+          <div className="health-loading">
+            <div className="spinner"></div>
+            <span>Checking system health...</span>
+          </div>
         </div>
       </div>
     );
@@ -62,15 +66,18 @@ function HealthCheck() {
 
   if (error) {
     return (
-      <div className="health-check">
-        <div className="health-error">
-          <span className="error-icon">✗</span>
-          <div>
-            <strong>Health Check Failed</strong>
-            <p>{error}</p>
-            <button onClick={checkHealth} className="retry-btn">
-              Retry
-            </button>
+      <div className="health-overlay" onClick={onClose}>
+        <div className="health-modal" onClick={(e) => e.stopPropagation()}>
+          <button className="health-close" onClick={onClose}>✕</button>
+          <div className="health-error">
+            <span className="error-icon">✗</span>
+            <div>
+              <strong>Health Check Failed</strong>
+              <p>{error}</p>
+              <button onClick={checkHealth} className="retry-btn">
+                Retry
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -78,27 +85,20 @@ function HealthCheck() {
   }
 
   return (
-    <div className="health-check">
-      <div className="health-header">
-        <h3>
-          <span className="pulse-dot" style={{ backgroundColor: getStatusColor(health?.status) }}></span>
-          System Health
-        </h3>
-        <div className="health-actions">
-          {lastChecked && (
-            <span className="last-checked">
-              Updated: {lastChecked.toLocaleTimeString()}
-            </span>
-          )}
-          <button onClick={checkHealth} disabled={loading} className="refresh-btn-small">
-            {loading ? '⟳' : '↻'}
-          </button>
-        </div>
-      </div>
+    <div className="health-overlay" onClick={onClose}>
+      <div className="health-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="health-close" onClick={onClose}>✕</button>
+        <div className="health-check">
+          <div className="health-header">
+            <h3>
+              <span className="pulse-dot" style={{ backgroundColor: getStatusColor(health?.status) }}></span>
+              System Health
+            </h3>
+          </div>
 
-      <div className="health-grid">
-        {/* Backend Status */}
-        <div className="health-item">
+          <div className="health-grid">
+            {/* Backend Status */}
+            <div className="health-item">
           <div className="health-item-header">
             <span className="health-icon" style={{ color: getStatusColor(health?.status) }}>
               {getStatusIcon(health?.status)}
@@ -225,8 +225,21 @@ function HealthCheck() {
               </div>
             )}
           </div>
+          
+          {lastChecked && (
+            <div className="health-footer">
+              <span className="last-checked">
+                Last Updated: {lastChecked.toLocaleString()}
+              </span>
+              <button onClick={checkHealth} disabled={loading} className="refresh-btn-small">
+                {loading ? '⟳' : '↻'}
+              </button>
+            </div>
+          )}
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -34,6 +34,8 @@ function AppContent() {
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [selectedCountry, setSelectedCountry] = useState('All')
   const [selectedView, setSelectedView] = useState('Global')
+  const [showHealthPanel, setShowHealthPanel] = useState(false)
+  const [healthStatus, setHealthStatus] = useState('loading')
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode')
     return saved ? JSON.parse(saved) : false
@@ -47,6 +49,23 @@ function AppContent() {
   // Auto-load ranking on mount
   useEffect(() => {
     fetchRanking()
+  }, [])
+
+  // Check health status periodically
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const healthResp = await api.health()
+        const allHealthy = healthResp.api_healthy && healthResp.model_loaded && healthResp.openai_configured
+        setHealthStatus(allHealthy ? 'healthy' : 'warning')
+      } catch (error) {
+        setHealthStatus('error')
+      }
+    }
+    
+    checkHealth()
+    const interval = setInterval(checkHealth, 30000) // Check every 30s
+    return () => clearInterval(interval)
   }, [])
 
   function toggleDarkMode() {
@@ -258,6 +277,16 @@ function AppContent() {
         <button className="theme-toggle" onClick={toggleDarkMode} title="Toggle theme">
           {darkMode ? '☀️' : '🌙'}
         </button>
+        <button 
+          className={`health-indicator ${healthStatus}`} 
+          onClick={() => setShowHealthPanel(!showHealthPanel)} 
+          title="System Health"
+        >
+          {healthStatus === 'healthy' && '✅'}
+          {healthStatus === 'warning' && '⚠️'}
+          {healthStatus === 'error' && '❌'}
+          {healthStatus === 'loading' && '⏳'}
+        </button>
         <button className="help-button" onClick={() => setShowHelp(true)} title="Help & Guide">
           ❓
         </button>
@@ -265,8 +294,8 @@ function AppContent() {
         <p>AI-Powered Stock Ranking & Analysis</p>
       </div>
       
-      {/* Health Check Section */}
-      <HealthCheck />
+      {/* Health Check Section - Toggle visibility */}
+      <HealthCheck isOpen={showHealthPanel} onClose={() => setShowHealthPanel(false)} />
       
       {/* Market View Selector */}
       <div className="card">

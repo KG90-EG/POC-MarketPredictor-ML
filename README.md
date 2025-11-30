@@ -15,11 +15,14 @@ This repository contains a production-grade machine learning pipeline and modern
 - ⚛️ **Modern React UI** - Real-time updates with color-coded indicators and dark/light theme toggle
 - 🌓 **Dark Mode Support** - Persistent theme toggle with smooth transitions
 - 🔍 **Company Detail Sidebar** - Comprehensive stock information with country domicile
+- 💊 **Health Status Indicator** - Real-time system health monitoring with icon-based status display
+- 📋 **Health Check Modal** - Comprehensive system diagnostics overlay with performance metrics
 - 🚄 **High Performance** - Batch API endpoints, parallel processing, Redis caching
 - 🔒 **Rate Limiting** - Built-in API protection with configurable limits
 - 📊 **Structured Logging** - Request tracking, performance metrics, audit trails
 - 🔴 **WebSocket Support** - Real-time price updates via WebSocket connections
 - 📈 **Monitoring** - Health checks and metrics endpoints for observability
+- 🛡️ **Error Boundary** - Graceful error handling with retry logic and user-friendly messages
 - 🔄 **CI/CD Pipeline** - Automated testing, linting, Docker builds
 - 📈 **MLflow Integration** - Model tracking, versioning, and promotion
 - 🐳 **Docker Support** - Multi-stage builds with frontend and backend
@@ -65,6 +68,17 @@ cd frontend && npm run dev
 - **Buy/Sell Signals**: Each stock shows STRONG BUY, BUY, HOLD, or SELL recommendation
 - **Live Market Data**: Real-time prices, changes, volumes, market caps, and country domicile
 - **Pagination**: Clean 10-per-page display with easy navigation
+- **Health Status Icon**: Real-time system health indicator in header (green/yellow/red/gray)
+  - Auto-refreshes every 30 seconds
+  - Click to view comprehensive diagnostics
+  - Shows API, model, cache, and WebSocket status
+- **Health Check Modal**: Full system diagnostics overlay with:
+  - Backend API status and response time
+  - ML model loading status
+  - OpenAI API availability
+  - Cache backend type and Redis connection
+  - Performance metrics (cache hit rate, rate limiter stats, WebSocket connections)
+  - Auto-refresh capability
 - **AI Analysis**: Optional OpenAI-powered recommendations (requires API key)
 
 ## How to push to GitHub and PR (simple flow):

@@ -14,7 +14,7 @@ boto3==1.35.67
 openai==1.57.4
 python-dotenv==1.0.0
 redis==5.0.1  # For production caching (optional, fallback to in-memory)
-websockets==12.0  # For real-time WebSocket support
+websockets==15.0.1  # Required by yfinance for live data features
 
 # Optional: xgboost & pyarrow may require system deps (libomp, cmake) on macOS. If installing on macOS, run
 # `brew install libomp cmake` or use a container with wheels available. If you prefer to avoid compilation, comment out xgboost and pyarrow.
