@@ -12,6 +12,7 @@ export default function App() {
   const [searchTicker, setSearchTicker] = useState('')
   const [searchLoading, setSearchLoading] = useState(false)
   const [searchResult, setSearchResult] = useState(null)
+  const [searchResultDetails, setSearchResultDetails] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
   const [showHelp, setShowHelp] = useState(false)
@@ -94,9 +95,36 @@ export default function App() {
       return
     }
     setSearchLoading(true)
-    // Open sidebar directly instead of showing search result card
-    openCompanyDetail(t)
-    setSearchLoading(false)
+    setSearchResult(null)
+    setSearchResultDetails(null)
+    try {
+      const [infoResp, predResp] = await Promise.all([
+        axios.get(`http://localhost:8000/ticker_info/${t}`),
+        axios.get(`http://localhost:8000/predict_ticker/${t}`)
+      ])
+      const info = infoResp.data || {}
+      const prob = predResp.data?.prob || null
+      setSearchResult({
+        ticker: t,
+        prob
+      })
+      setSearchResultDetails({
+        [t]: {
+          name: info.name || 'N/A',
+          price: info.price || null,
+          change: info.change || null,
+          volume: info.volume || null,
+          market_cap: info.market_cap || null,
+          country: info.country || 'N/A'
+        }
+      })
+    } catch (e) {
+      console.error('Search error', e)
+      const detail = e.response?.data?.detail || 'Failed to fetch stock info.'
+      alert(detail)
+    } finally {
+      setSearchLoading(false)
+    }
   }
 
   function formatNumber(num) {
@@ -176,13 +204,17 @@ export default function App() {
           <>
             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px'}}>
               <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-                <p style={{margin: 0, color: '#666'}}>Showing {results.filter(r => selectedCountry === 'All' || tickerDetails[r.ticker]?.country === selectedCountry).length} stocks</p>
+                <p style={{margin: 0, color: '#666'}}>
+                  {selectedCountry === 'All' 
+                    ? `Showing ${results.length} stocks ranked globally` 
+                    : `Top performers in ${selectedCountry}: ${results.filter(r => tickerDetails[r.ticker]?.country === selectedCountry).length} stocks`}
+                </p>
                 <select 
                   value={selectedCountry} 
                   onChange={(e) => { setSelectedCountry(e.target.value); setCurrentPage(1); }}
                   style={{padding: '6px 12px', borderRadius: '6px', border: '2px solid #667eea', background: 'white', cursor: 'pointer'}}
                 >
-                  <option value="All">🌍 All Countries</option>
+                  <option value="All">🌐 Global Rankings</option>
                   <option value="United States">🇺🇸 United States</option>
                   <option value="China">🇨🇳 China</option>
                   <option value="United Kingdom">🇬🇧 United Kingdom</option>
@@ -227,6 +259,53 @@ export default function App() {
           </button>
         </div>
       </div>
+
+      {/* Search Result */}
+      {searchResult && searchResultDetails && (
+        <div className="search-result">
+          <h2>🎯 Search Result</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Stock</th>
+                <th>Name</th>
+                <th>Country</th>
+                <th>Probability</th>
+                <th>Price</th>
+                <th>Change %</th>
+                <th>Volume</th>
+                <th>Market Cap</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr 
+                onClick={() => openCompanyDetail(searchResult.ticker)}
+                style={{ cursor: 'pointer' }}
+                title="Click for detailed information"
+              >
+                <td><span className="ticker-symbol">{searchResult.ticker}</span></td>
+                <td>{searchResultDetails[searchResult.ticker]?.name || 'N/A'}</td>
+                <td>
+                  <span className="country-tag">{searchResultDetails[searchResult.ticker]?.country || 'N/A'}</span>
+                </td>
+                <td>
+                  <span className={searchResult.prob > 0.6 ? 'high-prob' : ''}>
+                    {searchResult.prob != null ? `${(searchResult.prob * 100).toFixed(2)}%` : 'N/A'}
+                  </span>
+                </td>
+                <td>{searchResultDetails[searchResult.ticker]?.price != null ? `$${searchResultDetails[searchResult.ticker].price.toFixed(2)}` : 'N/A'}</td>
+                <td>
+                  <span className={searchResultDetails[searchResult.ticker]?.change > 0 ? 'positive' : searchResultDetails[searchResult.ticker]?.change < 0 ? 'negative' : ''}>
+                    {searchResultDetails[searchResult.ticker]?.change != null ? `${searchResultDetails[searchResult.ticker].change > 0 ? '+' : ''}${searchResultDetails[searchResult.ticker].change.toFixed(2)}%` : 'N/A'}
+                  </span>
+                </td>
+                <td>{searchResultDetails[searchResult.ticker]?.volume != null ? searchResultDetails[searchResult.ticker].volume.toLocaleString() : 'N/A'}</td>
+                <td>{formatNumber(searchResultDetails[searchResult.ticker]?.market_cap)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Results Section */}
       {results.length > 0 && (
