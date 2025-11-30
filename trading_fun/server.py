@@ -1,10 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 import joblib
 import os
+import logging
 from dotenv import load_dotenv
 from .trading import features, compute_rsi, compute_macd, compute_bollinger, compute_momentum
 import pandas as pd
@@ -12,18 +13,30 @@ import yfinance as yf
 import hashlib
 import time
 
+# Import new modules
+from .cache import cache
+from .rate_limiter import RateLimiter
+from .logging_config import setup_logging, RequestLogger
+from .websocket import manager as ws_manager
+
 # Load environment variables from .env file
 load_dotenv()
+
+# Setup structured logging
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
+logger = setup_logging(LOG_LEVEL)
 
 try:
     from openai import OpenAI
     OPENAI_CLIENT = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
-except Exception:
+    logger.info("OpenAI client initialized successfully")
+except Exception as e:
     OPENAI_CLIENT = None
+    logger.warning(f"OpenAI client not available: {e}")
 
-# Simple cache for LLM responses (TTL: 5 minutes)
-ANALYSIS_CACHE = {}
-CACHE_TTL = 300  # seconds
+# Cache TTL constants
+CACHE_TTL = 300  # 5 minutes for AI analysis
+COUNTRY_CACHE_TTL = 3600  # 1 hour for country stocks
 
 # Default popular stocks for automatic ranking
 DEFAULT_STOCKS = [
@@ -130,30 +143,26 @@ def get_stocks_by_country(country: str, limit: int = 30) -> List[str]:
     validated_stocks.sort(key=lambda x: x['market_cap'], reverse=True)
     return [s['ticker'] for s in validated_stocks[:limit]]
 
-# Cache for country stocks to avoid repeated API calls
-COUNTRY_STOCKS_CACHE = {}
-CACHE_TIMESTAMP = {}
-CACHE_DURATION = 3600  # 1 hour
-
 def get_country_stocks(country: str) -> List[str]:
     """Get stocks for country with caching."""
-    current_time = time.time()
-    
-    # Check cache
-    if country in COUNTRY_STOCKS_CACHE:
-        if current_time - CACHE_TIMESTAMP.get(country, 0) < CACHE_DURATION:
-            return COUNTRY_STOCKS_CACHE[country]
+    # Try cache first
+    cache_key = f"country_stocks:{country}"
+    cached_stocks = cache.get(cache_key)
+    if cached_stocks:
+        logger.debug(f"Cache hit for country: {country}")
+        return cached_stocks
     
     # Fetch and cache
+    logger.info(f"Fetching stocks for country: {country}")
     if country == 'Global' or country == 'United States':
         stocks = DEFAULT_STOCKS
     else:
         stocks = get_stocks_by_country(country, limit=30)
         if not stocks:  # Fallback to default if fetch fails
+            logger.warning(f"No stocks found for {country}, using defaults")
             stocks = DEFAULT_STOCKS
     
-    COUNTRY_STOCKS_CACHE[country] = stocks
-    CACHE_TIMESTAMP[country] = current_time
+    cache.set(cache_key, stocks, ttl_seconds=COUNTRY_CACHE_TTL)
     return stocks
 
 app = FastAPI()
@@ -166,6 +175,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add rate limiting middleware
+REQUESTS_PER_MINUTE = int(os.getenv('RATE_LIMIT_RPM', '60'))
+rate_limiter = RateLimiter(app, requests_per_minute=REQUESTS_PER_MINUTE)
+app.add_middleware(RateLimiter, requests_per_minute=REQUESTS_PER_MINUTE)
+logger.info(f"Rate limiting enabled: {REQUESTS_PER_MINUTE} requests/minute")
 
 MODEL_PATH = os.environ.get('PROD_MODEL_PATH', 'models/prod_model.bin')
 MODEL = None
@@ -192,7 +207,43 @@ def row_from_features(feat_dict: Dict[str, Any]):
 
 @app.get('/health')
 def health():
-    return {'status': 'ok', 'model_loaded': MODEL is not None}
+    """Enhanced health check with dependency status."""
+    with RequestLogger("GET /health"):
+        health_status = {
+            'status': 'ok',
+            'model_loaded': MODEL is not None,
+            'model_path': LOADED_MODEL_PATH,
+            'openai_available': OPENAI_CLIENT is not None,
+            'cache_backend': 'redis' if cache.redis_client else 'in-memory',
+            'timestamp': time.time()
+        }
+        
+        # Check Redis connectivity
+        if cache.redis_client:
+            try:
+                cache.redis_client.ping()
+                health_status['redis_status'] = 'connected'
+            except Exception as e:
+                health_status['redis_status'] = 'disconnected'
+                health_status['redis_error'] = str(e)
+                logger.warning(f"Redis health check failed: {e}")
+        
+        return health_status
+
+
+@app.get('/metrics')
+def metrics():
+    """Get system metrics for monitoring."""
+    with RequestLogger("GET /metrics"):
+        return {
+            'cache_stats': cache.get_stats(),
+            'rate_limiter_stats': rate_limiter.get_stats(),
+            'websocket_stats': ws_manager.get_stats(),
+            'model_info': {
+                'path': LOADED_MODEL_PATH,
+                'loaded': MODEL is not None
+            }
+        }
 
 
 @app.post('/predict_raw')
@@ -390,11 +441,11 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
     ).hexdigest()
 
     # Check cache
-    if cache_key in ANALYSIS_CACHE:
-        cached_data, timestamp = ANALYSIS_CACHE[cache_key]
-        if time.time() - timestamp < CACHE_TTL:
-            cached_data['cached'] = True
-            return cached_data
+    cached_data = cache.get(f"analysis:{cache_key}")
+    if cached_data:
+        logger.debug(f"Cache hit for analysis: {cache_key[:8]}")
+        cached_data['cached'] = True
+        return cached_data
 
     # Fetch detailed market data for top stocks
     enriched_data = []
@@ -479,7 +530,7 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
                 result = {'analysis': analysis, 'model': response.model, 'cached': False}
 
                 # Cache the result
-                ANALYSIS_CACHE[cache_key] = (result, time.time())
+                cache.set(f"analysis:{cache_key}", result, ttl_seconds=CACHE_TTL)
 
                 return result
             except Exception as e:
@@ -501,3 +552,58 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'LLM analysis failed: {str(e)}')
+
+
+@app.websocket("/ws/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: str):
+    """
+    WebSocket endpoint for real-time market data updates.
+    
+    Usage:
+    - Connect: ws://localhost:8000/ws/{client_id}
+    - Subscribe: {"action": "subscribe", "ticker": "AAPL"}
+    - Unsubscribe: {"action": "unsubscribe", "ticker": "AAPL"}
+    - Receive updates: {"type": "price_update", "ticker": "AAPL", "price": 150.0, ...}
+    """
+    await ws_manager.connect(websocket, client_id)
+    
+    # Start update task if not running
+    ws_manager.start_updates()
+    
+    try:
+        while True:
+            # Receive messages from client
+            data = await websocket.receive_json()
+            action = data.get('action')
+            ticker = data.get('ticker', '').upper()
+            
+            if action == 'subscribe' and ticker:
+                ws_manager.subscribe(client_id, ticker)
+                await ws_manager.send_personal_message(
+                    {'type': 'subscribed', 'ticker': ticker},
+                    client_id
+                )
+            elif action == 'unsubscribe' and ticker:
+                ws_manager.unsubscribe(client_id, ticker)
+                await ws_manager.send_personal_message(
+                    {'type': 'unsubscribed', 'ticker': ticker},
+                    client_id
+                )
+            elif action == 'ping':
+                await ws_manager.send_personal_message(
+                    {'type': 'pong', 'timestamp': time.time()},
+                    client_id
+                )
+            else:
+                await ws_manager.send_personal_message(
+                    {'type': 'error', 'message': 'Invalid action or missing ticker'},
+                    client_id
+                )
+    
+    except WebSocketDisconnect:
+        ws_manager.disconnect(client_id)
+        logger.info(f"WebSocket client {client_id} disconnected")
+    except Exception as e:
+        logger.error(f"WebSocket error for client {client_id}: {e}")
+        ws_manager.disconnect(client_id)
+
