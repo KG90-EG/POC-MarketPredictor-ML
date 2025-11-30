@@ -144,6 +144,14 @@ The `/analyze` endpoint accepts ranking data and optional user context to provid
 - `/ticker_info/{ticker}` — Fetch current price, change %, volume, and market cap
 - `/analyze` — POST endpoint for LLM-powered stock analysis
 
+## Search Ticker (New)
+- Enter a ticker in the UI search input (e.g., `AMD`) and click Search.
+- Backend endpoints used:
+	- `GET /ticker_info/{ticker}`: live name, price, change %, volume, market cap
+	- `GET /predict_ticker/{ticker}`: model probability for the ticker
+- Results render in a panel showing all the above plus probability.
+- Use this to explore tickers outside the ranking list.
+
 ## Integration Tests
 Added `test_integration_server.py` to validate `/health` and `/models` using a temporary dummy model.
 Run all tests:
