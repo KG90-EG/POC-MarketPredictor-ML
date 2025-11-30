@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any
 import joblib
@@ -8,6 +9,15 @@ import pandas as pd
 import yfinance as yf
 
 app = FastAPI()
+
+# Enable CORS for local frontend development
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 MODEL_PATH = os.environ.get('PROD_MODEL_PATH', 'models/prod_model.bin')
 MODEL = None
@@ -63,3 +73,34 @@ def predict_ticker(ticker: str):
     row = df.iloc[-1:]
     prob = MODEL.predict_proba(row[features].values)[0][1]
     return {'prob': float(prob)}
+
+
+@app.get('/ranking')
+def ranking(tickers: str = "AAPL,MSFT,NVDA"):
+    if MODEL is None:
+        raise HTTPException(status_code=503, detail='No model available')
+    chosen = [t.strip().upper() for t in tickers.split(',') if t.strip()]
+    result = []
+    for t in chosen:
+        df = yf.download(t, period='300d', auto_adjust=False)['Adj Close']
+        df = pd.DataFrame({'Adj Close': df})
+        df['SMA50'] = df['Adj Close'].rolling(50).mean()
+        df['SMA200'] = df['Adj Close'].rolling(200).mean()
+        df['RSI'] = compute_rsi(df['Adj Close'])
+        df['Volatility'] = df['Adj Close'].pct_change().rolling(30).std()
+        df['Momentum_10d'] = compute_momentum(df['Adj Close'], 10)
+        macd, macd_sig = compute_macd(df['Adj Close'])
+        df['MACD'] = macd
+        df['MACD_signal'] = macd_sig
+        bb_up, bb_low = compute_bollinger(df['Adj Close'])
+        df['BB_upper'] = bb_up
+        df['BB_lower'] = bb_low
+        df = df.dropna()
+        if df.empty:
+            continue
+        row = df.iloc[-1:]
+        prob = MODEL.predict_proba(row[features].values)[0][1]
+        result.append({'ticker': t, 'prob': float(prob)})
+    # sort result
+    result.sort(key=lambda r: r['prob'], reverse=True)
+    return {'ranking': result}

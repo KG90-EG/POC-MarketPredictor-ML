@@ -107,6 +107,25 @@ Hier ein kurzes Vorgehen, um den Algo zu einem autonom lernenden System zu mache
    python training/online_trainer.py
    ```
 
+   ## Frontend (React)
+
+   There is a small React frontend using Vite under `frontend/`. It calls the FastAPI backend `/ranking` endpoint and displays ticker probabilities.
+
+   Run it locally:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+   Access the UI at http://localhost:5173 and hit "Get Ranking" to query the API.
+
+   If you want the React app built into a static bundle (for static hosting), build with:
+   ```bash
+   cd frontend
+   npm run build
+   ```
+
+
 
 ## Docker
 
