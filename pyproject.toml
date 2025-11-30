@@ -17,4 +17,5 @@ dependencies = [
     "joblib",
     "fastapi",
     "uvicorn",
+    "boto3",
 ]

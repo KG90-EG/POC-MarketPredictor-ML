@@ -3,6 +3,10 @@ import joblib
 import os
 from trading_fun.trading import build_dataset
 from sklearn.metrics import accuracy_score
+try:
+    import boto3  # optional
+except ImportError:  # pragma: no cover
+    boto3 = None
 
 def evaluate_model(model_path, tickers, period='1y'):
     model = joblib.load(model_path)
@@ -20,18 +24,29 @@ def promote_if_better(new_model, prod_model, tickers):
     if new_acc > prod_acc:
         print('Promoting model...')
         os.makedirs(os.path.dirname(prod_model) or '.', exist_ok=True)
-                import shutil
-                shutil.copyfile(new_model, prod_model)
-                # After promotion, save latest baseline data for drift detection
-                try:
-                    from trading_fun.trading import build_dataset
-                    import numpy as np
-                    tickers_list = tickers
-                    data = build_dataset(tickers_list, period='1y')
-                    arr = np.concatenate([d['Adj Close'].values for _, d in data.groupby('Ticker')])
-                    np.save('models/baseline.npy', arr)
-                except Exception:
-                    pass
+        import shutil
+        shutil.copyfile(new_model, prod_model)
+        # After promotion, save latest baseline data for drift detection
+        try:
+            import numpy as np
+            data = build_dataset(tickers, period='1y')
+            arr = np.concatenate([d['Adj Close'].values for _, d in data.groupby('Ticker')])
+            os.makedirs('models', exist_ok=True)
+            np.save('models/baseline.npy', arr)
+        except Exception:  # pragma: no cover
+            pass
+        # Optional S3 upload of promoted model
+        bucket = os.environ.get('S3_BUCKET')
+        if bucket and boto3:
+            try:
+                s3 = boto3.client('s3')
+                key = f"models/{os.path.basename(prod_model)}"
+                s3.upload_file(prod_model, bucket, key)
+                print(f'Uploaded promoted model to s3://{bucket}/{key}')
+            except Exception as e:  # pragma: no cover
+                print('S3 upload failed:', e)
+        elif bucket and not boto3:
+            print('boto3 not installed; skipping S3 upload')
         print('Promoted new model')
         return True, new_acc, prod_acc
     return False, new_acc, prod_acc

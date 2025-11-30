@@ -60,4 +60,42 @@ Access in browser at `http://127.0.0.1:8000` (index served) or development mode 
 ## PR Template
 A reusable PR template lives at `.github/PULL_REQUEST_TEMPLATE.md`.
 
+## Pre-Commit Hooks
+Install and activate:
+```bash
+pip install pre-commit
+pre-commit install
+```
+Run on all files:
+```bash
+pre-commit run --all-files
+```
+
+## Optional S3 Model Upload
+Set `S3_BUCKET` and install `boto3` (already in requirements). Training and promotion scripts will upload model artifacts:
+```bash
+export S3_BUCKET=my-bucket
+python training/trainer.py
+```
+
+## Multi-Stage Docker Build
+The `Dockerfile` builds the frontend then serves via uvicorn.
+Build locally:
+```bash
+docker build -t trading-fun:latest .
+docker run -p 8000:8000 trading-fun:latest
+```
+Visit `http://localhost:8000`.
+
+## Netlify Frontend Deployment
+Add secrets `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID` in GitHub, the workflow `.github/workflows/deploy-frontend.yml` deploys on pushes to `main`.
+
+## Environment Variables Summary
+- `MLFLOW_TRACKING_URI`: MLflow backend (file:./mlruns by default)
+- `PROD_MODEL_PATH`: Path to production model file (default `models/prod_model.bin`)
+- `S3_BUCKET`: Optional S3 bucket for artifact upload
+- `NETLIFY_AUTH_TOKEN` / `NETLIFY_SITE_ID`: Netlify deploy workflow secrets
+- `CR_PAT`: GitHub Container Registry auth token for Docker image push
+
+
 
