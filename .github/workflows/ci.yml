@@ -1,0 +1,52 @@
+name: Python CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    - cron: '0 3 * * *'  # nightly at 03:00 UTC
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -r 01_Trading_Fun/requirements.txt
+        python -m pip install -r training/requirements.txt || true
+    - name: Run tests
+      run: |
+        python -m pytest -q
+    - name: Lint
+      run: |
+        python -m pip install flake8
+        flake8 . --max-line-length=120 || true
+    - name: Build Docker image
+      run: |
+        docker build -t trading_fun:latest .
+    - name: Push Docker image (optional)
+      env:
+        CR_PAT: ${{ secrets.CR_PAT }}
+        GH_USER: ${{ github.actor }}
+      run: |
+        if [ -n "$CR_PAT" ]; then
+          echo $CR_PAT | docker login ghcr.io -u $GH_USER --password-stdin
+          docker tag trading_fun:latest ghcr.io/$GH_USER/trading_fun:latest
+          docker push ghcr.io/$GH_USER/trading_fun:latest
+        else
+          echo "No CR_PAT secret set; skipping push"
+        fi
+    - name: Run training script (quick)
+      env:
+        MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+      run: |
+        python training/trainer.py

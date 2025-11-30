@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trading_fun"
+version = "0.1.0"
+description = "Simple trading helper package"
+authors = [ {name = "Kevin"} ]
+dependencies = [
+    "yfinance",
+    "pandas",
+    "numpy",
+    "scikit-learn",
+    "xgboost",
+]
