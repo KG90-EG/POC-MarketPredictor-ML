@@ -6,6 +6,8 @@ This repository contains a small machine learning pipeline and a reference front
 ## Features
 - 🤖 **ML-Powered Stock Ranking** - RandomForest/XGBoost models predict stock performance
 - 📊 **Real-Time Market Data** - Live prices, volume, market cap via yfinance
+- 🚀 **Auto-Load Rankings** - Top 50 popular stocks ranked automatically on page load
+- 📄 **Pagination** - Clean 10-per-page display with easy navigation
 - 🎯 **Automated Buy/Sell Signals** - Python-based recommendation engine with 5-tier signal system
 - 🧠 **AI Analysis** - OpenAI-powered trading recommendations with retry logic and caching
 - ⚛️ **Modern React UI** - Real-time updates with color-coded indicators and dark/light theme toggle
@@ -22,7 +24,39 @@ Quick summary:
 - `01_Trading_Fun/` — Copied legacy content and tests
 - `archive/` — Files archived and not used by the main flow
 
-How to push to GitHub and PR (simple flow):
+## Quick Start
+
+### First Time Setup
+1. **Install dependencies:**
+```bash
+pip install -r requirements.txt
+cd frontend && npm install
+```
+
+2. **Start the backend:**
+```bash
+uvicorn trading_fun.server:app --reload
+```
+
+3. **Start the frontend (in new terminal):**
+```bash
+cd frontend && npm run dev
+```
+
+4. **Open browser:** Navigate to `http://localhost:5173`
+   - Rankings load automatically showing top 50 stocks
+   - Browse paginated results (10 per page)
+   - Click any stock for detailed analysis
+   - Use search to look up specific stocks
+
+### What You'll See
+- **Immediate Rankings**: Top 50 popular stocks ranked by AI prediction (no manual entry needed)
+- **Buy/Sell Signals**: Each stock shows STRONG BUY, BUY, HOLD, or SELL recommendation
+- **Live Market Data**: Real-time prices, changes, volumes, and market caps
+- **Pagination**: Clean 10-per-page display with easy navigation
+- **AI Analysis**: Optional OpenAI-powered recommendations (requires API key)
+
+## How to push to GitHub and PR (simple flow):
 1. Make sure you have a GitHub repo: `KG90-EG/Trading-Fun`.
 2. Commit & push on `dev` branch (we already created `dev` and pushed the changes):
 ```bash
@@ -175,7 +209,15 @@ export OPENAI_MODEL='gpt-4o'  # or gpt-3.5-turbo, etc.
 
 ### Core Endpoints
 - `GET /health` — Health check with model status
-- `GET /ranking?tickers=AAPL,MSFT,NVDA` — Rank stocks by ML probability
+- `GET /ranking?tickers=` — Rank stocks by ML probability
+  - **Default behavior**: When called without tickers parameter (or empty), automatically ranks 50 popular large-cap stocks including:
+    - Tech: AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA, AMD, NFLX, ADBE, CRM, ORCL, INTC, CSCO, IBM, QCOM
+    - Finance: JPM, BAC, WFC, V, MA
+    - Healthcare: JNJ, UNH, LLY, ABBV, MRK, TMO, ABT
+    - Consumer: WMT, PG, KO, PEP, COST, MCD, NKE, DIS, PM
+    - Industrial: HON, BA, GE, UPS, ACN
+    - And more (50 total)
+  - **Custom tickers**: Pass comma-separated list to rank specific stocks: `/ranking?tickers=AAPL,TSLA,NVDA`
 - `GET /predict_ticker/{ticker}` — Get ML probability for single stock
 - `GET /ticker_info/{ticker}` — Fetch live market data (price, volume, market cap, P/E ratio)
 - `POST /analyze` — AI-powered buy/sell recommendations with enriched market context
@@ -217,6 +259,11 @@ export OPENAI_MODEL='gpt-4o'  # or gpt-3.5-turbo, etc.
 - Supports Enter key for quick searches
 
 ## UI Features
+- **Auto-Load on Start**: Rankings automatically load when the app opens - no manual input required
+- **Smart Pagination**: Display 10 stocks per page with Previous/Next navigation
+  - Page counter shows current position ("Page 1 of 5")
+  - Maintains rank order across pages (rank 11-20 on page 2, etc.)
+- **One-Click Refresh**: Refresh button reloads latest market data and rankings
 - **Gradient Theme Design**: Purple gradient background with clean, modern card-based layout
 - **Dark/Light Mode Toggle**: Click the sun/moon icon in the header to switch themes
   - Theme preference is automatically saved to localStorage
