@@ -2,12 +2,17 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import joblib
 import os
 from .trading import features, compute_rsi, compute_macd, compute_bollinger, compute_momentum
 import pandas as pd
 import yfinance as yf
+try:
+    from openai import OpenAI
+    OPENAI_CLIENT = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+except Exception:
+    OPENAI_CLIENT = None
 
 app = FastAPI()
 
@@ -139,3 +144,62 @@ def list_models() -> Dict[str, Any]:
                 items.append({'file': fname, 'size_bytes': size})
     current = os.path.basename(LOADED_MODEL_PATH) if LOADED_MODEL_PATH else None
     return {'current_model': current, 'available_models': items}
+
+
+@app.get('/ticker_info/{ticker}')
+def ticker_info(ticker: str) -> Dict[str, Any]:
+    """Fetch current price, change, volume, and market cap for a ticker."""
+    try:
+        stock = yf.Ticker(ticker)
+        info = stock.info
+        return {
+            'ticker': ticker,
+            'price': info.get('currentPrice', info.get('regularMarketPrice')),
+            'change': info.get('regularMarketChangePercent'),
+            'volume': info.get('volume'),
+            'market_cap': info.get('marketCap'),
+            'name': info.get('longName', ticker)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f'Unable to fetch info: {str(e)}')
+
+
+class AnalysisRequest(BaseModel):
+    ranking: List[Dict[str, Any]]
+    user_context: Optional[str] = None
+
+
+@app.post('/analyze')
+def analyze(request: AnalysisRequest) -> Dict[str, Any]:
+    """Use LLM to analyze ranking and provide recommendations."""
+    if not OPENAI_CLIENT:
+        raise HTTPException(status_code=503, detail='LLM not configured (set OPENAI_API_KEY)')
+    
+    # Build prompt
+    ranking_text = '\n'.join([f"{i+1}. {r['ticker']}: {r['prob']*100:.2f}% probability" 
+                              for i, r in enumerate(request.ranking[:10])])
+    
+    prompt = f"""You are a financial analysis assistant. Analyze the following stock ranking based on ML model predictions:
+
+{ranking_text}
+
+User context: {request.user_context or 'No additional context provided'}
+
+Provide:
+1. A brief summary of the top opportunities
+2. Key considerations and risks
+3. Actionable recommendations
+
+Keep your response concise (200-300 words)."""
+    
+    try:
+        response = OPENAI_CLIENT.chat.completions.create(
+            model=os.environ.get('OPENAI_MODEL', 'gpt-4o-mini'),
+            messages=[{'role': 'user', 'content': prompt}],
+            max_tokens=500,
+            temperature=0.7
+        )
+        analysis = response.choices[0].message.content
+        return {'analysis': analysis, 'model': response.model}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'LLM analysis failed: {str(e)}')

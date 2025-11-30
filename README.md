@@ -96,9 +96,33 @@ Add secrets `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID` in GitHub, the workflow `
 - `S3_BUCKET`: Optional S3 bucket for artifact upload
 - `NETLIFY_AUTH_TOKEN` / `NETLIFY_SITE_ID`: Netlify deploy workflow secrets
 - `CR_PAT`: GitHub Container Registry auth token for Docker image push
+- `OPENAI_API_KEY`: OpenAI API key for LLM-powered analysis (required for `/analyze` endpoint)
+- `OPENAI_MODEL`: OpenAI model to use (default: `gpt-4o-mini`)
+
+## LLM-Powered Analysis
+The UI now includes AI-powered recommendations using OpenAI's API. To enable:
+
+1. Set your API key:
+```bash
+export OPENAI_API_KEY='your-api-key-here'
+```
+
+2. (Optional) Choose a different model:
+```bash
+export OPENAI_MODEL='gpt-4o'  # or gpt-3.5-turbo, etc.
+```
+
+3. Start the server and use the "Get AI Recommendations" button in the UI.
+
+The `/analyze` endpoint accepts ranking data and optional user context to provide:
+- Summary of top opportunities
+- Risk considerations
+- Actionable recommendations
 
 ## Additional Endpoints
-New endpoint `/models` lists available model artifact files and indicates the current production model.
+- `/models` — Lists available model artifact files and indicates the current production model
+- `/ticker_info/{ticker}` — Fetch current price, change %, volume, and market cap
+- `/analyze` — POST endpoint for LLM-powered stock analysis
 
 ## Integration Tests
 Added `test_integration_server.py` to validate `/health` and `/models` using a temporary dummy model.
