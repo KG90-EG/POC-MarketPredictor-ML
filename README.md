@@ -6,7 +6,8 @@ This repository contains a small machine learning pipeline and a reference front
 ## Features
 - 🤖 **ML-Powered Stock Ranking** - RandomForest/XGBoost models predict stock performance
 - 📊 **Real-Time Market Data** - Live prices, volume, market cap via yfinance
-- 🧠 **AI Analysis** - OpenAI-powered recommendations with retry logic and caching
+- 🎯 **Automated Buy/Sell Signals** - Python-based recommendation engine with 5-tier signal system
+- 🧠 **AI Analysis** - OpenAI-powered trading recommendations with retry logic and caching
 - ⚛️ **Modern React UI** - Real-time updates with color-coded indicators and dark/light theme toggle
 - 🌓 **Dark Mode Support** - Persistent theme toggle with smooth transitions
 - 🔄 **CI/CD Pipeline** - Automated testing, linting, Docker builds
@@ -109,8 +110,41 @@ Add secrets `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID` in GitHub, the workflow `
 - `OPENAI_API_KEY`: OpenAI API key for LLM-powered analysis (required for `/analyze` endpoint)
 - `OPENAI_MODEL`: OpenAI model to use (default: `gpt-4o-mini`)
 
-## LLM-Powered Analysis
-The UI now includes AI-powered recommendations using OpenAI's API. To enable:
+## Automated Trading Recommendations
+
+The system provides a **dual-layer recommendation engine** combining algorithmic signals with AI-powered analysis:
+
+### 1. Python-Based Buy/Sell Signals
+
+The backend automatically generates trading signals based on ML model probability scores:
+
+- **STRONG BUY** (≥65%): High confidence buy opportunity
+- **BUY** (≥55%): Good buying opportunity
+- **HOLD** (45-54%): Maintain current position
+- **CONSIDER SELLING** (35-44%): Weak position, consider exit
+- **SELL** (<35%): Exit recommended
+
+These signals are computed in Python and provide immediate, algorithmic guidance even without LLM analysis.
+
+### 2. AI-Powered Analysis
+
+The `/analyze` endpoint enriches signals with comprehensive market context:
+
+**Market Data Included:**
+- Stock name and current price
+- Price change percentage
+- Trading volume and market capitalization
+- P/E ratio and valuation metrics
+- 52-week high/low ranges
+- Python-generated buy/sell signals
+
+**AI Recommendations Include:**
+1. **TOP 3 BUY RECOMMENDATIONS** - Specific stocks to buy NOW with reasoning
+2. **SELL/AVOID** - Stocks to exit or avoid with justification
+3. **KEY RISKS** - Important market risks to monitor
+4. **ACTION PLAN** - Clear, concrete next steps for investors
+
+### Setup Instructions
 
 1. Set your API key:
 ```bash
@@ -129,29 +163,58 @@ export OPENAI_MODEL='gpt-4o'  # or gpt-3.5-turbo, etc.
 
 3. Start the server and use the "Get AI Recommendations" button in the UI.
 
-The `/analyze` endpoint accepts ranking data and optional user context to provide:
-- Summary of top opportunities
-- Risk considerations
-- Actionable recommendations
-
-**Features:**
+**Enhanced Features:**
 - **Automatic retry logic**: Retries up to 3 times with exponential backoff on failures
 - **Rate limit handling**: Returns clear error messages for OpenAI 429 errors
 - **5-minute caching**: Identical requests within 5 minutes use cached results (reduces API calls)
+- **Rich market context**: Includes prices, volumes, P/E ratios, and technical signals
+- **Actionable output**: Specific buy/sell recommendations, not just analysis
 - **User context**: Add custom context like "focus on tech stocks" or "conservative portfolio"
 
-## Additional Endpoints
-- `/models` — Lists available model artifact files and indicates the current production model
-- `/ticker_info/{ticker}` — Fetch current price, change %, volume, and market cap
-- `/analyze` — POST endpoint for LLM-powered stock analysis
+## API Endpoints
 
-## Search Ticker (New)
-- Enter a ticker in the UI search input (e.g., `AMD`) and click Search.
+### Core Endpoints
+- `GET /health` — Health check with model status
+- `GET /ranking?tickers=AAPL,MSFT,NVDA` — Rank stocks by ML probability
+- `GET /predict_ticker/{ticker}` — Get ML probability for single stock
+- `GET /ticker_info/{ticker}` — Fetch live market data (price, volume, market cap, P/E ratio)
+- `POST /analyze` — AI-powered buy/sell recommendations with enriched market context
+- `GET /models` — Lists available model artifact files and current production model
+
+### `/analyze` Endpoint Details
+
+**Request Body:**
+```json
+{
+  "ranking": [{"ticker": "AAPL", "prob": 0.65}, ...],
+  "user_context": "Focus on growth stocks for long-term holding"
+}
+```
+
+**Response Includes:**
+- Python-generated buy/sell signals (STRONG BUY, BUY, HOLD, SELL)
+- Rich market data (prices, P/E ratios, 52-week ranges, volumes)
+- AI analysis with specific buy/sell recommendations
+- Risk assessment and action plan
+- Caching indicator (shows if result is from cache)
+
+**Example Response:**
+```json
+{
+  "analysis": "TOP 3 BUY RECOMMENDATIONS:\n1. AAPL - Strong buy at $278...",
+  "model": "gpt-4o-mini",
+  "cached": false
+}
+```
+
+## Search Individual Stocks
+- Enter a stock symbol in the UI search input (e.g., `AMD`, `META`, `NFLX`) and click Search
 - Backend endpoints used:
-	- `GET /ticker_info/{ticker}`: live name, price, change %, volume, market cap
-	- `GET /predict_ticker/{ticker}`: model probability for the ticker
-- Results render in a panel showing all the above plus probability.
-- Use this to explore tickers outside the ranking list.
+  - `GET /ticker_info/{ticker}`: live name, price, change %, volume, market cap
+  - `GET /predict_ticker/{ticker}`: ML probability and recommendation signal
+- Results render in a panel showing all market data plus probability score
+- Use this to explore stocks outside the main ranking list
+- Supports Enter key for quick searches
 
 ## UI Features
 - **Gradient Theme Design**: Purple gradient background with clean, modern card-based layout
