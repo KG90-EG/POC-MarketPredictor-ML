@@ -187,7 +187,7 @@ def list_models() -> Dict[str, Any]:
 
 @app.get('/ticker_info/{ticker}')
 def ticker_info(ticker: str) -> Dict[str, Any]:
-    """Fetch current price, change, volume, and market cap for a ticker."""
+    """Fetch comprehensive market data for a ticker including price, volume, market cap, P/E ratio, and 52-week range."""
     try:
         stock = yf.Ticker(ticker)
         info = stock.info
@@ -197,7 +197,10 @@ def ticker_info(ticker: str) -> Dict[str, Any]:
             'change': info.get('regularMarketChangePercent'),
             'volume': info.get('volume'),
             'market_cap': info.get('marketCap'),
-            'name': info.get('longName', ticker)
+            'name': info.get('longName', ticker),
+            'pe_ratio': info.get('trailingPE'),
+            'fifty_two_week_high': info.get('fiftyTwoWeekHigh'),
+            'fifty_two_week_low': info.get('fiftyTwoWeekLow')
         }
     except Exception as e:
         raise HTTPException(status_code=404, detail=f'Unable to fetch info: {str(e)}')
