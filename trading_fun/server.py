@@ -69,7 +69,10 @@ def predict_raw(payload: FeaturePayload):
     if MODEL is None:
         raise HTTPException(status_code=503, detail='No model available')
     row = row_from_features(payload.features)
-    prob = MODEL.predict_proba(row.values)[0][1] if hasattr(MODEL, 'predict_proba') else float(MODEL.predict(row.values)[0])
+    if hasattr(MODEL, 'predict_proba'):
+        prob = MODEL.predict_proba(row.values)[0][1]
+    else:
+        prob = float(MODEL.predict(row.values)[0])
     return {'prob': float(prob)}
 
 
@@ -191,40 +194,41 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
     """Use LLM to analyze ranking and provide recommendations."""
     if not OPENAI_CLIENT:
         raise HTTPException(status_code=503, detail='LLM not configured (set OPENAI_API_KEY)')
-    
+
     # Create cache key from ranking + context
     cache_key = hashlib.md5(
         f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()
     ).hexdigest()
-    
+
     # Check cache
     if cache_key in ANALYSIS_CACHE:
         cached_data, timestamp = ANALYSIS_CACHE[cache_key]
         if time.time() - timestamp < CACHE_TTL:
             cached_data['cached'] = True
             return cached_data
-    
+
     # Build prompt
-    ranking_text = '\n'.join([f"{i+1}. {r['ticker']}: {r['prob']*100:.2f}% probability" 
-                              for i, r in enumerate(request.ranking[:10])])
-    
-    prompt = f"""You are a financial analysis assistant. Analyze the following stock ranking based on ML model predictions:
+    ranking_text = '\n'.join(
+        [f"{i+1}. {r['ticker']}: {r['prob']*100:.2f}% probability"
+         for i, r in enumerate(request.ranking[:10])]
+    )
 
-{ranking_text}
+    user_ctx = request.user_context or 'No additional context provided'
+    prompt = (
+        f"You are a financial analysis assistant. Analyze the following "
+        f"stock ranking based on ML model predictions:\\n\\n{ranking_text}\\n\\n"
+        f"User context: {user_ctx}\\n\\n"
+        "Provide:\\n"
+        "1. A brief summary of the top opportunities\\n"
+        "2. Key considerations and risks\\n"
+        "3. Actionable recommendations\\n\\n"
+        "Keep your response concise (200-300 words)."
+    )
 
-User context: {request.user_context or 'No additional context provided'}
-
-Provide:
-1. A brief summary of the top opportunities
-2. Key considerations and risks
-3. Actionable recommendations
-
-Keep your response concise (200-300 words)."""
-    
     try:
         max_retries = 3
         retry_delay = 1
-        
+
         for attempt in range(max_retries):
             try:
                 response = OPENAI_CLIENT.chat.completions.create(
@@ -235,10 +239,10 @@ Keep your response concise (200-300 words)."""
                 )
                 analysis = response.choices[0].message.content
                 result = {'analysis': analysis, 'model': response.model, 'cached': False}
-                
+
                 # Cache the result
                 ANALYSIS_CACHE[cache_key] = (result, time.time())
-                
+
                 return result
             except Exception as e:
                 error_str = str(e)
@@ -249,8 +253,9 @@ Keep your response concise (200-300 words)."""
                         continue
                     else:
                         raise HTTPException(
-                            status_code=429, 
-                            detail='OpenAI rate limit exceeded. Please wait a moment and try again.'
+                            status_code=429,
+                            detail='OpenAI rate limit exceeded. '
+                                   'Please wait a moment and try again.'
                         )
                 else:
                     raise
