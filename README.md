@@ -1,2 +1,3 @@
 # Trading-Fun
-Support Trading Decision
+Support Trading Decision, building a POC. Ideal, with Backend and Frontend
+
