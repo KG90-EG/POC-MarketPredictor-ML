@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Dict, Any
+from typing import Dict, Any, List
 import joblib
 import os
 from .trading import features, compute_rsi, compute_macd, compute_bollinger, compute_momentum
@@ -22,8 +22,10 @@ app.add_middleware(
 
 MODEL_PATH = os.environ.get('PROD_MODEL_PATH', 'models/prod_model.bin')
 MODEL = None
+LOADED_MODEL_PATH = None
 if os.path.exists(MODEL_PATH):
     MODEL = joblib.load(MODEL_PATH)
+    LOADED_MODEL_PATH = MODEL_PATH
 
 # Optional: mount built frontend if available (expects Vite build in frontend/dist)
 FRONTEND_DIST = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist'))
@@ -88,8 +90,15 @@ def ranking(tickers: str = "AAPL,MSFT,NVDA"):
     chosen = [t.strip().upper() for t in tickers.split(',') if t.strip()]
     result = []
     for t in chosen:
-        df = yf.download(t, period='300d', auto_adjust=False)['Adj Close']
-        df = pd.DataFrame({'Adj Close': df})
+        try:
+            raw = yf.download(t, period='300d', auto_adjust=False)
+        except Exception:
+            continue
+        if 'Adj Close' not in raw.columns:
+            continue
+        df = raw['Adj Close']
+        if isinstance(df, pd.Series):
+            df = df.to_frame(name='Adj Close')
         df['SMA50'] = df['Adj Close'].rolling(50).mean()
         df['SMA200'] = df['Adj Close'].rolling(200).mean()
         df['RSI'] = compute_rsi(df['Adj Close'])
@@ -110,3 +119,23 @@ def ranking(tickers: str = "AAPL,MSFT,NVDA"):
     # sort result
     result.sort(key=lambda r: r['prob'], reverse=True)
     return {'ranking': result}
+
+
+@app.get('/models')
+def list_models() -> Dict[str, Any]:
+    """List available model artifacts in the models directory.
+    Returns current loaded model filename and list of other model files with sizes.
+    """
+    models_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'models'))
+    items: List[Dict[str, Any]] = []
+    if os.path.isdir(models_dir):
+        for fname in sorted(os.listdir(models_dir)):
+            fpath = os.path.join(models_dir, fname)
+            if os.path.isfile(fpath) and fname.endswith('.bin'):
+                try:
+                    size = os.path.getsize(fpath)
+                except OSError:
+                    size = None
+                items.append({'file': fname, 'size_bytes': size})
+    current = os.path.basename(LOADED_MODEL_PATH) if LOADED_MODEL_PATH else None
+    return {'current_model': current, 'available_models': items}

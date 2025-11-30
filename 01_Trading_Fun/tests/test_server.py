@@ -13,9 +13,8 @@ import pandas as pd
 
 class DummyModel:
     def predict_proba(self, X):
-        # return a constant probability based on sum of inputs
-        prob = np.full((len(X), 2), 0.5)
-        return prob
+        # Ignore feature count; return fixed probability
+        return [[0.4, 0.6] for _ in X]
 
 
 def test_health_and_predict_raw(monkeypatch, tmp_path):
@@ -26,6 +25,8 @@ def test_health_and_predict_raw(monkeypatch, tmp_path):
     model_path = models_dir / 'prod_model.bin'
     joblib.dump(dummy, str(model_path))
     monkeypatch.setenv('PROD_MODEL_PATH', str(model_path))
+    server.MODEL = dummy
+    server.LOADED_MODEL_PATH = str(model_path)
     # reload server module to pick up monkeypatched environment
     client = TestClient(server.app)
     r = client.get('/health')
@@ -38,11 +39,6 @@ def test_health_and_predict_raw(monkeypatch, tmp_path):
 
 
 def test_ranking_endpoint(monkeypatch, tmp_path):
-    class DummyModel:
-        def predict_proba(self, X):
-            # assign a probability that increases with ticker name length
-            return [[1.0 - 0.1, 0.1] for _ in X]
-
     dummy = DummyModel()
     models_dir = tmp_path / 'models'
     models_dir.mkdir()
@@ -50,6 +46,19 @@ def test_ranking_endpoint(monkeypatch, tmp_path):
     import joblib
     joblib.dump(dummy, str(model_path))
     monkeypatch.setenv('PROD_MODEL_PATH', str(model_path))
+    server.MODEL = dummy
+    server.LOADED_MODEL_PATH = str(model_path)
+    # Monkeypatch yfinance.download to deterministic small frame
+    import yfinance as yf
+
+    def fake_download(ticker, period='300d', auto_adjust=False):
+        import pandas as pd
+        import numpy as np
+        idx = pd.date_range(end=pd.Timestamp.today(), periods=10)
+        prices = np.linspace(100, 110, 10)
+        return pd.DataFrame({'Adj Close': prices}, index=idx)
+
+    monkeypatch.setattr(yf, 'download', fake_download)
     client = TestClient(server.app)
     r = client.get('/ranking?tickers=AAPL,MSFT')
     assert r.status_code == 200

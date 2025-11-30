@@ -97,5 +97,24 @@ Add secrets `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID` in GitHub, the workflow `
 - `NETLIFY_AUTH_TOKEN` / `NETLIFY_SITE_ID`: Netlify deploy workflow secrets
 - `CR_PAT`: GitHub Container Registry auth token for Docker image push
 
+## Additional Endpoints
+New endpoint `/models` lists available model artifact files and indicates the current production model.
+
+## Integration Tests
+Added `test_integration_server.py` to validate `/health` and `/models` using a temporary dummy model.
+Run all tests:
+```bash
+python -m pytest -q
+```
+
+## Gunicorn (Production Option)
+Use process management for higher concurrency:
+```bash
+gunicorn -c gunicorn_conf.py trading_fun.server:app
+```
+
+## Documentation Site
+Markdown docs in `docs/` deployed to GitHub Pages via `.github/workflows/pages.yml`. After enabling Pages for the repository (Settings -> Pages) the workflow publishes updates on pushes to `main`.
+
 
 
