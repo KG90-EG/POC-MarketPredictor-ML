@@ -32,7 +32,7 @@ function AppContent() {
   const [itemsPerPage] = useState(10)
   const [showHelp, setShowHelp] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState(null)
-  const [selectedView, setSelectedView] = useState('Global')
+  const [selectedViews, setSelectedViews] = useState(['Global'])
   const [showHealthPanel, setShowHealthPanel] = useState(false)
   const [healthStatus, setHealthStatus] = useState('loading')
   const [darkMode, setDarkMode] = useState(() => {
@@ -71,20 +71,29 @@ function AppContent() {
     setDarkMode(!darkMode)
   }
 
-  async function fetchRanking(view = selectedView) {
+  async function fetchRanking(views = selectedViews) {
     setLoading(true)
     setAnalysis(null)
     setCurrentPage(1)
     setLoadingProgress({ current: 0, total: 0 })
     
     try {
-      // Fetch ranking
-      const resp = await api.getRanking(view)
-      const ranking = resp.data.ranking
-      setResults(ranking)
+      // Fetch ranking for each selected view and merge
+      let allRankings = []
+      for (const view of views) {
+        const resp = await api.getRanking(view)
+        allRankings = [...allRankings, ...resp.data.ranking]
+      }
+      
+      // Remove duplicates and re-sort by probability
+      const uniqueRankings = Array.from(
+        new Map(allRankings.map(item => [item.ticker, item])).values()
+      ).sort((a, b) => b.prob - a.prob)
+      
+      setResults(uniqueRankings)
       
       // Batch fetch ticker details (much faster than sequential)
-      const tickers = ranking.map(r => r.ticker)
+      const tickers = uniqueRankings.map(r => r.ticker)
       setLoadingProgress({ current: 0, total: tickers.length })
       
       try {
@@ -109,7 +118,7 @@ function AppContent() {
           alert('⚠️ Network error: Please check your connection and try again.')
         }
         // Fallback to sequential if batch fails
-        await fetchDetailsSequential(ranking)
+        await fetchDetailsSequential(uniqueRankings)
       }
     } catch (e) {
       const error = handleApiError(e, 'Error fetching ranking')
@@ -299,41 +308,59 @@ function AppContent() {
       {/* Market View Selector */}
       <div className="card">
         <div className="card-title">
-          🌍 Market View - {selectedView}
+          🌍 Market View - {selectedViews.join(', ')}
           {!loading && results.length > 0 && (
             <span style={{marginLeft: '8px', color: '#667eea', fontWeight: 'bold'}}>({results.length})</span>
           )}
         </div>
+        <div style={{marginBottom: '8px', fontSize: '0.9rem', color: '#666'}}>
+          💡 Click to select multiple markets
+        </div>
         <div style={{display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px'}}>
-          {['Global', 'United States', 'Switzerland', 'Germany', 'United Kingdom', 'France', 'Japan', 'Canada'].map(view => (
-            <button
-              key={view}
-              onClick={() => {
-                setSelectedView(view)
-                fetchRanking(view)
-              }}
-              style={{
-                padding: '10px 20px',
-                background: selectedView === view ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f0f0f0',
-                color: selectedView === view ? 'white' : '#333',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: selectedView === view ? '600' : '400',
-                transition: 'all 0.3s ease',
-                boxShadow: selectedView === view ? '0 4px 12px rgba(102, 126, 234, 0.4)' : 'none'
-              }}
-            >
-              {view === 'Global' ? '🌐' : 
-               view === 'United States' ? '🇺🇸' : 
-               view === 'Switzerland' ? '🇨🇭' : 
-               view === 'Germany' ? '🇩🇪' : 
-               view === 'United Kingdom' ? '🇬🇧' : 
-               view === 'France' ? '🇫🇷' : 
-               view === 'Japan' ? '🇯🇵' : 
-               view === 'Canada' ? '🇨🇦' : '🌎'} {view}
-            </button>
-          ))}
+          {['Global', 'United States', 'Switzerland', 'Germany', 'United Kingdom', 'France', 'Japan', 'Canada'].map(view => {
+            const isSelected = selectedViews.includes(view)
+            return (
+              <button
+                key={view}
+                onClick={() => {
+                  let newViews
+                  if (isSelected) {
+                    // Deselect if already selected (but keep at least one)
+                    newViews = selectedViews.length > 1 
+                      ? selectedViews.filter(v => v !== view)
+                      : selectedViews
+                  } else {
+                    // Add to selection
+                    newViews = [...selectedViews, view]
+                  }
+                  setSelectedViews(newViews)
+                  fetchRanking(newViews)
+                }}
+                style={{
+                  padding: '10px 20px',
+                  background: isSelected ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f0f0f0',
+                  color: isSelected ? 'white' : '#333',
+                  border: isSelected ? '2px solid #764ba2' : '2px solid transparent',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: isSelected ? '600' : '400',
+                  transition: 'all 0.3s ease',
+                  boxShadow: isSelected ? '0 4px 12px rgba(102, 126, 234, 0.4)' : 'none',
+                  position: 'relative'
+                }}
+              >
+                {isSelected && <span style={{position: 'absolute', top: '-4px', right: '-4px', fontSize: '12px'}}>✓</span>}
+                {view === 'Global' ? '🌐' : 
+                 view === 'United States' ? '🇺🇸' : 
+                 view === 'Switzerland' ? '🇨🇭' : 
+                 view === 'Germany' ? '🇩🇪' : 
+                 view === 'United Kingdom' ? '🇬🇧' : 
+                 view === 'France' ? '🇫🇷' : 
+                 view === 'Japan' ? '🇯🇵' : 
+                 view === 'Canada' ? '🇨🇦' : '🌎'} {view}
+              </button>
+            )
+          })}
         </div>
         
         {loading ? (
@@ -490,6 +517,7 @@ function AppContent() {
                 <th>Stock</th>
                 <th>Name</th>
                 <th>Country</th>
+                <th>Signal</th>
                 <th>Probability</th>
                 <th>Price</th>
                 <th>Change %</th>
@@ -518,6 +546,21 @@ function AppContent() {
                     <td>{detail.name || 'N/A'}</td>
                     <td>
                       <span className="country-tag">{detail.country || 'N/A'}</span>
+                    </td>
+                    <td>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        fontWeight: '600',
+                        fontSize: '0.85rem',
+                        background: r.prob >= 0.5 ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                        color: 'white',
+                        boxShadow: r.prob >= 0.5 ? '0 2px 8px rgba(16, 185, 129, 0.3)' : '0 2px 8px rgba(239, 68, 68, 0.3)'
+                      }}>
+                        {r.prob >= 0.5 ? '🟢 BUY' : '🔴 SELL'}
+                      </span>
                     </td>
                     <td>
                       <span className={r.prob > 0.6 ? 'high-prob' : ''}>
