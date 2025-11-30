@@ -7,3 +7,5 @@ pytest==8.4.0
 mock==5.0.1
 mlflow==2.10.0
 joblib==1.5.2
+fastapi==0.95.1
+uvicorn==0.22.0

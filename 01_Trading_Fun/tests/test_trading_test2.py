@@ -115,6 +115,11 @@ def test_main_quick(monkeypatch):
                     'SMA200': i * 0.01,
                     'RSI': 50 + (i % 10),
                     'Volatility': 0.02 + (i % 5) * 0.001,
+                    'Momentum_10d': 0.001 * i,
+                    'MACD': 0.0,
+                    'MACD_signal': 0.0,
+                    'BB_upper': 1.01 * i,
+                    'BB_lower': 0.99 * i,
                     'Outperform': int(i % 2 == 0),
                     'Ticker': t,
                 })

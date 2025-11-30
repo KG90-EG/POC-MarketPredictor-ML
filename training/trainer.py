@@ -17,11 +17,13 @@ def main():
     os.makedirs(os.path.dirname(model_path), exist_ok=True)
     # Use mlflow to track the training run
     with mlflow.start_run():
-        model, acc = train_model(data, model_type='rf', save_path=model_path)
+        model, metrics = train_model(data, model_type='rf', save_path=model_path)
         mlflow.log_param('tickers', ','.join(tickers))
-        mlflow.log_metric('accuracy', float(acc))
+        for k, v in metrics.items():
+            if v is not None:
+                mlflow.log_metric(k, v)
         mlflow.sklearn.log_model(model, 'model')
-        print('Model saved to', model_path, 'acc=', acc)
+        print('Model saved to', model_path, 'metrics=', metrics)
 
 if __name__ == '__main__':
     main()

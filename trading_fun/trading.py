@@ -17,7 +17,24 @@ except Exception as e:
 
 # default tickers
 tickers = ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA", "V", "MA", "PG", "KO"]
-features = ["SMA50", "SMA200", "RSI", "Volatility"]
+features = ["SMA50", "SMA200", "RSI", "Volatility", "Momentum_10d", "MACD", "MACD_signal", "BB_upper", "BB_lower"]
+
+def compute_macd(series, fast=12, slow=26, signal=9):
+    fast_ema = series.ewm(span=fast, adjust=False).mean()
+    slow_ema = series.ewm(span=slow, adjust=False).mean()
+    macd = fast_ema - slow_ema
+    sig = macd.ewm(span=signal, adjust=False).mean()
+    return macd, sig
+
+def compute_bollinger(series, window=20):
+    sma = series.rolling(window).mean()
+    std = series.rolling(window).std()
+    upper = sma + (std * 2)
+    lower = sma - (std * 2)
+    return upper, lower
+
+def compute_momentum(series, period=10):
+    return series.pct_change(period)
 
 def compute_rsi(series, period=14):
     delta = series.diff()
@@ -40,6 +57,14 @@ def load_data(ticker, period="5y"):
     df["SMA200"] = df["Adj Close"].rolling(200).mean()
     df["RSI"] = compute_rsi(df["Adj Close"])
     df["Volatility"] = df["Adj Close"].pct_change().rolling(30).std()
+    # extra features
+    df["Momentum_10d"] = compute_momentum(df["Adj Close"], period=10)
+    macd, macd_sig = compute_macd(df["Adj Close"]) 
+    df["MACD"] = macd
+    df["MACD_signal"] = macd_sig
+    bb_up, bb_low = compute_bollinger(df["Adj Close"], window=20)
+    df["BB_upper"] = bb_up
+    df["BB_lower"] = bb_low
     df["Ticker"] = ticker
     return df.dropna()
 
@@ -103,16 +128,39 @@ def train_model(data, model_type='rf', save_path=None):
         import joblib
         joblib.dump(model, save_path)
     # MLFlow tracking if available
+    # Evaluate
+    from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+    preds = model.predict(X_test.values)
+    proba = model.predict_proba(X_test.values)[:, 1] if hasattr(model, 'predict_proba') else None
+    acc = accuracy_score(y_test.values, preds)
+    prec = precision_score(y_test.values, preds, zero_division=0)
+    rec = recall_score(y_test.values, preds, zero_division=0)
+    f1 = f1_score(y_test.values, preds, zero_division=0)
+    roc = roc_auc_score(y_test.values, proba) if proba is not None else None
+
+    # Cross-validation: time-series split
+    from sklearn.model_selection import TimeSeriesSplit, cross_val_score
+    tscv = TimeSeriesSplit(n_splits=5)
+    cv_scores = cross_val_score(model, X.values, y.values, cv=tscv, scoring='roc_auc' if roc is not None else 'accuracy')
+
+    metrics = {
+        'accuracy': float(acc),
+        'precision': float(prec),
+        'recall': float(rec),
+        'f1': float(f1),
+        'roc_auc': float(roc) if roc is not None else None,
+        'cv_mean': float(cv_scores.mean()),
+        'cv_std': float(cv_scores.std()),
+    }
+    # MLFlow tracking if available
     try:
         import mlflow
-        mlflow.log_metric('accuracy', float(acc))
+        for k, v in metrics.items():
+            if v is not None:
+                mlflow.log_metric(k, v)
     except Exception:
         pass
-    # Evaluate
-    from sklearn.metrics import accuracy_score
-    preds = model.predict(X_test.values)
-    acc = accuracy_score(y_test.values, preds)
-    return model, acc
+    return model, metrics
 
 def main(args=None):
     if args is None:
@@ -123,8 +171,8 @@ def main(args=None):
         logging.getLogger().setLevel(logging.INFO)
     chosen_tickers = [t.strip().upper() for t in args.tickers.split(',') if t.strip()]
     data = build_dataset(chosen_tickers, period=args.period)
-    model, acc = train_model(data, model_type='rf')
-    logging.info('Model trained, acc=%.3f', acc)
+    model, metrics = train_model(data, model_type='rf')
+    logging.info('Model trained, metrics=%s', metrics)
     # Ranking
     ranking = {}
     for t in chosen_tickers:

@@ -98,6 +98,16 @@ Hier ein kurzes Vorgehen, um den Algo zu einem autonom lernenden System zu mache
    - Setze `MLFLOW_TRACKING_URI` als Environment-Var auf eine Remote/Postgres-/S3-Lösung oder nutze das lokale `mlruns/`-Verzeichnis
    - In `train_model()` `mlflow.sklearn.log_model()` aufrufen mit den Parametern und Metriken.
 
+   ## Online learning (Optional)
+
+   We included a small online learning prototype `training/online_trainer.py` using the `river` library for streaming updates. This is experimental and useful to test online learning ideas. Run with:
+   ```bash
+   # install river
+   pip install river
+   python training/online_trainer.py
+   ```
+
+
 ## Docker
 
 ## MLflow Integration (kurz)
