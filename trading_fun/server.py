@@ -21,9 +21,11 @@ try:
 except Exception:
     OPENAI_CLIENT = None
 
-# Simple cache for LLM responses (TTL: 5 minutes)
+# Simple cache for LLM responses (TTL: 5 minutes) and cooldown to avoid rate limits
 ANALYSIS_CACHE = {}
 CACHE_TTL = 300  # seconds
+LAST_ANALYZE_TS = 0.0
+ANALYZE_COOLDOWN = int(os.environ.get('ANALYZE_COOLDOWN_SEC', '20'))  # seconds
 
 app = FastAPI()
 
@@ -192,10 +194,25 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
     if not OPENAI_CLIENT:
         raise HTTPException(status_code=503, detail='LLM not configured (set OPENAI_API_KEY)')
     
+    # Cooldown to reduce rate limits: if last call was too recent, serve cache or instruct user to wait
+    global LAST_ANALYZE_TS
+    now = time.time()
+    if now - LAST_ANALYZE_TS < ANALYZE_COOLDOWN:
+        # If we have a cached result for the same input, return it; else return 429 with remaining seconds
+        cache_key_try = hashlib.md5(
+            f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()
+        ).hexdigest()
+        if cache_key_try in ANALYSIS_CACHE:
+            cached_data, timestamp = ANALYSIS_CACHE[cache_key_try]
+            cached_data['cached'] = True
+            return cached_data
+        remaining = int(ANALYZE_COOLDOWN - (now - LAST_ANALYZE_TS))
+        raise HTTPException(status_code=429, detail=f"Please wait {remaining}s before requesting analysis again.")
+    
     # Create cache key from ranking + context
-    cache_key = hashlib.md5(
-        f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()
-    ).hexdigest()
+    # Normalize ranking probs to reduce cache misses (round to 2 decimals)
+    norm_ranking = [(r['ticker'], round(float(r.get('prob', 0.0)), 2)) for r in request.ranking[:10]]
+    cache_key = hashlib.md5(f"{norm_ranking}{request.user_context}".encode()).hexdigest()
     
     # Check cache
     if cache_key in ANALYSIS_CACHE:
@@ -238,6 +255,7 @@ Keep your response concise (200-300 words)."""
                 
                 # Cache the result
                 ANALYSIS_CACHE[cache_key] = (result, time.time())
+                LAST_ANALYZE_TS = time.time()
                 
                 return result
             except Exception as e:
