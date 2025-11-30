@@ -174,11 +174,13 @@ def ranking(tickers: str = ""):
                 raw.columns = raw.columns.get_level_values(0)
         except Exception:
             continue
-        if 'Adj Close' not in raw.columns:
+        if raw.empty or 'Adj Close' not in raw.columns:
             continue
-        df = raw['Adj Close']
-        if isinstance(df, pd.Series):
-            df = df.to_frame(name='Adj Close')
+        
+        # Ensure we have a DataFrame with proper column access
+        df = pd.DataFrame()
+        df['Adj Close'] = raw['Adj Close']
+        
         df['SMA50'] = df['Adj Close'].rolling(50).mean()
         df['SMA200'] = df['Adj Close'].rolling(200).mean()
         df['RSI'] = compute_rsi(df['Adj Close'])
