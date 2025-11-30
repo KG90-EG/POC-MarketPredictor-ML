@@ -44,7 +44,8 @@ export default function App() {
         ranking: results,
         user_context: userContext || null
       })
-      setAnalysis(resp.data.analysis)
+      const cachedNote = resp.data.cached ? ' (cached result)' : ''
+      setAnalysis(resp.data.analysis + cachedNote)
     } catch (e) {
       console.error(e)
       const errorDetail = e.response?.data?.detail || 'Analysis failed.'

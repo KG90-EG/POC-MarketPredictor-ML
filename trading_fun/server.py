@@ -9,6 +9,8 @@ from dotenv import load_dotenv
 from .trading import features, compute_rsi, compute_macd, compute_bollinger, compute_momentum
 import pandas as pd
 import yfinance as yf
+import hashlib
+import time
 
 # Load environment variables from .env file
 load_dotenv()
@@ -18,6 +20,10 @@ try:
     OPENAI_CLIENT = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
 except Exception:
     OPENAI_CLIENT = None
+
+# Simple cache for LLM responses (TTL: 5 minutes)
+ANALYSIS_CACHE = {}
+CACHE_TTL = 300  # seconds
 
 app = FastAPI()
 
@@ -186,6 +192,18 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
     if not OPENAI_CLIENT:
         raise HTTPException(status_code=503, detail='LLM not configured (set OPENAI_API_KEY)')
     
+    # Create cache key from ranking + context
+    cache_key = hashlib.md5(
+        f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()
+    ).hexdigest()
+    
+    # Check cache
+    if cache_key in ANALYSIS_CACHE:
+        cached_data, timestamp = ANALYSIS_CACHE[cache_key]
+        if time.time() - timestamp < CACHE_TTL:
+            cached_data['cached'] = True
+            return cached_data
+    
     # Build prompt
     ranking_text = '\n'.join([f"{i+1}. {r['ticker']}: {r['prob']*100:.2f}% probability" 
                               for i, r in enumerate(request.ranking[:10])])
@@ -204,7 +222,6 @@ Provide:
 Keep your response concise (200-300 words)."""
     
     try:
-        import time
         max_retries = 3
         retry_delay = 1
         
@@ -217,7 +234,12 @@ Keep your response concise (200-300 words)."""
                     temperature=0.7
                 )
                 analysis = response.choices[0].message.content
-                return {'analysis': analysis, 'model': response.model}
+                result = {'analysis': analysis, 'model': response.model, 'cached': False}
+                
+                # Cache the result
+                ANALYSIS_CACHE[cache_key] = (result, time.time())
+                
+                return result
             except Exception as e:
                 error_str = str(e)
                 # Check if it's a rate limit error
