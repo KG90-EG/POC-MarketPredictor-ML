@@ -24,7 +24,7 @@ app = FastAPI()
 # Enable CORS for local frontend development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -72,8 +72,11 @@ def predict_ticker(ticker: str):
     if MODEL is None:
         raise HTTPException(status_code=503, detail='No model available')
     # Get latest data and compute features
-    df = yf.download(ticker, period='300d', auto_adjust=False)['Adj Close']
-    df = pd.DataFrame({'Adj Close': df})
+    raw = yf.download(ticker, period='300d', auto_adjust=False, progress=False)
+    # Handle MultiIndex columns from yfinance
+    if isinstance(raw.columns, pd.MultiIndex):
+        raw.columns = raw.columns.get_level_values(0)
+    df = pd.DataFrame({'Adj Close': raw['Adj Close']})
     df['SMA50'] = df['Adj Close'].rolling(50).mean()
     df['SMA200'] = df['Adj Close'].rolling(200).mean()
     df['RSI'] = compute_rsi(df['Adj Close'])
@@ -101,7 +104,10 @@ def ranking(tickers: str = "AAPL,MSFT,NVDA"):
     result = []
     for t in chosen:
         try:
-            raw = yf.download(t, period='300d', auto_adjust=False)
+            raw = yf.download(t, period='300d', auto_adjust=False, progress=False)
+            # Handle MultiIndex columns from yfinance
+            if isinstance(raw.columns, pd.MultiIndex):
+                raw.columns = raw.columns.get_level_values(0)
         except Exception:
             continue
         if 'Adj Close' not in raw.columns:
