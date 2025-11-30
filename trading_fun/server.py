@@ -42,12 +42,15 @@ COUNTRY_STOCKS = {
     'Switzerland': [
         'NESN.SW', 'NOVN.SW', 'ROG.SW', 'UBSG.SW', 'ZURN.SW',  # Nestle, Novartis, Roche, UBS, Zurich Insurance
         'ABBN.SW', 'SREN.SW', 'GIVN.SW', 'LONN.SW', 'SLHN.SW',  # ABB, Sika, Givaudan, Lonza, Swiss Life
-        'SCMN.SW', 'ADEN.SW', 'GEBN.SW', 'PGHN.SW', 'SGSN.SW'   # Swisscom, Adecco, Geberit, Partners Group, SGS
+        'SCMN.SW', 'ADEN.SW', 'GEBN.SW', 'PGHN.SW', 'SGSN.SW',  # Swisscom, Adecco, Geberit, Partners Group, SGS
+        'CSGN.SW', 'HOLN.SW', 'CFR.SW', 'SYNN.SW', 'STMN.SW',  # Credit Suisse, Holcim, Richemont, Syngenta, Straumann
+        'KNIN.SW', 'BALN.SW', 'BUCN.SW', 'LISN.SW', 'VACN.SW'   # Kuehne+Nagel, Baloise, Bucher, Lindt, VAT Group
     ],
     'Germany': [
         'SAP', 'SIE.DE', 'ALV.DE', 'DTE.DE', 'VOW3.DE',  # SAP, Siemens, Allianz, Deutsche Telekom, VW
         'MBG.DE', 'BMW.DE', 'BAS.DE', 'ADS.DE', 'MUV2.DE',  # Mercedes, BMW, BASF, Adidas, Munich Re
-        'BAYN.DE', 'EOAN.DE', 'DB1.DE', 'HEN3.DE', 'IFX.DE'  # Bayer, E.ON, Deutsche Boerse, Henkel, Infineon
+        'BAYN.DE', 'EOAN.DE', 'DB1.DE', 'HEN3.DE', 'IFX.DE',  # Bayer, E.ON, Deutsche Boerse, Henkel, Infineon
+        'RHM.DE', 'DAI.DE', 'FRE.DE', 'SHL.DE', 'CON.DE'  # Rheinmetall, Daimler Truck, Fresenius, Siemens Healthineers, Continental
     ],
     'United Kingdom': [
         'SHEL.L', 'AZN.L', 'HSBA.L', 'ULVR.L', 'DGE.L',  # Shell, AstraZeneca, HSBC, Unilever, Diageo
