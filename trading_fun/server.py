@@ -200,7 +200,8 @@ def ticker_info(ticker: str) -> Dict[str, Any]:
             'name': info.get('longName', ticker),
             'pe_ratio': info.get('trailingPE'),
             'fifty_two_week_high': info.get('fiftyTwoWeekHigh'),
-            'fifty_two_week_low': info.get('fiftyTwoWeekLow')
+            'fifty_two_week_low': info.get('fiftyTwoWeekLow'),
+            'country': info.get('country', 'Unknown')
         }
     except Exception as e:
         raise HTTPException(status_code=404, detail=f'Unable to fetch info: {str(e)}')

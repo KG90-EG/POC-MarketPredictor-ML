@@ -16,6 +16,7 @@ export default function App() {
   const [itemsPerPage] = useState(10)
   const [showHelp, setShowHelp] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState(null)
+  const [selectedCountry, setSelectedCountry] = useState('All')
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode')
     return saved ? JSON.parse(saved) : false
@@ -89,34 +90,13 @@ export default function App() {
   async function performSearch() {
     const t = (searchTicker || '').trim().toUpperCase()
     if (!t) {
-      alert('Please enter a ticker to search.')
+      alert('Please enter a stock symbol to search.')
       return
     }
     setSearchLoading(true)
-    setSearchResult(null)
-    try {
-      const [infoResp, predResp] = await Promise.all([
-        axios.get(`http://localhost:8000/ticker_info/${t}`),
-        axios.get(`http://localhost:8000/predict_ticker/${t}`)
-      ])
-      const info = infoResp.data || {}
-      const prob = predResp.data?.prob || null
-      setSearchResult({
-        ticker: t,
-        name: info.name || 'N/A',
-        price: info.price || null,
-        change: info.change || null,
-        volume: info.volume || null,
-        market_cap: info.market_cap || null,
-        prob
-      })
-    } catch (e) {
-      console.error('Search error', e)
-      const detail = e.response?.data?.detail || 'Failed to fetch ticker info.'
-      alert(detail)
-    } finally {
-      setSearchLoading(false)
-    }
+    // Open sidebar directly instead of showing search result card
+    openCompanyDetail(t)
+    setSearchLoading(false)
   }
 
   function formatNumber(num) {
@@ -193,12 +173,32 @@ export default function App() {
             <p>Loading rankings from 50 popular stocks...</p>
           </div>
         ) : (
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'}}>
-            <p style={{margin: 0, color: '#666'}}>Showing {results.length} stocks ranked by AI prediction</p>
-            <button onClick={fetchRanking} style={{padding: '8px 16px'}}>
-              🔄 Refresh Rankings
-            </button>
-          </div>
+          <>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px'}}>
+              <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                <p style={{margin: 0, color: '#666'}}>Showing {results.filter(r => selectedCountry === 'All' || tickerDetails[r.ticker]?.country === selectedCountry).length} stocks</p>
+                <select 
+                  value={selectedCountry} 
+                  onChange={(e) => { setSelectedCountry(e.target.value); setCurrentPage(1); }}
+                  style={{padding: '6px 12px', borderRadius: '6px', border: '2px solid #667eea', background: 'white', cursor: 'pointer'}}
+                >
+                  <option value="All">🌍 All Countries</option>
+                  <option value="United States">🇺🇸 United States</option>
+                  <option value="China">🇨🇳 China</option>
+                  <option value="United Kingdom">🇬🇧 United Kingdom</option>
+                  <option value="Germany">🇩🇪 Germany</option>
+                  <option value="France">🇫🇷 France</option>
+                  <option value="Japan">🇯🇵 Japan</option>
+                  <option value="Switzerland">🇨🇭 Switzerland</option>
+                  <option value="Canada">🇨🇦 Canada</option>
+                  <option value="Other">🌎 Other</option>
+                </select>
+              </div>
+              <button onClick={fetchRanking} style={{padding: '8px 16px'}}>
+                🔄 Refresh Rankings
+              </button>
+            </div>
+          </>
         )}
       </div>
 
@@ -227,45 +227,6 @@ export default function App() {
           </button>
         </div>
       </div>
-
-      {/* Search Result */}
-      {searchResult && (
-        <div className="search-result">
-          <h2>🎯 Search Result</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Stock</th>
-                <th>Name</th>
-                <th>Probability</th>
-                <th>Price</th>
-                <th>Change %</th>
-                <th>Volume</th>
-                <th>Market Cap</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><span className="ticker-symbol">{searchResult.ticker}</span></td>
-                <td>{searchResult.name}</td>
-                <td>
-                  <span className={searchResult.prob > 0.6 ? 'high-prob' : ''}>
-                    {searchResult.prob != null ? `${(searchResult.prob * 100).toFixed(2)}%` : 'N/A'}
-                  </span>
-                </td>
-                <td>{searchResult.price != null ? `$${searchResult.price.toFixed(2)}` : 'N/A'}</td>
-                <td>
-                  <span className={searchResult.change > 0 ? 'positive' : searchResult.change < 0 ? 'negative' : ''}>
-                    {searchResult.change != null ? `${searchResult.change > 0 ? '+' : ''}${searchResult.change.toFixed(2)}%` : 'N/A'}
-                  </span>
-                </td>
-                <td>{searchResult.volume != null ? searchResult.volume.toLocaleString() : 'N/A'}</td>
-                <td>{formatNumber(searchResult.market_cap)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )}
 
       {/* Results Section */}
       {results.length > 0 && (
@@ -309,6 +270,7 @@ export default function App() {
                 <th>Rank</th>
                 <th>Stock</th>
                 <th>Name</th>
+                <th>Country</th>
                 <th>Probability</th>
                 <th>Price</th>
                 <th>Change %</th>
@@ -318,9 +280,10 @@ export default function App() {
             </thead>
             <tbody>
               {results
+                .filter(r => selectedCountry === 'All' || tickerDetails[r.ticker]?.country === selectedCountry)
                 .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                 .map((r, idx) => {
-                const rank = (currentPage - 1) * itemsPerPage + idx + 1
+                const rank = results.filter(item => selectedCountry === 'All' || tickerDetails[item.ticker]?.country === selectedCountry).indexOf(r) + 1
                 const detail = tickerDetails[r.ticker] || {}
                 const changeClass = detail.change > 0 ? 'positive' : detail.change < 0 ? 'negative' : ''
                 return (
@@ -335,6 +298,9 @@ export default function App() {
                     </td>
                     <td><span className="ticker-symbol">{r.ticker}</span></td>
                     <td>{detail.name || 'N/A'}</td>
+                    <td>
+                      <span className="country-tag">{detail.country || 'N/A'}</span>
+                    </td>
                     <td>
                       <span className={r.prob > 0.6 ? 'high-prob' : ''}>
                         {(r.prob * 100).toFixed(2)}%
@@ -355,7 +321,7 @@ export default function App() {
           </table>
 
           {/* Pagination Controls */}
-          {results.length > itemsPerPage && (
+          {results.filter(r => selectedCountry === 'All' || tickerDetails[r.ticker]?.country === selectedCountry).length > itemsPerPage && (
             <div className="pagination">
               <button 
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
@@ -370,15 +336,15 @@ export default function App() {
                   onChange={(e) => setCurrentPage(Number(e.target.value))}
                   className="page-dropdown"
                 >
-                  {Array.from({ length: Math.ceil(results.length / itemsPerPage) }, (_, i) => i + 1).map(pageNum => (
+                  {Array.from({ length: Math.ceil(results.filter(r => selectedCountry === 'All' || tickerDetails[r.ticker]?.country === selectedCountry).length / itemsPerPage) }, (_, i) => i + 1).map(pageNum => (
                     <option key={pageNum} value={pageNum}>{pageNum}</option>
                   ))}
                 </select>
-                <span className="page-info">of {Math.ceil(results.length / itemsPerPage)}</span>
+                <span className="page-info">of {Math.ceil(results.filter(r => selectedCountry === 'All' || tickerDetails[r.ticker]?.country === selectedCountry).length / itemsPerPage)}</span>
               </div>
               <button 
-                onClick={() => setCurrentPage(p => Math.min(Math.ceil(results.length / itemsPerPage), p + 1))} 
-                disabled={currentPage >= Math.ceil(results.length / itemsPerPage)}
+                onClick={() => setCurrentPage(p => Math.min(Math.ceil(results.filter(r => selectedCountry === 'All' || tickerDetails[r.ticker]?.country === selectedCountry).length / itemsPerPage), p + 1))} 
+                disabled={currentPage >= Math.ceil(results.filter(r => selectedCountry === 'All' || tickerDetails[r.ticker]?.country === selectedCountry).length / itemsPerPage)}
               >
                 Next →
               </button>
@@ -462,6 +428,9 @@ export default function App() {
               <div className="sidebar-content">
                 <h2>{selectedCompany.ticker}</h2>
                 <p className="company-name">{selectedCompany.name || 'N/A'}</p>
+                {selectedCompany.country && (
+                  <p className="company-country">🌍 {selectedCompany.country}</p>
+                )}
                 
                 <div className="detail-section">
                   <h3>🎯 Trading Signal</h3>

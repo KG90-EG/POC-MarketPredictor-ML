@@ -583,6 +583,21 @@ td:first-child {
   font-size: 1rem;
 }
 
+/* Country Tag */
+.country-tag {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+body.dark-mode .country-tag {
+  background: linear-gradient(135deg, #4a5de8 0%, #5c3a92 100%);
+}
+
 /* Pagination */
 .pagination {
   display: flex;
@@ -837,11 +852,22 @@ body.dark-mode .sidebar-content h2 {
 .company-name {
   color: #666;
   font-size: 1.1rem;
-  margin-bottom: 24px;
+  margin-bottom: 8px;
 }
 
 body.dark-mode .company-name {
   color: #9aa0aa;
+}
+
+.company-country {
+  color: #667eea;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+body.dark-mode .company-country {
+  color: #8b9dd9;
 }
 
 .detail-section {
