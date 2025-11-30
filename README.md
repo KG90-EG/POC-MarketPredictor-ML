@@ -6,12 +6,15 @@ This repository contains a small machine learning pipeline and a reference front
 ## Features
 - 🤖 **ML-Powered Stock Ranking** - RandomForest/XGBoost models predict stock performance
 - 📊 **Real-Time Market Data** - Live prices, volume, market cap via yfinance
-- 🚀 **Auto-Load Rankings** - Top 50 popular stocks ranked automatically on page load
+- 🌍 **Multi-Market Views** - Analyze stocks from 8 different markets (US, Switzerland, Germany, UK, France, Japan, Canada)
+- 🔄 **Dynamic Stock Discovery** - Automatically validates and ranks top companies by market cap
+- 🚀 **Auto-Load Rankings** - Top stocks ranked automatically on page load based on selected market
 - 📄 **Pagination** - Clean 10-per-page display with easy navigation
 - 🎯 **Automated Buy/Sell Signals** - Python-based recommendation engine with 5-tier signal system
 - 🧠 **AI Analysis** - OpenAI-powered trading recommendations with retry logic and caching
 - ⚛️ **Modern React UI** - Real-time updates with color-coded indicators and dark/light theme toggle
 - 🌓 **Dark Mode Support** - Persistent theme toggle with smooth transitions
+- 🔍 **Company Detail Sidebar** - Comprehensive stock information with country domicile
 - 🔄 **CI/CD Pipeline** - Automated testing, linting, Docker builds
 - 📈 **MLflow Integration** - Model tracking, versioning, and promotion
 - 🐳 **Docker Support** - Multi-stage builds with frontend and backend
@@ -44,15 +47,18 @@ cd frontend && npm run dev
 ```
 
 4. **Open browser:** Navigate to `http://localhost:5173`
-   - Rankings load automatically showing top 50 stocks
+   - Select a market view (Global, Switzerland, Germany, UK, France, Japan, Canada)
+   - Rankings load automatically showing top stocks from selected market
    - Browse paginated results (10 per page)
-   - Click any stock for detailed analysis
+   - Click any stock for detailed analysis with country information
    - Use search to look up specific stocks
 
 ### What You'll See
-- **Immediate Rankings**: Top 50 popular stocks ranked by AI prediction (no manual entry needed)
+- **Market View Selector**: Choose from 8 different markets (US, Switzerland, Germany, UK, France, Japan, Canada)
+- **Dynamic Rankings**: Top 30 companies from selected market, validated by market cap
+- **Diversified Portfolio**: Build portfolio from multiple countries for global diversification
 - **Buy/Sell Signals**: Each stock shows STRONG BUY, BUY, HOLD, or SELL recommendation
-- **Live Market Data**: Real-time prices, changes, volumes, and market caps
+- **Live Market Data**: Real-time prices, changes, volumes, market caps, and country domicile
 - **Pagination**: Clean 10-per-page display with easy navigation
 - **AI Analysis**: Optional OpenAI-powered recommendations (requires API key)
 
@@ -205,21 +211,78 @@ export OPENAI_MODEL='gpt-4o'  # or gpt-3.5-turbo, etc.
 - **Actionable output**: Specific buy/sell recommendations, not just analysis
 - **User context**: Add custom context like "focus on tech stocks" or "conservative portfolio"
 
+## Multi-Market View System
+
+The application supports **8 different market views** for building a diversified global portfolio:
+
+### Available Markets
+- 🌐 **Global** - Top 50 US large-cap stocks (technology-dominated)
+- 🇺🇸 **United States** - US market leaders across all sectors
+- 🇨🇭 **Switzerland** - Top 30 Swiss companies (Nestle, Novartis, Roche, UBS, etc.)
+- 🇩🇪 **Germany** - Top 20 German companies (SAP, Siemens, BMW, Rheinmetall, etc.)
+- 🇬🇧 **United Kingdom** - Top 20 UK companies (Shell, AstraZeneca, HSBC, BP, etc.)
+- 🇫🇷 **France** - Top 20 French companies (LVMH, L'Oreal, TotalEnergies, Airbus, etc.)
+- 🇯🇵 **Japan** - Top 20 Japanese companies (Toyota, Sony, Nintendo, SoftBank, etc.)
+- 🇨🇦 **Canada** - Top 20 Canadian companies (Shopify, Royal Bank, Enbridge, etc.)
+
+### Dynamic Stock Discovery
+
+Instead of hardcoded lists, the system **dynamically discovers and validates** top stocks:
+
+1. **Seed Lists**: Curated starting lists for each country (20-30 companies)
+2. **Real-Time Validation**: For each stock:
+   - Fetches current market data from yfinance
+   - Validates market cap exists and is positive
+   - Confirms company country matches expected market
+3. **Market Cap Ranking**: Automatically sorts by market capitalization (largest first)
+4. **Top N Selection**: Returns the top companies ensuring you get the most liquid, established stocks
+5. **Smart Caching**: Results cached for 1 hour to optimize performance and reduce API calls
+
+### Benefits
+- ✅ **Always Current**: Automatically filters out delisted or invalid stocks
+- ✅ **Market Cap Validated**: Only includes companies with verified market data
+- ✅ **Global Diversification**: Build portfolios across multiple countries and regions
+- ✅ **No Manual Updates**: System automatically maintains current company lists
+- ✅ **Performance Optimized**: 1-hour caching reduces API calls while keeping data fresh
+
+### Usage
+
+**Via UI:**
+1. Select a market view button at the top of the page
+2. System automatically fetches and ranks top stocks for that market
+3. View rankings with country filter dropdown for additional filtering
+4. Click any stock to see detailed company information including domicile
+
+**Via API:**
+```bash
+# Get Swiss market rankings
+curl "http://localhost:8000/ranking?country=Switzerland"
+
+# Get German market rankings
+curl "http://localhost:8000/ranking?country=Germany"
+
+# Global (US) rankings
+curl "http://localhost:8000/ranking?country=Global"
+```
+
 ## API Endpoints
 
 ### Core Endpoints
 - `GET /health` — Health check with model status
-- `GET /ranking?tickers=` — Rank stocks by ML probability
-  - **Default behavior**: When called without tickers parameter (or empty), automatically ranks 50 popular large-cap stocks including:
-    - Tech: AAPL, MSFT, GOOGL, AMZN, NVDA, META, TSLA, AMD, NFLX, ADBE, CRM, ORCL, INTC, CSCO, IBM, QCOM
-    - Finance: JPM, BAC, WFC, V, MA
-    - Healthcare: JNJ, UNH, LLY, ABBV, MRK, TMO, ABT
-    - Consumer: WMT, PG, KO, PEP, COST, MCD, NKE, DIS, PM
-    - Industrial: HON, BA, GE, UPS, ACN
-    - And more (50 total)
-  - **Custom tickers**: Pass comma-separated list to rank specific stocks: `/ranking?tickers=AAPL,TSLA,NVDA`
+- `GET /ranking?country=` — Rank stocks by ML probability with dynamic market selection
+  - **Country parameter**: `Global`, `United States`, `Switzerland`, `Germany`, `United Kingdom`, `France`, `Japan`, `Canada`
+  - **Default behavior**: When called without tickers parameter, dynamically fetches and ranks top stocks for specified country:
+    - Validates each stock has real market data
+    - Sorts by market capitalization
+    - Returns top 30 most liquid companies
+    - Results cached for 1 hour per country
+  - **Examples**:
+    - `/ranking?country=Switzerland` — Top 30 Swiss companies
+    - `/ranking?country=Germany` — Top 20 German companies
+    - `/ranking?country=Global` — Top 50 US large-caps (default)
+  - **Custom tickers**: Override with specific tickers: `/ranking?tickers=AAPL,TSLA,NVDA`
 - `GET /predict_ticker/{ticker}` — Get ML probability for single stock
-- `GET /ticker_info/{ticker}` — Fetch live market data (price, volume, market cap, P/E ratio)
+- `GET /ticker_info/{ticker}` — Fetch live market data (price, volume, market cap, P/E ratio, country domicile, 52-week range)
 - `POST /analyze` — AI-powered buy/sell recommendations with enriched market context
 - `GET /models` — Lists available model artifact files and current production model
 
@@ -259,19 +322,30 @@ export OPENAI_MODEL='gpt-4o'  # or gpt-3.5-turbo, etc.
 - Supports Enter key for quick searches
 
 ## UI Features
-- **Auto-Load on Start**: Rankings automatically load when the app opens - no manual input required
-- **Smart Pagination**: Display 10 stocks per page with Previous/Next navigation
+- **Multi-Market View Selector**: 8 market buttons to switch between global regions (US, Switzerland, Germany, UK, France, Japan, Canada)
+- **Auto-Load on Start**: Rankings automatically load when the app opens based on selected market view
+- **Dynamic Country Filter**: Dropdown shows only countries present in current dataset
+- **Smart Pagination**: Display 10 stocks per page with page jump dropdown and Previous/Next navigation
   - Page counter shows current position ("Page 1 of 5")
   - Maintains rank order across pages (rank 11-20 on page 2, etc.)
-- **One-Click Refresh**: Refresh button reloads latest market data and rankings
+- **Company Detail Sidebar**: Click any stock row to view comprehensive details:
+  - Trading signal badge (STRONG BUY, BUY, HOLD, SELL)
+  - Company name and country domicile with flag emoji
+  - Price information grid (current, change %, 52-week high/low)
+  - Market data grid (market cap, volume, P/E ratio)
+  - Recommendation text based on ML probability
+- **Search with Table View**: Search individual stocks displays results in table format
+  - Click search result row to open detailed sidebar
+  - Shows all market data including country
+- **One-Click Refresh**: Refresh button reloads latest market data and rankings for current view
 - **Gradient Theme Design**: Purple gradient background with clean, modern card-based layout
 - **Dark/Light Mode Toggle**: Click the sun/moon icon in the header to switch themes
   - Theme preference is automatically saved to localStorage
   - Smooth transitions between themes
   - Optimized color schemes for both modes
+- **Help/Guide Modal**: ? button provides comprehensive usage instructions
 - **Rank Badges**: Top 3 stocks get special gold/silver/bronze styling
 - **Real-Time Updates**: Live market data with color-coded positive/negative indicators
-- **Search Functionality**: Quick ticker lookup with Enter key support
 - **Loading States**: Animated spinners for better user experience
 
 ## Integration Tests
