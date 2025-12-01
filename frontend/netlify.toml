@@ -1,0 +1,79 @@
+# Netlify Configuration for POC-MarketPredictor-ML Frontend
+
+[build]
+  # Directory with package.json
+  base = "frontend/"
+  
+  # Build command
+  command = "npm run build"
+  
+  # Directory with build artifacts (dist for Vite)
+  publish = "dist/"
+
+[build.environment]
+  # Node version
+  NODE_VERSION = "18"
+  
+  # Use npm ci for faster installs
+  NPM_FLAGS = "--legacy-peer-deps"
+
+# Redirects for SPA routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+
+# Headers for security and caching
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Security headers
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    
+    # Content Security Policy (adjust as needed)
+    Content-Security-Policy = """
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://browser.sentry-cdn.com;
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' data: https: blob:;
+      font-src 'self' data:;
+      connect-src 'self' https://*.sentry.io http://localhost:8000 https://*.coingecko.com;
+      frame-ancestors 'none';
+    """
+
+# Cache static assets
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Cache service worker
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+# Production redirects (API proxy)
+[[redirects]]
+  from = "/api/*"
+  to = "https://your-backend-domain.com/api/:splat"
+  status = 200
+  force = true
+  
+  # Only for production (use env var)
+  [redirects.conditions]
+    Environment = ["production"]
+
+# Dev/Staging API redirect (if needed)
+[[redirects]]
+  from = "/api/*"
+  to = "http://localhost:8000/api/:splat"
+  status = 200
+  force = true
+  
+  [redirects.conditions]
+    Environment = ["dev", "staging"]
