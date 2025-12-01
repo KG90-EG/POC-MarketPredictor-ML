@@ -36,7 +36,9 @@ class StockService:
             return cached
 
         # Get seed list for country
-        seed_list = config.market.country_seeds.get(country, config.market.default_stocks)
+        seed_list = config.market.country_seeds.get(
+            country, config.market.default_stocks
+        )
 
         # Validate and rank by market cap in parallel
         validated_stocks = StockService._validate_stocks_parallel(seed_list, country)
@@ -54,7 +56,9 @@ class StockService:
         return result
 
     @staticmethod
-    def _validate_stocks_parallel(tickers: List[str], country: Optional[str] = None) -> List[Dict[str, Any]]:
+    def _validate_stocks_parallel(
+        tickers: List[str], country: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """
         Validate stocks in parallel using ThreadPoolExecutor.
 
@@ -125,7 +129,11 @@ class StockService:
             result = {
                 "name": info.get("longName", info.get("shortName", "N/A")),
                 "price": float(current_price) if current_price else None,
-                "change": float(current_price - prev_close) if current_price and prev_close else None,
+                "change": (
+                    float(current_price - prev_close)
+                    if current_price and prev_close
+                    else None
+                ),
                 "volume": int(info.get("volume", 0)) if info.get("volume") else None,
                 "market_cap": info.get("marketCap", None),
                 "pe_ratio": info.get("forwardPE", info.get("trailingPE", None)),
@@ -144,7 +152,9 @@ class StockService:
             raise ValueError(f"Unable to fetch data for ticker {ticker}")
 
     @staticmethod
-    def get_ticker_info_batch(tickers: List[str]) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, str]]:
+    def get_ticker_info_batch(
+        tickers: List[str],
+    ) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, str]]:
         """
         Get information for multiple tickers in parallel.
 
@@ -157,7 +167,9 @@ class StockService:
         results = {}
         errors = {}
 
-        def fetch_ticker(ticker: str) -> Tuple[str, Optional[Dict[str, Any]], Optional[str]]:
+        def fetch_ticker(
+            ticker: str,
+        ) -> Tuple[str, Optional[Dict[str, Any]], Optional[str]]:
             try:
                 info = StockService.get_ticker_info(ticker)
                 return ticker, info, None
@@ -253,10 +265,14 @@ class ValidationService:
         Raises:
             ValueError: If country is invalid
         """
-        valid_countries = ["Global", "United States"] + list(config.market.country_seeds.keys())
+        valid_countries = ["Global", "United States"] + list(
+            config.market.country_seeds.keys()
+        )
 
         if country not in valid_countries:
-            raise ValueError(f"Invalid country. Must be one of: {', '.join(valid_countries)}")
+            raise ValueError(
+                f"Invalid country. Must be one of: {', '.join(valid_countries)}"
+            )
 
         return country
 
@@ -298,7 +314,10 @@ class HealthService:
     @staticmethod
     def check_openai_health() -> Dict[str, Any]:
         """Check OpenAI API availability"""
-        return {"openai_configured": bool(config.api.openai_api_key), "openai_model": config.api.openai_model}
+        return {
+            "openai_configured": bool(config.api.openai_api_key),
+            "openai_model": config.api.openai_model,
+        }
 
     @staticmethod
     def check_cache_health() -> Dict[str, Any]:

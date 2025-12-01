@@ -529,7 +529,12 @@ def ranking(tickers: str = "", country: str = "Global"):
 
 
 @app.get("/crypto/ranking")
-def crypto_ranking(crypto_ids: str = "", include_nft: bool = True, min_probability: float = 0.0, limit: int = 50):
+def crypto_ranking(
+    crypto_ids: str = "",
+    include_nft: bool = True,
+    min_probability: float = 0.0,
+    limit: int = 50,
+):
     """
     Rank cryptocurrencies and digital assets by momentum score.
 
@@ -550,18 +555,25 @@ def crypto_ranking(crypto_ids: str = "", include_nft: bool = True, min_probabili
         # Parse crypto IDs if provided
         crypto_list = None
         if crypto_ids.strip():
-            crypto_list = [cid.strip().lower() for cid in crypto_ids.split(",") if cid.strip()]
+            crypto_list = [
+                cid.strip().lower() for cid in crypto_ids.split(",") if cid.strip()
+            ]
 
         # Get ranked cryptocurrencies
         rankings = get_crypto_ranking(
-            crypto_ids=crypto_list, include_nft=include_nft, min_probability=min_probability, limit=limit
+            crypto_ids=crypto_list,
+            include_nft=include_nft,
+            min_probability=min_probability,
+            limit=limit,
         )
 
         return {"ranking": rankings}
 
     except Exception as e:
         logger.error(f"Error in crypto_ranking endpoint: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch crypto rankings: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch crypto rankings: {str(e)}"
+        )
 
 
 @app.get("/crypto/search")
@@ -582,7 +594,9 @@ def crypto_search(query: str):
         result = search_crypto(query.strip())
 
         if result is None:
-            raise HTTPException(status_code=404, detail=f"Cryptocurrency '{query}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Cryptocurrency '{query}' not found"
+            )
 
         return result
 
@@ -590,7 +604,9 @@ def crypto_search(query: str):
         raise
     except Exception as e:
         logger.error(f"Error in crypto_search endpoint: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to search crypto: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to search crypto: {str(e)}"
+        )
 
 
 @app.get("/crypto/details/{crypto_id}")
@@ -608,7 +624,9 @@ def crypto_details(crypto_id: str):
         details = get_crypto_details(crypto_id)
 
         if details is None:
-            raise HTTPException(status_code=404, detail=f"Cryptocurrency '{crypto_id}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Cryptocurrency '{crypto_id}' not found"
+            )
 
         return details
 
@@ -616,7 +634,9 @@ def crypto_details(crypto_id: str):
         raise
     except Exception as e:
         logger.error(f"Error in crypto_details endpoint: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch crypto details: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch crypto details: {str(e)}"
+        )
 
 
 @app.get("/models")
@@ -624,7 +644,9 @@ def list_models() -> Dict[str, Any]:
     """List available model artifacts in the models directory.
     Returns current loaded model filename and list of other model files with sizes.
     """
-    models_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "models"))
+    models_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "models")
+    )
     items: List[Dict[str, Any]] = []
     if os.path.isdir(models_dir):
         for fname in sorted(os.listdir(models_dir)):
@@ -655,7 +677,9 @@ def ticker_info(ticker: str) -> Dict[str, Any]:
             raise HTTPException(status_code=400, detail=str(e))
         except Exception as e:
             logger.error(f"Error fetching info for {ticker}: {e}")
-            raise HTTPException(status_code=404, detail=f"Unable to fetch info: {str(e)}")
+            raise HTTPException(
+                status_code=404, detail=f"Unable to fetch info: {str(e)}"
+            )
 
 
 @app.post("/ticker_info_batch")
@@ -679,10 +703,14 @@ class AnalysisRequest(BaseModel):
 def analyze(request: AnalysisRequest) -> Dict[str, Any]:
     """Use LLM to analyze ranking and provide buy/sell recommendations."""
     if not OPENAI_CLIENT:
-        raise HTTPException(status_code=503, detail="LLM not configured (set OPENAI_API_KEY)")
+        raise HTTPException(
+            status_code=503, detail="LLM not configured (set OPENAI_API_KEY)"
+        )
 
     # Create cache key from ranking + context
-    cache_key = hashlib.md5(f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()).hexdigest()
+    cache_key = hashlib.md5(
+        f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()
+    ).hexdigest()
 
     # Check cache
     cached_data = cache.get(f"analysis:{cache_key}")
@@ -734,7 +762,11 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
                     "rank": rank,
                     "ticker": r["ticker"],
                     "prob": r["prob"],
-                    "signal": ("BUY" if r["prob"] >= 0.55 else "HOLD" if r["prob"] >= 0.45 else "SELL"),
+                    "signal": (
+                        "BUY"
+                        if r["prob"] >= 0.55
+                        else "HOLD" if r["prob"] >= 0.45 else "SELL"
+                    ),
                 }
             )
 
@@ -784,7 +816,11 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
                 }
 
                 # Cache the result
-                cache.set(f"analysis:{cache_key}", result, ttl_seconds=app_config.cache.ai_analysis_ttl)
+                cache.set(
+                    f"analysis:{cache_key}",
+                    result,
+                    ttl_seconds=app_config.cache.ai_analysis_ttl,
+                )
 
                 return result
             except Exception as e:
@@ -797,7 +833,8 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
                     else:
                         raise HTTPException(
                             status_code=429,
-                            detail="OpenAI rate limit exceeded. " "Please wait a moment and try again.",
+                            detail="OpenAI rate limit exceeded. "
+                            "Please wait a moment and try again.",
                         )
                 else:
                     raise
@@ -832,12 +869,18 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
             if action == "subscribe" and ticker:
                 ws_manager.subscribe(client_id, ticker)
-                await ws_manager.send_personal_message({"type": "subscribed", "ticker": ticker}, client_id)
+                await ws_manager.send_personal_message(
+                    {"type": "subscribed", "ticker": ticker}, client_id
+                )
             elif action == "unsubscribe" and ticker:
                 ws_manager.unsubscribe(client_id, ticker)
-                await ws_manager.send_personal_message({"type": "unsubscribed", "ticker": ticker}, client_id)
+                await ws_manager.send_personal_message(
+                    {"type": "unsubscribed", "ticker": ticker}, client_id
+                )
             elif action == "ping":
-                await ws_manager.send_personal_message({"type": "pong", "timestamp": time.time()}, client_id)
+                await ws_manager.send_personal_message(
+                    {"type": "pong", "timestamp": time.time()}, client_id
+                )
             else:
                 await ws_manager.send_personal_message(
                     {"type": "error", "message": "Invalid action or missing ticker"},
@@ -854,6 +897,8 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
 # Mount frontend static files LAST so API routes take precedence
 # This must come after all route definitions to avoid catching API routes
-FRONTEND_DIST = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
+FRONTEND_DIST = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+)
 if os.path.isdir(FRONTEND_DIST):
     app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
