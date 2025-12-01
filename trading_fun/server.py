@@ -1,4 +1,11 @@
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request, Response
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    WebSocket,
+    WebSocketDisconnect,
+    Request,
+    Response,
+)
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -344,7 +351,7 @@ def startup_event():
     """Initialize metrics and system state on startup."""
     prom_metrics.initialize_metrics(
         model_is_loaded=MODEL is not None,
-        openai_is_configured=OPENAI_CLIENT is not None
+        openai_is_configured=OPENAI_CLIENT is not None,
     )
     logger.info("Prometheus metrics initialized")
 
@@ -388,10 +395,11 @@ async def metrics_middleware(request: Request, call_next):
         method=request.method,
         endpoint=request.url.path,
         status=response.status_code,
-        duration=duration
+        duration=duration,
     )
 
     return response
+
 
 MODEL_PATH = app_config.model.prod_model_path
 MODEL = None
