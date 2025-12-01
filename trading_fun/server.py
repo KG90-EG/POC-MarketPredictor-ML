@@ -342,7 +342,43 @@ def get_country_stocks(country: str) -> List[str]:
         return app_config.market.default_stocks
 
 
-app = FastAPI()
+app = FastAPI(
+    title="Market Predictor ML API",
+    description="""
+    A production-ready ML trading API that provides:
+    
+    * **Stock Analysis**: Real-time stock data and ML-based predictions
+    * **Crypto Rankings**: Cryptocurrency momentum scoring and analysis
+    * **AI Analysis**: OpenAI-powered company insights and recommendations
+    * **Health Monitoring**: Prometheus metrics and health checks
+    * **WebSocket Support**: Real-time updates for portfolio changes
+    
+    ## Features
+    
+    - Machine learning models for stock price predictions
+    - Technical indicators (RSI, MACD, Bollinger Bands, Momentum)
+    - CoinGecko integration for cryptocurrency data
+    - Caching and rate limiting for optimal performance
+    - Real-time health monitoring with Prometheus
+    - WebSocket updates for live portfolio tracking
+    
+    ## Rate Limits
+    
+    API endpoints are rate limited to prevent abuse. Default: 60 requests/minute.
+    """,
+    version="2.0.0",
+    contact={
+        "name": "Market Predictor ML Team",
+        "url": "https://github.com/yourusername/POC-MarketPredictor-ML",
+    },
+    license_info={
+        "name": "MIT License",
+        "url": "https://opensource.org/licenses/MIT",
+    },
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+)
 
 
 # Initialize Prometheus metrics on startup
@@ -419,9 +455,13 @@ def row_from_features(feat_dict: Dict[str, Any]):
     return pd.DataFrame([row])
 
 
-@app.get("/")
+@app.get("/", tags=["System"])
 def root():
-    """Root endpoint with API information."""
+    """
+    Root endpoint with API information.
+    
+    Returns basic information about the API and available endpoints.
+    """
     return {
         "name": "POC-MarketPredictor-ML API",
         "version": "1.0.0",
@@ -440,7 +480,20 @@ def root():
     }
 
 
-@app.get("/health")
+@app.get(
+    "/health",
+    tags=["System"],
+    summary="Health Check",
+    description="""
+    Comprehensive health check endpoint.
+    
+    Returns status of:
+    - ML model availability
+    - OpenAI API configuration
+    - Cache system
+    - Overall API health
+    """,
+)
 def health():
     """Enhanced health check with dependency status using HealthService."""
     with RequestLogger("GET /health"):
@@ -469,7 +522,18 @@ def health():
         return health_status
 
 
-@app.get("/metrics")
+@app.get(
+    "/metrics",
+    tags=["Monitoring"],
+    summary="System Metrics",
+    description="""
+    Get detailed system metrics including:
+    - Cache statistics (hits, misses, size)
+    - Rate limiter statistics
+    - WebSocket connection stats
+    - Model information
+    """,
+)
 def metrics():
     """Get system metrics for monitoring."""
     with RequestLogger("GET /metrics"):
@@ -481,7 +545,12 @@ def metrics():
         }
 
 
-@app.get("/prometheus")
+@app.get(
+    "/prometheus",
+    tags=["Monitoring"],
+    summary="Prometheus Metrics",
+    description="Expose metrics in Prometheus format for scraping.",
+)
 def prometheus_metrics():
     """Expose Prometheus metrics in Prometheus format."""
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
@@ -499,7 +568,22 @@ def predict_raw(payload: FeaturePayload):
     return {"prob": float(prob)}
 
 
-@app.get("/predict_ticker/{ticker}")
+@app.get(
+    "/predict_ticker/{ticker}",
+    tags=["Predictions"],
+    summary="Predict Stock Movement",
+    description="""
+    Get ML prediction for a specific stock ticker.
+    
+    Uses machine learning model to predict likely price movement based on:
+    - Technical indicators (RSI, MACD, Bollinger Bands, Momentum)
+    - Historical price patterns
+    - Volume analysis
+    
+    Returns probability (0-1) where higher values indicate higher confidence
+    of upward movement.
+    """,
+)
 def predict_ticker(ticker: str):
     if MODEL is None:
         raise HTTPException(status_code=503, detail="No model available")
@@ -528,7 +612,21 @@ def predict_ticker(ticker: str):
     return {"prob": float(prob)}
 
 
-@app.get("/ranking")
+@app.get(
+    "/ranking",
+    tags=["Predictions"],
+    summary="Stock Rankings",
+    description="""
+    Get ranked list of stocks based on ML predictions.
+    
+    Supports filtering by:
+    - Country/region (e.g., 'Switzerland', 'Germany', 'United States')
+    - Custom ticker list (comma-separated)
+    - Top N results
+    
+    Returns stocks sorted by prediction probability (highest first).
+    """,
+)
 def ranking(tickers: str = "", country: str = "Global"):
     """Rank stocks by ML prediction probability.
     If no tickers provided, dynamically fetches top stocks for the specified country.
@@ -595,7 +693,22 @@ def ranking(tickers: str = "", country: str = "Global"):
     return {"ranking": result}
 
 
-@app.get("/crypto/ranking")
+@app.get(
+    "/crypto/ranking",
+    tags=["Cryptocurrency"],
+    summary="Cryptocurrency Rankings",
+    description="""
+    Get ranked cryptocurrencies based on momentum scoring.
+    
+    Scoring considers:
+    - Market cap rank (top coins weighted higher)
+    - 24h, 7d, 30d price changes
+    - Volume/market cap ratio (liquidity)
+    - Overall momentum score (0-1)
+    
+    Data sourced from CoinGecko API (no API key required).
+    """,
+)
 def crypto_ranking(
     crypto_ids: str = "",
     include_nft: bool = True,
@@ -643,7 +756,21 @@ def crypto_ranking(
         )
 
 
-@app.get("/crypto/search")
+@app.get(
+    "/crypto/search",
+    tags=["Cryptocurrency"],
+    summary="Search Cryptocurrency",
+    description="""
+    Search for a cryptocurrency by name or symbol.
+    
+    Examples:
+    - "bitcoin" or "BTC"
+    - "ethereum" or "ETH"
+    - "cardano" or "ADA"
+    
+    Returns detailed crypto information including price, market cap, and momentum score.
+    """,
+)
 def crypto_search(query: str):
     """
     Search for a cryptocurrency by name or symbol.
@@ -676,7 +803,22 @@ def crypto_search(query: str):
         )
 
 
-@app.get("/crypto/details/{crypto_id}")
+@app.get(
+    "/crypto/details/{crypto_id}",
+    tags=["Cryptocurrency"],
+    summary="Cryptocurrency Details",
+    description="""
+    Get detailed information for a specific cryptocurrency.
+    
+    Requires CoinGecko crypto ID (e.g., "bitcoin", "ethereum", "cardano").
+    
+    Returns comprehensive data including:
+    - Current price and market data
+    - Community statistics
+    - 24h/7d/30d price changes
+    - Market cap and volume
+    """,
+)
 def crypto_details(crypto_id: str):
     """
     Get detailed information for a specific cryptocurrency.
@@ -766,7 +908,121 @@ class AnalysisRequest(BaseModel):
     user_context: Optional[str] = None
 
 
-@app.post("/analyze")
+# Response Models for OpenAPI documentation
+class HealthResponse(BaseModel):
+    """Health check response with system status"""
+
+    status: str
+    timestamp: float
+    model_loaded: bool
+    openai_available: bool
+    api_healthy: bool
+    model_path: Optional[str] = None
+    model_size_mb: Optional[float] = None
+    openai_key_set: bool
+    cache_enabled: bool
+    cache_size: int
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "status": "ok",
+                "timestamp": 1704067200.0,
+                "model_loaded": True,
+                "openai_available": True,
+                "api_healthy": True,
+                "model_path": "models/rf_model.pkl",
+                "model_size_mb": 25.3,
+                "openai_key_set": True,
+                "cache_enabled": True,
+                "cache_size": 42,
+            }
+        }
+
+
+class PredictionResponse(BaseModel):
+    """ML model prediction response"""
+
+    ticker: str
+    probability: float
+    prediction: int
+    technical_indicators: Optional[Dict[str, float]] = None
+    cached: bool = False
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "ticker": "AAPL",
+                "probability": 0.73,
+                "prediction": 1,
+                "technical_indicators": {
+                    "RSI": 65.2,
+                    "MACD": 1.45,
+                    "BB_upper": 152.3,
+                    "BB_lower": 145.8,
+                },
+                "cached": False,
+            }
+        }
+
+
+class StockRanking(BaseModel):
+    """Individual stock ranking item"""
+
+    ticker: str
+    company_name: str
+    probability: float
+    current_price: Optional[float] = None
+    market_cap: Optional[float] = None
+    sector: Optional[str] = None
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "ticker": "AAPL",
+                "company_name": "Apple Inc.",
+                "probability": 0.73,
+                "current_price": 150.25,
+                "market_cap": 2400000000000,
+                "sector": "Technology",
+            }
+        }
+
+
+class CryptoRanking(BaseModel):
+    """Individual cryptocurrency ranking item"""
+
+    crypto_id: str
+    symbol: str
+    name: str
+    probability: float
+    momentum_score: float
+    price: float
+    change_24h: float
+    change_7d: float
+    market_cap: float
+    market_cap_rank: int
+    image: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "crypto_id": "bitcoin",
+                "symbol": "BTC",
+                "name": "Bitcoin",
+                "probability": 0.85,
+                "momentum_score": 0.85,
+                "price": 45000.0,
+                "change_24h": 5.2,
+                "change_7d": 10.5,
+                "market_cap": 850000000000,
+                "market_cap_rank": 1,
+                "image": "https://assets.coingecko.com/coins/images/1/large/bitcoin.png",
+            }
+        }
+
+
+@app.post("/analyze", tags=["AI Analysis"])
 def analyze(request: AnalysisRequest) -> Dict[str, Any]:
     """Use LLM to analyze ranking and provide buy/sell recommendations."""
     if not OPENAI_CLIENT:

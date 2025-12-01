@@ -1,6 +1,7 @@
 import argparse
 import logging
 import shutil
+from typing import Optional, Tuple
 import yfinance as yf
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -42,7 +43,20 @@ features = [
 ]
 
 
-def compute_macd(series, fast=12, slow=26, signal=9):
+def compute_macd(
+    series: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9
+) -> Tuple[pd.Series, pd.Series]:
+    """Compute MACD (Moving Average Convergence Divergence) indicator.
+    
+    Args:
+        series: Price series to compute MACD on
+        fast: Fast EMA period (default: 12)
+        slow: Slow EMA period (default: 26)
+        signal: Signal line period (default: 9)
+    
+    Returns:
+        Tuple of (MACD line, Signal line)
+    """
     fast_ema = series.ewm(span=fast, adjust=False).mean()
     slow_ema = series.ewm(span=slow, adjust=False).mean()
     macd = fast_ema - slow_ema
@@ -50,7 +64,16 @@ def compute_macd(series, fast=12, slow=26, signal=9):
     return macd, sig
 
 
-def compute_bollinger(series, window=20):
+def compute_bollinger(series: pd.Series, window: int = 20) -> Tuple[pd.Series, pd.Series]:
+    """Compute Bollinger Bands.
+    
+    Args:
+        series: Price series to compute bands on
+        window: Rolling window size (default: 20)
+    
+    Returns:
+        Tuple of (upper band, lower band)
+    """
     sma = series.rolling(window).mean()
     std = series.rolling(window).std()
     upper = sma + (std * 2)
@@ -58,11 +81,29 @@ def compute_bollinger(series, window=20):
     return upper, lower
 
 
-def compute_momentum(series, period=10):
+def compute_momentum(series: pd.Series, period: int = 10) -> pd.Series:
+    """Compute momentum as percentage change over period.
+    
+    Args:
+        series: Price series
+        period: Number of periods to look back (default: 10)
+    
+    Returns:
+        Momentum series
+    """
     return series.pct_change(period)
 
 
-def compute_rsi(series, period=14):
+def compute_rsi(series: pd.Series, period: int = 14) -> pd.Series:
+    """Compute RSI (Relative Strength Index).
+    
+    Args:
+        series: Price series
+        period: RSI period (default: 14)
+    
+    Returns:
+        RSI series (0-100)
+    """
     delta = series.diff()
     gain = delta.where(delta > 0, 0).rolling(period).mean()
     loss = (-delta.where(delta < 0, 0)).rolling(period).mean()
@@ -70,7 +111,16 @@ def compute_rsi(series, period=14):
     return 100 - (100 / (1 + rs))
 
 
-def load_data(ticker, period="5y"):
+def load_data(ticker: str, period: str = "5y") -> Optional[pd.DataFrame]:
+    """Load historical price data for a ticker.
+    
+    Args:
+        ticker: Stock ticker symbol
+        period: Time period (e.g., "5y", "1y", "6mo")
+    
+    Returns:
+        DataFrame with OHLCV data, or None if failed
+    """
     try:
         df = yf.download(ticker, period=period, interval="1d", auto_adjust=False)
     except Exception as e:
