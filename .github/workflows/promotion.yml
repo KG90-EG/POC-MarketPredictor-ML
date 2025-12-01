@@ -26,7 +26,11 @@ jobs:
           python training/trainer.py
       - name: Evaluate and Promote
         run: |
-          NEWMODEL=$(ls models | sort -r | head -n1)
+          NEWMODEL=$(ls -t models/model_*.bin 2>/dev/null | head -n1 | xargs basename)
+          if [ -z "$NEWMODEL" ]; then
+            echo "No new model found to evaluate"
+            exit 1
+          fi
           python training/evaluate_and_promote.py --new-model models/$NEWMODEL --prod-model models/prod_model.bin --tickers AAPL,MSFT,NVDA
       - name: Upload prod model to S3 (optional)
         env:
