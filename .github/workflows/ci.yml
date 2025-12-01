@@ -33,8 +33,8 @@ jobs:
         python -m pytest -q
     - name: Lint & Format Check
       run: |
-        flake8 . --max-line-length=120 --exclude=.venv,venv,node_modules,frontend,archive,01_Trading_Fun/tests
-        black --check . --exclude='/(\.venv|venv|node_modules|frontend|archive|01_Trading_Fun)/'
+        flake8 trading_fun/ training/ backtest/ scripts/ --max-line-length=120
+        black --check trading_fun/ training/ backtest/ scripts/
     - name: Build Docker image
       run: |
         docker build -t trading_fun:latest .
