@@ -35,6 +35,10 @@ export default [
         Event: 'readonly',
         EventSource: 'readonly',
         URL: 'readonly',
+        URLSearchParams: 'readonly',
+        alert: 'readonly',
+        global: 'writable',
+        vi: 'readonly',
       },
     },
     settings: {

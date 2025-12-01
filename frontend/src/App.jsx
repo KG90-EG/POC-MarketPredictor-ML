@@ -4,6 +4,9 @@ import { api, handleApiError } from './api'
 import ErrorBoundary from './components/ErrorBoundary'
 import HealthCheck from './components/HealthCheck'
 import Tooltip from './components/Tooltip'
+import HelpModal from './components/HelpModal'
+import CompanyDetailSidebar from './components/CompanyDetailSidebar'
+import AIAnalysisSection from './components/AIAnalysisSection'
 import './styles.css'
 
 // Create a React Query client
@@ -856,36 +859,13 @@ function AppContent() {
       {portfolioView === 'stocks' && results.length > 0 && (
         <>
           {/* AI Analysis Section */}
-          <section className="analysis-section" role="region" aria-label="AI analysis context input">
-            <label>
-              <strong>🤖 Optional context for AI analysis</strong>
-              <textarea 
-                value={userContext}
-                onChange={(e) => setUserContext(e.target.value)}
-                placeholder="e.g., I'm interested in tech stocks with growth potential, looking for long-term investments..."
-                rows={3}
-                aria-label="Enter context for AI analysis"
-              />
-            </label>
-            <button onClick={requestAnalysis} disabled={analyzing} aria-label="Request AI analysis and recommendations">
-              {analyzing ? (
-                <>
-                  <span className="spinner"></span>
-                  Analyzing...
-                </>
-              ) : (
-                '✨ Get AI Recommendations'
-              )}
-            </button>
-          </section>
-
-          {/* AI Analysis Result */}
-          {analysis && (
-            <section className="analysis-result" role="region" aria-label="AI analysis results">
-              <h3>💡 AI Analysis & Recommendations</h3>
-              <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>{analysis}</p>
-            </section>
-          )}
+          <AIAnalysisSection
+            userContext={userContext}
+            onContextChange={setUserContext}
+            onAnalyze={requestAnalysis}
+            analyzing={analyzing}
+            analysis={analysis}
+          />
 
           {/* Ranked Stocks Table */}
           <h2>Ranked Stocks</h2>
@@ -1012,175 +992,10 @@ function AppContent() {
       )}
 
       {/* Help Modal */}
-      {showHelp && (
-        <div 
-          className="modal-overlay" 
-          onClick={() => setShowHelp(false)}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="help-modal-title"
-        >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button 
-              className="modal-close" 
-              onClick={() => setShowHelp(false)}
-              aria-label="Close help modal"
-            >
-              ×
-            </button>
-            <h2 id="help-modal-title">📚 How to Use Trading Fun</h2>
-            
-            <div className="help-section">
-              <h3>🚀 Getting Started</h3>
-              <p>Rankings load automatically when you open the app. The system analyzes 50 popular stocks using machine learning and provides buy/sell recommendations.</p>
-            </div>
-
-            <div className="help-section">
-              <h3>📊 Understanding the Rankings</h3>
-              <ul>
-                <li><strong>Probability:</strong> ML model's confidence in stock outperformance (higher = better)</li>
-                <li><strong>Rank Badges:</strong> Top 3 stocks get gold, silver, and bronze badges</li>
-                <li><strong>Color Indicators:</strong> Green = price up, Red = price down</li>
-              </ul>
-            </div>
-
-            <div className="help-section">
-              <h3>🎯 Buy/Sell Signals</h3>
-              <ul>
-                <li><strong>STRONG BUY</strong> (≥65%): High confidence opportunity</li>
-                <li><strong>BUY</strong> (≥55%): Good buying opportunity</li>
-                <li><strong>HOLD</strong> (45-54%): Maintain position</li>
-                <li><strong>CONSIDER SELLING</strong> (35-44%): Weak position</li>
-                <li><strong>SELL</strong> (&lt;35%): Exit recommended</li>
-              </ul>
-            </div>
-
-            <div className="help-section">
-              <h3>🔍 Navigation</h3>
-              <ul>
-                <li><strong>Pagination:</strong> Use dropdown to jump to any page, or Previous/Next buttons</li>
-                <li><strong>Click a row:</strong> Opens detailed company information sidebar</li>
-                <li><strong>Search:</strong> Look up specific stocks not in the main ranking</li>
-                <li><strong>Refresh:</strong> Reload latest market data and rankings</li>
-              </ul>
-            </div>
-
-            <div className="help-section">
-              <h3>🤖 AI Analysis (Optional)</h3>
-              <p>Add context like "focus on tech stocks" or "conservative portfolio" to get personalized AI-powered recommendations. The system provides specific buy/sell advice, risk assessment, and action plans.</p>
-            </div>
-
-            <div className="help-section">
-              <h3>🌓 Theme Toggle</h3>
-              <p>Click the sun/moon icon to switch between light and dark modes. Your preference is saved automatically.</p>
-            </div>
-          </div>
-        </div>
-      )}
+      <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
 
       {/* Company Detail Sidebar */}
-      {selectedCompany && (
-        <>
-          <div 
-            className="sidebar-overlay" 
-            onClick={() => setSelectedCompany(null)}
-            aria-hidden="true"
-          ></div>
-          <aside 
-            className="sidebar"
-            role="complementary"
-            aria-labelledby="sidebar-title"
-          >
-            <button 
-              className="sidebar-close" 
-              onClick={() => setSelectedCompany(null)}
-              aria-label="Close company details"
-            >
-              ×
-            </button>
-            
-            {selectedCompany.loading ? (
-              <div style={{ textAlign: 'center', padding: '40px' }}>
-                <span className="spinner"></span>
-                <p>Loading company details...</p>
-              </div>
-            ) : selectedCompany.error ? (
-              <div style={{ padding: '20px', color: '#e74c3c' }} role="alert">
-                <p>{selectedCompany.error}</p>
-              </div>
-            ) : (
-              <div className="sidebar-content">
-                <h2 id="sidebar-title">{selectedCompany.ticker}</h2>
-                <p className="company-name">{selectedCompany.name || 'N/A'}</p>
-                {selectedCompany.country && (
-                  <p className="company-country">🌍 {selectedCompany.country}</p>
-                )}
-                
-                <div className="detail-section">
-                  <h3>🎯 Trading Signal</h3>
-                  <div className={`signal-badge signal-${selectedCompany.signal?.toLowerCase().replace(/ /g, '-')}`}>
-                    {selectedCompany.signal}
-                  </div>
-                  <p className="probability">ML Probability: {selectedCompany.prob ? `${(selectedCompany.prob * 100).toFixed(2)}%` : 'N/A'}</p>
-                </div>
-
-                <div className="detail-section">
-                  <h3>💰 Price Information</h3>
-                  <div className="detail-grid">
-                    <div className="detail-item">
-                      <span className="detail-label">Current Price</span>
-                      <span className="detail-value">{selectedCompany.price ? `$${selectedCompany.price.toFixed(2)}` : 'N/A'}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Change %</span>
-                      <span className={`detail-value ${selectedCompany.change > 0 ? 'positive' : selectedCompany.change < 0 ? 'negative' : ''}`}>
-                        {selectedCompany.change ? `${selectedCompany.change > 0 ? '+' : ''}${selectedCompany.change.toFixed(2)}%` : 'N/A'}
-                      </span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">52-Week High</span>
-                      <span className="detail-value">{selectedCompany.fifty_two_week_high ? `$${selectedCompany.fifty_two_week_high.toFixed(2)}` : 'N/A'}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">52-Week Low</span>
-                      <span className="detail-value">{selectedCompany.fifty_two_week_low ? `$${selectedCompany.fifty_two_week_low.toFixed(2)}` : 'N/A'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="detail-section">
-                  <h3>📊 Market Data</h3>
-                  <div className="detail-grid">
-                    <div className="detail-item">
-                      <span className="detail-label">Market Cap</span>
-                      <span className="detail-value">{formatNumber(selectedCompany.market_cap)}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">Volume</span>
-                      <span className="detail-value">{selectedCompany.volume ? selectedCompany.volume.toLocaleString() : 'N/A'}</span>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">P/E Ratio</span>
-                      <span className="detail-value">{selectedCompany.pe_ratio ? selectedCompany.pe_ratio.toFixed(2) : 'N/A'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="detail-section">
-                  <h3>💡 Recommendation</h3>
-                  <p className="recommendation-text">
-                    {selectedCompany.signal === 'STRONG BUY' && 'This stock shows strong potential for outperformance based on ML analysis. Consider adding to your portfolio.'}
-                    {selectedCompany.signal === 'BUY' && 'Positive signals indicate good buying opportunity. Review fundamentals before investing.'}
-                    {selectedCompany.signal === 'HOLD' && 'Neutral signals suggest maintaining current position. Monitor for changes.'}
-                    {selectedCompany.signal === 'CONSIDER SELLING' && 'Weak signals detected. Consider reducing position or exiting.'}
-                    {selectedCompany.signal === 'SELL' && 'ML model suggests poor performance outlook. Consider exiting position.'}
-                  </p>
-                </div>
-              </div>
-            )}
-          </aside>
-        </>
-      )}
+      <CompanyDetailSidebar company={selectedCompany} onClose={() => setSelectedCompany(null)} />
       
       </main>
       
