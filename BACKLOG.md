@@ -318,7 +318,7 @@ docker-compose up -d prometheus grafana
 ---
 
 ### Documentation Enhancements
-**Status**: ✅ 40% Complete  
+**Status**: ✅ 85% Complete  
 **Type**: Documentation  
 **Priority**: Low
 
@@ -331,13 +331,19 @@ docker-compose up -d prometheus grafana
   - Interactive Swagger UI at /docs
   - ReDoc at /redoc
   - OpenAPI schema at /openapi.json
+- ✅ **Contributing Guidelines** (CONTRIBUTING.md)
+  - Code standards (Python: Black/Flake8, JS: ESLint/Prettier)
+  - PR process and commit conventions (Conventional Commits)
+  - Setup instructions and troubleshooting
+  - Testing requirements and examples
+  - Accessibility guidelines
+- ✅ **Architecture Decision Records (ADRs)**
+  - ADR-001: Architecture Overview (FastAPI + React + Vite)
+  - ADR-002: Model Training Strategy (XGBoost + Online Learning)
+  - ADR-003: Caching Strategy (TTL Cache + Rate Limiting)
 
 **Remaining**:
-- Component library documentation (Storybook)
-- Deployment guide enhancements
-- Troubleshooting guide expansion
-- Contributing guidelines
-- Architecture decision records (ADRs)
+- Component library documentation (Storybook, ~1 day, optional)
 
 ---
 
