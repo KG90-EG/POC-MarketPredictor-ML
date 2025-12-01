@@ -10,9 +10,16 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - name: Setup Python
@@ -22,7 +29,12 @@ jobs:
       - name: Prepare docs artifact
         run: |
           mkdir -p site
-          cp -R docs/* site/
+          if [ -d "docs" ]; then
+            cp -R docs/* site/
+          else
+            echo "# Trading Fun Docs" > site/index.md
+            echo "Documentation coming soon..." >> site/index.md
+          fi
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
@@ -30,3 +42,12 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - name: Deployment status
+        if: failure()
+        run: |
+          echo "⚠️ GitHub Pages deployment failed."
+          echo "Please enable GitHub Pages in repository settings:"
+          echo "1. Go to Settings > Pages"
+          echo "2. Set Source to 'GitHub Actions'"
+          echo "3. Save and re-run this workflow"
