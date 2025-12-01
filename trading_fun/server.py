@@ -377,6 +377,27 @@ def row_from_features(feat_dict: Dict[str, Any]):
     return pd.DataFrame([row])
 
 
+@app.get("/")
+def root():
+    """Root endpoint with API information."""
+    return {
+        "name": "POC-MarketPredictor-ML API",
+        "version": "1.0.0",
+        "description": "Machine Learning powered stock ranking and analysis",
+        "endpoints": {
+            "docs": "/docs",
+            "redoc": "/redoc",
+            "health": "/health",
+            "metrics": "/metrics",
+            "ranking": "/ranking",
+            "ticker_info": "/ticker_info/{ticker}",
+            "predict": "/predict_ticker/{ticker}",
+            "analyze": "/analyze"
+        },
+        "status": "operational"
+    }
+
+
 @app.get("/health")
 def health():
     """Enhanced health check with dependency status."""
