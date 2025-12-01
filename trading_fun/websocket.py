@@ -5,9 +5,8 @@ WebSocket manager for real-time market data updates.
 import asyncio
 import logging
 from typing import Dict, Set
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket
 import yfinance as yf
-import json
 
 logger = logging.getLogger(__name__)
 

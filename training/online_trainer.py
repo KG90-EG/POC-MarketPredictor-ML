@@ -10,7 +10,6 @@ except Exception:
     ColumnTransformer = None
 
 from trading_fun.trading import build_dataset
-import numpy as np
 
 
 def run_online_training(tickers=["AAPL", "MSFT", "NVDA"], n_iter=1000):

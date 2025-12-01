@@ -1,11 +1,10 @@
-from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 import joblib
 import os
-import logging
 from dotenv import load_dotenv
 from .trading import (
     features,
@@ -113,7 +112,6 @@ COUNTRY_INDICES = {
 def get_top_stocks_from_index(index_symbol: str, limit: int = 30) -> List[str]:
     """Dynamically fetch top stocks from a market index."""
     try:
-        index = yf.Ticker(index_symbol)
         # For indices, we'll use a curated list approach with validation
         # This is more reliable than trying to parse index constituents
         return []
@@ -536,7 +534,8 @@ def list_models() -> Dict[str, Any]:
 
 @app.get("/ticker_info/{ticker}")
 def ticker_info(ticker: str) -> Dict[str, Any]:
-    """Fetch comprehensive market data for a ticker including price, volume, market cap, P/E ratio, and 52-week range."""
+    """Fetch comprehensive market data for a ticker including price, volume,
+    market cap, P/E ratio, and 52-week range."""
     try:
         stock = yf.Ticker(ticker)
         info = stock.info

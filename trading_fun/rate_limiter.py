@@ -4,7 +4,7 @@ Rate limiting middleware for FastAPI.
 
 import time
 from collections import defaultdict
-from typing import Dict, Tuple
+from typing import Dict
 from fastapi import Request, HTTPException, status
 from starlette.middleware.base import BaseHTTPMiddleware
 

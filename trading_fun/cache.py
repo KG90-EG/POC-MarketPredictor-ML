@@ -5,7 +5,6 @@ Redis-based caching with fallback to in-memory cache.
 import json
 import logging
 import os
-from datetime import timedelta
 from typing import Any, Optional
 
 logger = logging.getLogger(__name__)

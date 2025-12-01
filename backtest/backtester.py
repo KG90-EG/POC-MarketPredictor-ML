@@ -17,7 +17,6 @@ def simulate_strategy(
     df["position"] = 0
     df["pnl"] = 0.0
     # naive approach: if signal -> buy one share and hold for 90 days
-    positions = []
     for i in range(len(df)):
         if df["signal"].iat[i] == 1:
             buy_price = df[price_col].iat[i]
@@ -55,8 +54,6 @@ def from_predictions(preds: Iterable, prices: Iterable, threshold: float = 0.5):
 
 if __name__ == "__main__":
     # small example
-    import numpy as np
-
     prices = np.linspace(10, 20, 500)
     probs = np.random.rand(500)
     df, metrics = from_predictions(probs, prices, threshold=0.9)

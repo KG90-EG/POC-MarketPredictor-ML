@@ -1,11 +1,9 @@
 """Trainer script that can be used by CI/CD or a scheduled job to retrain and save models."""
 
 import os
-import sys
 from datetime import datetime
 from trading_fun.trading import build_dataset, train_model
 import mlflow
-import os
 
 try:
     import boto3  # optional
