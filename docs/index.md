@@ -61,8 +61,27 @@ pre-commit install
 pre-commit run --all-files
 ```
 
+## Documentation
+
+### Core Documentation
+- [README](../README.md) - Main project documentation
+- [SPEC](../SPEC.md) - Technical specification
+- [DEPLOYMENT](../DEPLOYMENT.md) - Deployment guide
+- [BACKLOG](../BACKLOG.md) - Project backlog and planned features
+
+### Current Features
+- [Production Features](PRODUCTION_FEATURES.md) - Production-ready capabilities
+- [Frontend Components](FRONTEND_COMPONENTS.md) - React component library
+- [Next Level Summary](NEXT_LEVEL_SUMMARY.md) - Advanced features
+
+### Historical Documentation
+- [History Index](history/README.md) - Archived implementation docs
+- [Implementation Summary](history/IMPLEMENTATION_SUMMARY.md)
+- [Architecture Review](history/ARCHITECTURE_REVIEW.md)
+- [Improvements Guide](history/IMPROVEMENTS.md)
+
 ## Contributing
-Open a PR from `dev` to `main`. Use the template and ensure CI passes.
+Open a PR from `dev` to `main`. Use the template and ensure CI passes. See [BACKLOG.md](../BACKLOG.md) for planned features and issues.
 
 ---
 Generated docs are published via GitHub Pages workflow.

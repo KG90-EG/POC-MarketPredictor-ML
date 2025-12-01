@@ -313,13 +313,23 @@ function AppContent() {
 
   return (
     <div className="container">
-      <div className="header">
-        <button className="theme-toggle" onClick={toggleDarkMode} title="Toggle theme">
+      {/* Skip Navigation Link */}
+      <a href="#main-content" className="skip-link">Skip to main content</a>
+      
+      <header className="header" role="banner">
+        <button 
+          className="theme-toggle" 
+          onClick={toggleDarkMode} 
+          aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
+          title={`Toggle ${darkMode ? 'light' : 'dark'} mode`}
+        >
           {darkMode ? '☀️' : '🌙'}
         </button>
         <button 
           className={`health-indicator ${healthStatus}`} 
           onClick={() => setShowHealthPanel(!showHealthPanel)} 
+          aria-label={`System health status: ${healthStatus}. Click to view details.`}
+          aria-expanded={showHealthPanel}
           title="System Health"
         >
           {healthStatus === 'healthy' && '✅'}
@@ -327,18 +337,24 @@ function AppContent() {
           {healthStatus === 'error' && '❌'}
           {healthStatus === 'loading' && '⏳'}
         </button>
-        <button className="help-button" onClick={() => setShowHelp(true)} title="Help & Guide">
+        <button 
+          className="help-button" 
+          onClick={() => setShowHelp(true)} 
+          aria-label="Open help and usage guide"
+          title="Help & Guide"
+        >
           ❓
         </button>
-        <h1><span className="emoji">📈</span> POC Trading Overview</h1>
+        <h1><span className="emoji" aria-hidden="true">📈</span> POC Trading Overview</h1>
         <p>AI-Powered Stock Ranking & Analysis</p>
-      </div>
+      </header>
       
       {/* Health Check Section - Toggle visibility */}
       <HealthCheck isOpen={showHealthPanel} onClose={() => setShowHealthPanel(false)} />
       
+      <main id="main-content" role="main">
       {/* Portfolio View Toggle */}
-      <div className="card" style={{marginBottom: '24px'}}>
+      <section className="card" style={{marginBottom: '24px'}} role="region" aria-label="Portfolio view selector">
         <div className="card-title">📊 Portfolio View</div>
         <div style={{display: 'flex', gap: '16px', marginTop: '12px'}}>
           <button
@@ -346,6 +362,8 @@ function AppContent() {
               setPortfolioView('stocks')
               if (results.length === 0) fetchRanking()
             }}
+            aria-label="Switch to stocks and shares portfolio view"
+            aria-pressed={portfolioView === 'stocks'}
             style={{
               flex: 1,
               padding: '16px 24px',
@@ -377,6 +395,8 @@ function AppContent() {
               setPortfolioView('crypto')
               if (cryptoResults.length === 0) fetchCryptoRanking()
             }}
+            aria-label="Switch to digital assets and cryptocurrency portfolio view"
+            aria-pressed={portfolioView === 'crypto'}
             style={{
               flex: 1,
               padding: '16px 24px',
@@ -403,11 +423,11 @@ function AppContent() {
             </div>
           </button>
         </div>
-      </div>
+      </section>
       
       {/* Market View Selector - Only for stocks */}
       {portfolioView === 'stocks' && (
-      <div className="card">
+      <section className="card" role="region" aria-label="Market view selector">
         <div className="card-title">
           🌍 Market View - {selectedViews.join(', ')}
           {!loading && results.length > 0 && (
@@ -437,6 +457,8 @@ function AppContent() {
                   setSelectedViews(newViews)
                   fetchRanking(newViews)
                 }}
+                aria-label={`${view} market view`}
+                aria-pressed={isSelected}
                 style={{
                   padding: '10px 20px',
                   background: isSelected ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f0f0f0',
@@ -465,7 +487,7 @@ function AppContent() {
         </div>
         
         {loading ? (
-          <div style={{textAlign: 'center', padding: '40px'}}>
+          <div style={{textAlign: 'center', padding: '40px'}} role="status" aria-live="polite" aria-atomic="true">
             <span className="spinner"></span>
             <p>Loading {selectedViews.join(', ')} market rankings...</p>
             {loadingProgress.total > 0 && (
@@ -500,12 +522,12 @@ function AppContent() {
             Select a market view above to analyze top performers for a diversified portfolio
           </p>
         )}
-      </div>
+      </section>
       )}
 
       {/* Digital Assets / Crypto View */}
       {portfolioView === 'crypto' && (
-        <div className="card">
+        <section className="card" role="region" aria-label="Digital assets and cryptocurrency rankings">
           <div className="card-title">
             ₿ Digital Assets Rankings
             {!cryptoLoading && cryptoResults.length > 0 && (
@@ -526,6 +548,7 @@ function AppContent() {
                     fetchCryptoRanking()
                   }
                 }}
+                aria-label="Include NFT-related tokens in rankings"
                 style={{width: '18px', height: '18px'}}
               />
               <span style={{fontSize: '0.95rem'}}>Include NFT tokens</span>
@@ -542,6 +565,7 @@ function AppContent() {
                     setTimeout(() => fetchCryptoRanking(), 100)
                   }
                 }}
+                aria-label="Select number of cryptocurrencies to display"
                 style={{
                   padding: '6px 12px',
                   border: '2px solid #ddd',
@@ -560,6 +584,7 @@ function AppContent() {
             <button 
               onClick={fetchCryptoRanking}
               disabled={cryptoLoading}
+              aria-label="Refresh cryptocurrency rankings from CoinGecko"
               style={{
                 padding: '8px 16px',
                 background: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
@@ -576,7 +601,7 @@ function AppContent() {
           </div>
           
           {cryptoLoading ? (
-            <div style={{textAlign: 'center', padding: '40px'}}>
+            <div style={{textAlign: 'center', padding: '40px'}} role="status" aria-live="polite" aria-atomic="true">
               <span className="spinner"></span>
               <p>Loading digital assets rankings...</p>
             </div>
@@ -586,26 +611,26 @@ function AppContent() {
                 ℹ️ <strong>Digital Assets powered by CoinGecko API.</strong> Momentum scores consider market cap rank, price trends (24h/7d/30d), and liquidity.
               </div>
               
-              <table>
+              <table aria-label="Digital assets and cryptocurrency rankings table">
                 <thead>
                   <tr>
-                    <th>Rank</th>
-                    <th>Asset</th>
-                    <th>Symbol</th>
-                    <th>
+                    <th scope="col">Rank</th>
+                    <th scope="col">Asset</th>
+                    <th scope="col">Symbol</th>
+                    <th scope="col">
                       <Tooltip content="Momentum score (0-100%). Higher scores indicate better recent performance, market cap rank, and liquidity. Similar to probability score for stocks." position="top">
                         Momentum Score ⓘ
                       </Tooltip>
                     </th>
-                    <th>Price (USD)</th>
-                    <th>
+                    <th scope="col">Price (USD)</th>
+                    <th scope="col">
                       <Tooltip content="24-hour price change percentage. Crypto markets are highly volatile - double-digit changes are common." position="top">
                         24h Change ⓘ
                       </Tooltip>
                     </th>
-                    <th>7d Change</th>
-                    <th>Market Cap</th>
-                    <th>Volume/MCap</th>
+                    <th scope="col">7d Change</th>
+                    <th scope="col">Market Cap</th>
+                    <th scope="col">Volume/MCap</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -671,7 +696,7 @@ function AppContent() {
               
               {/* Pagination Controls */}
               {cryptoResults.length > cryptoPerPage && (
-                <div style={{
+                <nav aria-label="Cryptocurrency results pagination" style={{
                   marginTop: '20px',
                   display: 'flex',
                   justifyContent: 'center',
@@ -681,6 +706,7 @@ function AppContent() {
                   <button
                     onClick={() => setCryptoPage(Math.max(1, cryptoPage - 1))}
                     disabled={cryptoPage === 1}
+                    aria-label="Go to previous page"
                     style={{
                       padding: '8px 16px',
                       background: cryptoPage === 1 ? '#e0e0e0' : 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
@@ -695,7 +721,7 @@ function AppContent() {
                     ← Previous
                   </button>
                   
-                  <span style={{fontSize: '0.9rem', fontWeight: '500'}}>
+                  <span style={{fontSize: '0.9rem', fontWeight: '500'}} aria-live="polite" aria-atomic="true">
                     Page {cryptoPage} of {Math.ceil(cryptoResults.length / cryptoPerPage)} 
                     <span style={{color: '#666', marginLeft: '8px'}}>
                       ({(cryptoPage - 1) * cryptoPerPage + 1}-{Math.min(cryptoPage * cryptoPerPage, cryptoResults.length)} of {cryptoResults.length})
@@ -705,6 +731,7 @@ function AppContent() {
                   <button
                     onClick={() => setCryptoPage(Math.min(Math.ceil(cryptoResults.length / cryptoPerPage), cryptoPage + 1))}
                     disabled={cryptoPage >= Math.ceil(cryptoResults.length / cryptoPerPage)}
+                    aria-label="Go to next page"
                     style={{
                       padding: '8px 16px',
                       background: cryptoPage >= Math.ceil(cryptoResults.length / cryptoPerPage) ? '#e0e0e0' : 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
@@ -718,7 +745,7 @@ function AppContent() {
                   >
                     Next →
                   </button>
-                </div>
+                </nav>
               )}
             </div>
           ) : (
@@ -726,13 +753,13 @@ function AppContent() {
               Click "Refresh Rankings" to load digital assets data
             </p>
           )}
-        </div>
+        </section>
       )}
 
       {/* Search Section - Only for stocks */}
       {portfolioView === 'stocks' && (
       <>
-      <div className="card">
+      <section className="card" role="region" aria-label="Search for individual stocks">
         <div className="card-title">🔍 Search Individual Stock</div>
         <div className="search-controls">
           <label>
@@ -742,9 +769,10 @@ function AppContent() {
               onChange={(e) => setSearchTicker(e.target.value)}
               onKeyPress={(e) => handleKeyPress(e, performSearch)}
               placeholder="e.g., AMD, META, NFLX"
+              aria-label="Enter stock symbol to search"
             />
           </label>
-          <button onClick={performSearch} disabled={searchLoading}>
+          <button onClick={performSearch} disabled={searchLoading} aria-label="Search for stock by symbol">
             {searchLoading ? (
               <>
                 <span className="spinner"></span>
@@ -755,31 +783,31 @@ function AppContent() {
             )}
           </button>
         </div>
-      </div>
+      </section>
 
       {/* Search Result */}
       {searchResult && searchResultDetails && (
-        <div className="search-result">
+        <section className="search-result" role="region" aria-label="Stock search results">
           <h2>🎯 Search Result</h2>
-          <table>
+          <table aria-label="Search result details table">
             <thead>
               <tr>
-                <th>Stock</th>
-                <th>Name</th>
-                <th>Country</th>
-                <th>
+                <th scope="col">Stock</th>
+                <th scope="col">Name</th>
+                <th scope="col">Country</th>
+                <th scope="col">
                   <Tooltip content="AI confidence score (0-100%). Higher scores indicate stronger buy signals based on technical indicators, price trends, and market data. 65%+ is strong buy, 55-65% is buy, 45-55% is hold, 35-45% consider selling, below 35% is sell." position="top">
                     Probability ⓘ
                   </Tooltip>
                 </th>
-                <th>Price</th>
-                <th>
+                <th scope="col">Price</th>
+                <th scope="col">
                   <Tooltip content="Daily price change percentage. Positive (+) values indicate the stock is up today, negative (-) values mean it's down. Strong moves are typically ±3% or more for established stocks." position="top">
                     Change % ⓘ
                   </Tooltip>
                 </th>
-                <th>Volume</th>
-                <th>Market Cap</th>
+                <th scope="col">Volume</th>
+                <th scope="col">Market Cap</th>
               </tr>
             </thead>
             <tbody>
@@ -819,7 +847,7 @@ function AppContent() {
               </tr>
             </tbody>
           </table>
-        </div>
+        </section>
       )}
       </>
       )}
@@ -828,7 +856,7 @@ function AppContent() {
       {portfolioView === 'stocks' && results.length > 0 && (
         <>
           {/* AI Analysis Section */}
-          <div className="analysis-section">
+          <section className="analysis-section" role="region" aria-label="AI analysis context input">
             <label>
               <strong>🤖 Optional context for AI analysis</strong>
               <textarea 
@@ -836,9 +864,10 @@ function AppContent() {
                 onChange={(e) => setUserContext(e.target.value)}
                 placeholder="e.g., I'm interested in tech stocks with growth potential, looking for long-term investments..."
                 rows={3}
+                aria-label="Enter context for AI analysis"
               />
             </label>
-            <button onClick={requestAnalysis} disabled={analyzing}>
+            <button onClick={requestAnalysis} disabled={analyzing} aria-label="Request AI analysis and recommendations">
               {analyzing ? (
                 <>
                   <span className="spinner"></span>
@@ -848,39 +877,39 @@ function AppContent() {
                 '✨ Get AI Recommendations'
               )}
             </button>
-          </div>
+          </section>
 
           {/* AI Analysis Result */}
           {analysis && (
-            <div className="analysis-result">
+            <section className="analysis-result" role="region" aria-label="AI analysis results">
               <h3>💡 AI Analysis & Recommendations</h3>
               <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>{analysis}</p>
-            </div>
+            </section>
           )}
 
           {/* Ranked Stocks Table */}
           <h2>Ranked Stocks</h2>
-          <table>
+          <table aria-label="Ranked stocks results table">
             <thead>
               <tr>
-                <th>Rank</th>
-                <th>Stock</th>
-                <th>Name</th>
-                <th>Country</th>
-                <th>Signal</th>
-                <th>
+                <th scope="col">Rank</th>
+                <th scope="col">Stock</th>
+                <th scope="col">Name</th>
+                <th scope="col">Country</th>
+                <th scope="col">Signal</th>
+                <th scope="col">
                   <Tooltip content="AI confidence score (0-100%). Higher scores indicate stronger buy signals based on technical indicators, price trends, and market data. 65%+ is strong buy, 55-65% is buy, 45-55% is hold, 35-45% consider selling, below 35% is sell." position="top">
                     Probability ⓘ
                   </Tooltip>
                 </th>
-                <th>Price</th>
-                <th>
+                <th scope="col">Price</th>
+                <th scope="col">
                   <Tooltip content="Daily price change percentage. Positive (+) values indicate the stock is up today, negative (-) values mean it's down. Strong moves are typically ±3% or more for established stocks." position="top">
                     Change % ⓘ
                   </Tooltip>
                 </th>
-                <th>Volume</th>
-                <th>Market Cap</th>
+                <th scope="col">Volume</th>
+                <th scope="col">Market Cap</th>
               </tr>
             </thead>
             <tbody>
@@ -1126,6 +1155,8 @@ function AppContent() {
           </div>
         </>
       )}
+      
+      </main>
       
       {/* Footer */}
       <footer style={{
