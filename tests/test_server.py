@@ -8,16 +8,12 @@ import numpy as np
 
 @pytest.fixture
 def client():
-    """Create test client"""
-    with patch('trading_fun.server.MODEL') as mock_model:
-        mock_model.predict_proba.return_value = [[0.3, 0.7]]
-        mock_model.predict.return_value = [1]
-        
-        # Import after patching to avoid loading real model
-        from trading_fun.server import app
-        
-        with TestClient(app) as test_client:
-            yield test_client
+    """Create test client - uses real app with loaded model"""
+    # Import app (it will use the real MODEL or None if not found)
+    from trading_fun.server import app
+    
+    with TestClient(app) as test_client:
+        yield test_client
 
 
 class TestHealthEndpoint:

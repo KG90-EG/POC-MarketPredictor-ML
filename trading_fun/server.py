@@ -359,14 +359,6 @@ if os.path.exists(MODEL_PATH):
     MODEL = joblib.load(MODEL_PATH)
     LOADED_MODEL_PATH = MODEL_PATH
 
-# Optional: mount built frontend if available (expects Vite build in frontend/dist)
-FRONTEND_DIST = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
-)
-if os.path.isdir(FRONTEND_DIST):
-    app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
-
-
 class FeaturePayload(BaseModel):
     features: Dict[str, float]
 
@@ -816,3 +808,12 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     except Exception as e:
         logger.error(f"WebSocket error for client {client_id}: {e}")
         ws_manager.disconnect(client_id)
+
+
+# Mount frontend static files LAST so API routes take precedence
+# This must come after all route definitions to avoid catching API routes
+FRONTEND_DIST = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+)
+if os.path.isdir(FRONTEND_DIST):
+    app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
