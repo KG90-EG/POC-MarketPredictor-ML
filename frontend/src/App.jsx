@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { api, handleApiError } from './api'
 import ErrorBoundary from './components/ErrorBoundary'
 import HealthCheck from './components/HealthCheck'
+import Tooltip from './components/Tooltip'
 import './styles.css'
 
 // Create a React Query client
@@ -39,6 +40,15 @@ function AppContent() {
     const saved = localStorage.getItem('darkMode')
     return saved ? JSON.parse(saved) : false
   })
+  
+  // Digital Assets / Crypto state
+  const [portfolioView, setPortfolioView] = useState('stocks') // 'stocks' or 'crypto'
+  const [cryptoResults, setCryptoResults] = useState([])
+  const [cryptoLoading, setCryptoLoading] = useState(false)
+  const [includeNFT, setIncludeNFT] = useState(true)
+  const [cryptoLimit, setCryptoLimit] = useState(50)
+  const [cryptoPage, setCryptoPage] = useState(1)
+  const [cryptoPerPage] = useState(20) // Items per page
 
   useEffect(() => {
     document.body.classList.toggle('dark-mode', darkMode)
@@ -150,6 +160,28 @@ function AppContent() {
       }
     }
     setTickerDetails(details)
+  }
+
+  async function fetchCryptoRanking() {
+    setCryptoLoading(true)
+    setCryptoPage(1) // Reset to first page
+    try {
+      const resp = await api.getCryptoRanking('', includeNFT, 0.0, cryptoLimit)
+      const rankings = resp.data.ranking || []
+      setCryptoResults(rankings)
+    } catch (e) {
+      const error = handleApiError(e, 'Error fetching crypto rankings')
+      let errorMessage = `Failed to load crypto rankings: ${error.message}`
+      if (error.isNetworkError) {
+        errorMessage = '⚠️ Network error: Unable to connect to the backend.'
+      } else if (error.isRateLimit) {
+        errorMessage = '⏱️ Rate limit exceeded. Please wait a moment and try again.'
+      }
+      alert(errorMessage)
+      console.error('Crypto ranking fetch error:', error)
+    } finally {
+      setCryptoLoading(false)
+    }
   }
 
   async function requestAnalysis() {
@@ -305,7 +337,76 @@ function AppContent() {
       {/* Health Check Section - Toggle visibility */}
       <HealthCheck isOpen={showHealthPanel} onClose={() => setShowHealthPanel(false)} />
       
-      {/* Market View Selector */}
+      {/* Portfolio View Toggle */}
+      <div className="card" style={{marginBottom: '24px'}}>
+        <div className="card-title">📊 Portfolio View</div>
+        <div style={{display: 'flex', gap: '16px', marginTop: '12px'}}>
+          <button
+            onClick={() => {
+              setPortfolioView('stocks')
+              if (results.length === 0) fetchRanking()
+            }}
+            style={{
+              flex: 1,
+              padding: '16px 24px',
+              background: portfolioView === 'stocks' 
+                ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
+                : '#f0f0f0',
+              color: portfolioView === 'stocks' ? 'white' : '#333',
+              border: portfolioView === 'stocks' ? '3px solid #764ba2' : '2px solid #ddd',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              fontSize: '1rem',
+              transition: 'all 0.3s ease',
+              boxShadow: portfolioView === 'stocks' 
+                ? '0 6px 16px rgba(102, 126, 234, 0.5)' 
+                : '0 2px 8px rgba(0, 0, 0, 0.1)',
+              transform: portfolioView === 'stocks' ? 'scale(1.02)' : 'scale(1)'
+            }}
+          >
+            <div style={{fontSize: '2rem', marginBottom: '8px'}}>📈</div>
+            <div>Stocks & Shares</div>
+            <div style={{fontSize: '0.75rem', marginTop: '4px', opacity: 0.9}}>
+              Traditional equities, indices & ETFs
+            </div>
+          </button>
+          
+          <button
+            onClick={() => {
+              setPortfolioView('crypto')
+              if (cryptoResults.length === 0) fetchCryptoRanking()
+            }}
+            style={{
+              flex: 1,
+              padding: '16px 24px',
+              background: portfolioView === 'crypto' 
+                ? 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)' 
+                : '#f0f0f0',
+              color: portfolioView === 'crypto' ? 'white' : '#333',
+              border: portfolioView === 'crypto' ? '3px solid #ea580c' : '2px solid #ddd',
+              borderRadius: '12px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              fontSize: '1rem',
+              transition: 'all 0.3s ease',
+              boxShadow: portfolioView === 'crypto' 
+                ? '0 6px 16px rgba(245, 158, 11, 0.5)' 
+                : '0 2px 8px rgba(0, 0, 0, 0.1)',
+              transform: portfolioView === 'crypto' ? 'scale(1.02)' : 'scale(1)'
+            }}
+          >
+            <div style={{fontSize: '2rem', marginBottom: '8px'}}>₿</div>
+            <div>Digital Assets</div>
+            <div style={{fontSize: '0.75rem', marginTop: '4px', opacity: 0.9}}>
+              Crypto, NFTs, Bitcoin, Ethereum & more
+            </div>
+          </button>
+        </div>
+      </div>
+      
+      {/* Market View Selector - Only for stocks */}
+      {portfolioView === 'stocks' && (
       <div className="card">
         <div className="card-title">
           🌍 Market View - {selectedViews.join(', ')}
@@ -366,7 +467,7 @@ function AppContent() {
         {loading ? (
           <div style={{textAlign: 'center', padding: '40px'}}>
             <span className="spinner"></span>
-            <p>Loading {selectedView} market rankings...</p>
+            <p>Loading {selectedViews.join(', ')} market rankings...</p>
             {loadingProgress.total > 0 && (
               <div style={{marginTop: '16px'}}>
                 <div style={{
@@ -400,8 +501,237 @@ function AppContent() {
           </p>
         )}
       </div>
+      )}
 
-      {/* Search Section */}
+      {/* Digital Assets / Crypto View */}
+      {portfolioView === 'crypto' && (
+        <div className="card">
+          <div className="card-title">
+            ₿ Digital Assets Rankings
+            {!cryptoLoading && cryptoResults.length > 0 && (
+              <span style={{marginLeft: '8px', color: '#f59e0b', fontWeight: 'bold'}}>({cryptoResults.length})</span>
+            )}
+          </div>
+          
+          {/* NFT Toggle and Limit Selector */}
+          <div style={{marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap'}}>
+            <label style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
+              <input 
+                type="checkbox" 
+                checked={includeNFT}
+                onChange={(e) => {
+                  setIncludeNFT(e.target.checked)
+                  // Auto-refresh if crypto data is already loaded
+                  if (cryptoResults.length > 0) {
+                    fetchCryptoRanking()
+                  }
+                }}
+                style={{width: '18px', height: '18px'}}
+              />
+              <span style={{fontSize: '0.95rem'}}>Include NFT tokens</span>
+            </label>
+            
+            <label style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+              <span style={{fontSize: '0.95rem', fontWeight: '500'}}>Top:</span>
+              <select 
+                value={cryptoLimit}
+                onChange={(e) => {
+                  setCryptoLimit(Number(e.target.value))
+                  // Auto-refresh if crypto data is already loaded
+                  if (cryptoResults.length > 0) {
+                    setTimeout(() => fetchCryptoRanking(), 100)
+                  }
+                }}
+                style={{
+                  padding: '6px 12px',
+                  border: '2px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '0.9rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value={20}>20 cryptos</option>
+                <option value={50}>50 cryptos</option>
+                <option value={100}>100 cryptos</option>
+                <option value={200}>200 cryptos</option>
+              </select>
+            </label>
+            
+            <button 
+              onClick={fetchCryptoRanking}
+              disabled={cryptoLoading}
+              style={{
+                padding: '8px 16px',
+                background: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: cryptoLoading ? 'not-allowed' : 'pointer',
+                fontWeight: '600',
+                fontSize: '0.9rem'
+              }}
+            >
+              {cryptoLoading ? '⟳ Refreshing...' : '🔄 Refresh Rankings'}
+            </button>
+          </div>
+          
+          {cryptoLoading ? (
+            <div style={{textAlign: 'center', padding: '40px'}}>
+              <span className="spinner"></span>
+              <p>Loading digital assets rankings...</p>
+            </div>
+          ) : cryptoResults.length > 0 ? (
+            <div>
+              <div style={{marginBottom: '16px', padding: '12px', background: '#fef3c7', borderRadius: '8px', fontSize: '0.9rem'}}>
+                ℹ️ <strong>Digital Assets powered by CoinGecko API.</strong> Momentum scores consider market cap rank, price trends (24h/7d/30d), and liquidity.
+              </div>
+              
+              <table>
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Asset</th>
+                    <th>Symbol</th>
+                    <th>
+                      <Tooltip content="Momentum score (0-100%). Higher scores indicate better recent performance, market cap rank, and liquidity. Similar to probability score for stocks." position="top">
+                        Momentum Score ⓘ
+                      </Tooltip>
+                    </th>
+                    <th>Price (USD)</th>
+                    <th>
+                      <Tooltip content="24-hour price change percentage. Crypto markets are highly volatile - double-digit changes are common." position="top">
+                        24h Change ⓘ
+                      </Tooltip>
+                    </th>
+                    <th>7d Change</th>
+                    <th>Market Cap</th>
+                    <th>Volume/MCap</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cryptoResults.slice((cryptoPage - 1) * cryptoPerPage, cryptoPage * cryptoPerPage).map((crypto, idx) => {
+                    const actualRank = (cryptoPage - 1) * cryptoPerPage + idx + 1
+                    const changeClass = crypto.change_24h > 0 ? 'positive' : crypto.change_24h < 0 ? 'negative' : ''
+                    const change7dClass = crypto.change_7d > 0 ? 'positive' : crypto.change_7d < 0 ? 'negative' : ''
+                    
+                    return (
+                      <tr key={crypto.crypto_id} style={{cursor: 'default'}}>
+                        <td>
+                          <span className={actualRank <= 3 ? 'rank-badge gold' : 'rank-badge'}>{actualRank}</span>
+                        </td>
+                        <td>
+                          <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                            {crypto.image && (
+                              <img src={crypto.image} alt={crypto.name} style={{width: '24px', height: '24px', borderRadius: '50%'}} />
+                            )}
+                            <span style={{fontWeight: '600'}}>{crypto.name}</span>
+                          </div>
+                        </td>
+                        <td><span className="ticker-symbol">{crypto.symbol}</span></td>
+                        <td>
+                          <Tooltip 
+                            content={`${(crypto.momentum_score * 100).toFixed(2)}% momentum. Rank #${crypto.market_cap_rank} by market cap. ${crypto.momentum_score >= 0.65 ? 'Strong bullish signal' : crypto.momentum_score >= 0.55 ? 'Bullish momentum' : crypto.momentum_score >= 0.45 ? 'Neutral' : 'Weak momentum'}`}
+                            position="top"
+                          >
+                            <span className={crypto.momentum_score > 0.6 ? 'high-prob' : ''}>
+                              {(crypto.momentum_score * 100).toFixed(2)}%
+                            </span>
+                          </Tooltip>
+                        </td>
+                        <td>${crypto.price?.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 6}) || 'N/A'}</td>
+                        <td>
+                          <Tooltip 
+                            content={`${crypto.change_24h ? crypto.change_24h.toFixed(2) : 'N/A'}% in last 24 hours. ${crypto.change_24h > 10 ? '🚀 Major pump!' : crypto.change_24h > 5 ? 'Strong gain' : crypto.change_24h > 0 ? 'Slight increase' : crypto.change_24h < -10 ? '⚠️ Heavy drop' : crypto.change_24h < -5 ? 'Significant loss' : crypto.change_24h < 0 ? 'Minor decline' : 'Stable'}`}
+                            position="top"
+                          >
+                            <span className={changeClass}>
+                              {crypto.change_24h ? `${crypto.change_24h > 0 ? '+' : ''}${crypto.change_24h.toFixed(2)}%` : 'N/A'}
+                            </span>
+                          </Tooltip>
+                        </td>
+                        <td>
+                          <span className={change7dClass}>
+                            {crypto.change_7d ? `${crypto.change_7d > 0 ? '+' : ''}${crypto.change_7d.toFixed(2)}%` : 'N/A'}
+                          </span>
+                        </td>
+                        <td>${crypto.market_cap ? (crypto.market_cap / 1e9).toFixed(2) + 'B' : 'N/A'}</td>
+                        <td>
+                          <Tooltip 
+                            content={`${crypto.volume_to_mcap_ratio ? crypto.volume_to_mcap_ratio.toFixed(2) : 'N/A'}% - Trading volume as % of market cap. Higher = more liquid. 20%+ is excellent, 10-20% is good, <10% is lower liquidity.`}
+                            position="top"
+                          >
+                            {crypto.volume_to_mcap_ratio ? `${crypto.volume_to_mcap_ratio.toFixed(2)}%` : 'N/A'}
+                          </Tooltip>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              
+              {/* Pagination Controls */}
+              {cryptoResults.length > cryptoPerPage && (
+                <div style={{
+                  marginTop: '20px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}>
+                  <button
+                    onClick={() => setCryptoPage(Math.max(1, cryptoPage - 1))}
+                    disabled={cryptoPage === 1}
+                    style={{
+                      padding: '8px 16px',
+                      background: cryptoPage === 1 ? '#e0e0e0' : 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
+                      color: cryptoPage === 1 ? '#999' : 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: cryptoPage === 1 ? 'not-allowed' : 'pointer',
+                      fontWeight: '600',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    ← Previous
+                  </button>
+                  
+                  <span style={{fontSize: '0.9rem', fontWeight: '500'}}>
+                    Page {cryptoPage} of {Math.ceil(cryptoResults.length / cryptoPerPage)} 
+                    <span style={{color: '#666', marginLeft: '8px'}}>
+                      ({(cryptoPage - 1) * cryptoPerPage + 1}-{Math.min(cryptoPage * cryptoPerPage, cryptoResults.length)} of {cryptoResults.length})
+                    </span>
+                  </span>
+                  
+                  <button
+                    onClick={() => setCryptoPage(Math.min(Math.ceil(cryptoResults.length / cryptoPerPage), cryptoPage + 1))}
+                    disabled={cryptoPage >= Math.ceil(cryptoResults.length / cryptoPerPage)}
+                    style={{
+                      padding: '8px 16px',
+                      background: cryptoPage >= Math.ceil(cryptoResults.length / cryptoPerPage) ? '#e0e0e0' : 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
+                      color: cryptoPage >= Math.ceil(cryptoResults.length / cryptoPerPage) ? '#999' : 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: cryptoPage >= Math.ceil(cryptoResults.length / cryptoPerPage) ? 'not-allowed' : 'pointer',
+                      fontWeight: '600',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    Next →
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p style={{color: '#666', fontSize: '0.9rem', margin: '0', textAlign: 'center', padding: '20px'}}>
+              Click "Refresh Rankings" to load digital assets data
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Search Section - Only for stocks */}
+      {portfolioView === 'stocks' && (
+      <>
       <div className="card">
         <div className="card-title">🔍 Search Individual Stock</div>
         <div className="search-controls">
@@ -437,9 +767,17 @@ function AppContent() {
                 <th>Stock</th>
                 <th>Name</th>
                 <th>Country</th>
-                <th>Probability</th>
+                <th>
+                  <Tooltip content="AI confidence score (0-100%). Higher scores indicate stronger buy signals based on technical indicators, price trends, and market data. 65%+ is strong buy, 55-65% is buy, 45-55% is hold, 35-45% consider selling, below 35% is sell." position="top">
+                    Probability ⓘ
+                  </Tooltip>
+                </th>
                 <th>Price</th>
-                <th>Change %</th>
+                <th>
+                  <Tooltip content="Daily price change percentage. Positive (+) values indicate the stock is up today, negative (-) values mean it's down. Strong moves are typically ±3% or more for established stocks." position="top">
+                    Change % ⓘ
+                  </Tooltip>
+                </th>
                 <th>Volume</th>
                 <th>Market Cap</th>
               </tr>
@@ -456,15 +794,25 @@ function AppContent() {
                   <span className="country-tag">{searchResultDetails[searchResult.ticker]?.country || 'N/A'}</span>
                 </td>
                 <td>
-                  <span className={searchResult.prob > 0.6 ? 'high-prob' : ''}>
-                    {searchResult.prob != null ? `${(searchResult.prob * 100).toFixed(2)}%` : 'N/A'}
-                  </span>
+                  <Tooltip 
+                    content={`${searchResult.prob != null ? `${(searchResult.prob * 100).toFixed(2)}% confidence. ${searchResult.prob >= 0.65 ? 'Strong buy signal' : searchResult.prob >= 0.55 ? 'Buy signal' : searchResult.prob >= 0.45 ? 'Hold' : searchResult.prob >= 0.35 ? 'Consider selling' : 'Sell signal'}` : 'N/A'}`}
+                    position="top"
+                  >
+                    <span className={searchResult.prob > 0.6 ? 'high-prob' : ''}>
+                      {searchResult.prob != null ? `${(searchResult.prob * 100).toFixed(2)}%` : 'N/A'}
+                    </span>
+                  </Tooltip>
                 </td>
                 <td>{searchResultDetails[searchResult.ticker]?.price != null ? `$${searchResultDetails[searchResult.ticker].price.toFixed(2)}` : 'N/A'}</td>
                 <td>
-                  <span className={searchResultDetails[searchResult.ticker]?.change > 0 ? 'positive' : searchResultDetails[searchResult.ticker]?.change < 0 ? 'negative' : ''}>
-                    {searchResultDetails[searchResult.ticker]?.change != null ? `${searchResultDetails[searchResult.ticker].change > 0 ? '+' : ''}${searchResultDetails[searchResult.ticker].change.toFixed(2)}%` : 'N/A'}
-                  </span>
+                  <Tooltip 
+                    content={`${searchResultDetails[searchResult.ticker]?.change != null ? `${searchResultDetails[searchResult.ticker].change > 0 ? '+' : ''}${searchResultDetails[searchResult.ticker].change.toFixed(2)}% daily change. ${searchResultDetails[searchResult.ticker].change > 3 ? 'Strong upward move!' : searchResultDetails[searchResult.ticker].change > 0 ? 'Positive momentum' : searchResultDetails[searchResult.ticker].change < -3 ? 'Significant drop' : searchResultDetails[searchResult.ticker].change < 0 ? 'Slight decline' : 'No change'}` : 'N/A'}`}
+                    position="top"
+                  >
+                    <span className={searchResultDetails[searchResult.ticker]?.change > 0 ? 'positive' : searchResultDetails[searchResult.ticker]?.change < 0 ? 'negative' : ''}>
+                      {searchResultDetails[searchResult.ticker]?.change != null ? `${searchResultDetails[searchResult.ticker].change > 0 ? '+' : ''}${searchResultDetails[searchResult.ticker].change.toFixed(2)}%` : 'N/A'}
+                    </span>
+                  </Tooltip>
                 </td>
                 <td>{searchResultDetails[searchResult.ticker]?.volume != null ? searchResultDetails[searchResult.ticker].volume.toLocaleString() : 'N/A'}</td>
                 <td>{formatNumber(searchResultDetails[searchResult.ticker]?.market_cap)}</td>
@@ -473,9 +821,11 @@ function AppContent() {
           </table>
         </div>
       )}
+      </>
+      )}
 
-      {/* Results Section */}
-      {results.length > 0 && (
+      {/* Results Section - Only for stocks */}
+      {portfolioView === 'stocks' && results.length > 0 && (
         <>
           {/* AI Analysis Section */}
           <div className="analysis-section">
@@ -518,9 +868,17 @@ function AppContent() {
                 <th>Name</th>
                 <th>Country</th>
                 <th>Signal</th>
-                <th>Probability</th>
+                <th>
+                  <Tooltip content="AI confidence score (0-100%). Higher scores indicate stronger buy signals based on technical indicators, price trends, and market data. 65%+ is strong buy, 55-65% is buy, 45-55% is hold, 35-45% consider selling, below 35% is sell." position="top">
+                    Probability ⓘ
+                  </Tooltip>
+                </th>
                 <th>Price</th>
-                <th>Change %</th>
+                <th>
+                  <Tooltip content="Daily price change percentage. Positive (+) values indicate the stock is up today, negative (-) values mean it's down. Strong moves are typically ±3% or more for established stocks." position="top">
+                    Change % ⓘ
+                  </Tooltip>
+                </th>
                 <th>Volume</th>
                 <th>Market Cap</th>
               </tr>
@@ -563,15 +921,25 @@ function AppContent() {
                       </span>
                     </td>
                     <td>
-                      <span className={r.prob > 0.6 ? 'high-prob' : ''}>
-                        {(r.prob * 100).toFixed(2)}%
-                      </span>
+                      <Tooltip 
+                        content={`${(r.prob * 100).toFixed(2)}% confidence. ${r.prob >= 0.65 ? 'Strong buy signal - High confidence for upward movement' : r.prob >= 0.55 ? 'Buy signal - Good potential for growth' : r.prob >= 0.45 ? 'Hold - Neutral outlook' : r.prob >= 0.35 ? 'Consider selling - Weak performance expected' : 'Sell signal - Strong downward indicator'}`}
+                        position="top"
+                      >
+                        <span className={r.prob > 0.6 ? 'high-prob' : ''}>
+                          {(r.prob * 100).toFixed(2)}%
+                        </span>
+                      </Tooltip>
                     </td>
                     <td>{detail.price ? `$${detail.price.toFixed(2)}` : 'N/A'}</td>
                     <td>
-                      <span className={changeClass}>
-                        {detail.change ? `${detail.change > 0 ? '+' : ''}${detail.change.toFixed(2)}%` : 'N/A'}
-                      </span>
+                      <Tooltip 
+                        content={`${detail.change ? (detail.change > 0 ? `+${detail.change.toFixed(2)}%` : `${detail.change.toFixed(2)}%`) : 'N/A'} daily change. ${detail.change > 3 ? '🚀 Strong upward move!' : detail.change > 0 ? '✅ Positive momentum' : detail.change < -3 ? '⚠️ Significant drop' : detail.change < 0 ? '⬇️ Slight decline' : 'No change'}`}
+                        position="top"
+                      >
+                        <span className={changeClass}>
+                          {detail.change ? `${detail.change > 0 ? '+' : ''}${detail.change.toFixed(2)}%` : 'N/A'}
+                        </span>
+                      </Tooltip>
                     </td>
                     <td>{detail.volume ? detail.volume.toLocaleString() : 'N/A'}</td>
                     <td>{formatNumber(detail.market_cap)}</td>
@@ -758,6 +1126,30 @@ function AppContent() {
           </div>
         </>
       )}
+      
+      {/* Footer */}
+      <footer style={{
+        marginTop: '40px',
+        padding: '20px',
+        borderTop: '2px solid #e0e0e0',
+        textAlign: 'center',
+        fontSize: '0.85rem',
+        color: '#666'
+      }}>
+        {portfolioView === 'crypto' && (
+          <div style={{marginBottom: '12px'}}>
+            <p style={{margin: '0 0 8px 0'}}>
+              📊 Digital Assets data powered by <strong>CoinGecko API</strong>
+            </p>
+            <p style={{margin: '0', fontSize: '0.8rem', color: '#999'}}>
+              Live market data • Top {cryptoLimit} cryptocurrencies by market cap • Real-time momentum scoring
+            </p>
+          </div>
+        )}
+        <p style={{margin: '8px 0 0 0', fontSize: '0.8rem'}}>
+          © 2025 Trading Fun AI Market Predictor • Built with ML & FastAPI
+        </p>
+      </footer>
     </div>
   )
 }

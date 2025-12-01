@@ -53,6 +53,24 @@ export const api = {
 
   // Models info
   getModels: () => apiClient.get('/models'),
+
+  // Crypto/Digital Assets endpoints
+  getCryptoRanking: (cryptoIds = '', includeNft = true, minProbability = 0.0, limit = 50) => {
+    const params = new URLSearchParams()
+    if (cryptoIds) params.append('crypto_ids', cryptoIds)
+    params.append('include_nft', includeNft)
+    params.append('min_probability', minProbability)
+    params.append('limit', limit)
+    return apiClient.get(`/crypto/ranking?${params.toString()}`)
+  },
+
+  searchCrypto: (query) => {
+    const params = new URLSearchParams()
+    params.append('query', query)
+    return apiClient.get(`/crypto/search?${params.toString()}`)
+  },
+
+  getCryptoDetails: (cryptoId) => apiClient.get(`/crypto/details/${cryptoId}`),
 }
 
 // Error handler helper

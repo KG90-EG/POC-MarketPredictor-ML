@@ -13,6 +13,13 @@ from .trading import (
     compute_bollinger,
     compute_momentum,
 )
+from .crypto import (
+    get_crypto_ranking,
+    search_crypto,
+    get_crypto_details,
+    DEFAULT_CRYPTOS,
+    NFT_TOKENS,
+)
 import pandas as pd
 import yfinance as yf
 import hashlib
@@ -339,8 +346,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
+        "http://127.0.0.1:5173",
         "http://localhost:5174",
         "http://localhost:3000",
+        "null",  # For file:// protocol
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -521,6 +530,105 @@ def ranking(tickers: str = "", country: str = "Global"):
     # sort result
     result.sort(key=lambda r: r["prob"], reverse=True)
     return {"ranking": result}
+
+
+@app.get("/crypto/ranking")
+def crypto_ranking(
+    crypto_ids: str = "",
+    include_nft: bool = True,
+    min_probability: float = 0.0,
+    limit: int = 50
+):
+    """
+    Rank cryptocurrencies and digital assets by momentum score.
+    
+    Query Parameters:
+    - crypto_ids: Comma-separated list of CoinGecko crypto IDs (e.g., "bitcoin,ethereum")
+                  If empty, fetches top cryptos by market cap dynamically
+    - include_nft: Include NFT-related tokens when crypto_ids is empty (default: True)
+    - min_probability: Minimum probability threshold (default: 0.0)
+    - limit: Number of top cryptos to fetch when crypto_ids is empty (default: 50, max: 250)
+    
+    Returns:
+    - JSON with ranked list of cryptocurrencies with trading signals
+    """
+    try:
+        # Validate and cap limit
+        limit = min(max(1, limit), 250)
+        
+        # Parse crypto IDs if provided
+        crypto_list = None
+        if crypto_ids.strip():
+            crypto_list = [cid.strip().lower() for cid in crypto_ids.split(",") if cid.strip()]
+        
+        # Get ranked cryptocurrencies
+        rankings = get_crypto_ranking(
+            crypto_ids=crypto_list,
+            include_nft=include_nft,
+            min_probability=min_probability,
+            limit=limit
+        )
+        
+        return {"ranking": rankings}
+    
+    except Exception as e:
+        logger.error(f"Error in crypto_ranking endpoint: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch crypto rankings: {str(e)}")
+
+
+@app.get("/crypto/search")
+def crypto_search(query: str):
+    """
+    Search for a cryptocurrency by name or symbol.
+    
+    Query Parameters:
+    - query: Search query (name or symbol, e.g., "bitcoin", "BTC", "ethereum")
+    
+    Returns:
+    - JSON with crypto details and trading signals
+    """
+    if not query.strip():
+        raise HTTPException(status_code=400, detail="Query parameter is required")
+    
+    try:
+        result = search_crypto(query.strip())
+        
+        if result is None:
+            raise HTTPException(status_code=404, detail=f"Cryptocurrency '{query}' not found")
+        
+        return result
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in crypto_search endpoint: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to search crypto: {str(e)}")
+
+
+@app.get("/crypto/details/{crypto_id}")
+def crypto_details(crypto_id: str):
+    """
+    Get detailed information for a specific cryptocurrency.
+    
+    Path Parameters:
+    - crypto_id: CoinGecko crypto ID (e.g., "bitcoin", "ethereum")
+    
+    Returns:
+    - JSON with detailed crypto information
+    """
+    try:
+        details = get_crypto_details(crypto_id)
+        
+        if details is None:
+            raise HTTPException(status_code=404, detail=f"Cryptocurrency '{crypto_id}' not found")
+        
+        return details
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in crypto_details endpoint: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch crypto details: {str(e)}")
 
 
 @app.get("/models")
