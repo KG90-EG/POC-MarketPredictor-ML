@@ -17,8 +17,6 @@ from .crypto import (
     get_crypto_ranking,
     search_crypto,
     get_crypto_details,
-    DEFAULT_CRYPTOS,
-    NFT_TOKENS,
 )
 import pandas as pd
 import yfinance as yf
@@ -31,12 +29,7 @@ from .rate_limiter import RateLimiter
 from .logging_config import setup_logging, RequestLogger
 from .websocket import manager as ws_manager
 from .config import config as app_config
-from .services import (
-    StockService,
-    SignalService,
-    ValidationService,
-    HealthService
-)
+from .services import StockService, ValidationService, HealthService
 
 # Load environment variables from .env file
 load_dotenv()
@@ -326,7 +319,7 @@ def get_country_stocks(country: str) -> List[str]:
     try:
         # Validate country first
         country = ValidationService.validate_country(country)
-        
+
         # Use StockService to get stocks
         if country == "Global" or country == "United States":
             return app_config.market.default_stocks
@@ -408,21 +401,21 @@ def health():
             "status": "ok",
             "timestamp": time.time(),
         }
-        
+
         # Model health
         model_health = HealthService.check_model_health()
         health_status.update(model_health)
         health_status["model_loaded"] = MODEL is not None
-        
+
         # OpenAI health
         openai_health = HealthService.check_openai_health()
         health_status.update(openai_health)
         health_status["openai_available"] = OPENAI_CLIENT is not None
-        
+
         # Cache health
         cache_health = HealthService.check_cache_health()
         health_status.update(cache_health)
-        
+
         # Additional status flags for backwards compatibility
         health_status["api_healthy"] = True
 
@@ -536,44 +529,36 @@ def ranking(tickers: str = "", country: str = "Global"):
 
 
 @app.get("/crypto/ranking")
-def crypto_ranking(
-    crypto_ids: str = "",
-    include_nft: bool = True,
-    min_probability: float = 0.0,
-    limit: int = 50
-):
+def crypto_ranking(crypto_ids: str = "", include_nft: bool = True, min_probability: float = 0.0, limit: int = 50):
     """
     Rank cryptocurrencies and digital assets by momentum score.
-    
+
     Query Parameters:
     - crypto_ids: Comma-separated list of CoinGecko crypto IDs (e.g., "bitcoin,ethereum")
                   If empty, fetches top cryptos by market cap dynamically
     - include_nft: Include NFT-related tokens when crypto_ids is empty (default: True)
     - min_probability: Minimum probability threshold (default: 0.0)
     - limit: Number of top cryptos to fetch when crypto_ids is empty (default: 50, max: 250)
-    
+
     Returns:
     - JSON with ranked list of cryptocurrencies with trading signals
     """
     try:
         # Validate and cap limit
         limit = min(max(1, limit), 250)
-        
+
         # Parse crypto IDs if provided
         crypto_list = None
         if crypto_ids.strip():
             crypto_list = [cid.strip().lower() for cid in crypto_ids.split(",") if cid.strip()]
-        
+
         # Get ranked cryptocurrencies
         rankings = get_crypto_ranking(
-            crypto_ids=crypto_list,
-            include_nft=include_nft,
-            min_probability=min_probability,
-            limit=limit
+            crypto_ids=crypto_list, include_nft=include_nft, min_probability=min_probability, limit=limit
         )
-        
+
         return {"ranking": rankings}
-    
+
     except Exception as e:
         logger.error(f"Error in crypto_ranking endpoint: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch crypto rankings: {str(e)}")
@@ -583,24 +568,24 @@ def crypto_ranking(
 def crypto_search(query: str):
     """
     Search for a cryptocurrency by name or symbol.
-    
+
     Query Parameters:
     - query: Search query (name or symbol, e.g., "bitcoin", "BTC", "ethereum")
-    
+
     Returns:
     - JSON with crypto details and trading signals
     """
     if not query.strip():
         raise HTTPException(status_code=400, detail="Query parameter is required")
-    
+
     try:
         result = search_crypto(query.strip())
-        
+
         if result is None:
             raise HTTPException(status_code=404, detail=f"Cryptocurrency '{query}' not found")
-        
+
         return result
-    
+
     except HTTPException:
         raise
     except Exception as e:
@@ -612,21 +597,21 @@ def crypto_search(query: str):
 def crypto_details(crypto_id: str):
     """
     Get detailed information for a specific cryptocurrency.
-    
+
     Path Parameters:
     - crypto_id: CoinGecko crypto ID (e.g., "bitcoin", "ethereum")
-    
+
     Returns:
     - JSON with detailed crypto information
     """
     try:
         details = get_crypto_details(crypto_id)
-        
+
         if details is None:
             raise HTTPException(status_code=404, detail=f"Cryptocurrency '{crypto_id}' not found")
-        
+
         return details
-    
+
     except HTTPException:
         raise
     except Exception as e:
@@ -639,9 +624,7 @@ def list_models() -> Dict[str, Any]:
     """List available model artifacts in the models directory.
     Returns current loaded model filename and list of other model files with sizes.
     """
-    models_dir = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "models")
-    )
+    models_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "models"))
     items: List[Dict[str, Any]] = []
     if os.path.isdir(models_dir):
         for fname in sorted(os.listdir(models_dir)):
@@ -663,7 +646,7 @@ def ticker_info(ticker: str) -> Dict[str, Any]:
         try:
             # Validate ticker
             ticker = ValidationService.validate_ticker(ticker)
-            
+
             # Use StockService to get info
             info = StockService.get_ticker_info(ticker)
             info["ticker"] = ticker
@@ -696,14 +679,10 @@ class AnalysisRequest(BaseModel):
 def analyze(request: AnalysisRequest) -> Dict[str, Any]:
     """Use LLM to analyze ranking and provide buy/sell recommendations."""
     if not OPENAI_CLIENT:
-        raise HTTPException(
-            status_code=503, detail="LLM not configured (set OPENAI_API_KEY)"
-        )
+        raise HTTPException(status_code=503, detail="LLM not configured (set OPENAI_API_KEY)")
 
     # Create cache key from ranking + context
-    cache_key = hashlib.md5(
-        f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()
-    ).hexdigest()
+    cache_key = hashlib.md5(f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()).hexdigest()
 
     # Check cache
     cached_data = cache.get(f"analysis:{cache_key}")
@@ -755,11 +734,7 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
                     "rank": rank,
                     "ticker": r["ticker"],
                     "prob": r["prob"],
-                    "signal": (
-                        "BUY"
-                        if r["prob"] >= 0.55
-                        else "HOLD" if r["prob"] >= 0.45 else "SELL"
-                    ),
+                    "signal": ("BUY" if r["prob"] >= 0.55 else "HOLD" if r["prob"] >= 0.45 else "SELL"),
                 }
             )
 
@@ -809,7 +784,7 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
                 }
 
                 # Cache the result
-                cache.set(f"analysis:{cache_key}", result, ttl_seconds=CACHE_TTL)
+                cache.set(f"analysis:{cache_key}", result, ttl_seconds=app_config.cache.ai_analysis_ttl)
 
                 return result
             except Exception as e:
@@ -822,8 +797,7 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
                     else:
                         raise HTTPException(
                             status_code=429,
-                            detail="OpenAI rate limit exceeded. "
-                            "Please wait a moment and try again.",
+                            detail="OpenAI rate limit exceeded. " "Please wait a moment and try again.",
                         )
                 else:
                     raise
@@ -858,18 +832,12 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
             if action == "subscribe" and ticker:
                 ws_manager.subscribe(client_id, ticker)
-                await ws_manager.send_personal_message(
-                    {"type": "subscribed", "ticker": ticker}, client_id
-                )
+                await ws_manager.send_personal_message({"type": "subscribed", "ticker": ticker}, client_id)
             elif action == "unsubscribe" and ticker:
                 ws_manager.unsubscribe(client_id, ticker)
-                await ws_manager.send_personal_message(
-                    {"type": "unsubscribed", "ticker": ticker}, client_id
-                )
+                await ws_manager.send_personal_message({"type": "unsubscribed", "ticker": ticker}, client_id)
             elif action == "ping":
-                await ws_manager.send_personal_message(
-                    {"type": "pong", "timestamp": time.time()}, client_id
-                )
+                await ws_manager.send_personal_message({"type": "pong", "timestamp": time.time()}, client_id)
             else:
                 await ws_manager.send_personal_message(
                     {"type": "error", "message": "Invalid action or missing ticker"},
@@ -886,8 +854,6 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
 # Mount frontend static files LAST so API routes take precedence
 # This must come after all route definitions to avoid catching API routes
-FRONTEND_DIST = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
-)
+FRONTEND_DIST = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
 if os.path.isdir(FRONTEND_DIST):
     app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
