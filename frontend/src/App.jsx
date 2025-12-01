@@ -1178,7 +1178,7 @@ function AppContent() {
                 </div>
               </div>
             )}
-          </div>
+          </aside>
         </>
       )}
       
