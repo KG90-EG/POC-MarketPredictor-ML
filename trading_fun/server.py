@@ -30,26 +30,31 @@ from .cache import cache
 from .rate_limiter import RateLimiter
 from .logging_config import setup_logging, RequestLogger
 from .websocket import manager as ws_manager
+from .config import config as app_config
+from .services import (
+    StockService,
+    SignalService,
+    ValidationService,
+    HealthService
+)
 
 # Load environment variables from .env file
 load_dotenv()
 
+# Validate configuration
+app_config.validate()
+
 # Setup structured logging
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-logger = setup_logging(LOG_LEVEL)
+logger = setup_logging(app_config.logging.log_level)
 
 try:
     from openai import OpenAI
 
-    OPENAI_CLIENT = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    OPENAI_CLIENT = OpenAI(api_key=app_config.api.openai_api_key)
     logger.info("OpenAI client initialized successfully")
 except Exception as e:
     OPENAI_CLIENT = None
     logger.warning(f"OpenAI client not available: {e}")
-
-# Cache TTL constants
-CACHE_TTL = 300  # 5 minutes for AI analysis
-COUNTRY_CACHE_TTL = 3600  # 1 hour for country stocks
 
 # Default popular stocks for automatic ranking
 DEFAULT_STOCKS = [
@@ -317,26 +322,22 @@ def get_stocks_by_country(country: str, limit: int = 30) -> List[str]:
 
 
 def get_country_stocks(country: str) -> List[str]:
-    """Get stocks for country with caching."""
-    # Try cache first
-    cache_key = f"country_stocks:{country}"
-    cached_stocks = cache.get(cache_key)
-    if cached_stocks:
-        logger.debug(f"Cache hit for country: {country}")
-        return cached_stocks
-
-    # Fetch and cache
-    logger.info(f"Fetching stocks for country: {country}")
-    if country == "Global" or country == "United States":
-        stocks = DEFAULT_STOCKS
-    else:
-        stocks = get_stocks_by_country(country, limit=30)
-        if not stocks:  # Fallback to default if fetch fails
-            logger.warning(f"No stocks found for {country}, using defaults")
-            stocks = DEFAULT_STOCKS
-
-    cache.set(cache_key, stocks, ttl_seconds=COUNTRY_CACHE_TTL)
-    return stocks
+    """Get stocks for country using StockService with caching."""
+    try:
+        # Validate country first
+        country = ValidationService.validate_country(country)
+        
+        # Use StockService to get stocks
+        if country == "Global" or country == "United States":
+            return app_config.market.default_stocks
+        else:
+            return StockService.get_stocks_by_country(country, limit=30)
+    except ValueError as e:
+        logger.error(f"Invalid country: {country}, error: {e}")
+        return app_config.market.default_stocks
+    except Exception as e:
+        logger.error(f"Error fetching stocks for {country}: {e}")
+        return app_config.market.default_stocks
 
 
 app = FastAPI()
@@ -357,11 +358,10 @@ app.add_middleware(
 )
 
 # Add rate limiting middleware
-REQUESTS_PER_MINUTE = int(os.getenv("RATE_LIMIT_RPM", "60"))
-rate_limiter = RateLimiter(app, requests_per_minute=REQUESTS_PER_MINUTE)
-logger.info(f"Rate limiting enabled: {REQUESTS_PER_MINUTE} requests/minute")
+rate_limiter = RateLimiter(app, requests_per_minute=app_config.api.rate_limit_rpm)
+logger.info(f"Rate limiting enabled: {app_config.api.rate_limit_rpm} requests/minute")
 
-MODEL_PATH = os.environ.get("PROD_MODEL_PATH", "models/prod_model.bin")
+MODEL_PATH = app_config.model.prod_model_path
 MODEL = None
 LOADED_MODEL_PATH = None
 if os.path.exists(MODEL_PATH):
@@ -402,26 +402,29 @@ def root():
 
 @app.get("/health")
 def health():
-    """Enhanced health check with dependency status."""
+    """Enhanced health check with dependency status using HealthService."""
     with RequestLogger("GET /health"):
         health_status = {
             "status": "ok",
-            "model_loaded": MODEL is not None,
-            "model_path": LOADED_MODEL_PATH,
-            "openai_available": OPENAI_CLIENT is not None,
-            "cache_backend": "redis" if cache.redis_client else "in-memory",
             "timestamp": time.time(),
         }
-
-        # Check Redis connectivity
-        if cache.redis_client:
-            try:
-                cache.redis_client.ping()
-                health_status["redis_status"] = "connected"
-            except Exception as e:
-                health_status["redis_status"] = "disconnected"
-                health_status["redis_error"] = str(e)
-                logger.warning(f"Redis health check failed: {e}")
+        
+        # Model health
+        model_health = HealthService.check_model_health()
+        health_status.update(model_health)
+        health_status["model_loaded"] = MODEL is not None
+        
+        # OpenAI health
+        openai_health = HealthService.check_openai_health()
+        health_status.update(openai_health)
+        health_status["openai_available"] = OPENAI_CLIENT is not None
+        
+        # Cache health
+        cache_health = HealthService.check_cache_health()
+        health_status.update(cache_health)
+        
+        # Additional status flags for backwards compatibility
+        health_status["api_healthy"] = True
 
         return health_status
 
@@ -655,71 +658,33 @@ def list_models() -> Dict[str, Any]:
 
 @app.get("/ticker_info/{ticker}")
 def ticker_info(ticker: str) -> Dict[str, Any]:
-    """Fetch comprehensive market data for a ticker including price, volume,
-    market cap, P/E ratio, and 52-week range."""
-    try:
-        stock = yf.Ticker(ticker)
-        info = stock.info
-        return {
-            "ticker": ticker,
-            "price": info.get("currentPrice", info.get("regularMarketPrice")),
-            "change": info.get("regularMarketChangePercent"),
-            "volume": info.get("volume"),
-            "market_cap": info.get("marketCap"),
-            "name": info.get("longName", ticker),
-            "pe_ratio": info.get("trailingPE"),
-            "fifty_two_week_high": info.get("fiftyTwoWeekHigh"),
-            "fifty_two_week_low": info.get("fiftyTwoWeekLow"),
-            "country": info.get("country", "Unknown"),
-        }
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Unable to fetch info: {str(e)}")
+    """Fetch comprehensive market data for a ticker using StockService."""
+    with RequestLogger(f"GET /ticker_info/{ticker}"):
+        try:
+            # Validate ticker
+            ticker = ValidationService.validate_ticker(ticker)
+            
+            # Use StockService to get info
+            info = StockService.get_ticker_info(ticker)
+            info["ticker"] = ticker
+            return info
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            logger.error(f"Error fetching info for {ticker}: {e}")
+            raise HTTPException(status_code=404, detail=f"Unable to fetch info: {str(e)}")
 
 
 @app.post("/ticker_info_batch")
 def ticker_info_batch(tickers: List[str]) -> Dict[str, Any]:
-    """Batch fetch ticker information for multiple stocks in parallel.
-    Returns dict mapping ticker to info, with errors for failed tickers.
-    """
-    import concurrent.futures
-
-    results = {}
-    errors = {}
-
-    def fetch_single(ticker: str):
+    """Batch fetch ticker information using StockService for parallel processing."""
+    with RequestLogger("POST /ticker_info_batch"):
         try:
-            stock = yf.Ticker(ticker)
-            info = stock.info
-            return (
-                ticker,
-                {
-                    "ticker": ticker,
-                    "price": info.get("currentPrice", info.get("regularMarketPrice")),
-                    "change": info.get("regularMarketChangePercent"),
-                    "volume": info.get("volume"),
-                    "market_cap": info.get("marketCap"),
-                    "name": info.get("longName", ticker),
-                    "pe_ratio": info.get("trailingPE"),
-                    "fifty_two_week_high": info.get("fiftyTwoWeekHigh"),
-                    "fifty_two_week_low": info.get("fiftyTwoWeekLow"),
-                    "country": info.get("country", "Unknown"),
-                },
-                None,
-            )
+            results, errors = StockService.get_ticker_info_batch(tickers)
+            return {"results": results, "errors": errors}
         except Exception as e:
-            return ticker, None, str(e)
-
-    # Fetch in parallel with thread pool (max 10 concurrent)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        futures = [executor.submit(fetch_single, t) for t in tickers]
-        for future in concurrent.futures.as_completed(futures):
-            ticker, data, error = future.result()
-            if error:
-                errors[ticker] = error
-            else:
-                results[ticker] = data
-
-    return {"results": results, "errors": errors}
+            logger.error(f"Batch ticker info fetch failed: {e}")
+            raise HTTPException(status_code=500, detail=f"Batch fetch failed: {str(e)}")
 
 
 class AnalysisRequest(BaseModel):
