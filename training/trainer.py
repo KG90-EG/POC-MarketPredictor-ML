@@ -28,14 +28,14 @@ def main():
     except Exception as e:
         print(f"ERROR: Failed to build dataset: {e}")
         return
-    
+
     model_path = os.path.abspath(
         os.path.join(
             "models", f'model_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.bin'
         )
     )
     os.makedirs(os.path.dirname(model_path), exist_ok=True)
-    
+
     # Use mlflow to track the training run
     try:
         with mlflow.start_run():
