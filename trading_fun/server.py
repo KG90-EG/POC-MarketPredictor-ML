@@ -350,7 +350,6 @@ app.add_middleware(
 # Add rate limiting middleware
 REQUESTS_PER_MINUTE = int(os.getenv("RATE_LIMIT_RPM", "60"))
 rate_limiter = RateLimiter(app, requests_per_minute=REQUESTS_PER_MINUTE)
-app.add_middleware(RateLimiter, requests_per_minute=REQUESTS_PER_MINUTE)
 logger.info(f"Rate limiting enabled: {REQUESTS_PER_MINUTE} requests/minute")
 
 MODEL_PATH = os.environ.get("PROD_MODEL_PATH", "models/prod_model.bin")

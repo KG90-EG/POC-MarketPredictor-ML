@@ -49,22 +49,49 @@ pip install -r requirements.txt
 cd frontend && npm install
 ```
 
-2. **Start the backend:**
+2. **Optional - Configure environment variables:**
+```bash
+# Copy example environment file (everything works without this!)
+cp .env.example .env
+
+# Edit .env if you want to enable optional features:
+# - OpenAI API for AI analysis
+# - Redis for distributed caching
+# - AWS S3 for model storage
+# See .env.example and SECRETS.md for details
+```
+
+3. **Start the backend:**
 ```bash
 uvicorn trading_fun.server:app --reload
 ```
 
-3. **Start the frontend (in new terminal):**
+4. **Start the frontend (in new terminal):**
 ```bash
 cd frontend && npm run dev
 ```
 
-4. **Open browser:** Navigate to `http://localhost:5173`
+5. **Open browser:** Navigate to `http://localhost:5173`
    - Select a market view (Global, Switzerland, Germany, UK, France, Japan, Canada)
    - Rankings load automatically showing top stocks from selected market
    - Browse paginated results (10 per page)
    - Click any stock for detailed analysis with country information
    - Use search to look up specific stocks
+
+### Running Tests
+```bash
+# Run all tests
+pytest
+
+# Run with verbose output
+pytest -v
+
+# Run specific test file
+pytest tests/test_trading.py
+
+# Run tests with coverage (if pytest-cov installed)
+pytest --cov=trading_fun --cov-report=html
+```
 
 ### What You'll See
 - **Market View Selector**: Choose from 8 different markets (US, Switzerland, Germany, UK, France, Japan, Canada)
@@ -101,9 +128,28 @@ https://github.com/KG90-EG/Trading-Fun/pull/new/dev
 ```
 4. Review & Merge PR (squash or merge commit) — GitHub Actions will run CI.
 
+## Configuration
+
+### Environment Variables
+The application is configured via environment variables. See `.env.example` for all options:
+- Copy `.env.example` to `.env` to customize settings
+- **Everything works with defaults** - no configuration needed!
+- Optional features: OpenAI API, Redis caching, AWS S3 storage
+- See detailed docs in `.env.example`
+
+### GitHub Secrets (for CI/CD)
+For automated deployments, add secrets in GitHub repository settings:
+- **NETLIFY_AUTH_TOKEN**, **NETLIFY_SITE_ID** - Frontend deployment
+- **AWS_ACCESS_KEY_ID**, **AWS_SECRET_ACCESS_KEY**, **S3_BUCKET** - Model storage
+- **CR_PAT** - Docker image publishing
+- **MLFLOW_TRACKING_URI** - ML experiment tracking
+
+📚 **See [SECRETS.md](SECRETS.md) for detailed setup instructions**
+
 Deployment tips:
-- Add GitHub secrets: `MLFLOW_TRACKING_URI`, `CR_PAT`, and `S3_BUCKET` if you wish to upload models.
-- Configure your production environment to use `models/prod_model.bin` as the production model.
+- All secrets are **optional** - CI works without them
+- Workflows gracefully skip steps when secrets aren't configured
+- Configure only the features you need
 
 ## Lint & Format
 Run lint and format checks locally (CI enforces these):

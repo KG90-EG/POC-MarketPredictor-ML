@@ -26,9 +26,11 @@ class CacheManager:
         self.redis_client = None
         self.in_memory_cache = {}
         self.cache_timestamps = {}
+        self._redis_connection_attempted = False
+        self._use_redis = os.getenv("USE_REDIS", "false").lower() in ["true", "1", "yes"]
 
-        # Try to connect to Redis if available
-        if REDIS_AVAILABLE:
+        # Only try to connect to Redis if explicitly enabled
+        if REDIS_AVAILABLE and self._use_redis:
             redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
             try:
                 self.redis_client = redis.from_url(
@@ -39,12 +41,18 @@ class CacheManager:
                 )
                 # Test connection
                 self.redis_client.ping()
-                logger.info(f"Connected to Redis at {redis_url}")
+                logger.info(f"✅ Connected to Redis at {redis_url}")
+                self._redis_connection_attempted = True
             except Exception as e:
-                logger.warning(
-                    f"Could not connect to Redis: {e}. Using in-memory cache."
+                logger.info(
+                    f"ℹ️  Redis not available (USE_REDIS={self._use_redis}): {e}. Using in-memory cache."
                 )
                 self.redis_client = None
+                self._redis_connection_attempted = True
+        elif not REDIS_AVAILABLE:
+            logger.debug("Redis library not installed. Using in-memory cache.")
+        else:
+            logger.debug("Redis disabled (set USE_REDIS=true to enable). Using in-memory cache.")
 
     def get(self, key: str) -> Optional[Any]:
         """Get value from cache (Redis or in-memory)."""
