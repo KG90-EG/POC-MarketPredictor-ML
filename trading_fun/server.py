@@ -359,6 +359,7 @@ if os.path.exists(MODEL_PATH):
     MODEL = joblib.load(MODEL_PATH)
     LOADED_MODEL_PATH = MODEL_PATH
 
+
 class FeaturePayload(BaseModel):
     features: Dict[str, float]
 
@@ -384,9 +385,9 @@ def root():
             "ranking": "/ranking",
             "ticker_info": "/ticker_info/{ticker}",
             "predict": "/predict_ticker/{ticker}",
-            "analyze": "/analyze"
+            "analyze": "/analyze",
         },
-        "status": "operational"
+        "status": "operational",
     }
 
 
