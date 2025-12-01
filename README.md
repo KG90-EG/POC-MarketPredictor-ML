@@ -37,6 +37,11 @@ Quick summary:
 
 ## Quick Start
 
+### Requirements
+- **Python 3.10 - 3.12** (recommended for best compatibility)
+- **Node.js 18+** (for frontend)
+- Note: Python 3.14 requires source builds for some dependencies
+
 ### First Time Setup
 1. **Install dependencies:**
 ```bash
