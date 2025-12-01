@@ -1,9 +1,11 @@
 name: Deploy Docs
 
+# Disabled: GitHub Pages requires public repository or GitHub Pro
+# To enable: Make repository public or upgrade to GitHub Pro/Team
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger only
+  # push:
+  #   branches: [ main ]
 
 permissions:
   contents: read
