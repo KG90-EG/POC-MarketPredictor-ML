@@ -1,4 +1,4 @@
-# Trading-Fun
+# POC-MarketPredictor-ML
 Support Trading Decision, building a POC. Ideal, with Backend and Frontend
 
 This repository contains a production-grade machine learning pipeline and modern web application for generating ranked lists of stocks with ML-powered predictions and AI-driven analysis.

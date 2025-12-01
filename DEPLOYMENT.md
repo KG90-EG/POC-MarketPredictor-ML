@@ -7,14 +7,14 @@ The documentation site deploys automatically to GitHub Pages when you push to `m
 ### First-time Setup
 
 1. **Enable GitHub Pages**:
-   - Go to your repository: https://github.com/KG90-EG/Trading-Fun
-   - Click **Settings** → **Pages**
+   - Go to your repository: https://github.com/KG90-EG/POC-MarketPredictor-ML
+   - Navigate to **Settings** → **Pages**
    - Under "Source", select **GitHub Actions**
    - Click **Save**
 
 2. **Verify Deployment**:
    - After enabling, push a commit or manually trigger the "Deploy Docs" workflow
-   - Your docs will be available at: `https://KG90-EG.github.io/Trading-Fun/`
+   - Your docs will be available at: `https://KG90-EG.github.io/POC-MarketPredictor-ML/`
 
 ### Troubleshooting
 
