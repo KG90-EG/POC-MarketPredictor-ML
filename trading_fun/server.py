@@ -337,6 +337,7 @@ def get_country_stocks(country: str) -> List[str]:
 
 app = FastAPI()
 
+
 # Initialize Prometheus metrics on startup
 @app.on_event("startup")
 def startup_event():
@@ -346,6 +347,7 @@ def startup_event():
         openai_is_configured=OPENAI_CLIENT is not None
     )
     logger.info("Prometheus metrics initialized")
+
 
 # Enable CORS for local frontend development
 app.add_middleware(
@@ -366,20 +368,21 @@ app.add_middleware(
 rate_limiter = RateLimiter(app, requests_per_minute=app_config.api.rate_limit_rpm)
 logger.info(f"Rate limiting enabled: {app_config.api.rate_limit_rpm} requests/minute")
 
+
 # Add Prometheus metrics middleware
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next):
     """Track request metrics for all HTTP requests."""
     start_time = time.time()
-    
+
     # Skip metrics for the metrics endpoint itself
     if request.url.path == "/prometheus":
         response = await call_next(request)
         return response
-    
+
     response = await call_next(request)
     duration = time.time() - start_time
-    
+
     # Track metrics
     prom_metrics.track_request_metrics(
         method=request.method,
@@ -387,7 +390,7 @@ async def metrics_middleware(request: Request, call_next):
         status=response.status_code,
         duration=duration
     )
-    
+
     return response
 
 MODEL_PATH = app_config.model.prod_model_path
@@ -525,7 +528,7 @@ def ranking(tickers: str = "", country: str = "Global"):
     """
     if MODEL is None:
         raise HTTPException(status_code=503, detail="No model available")
-    
+
     start_time = time.time()
 
     # Use country-specific stocks if no tickers provided
@@ -567,20 +570,20 @@ def ranking(tickers: str = "", country: str = "Global"):
             continue
         row = df.iloc[-1:]
         prob = MODEL.predict_proba(row[features].values)[0][1]
-        
+
         # Track model prediction metrics
         pred_duration = time.time() - pred_start
         prom_metrics.track_model_prediction("random_forest", float(prob), pred_duration)
-        
+
         result.append({"ticker": t, "prob": float(prob)})
-    
+
     # sort result
     result.sort(key=lambda r: r["prob"], reverse=True)
-    
+
     # Track ranking generation metrics
     duration = time.time() - start_time
     prom_metrics.track_ranking_generation(country, len(result), duration)
-    
+
     return {"ranking": result}
 
 
