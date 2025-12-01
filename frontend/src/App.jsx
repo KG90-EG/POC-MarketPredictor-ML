@@ -1013,10 +1013,22 @@ function AppContent() {
 
       {/* Help Modal */}
       {showHelp && (
-        <div className="modal-overlay" onClick={() => setShowHelp(false)}>
+        <div 
+          className="modal-overlay" 
+          onClick={() => setShowHelp(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="help-modal-title"
+        >
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setShowHelp(false)}>×</button>
-            <h2>📚 How to Use Trading Fun</h2>
+            <button 
+              className="modal-close" 
+              onClick={() => setShowHelp(false)}
+              aria-label="Close help modal"
+            >
+              ×
+            </button>
+            <h2 id="help-modal-title">📚 How to Use Trading Fun</h2>
             
             <div className="help-section">
               <h3>🚀 Getting Started</h3>
@@ -1069,9 +1081,23 @@ function AppContent() {
       {/* Company Detail Sidebar */}
       {selectedCompany && (
         <>
-          <div className="sidebar-overlay" onClick={() => setSelectedCompany(null)}></div>
-          <div className="sidebar">
-            <button className="sidebar-close" onClick={() => setSelectedCompany(null)}>×</button>
+          <div 
+            className="sidebar-overlay" 
+            onClick={() => setSelectedCompany(null)}
+            aria-hidden="true"
+          ></div>
+          <aside 
+            className="sidebar"
+            role="complementary"
+            aria-labelledby="sidebar-title"
+          >
+            <button 
+              className="sidebar-close" 
+              onClick={() => setSelectedCompany(null)}
+              aria-label="Close company details"
+            >
+              ×
+            </button>
             
             {selectedCompany.loading ? (
               <div style={{ textAlign: 'center', padding: '40px' }}>
@@ -1079,12 +1105,12 @@ function AppContent() {
                 <p>Loading company details...</p>
               </div>
             ) : selectedCompany.error ? (
-              <div style={{ padding: '20px', color: '#e74c3c' }}>
+              <div style={{ padding: '20px', color: '#e74c3c' }} role="alert">
                 <p>{selectedCompany.error}</p>
               </div>
             ) : (
               <div className="sidebar-content">
-                <h2>{selectedCompany.ticker}</h2>
+                <h2 id="sidebar-title">{selectedCompany.ticker}</h2>
                 <p className="company-name">{selectedCompany.name || 'N/A'}</p>
                 {selectedCompany.country && (
                   <p className="company-country">🌍 {selectedCompany.country}</p>
