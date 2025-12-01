@@ -43,11 +43,19 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
         continue-on-error: true
-      - name: Deployment status
-        if: failure()
+      - name: Check deployment status
+        if: steps.deployment.outcome == 'failure'
         run: |
-          echo "⚠️ GitHub Pages deployment failed."
-          echo "Please enable GitHub Pages in repository settings:"
-          echo "1. Go to Settings > Pages"
-          echo "2. Set Source to 'GitHub Actions'"
-          echo "3. Save and re-run this workflow"
+          echo "::warning::⚠️ GitHub Pages deployment failed."
+          echo "::warning::Please enable GitHub Pages in repository settings:"
+          echo "::warning::1. Go to Settings > Pages"
+          echo "::warning::2. Set Source to 'GitHub Actions'"
+          echo "::warning::3. Save and re-run this workflow"
+          echo ""
+          echo "If Pages is already enabled, check the deployment error above."
+          exit 0
+      - name: Deployment successful
+        if: steps.deployment.outcome == 'success'
+        run: |
+          echo "✅ Documentation deployed successfully!"
+          echo "📄 Site URL: ${{ steps.deployment.outputs.page_url }}"
