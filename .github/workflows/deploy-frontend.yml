@@ -24,6 +24,10 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
         run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_SITE_ID" ]; then
+            echo "::notice::Netlify secrets not configured. Skipping deployment. See SECRETS.md for setup."
+            exit 0
+          fi
           npm install -g netlify-cli
           netlify deploy --prod --dir=frontend/dist --auth "$NETLIFY_AUTH_TOKEN" --site "$NETLIFY_SITE_ID"
       - name: Post deploy summary
