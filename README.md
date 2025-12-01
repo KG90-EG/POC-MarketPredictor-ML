@@ -208,8 +208,25 @@ docker run -p 8000:8000 trading-fun:latest
 ```
 Visit `http://localhost:8000`.
 
-## Netlify Frontend Deployment
-Add secrets `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID` in GitHub, the workflow `.github/workflows/deploy-frontend.yml` deploys on pushes to `main`.
+## Deployment
+
+### Frontend Deployment
+The frontend can be deployed to Netlify or Vercel. For detailed deployment instructions, see [Frontend Deployment Guide](docs/FRONTEND_DEPLOYMENT.md).
+
+**Quick Start - Netlify**:
+1. Sign in to [Netlify](https://app.netlify.com)
+2. Import from Git → Select repository
+3. Configure:
+   - Base directory: `frontend`
+   - Build command: `npm run build`
+   - Publish directory: `frontend/dist`
+4. Add environment variable: `VITE_API_URL` (your backend URL)
+5. Deploy!
+
+**GitHub Actions**: Add secrets `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID` for automated deployments via `.github/workflows/deploy-frontend.yml`.
+
+### Backend Deployment
+See [DEPLOYMENT.md](DEPLOYMENT.md) for backend deployment options (Docker, cloud platforms).
 
 ## Environment Variables Summary
 
