@@ -87,10 +87,12 @@ export function useTickerDetails(tickers = []) {
       return batchResults
     } catch (e) {
       const errorInfo = handleApiError(e, 'Failed to fetch ticker details')
-      setError(errorInfo)
+      console.warn('Batch fetch failed, attempting sequential fetch', errorInfo)
+      
+      // Clear error since we're falling back
+      setError(null)
       
       // Fallback to sequential fetching
-      console.warn('Batch fetch failed, attempting sequential fetch')
       await fetchDetailsSequential(tickerList)
     } finally {
       setLoading(false)

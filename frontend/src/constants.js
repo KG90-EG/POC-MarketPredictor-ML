@@ -104,9 +104,12 @@ export const ERROR_MESSAGES = {
   RATE_LIMIT: '⏱️ Rate limit exceeded. Please wait a moment and try again.',
   INVALID_TICKER: '❌ Invalid ticker symbol. Please check and try again.',
   NO_DATA: 'No data available. Please try again later.',
-  SERVER_ERROR: 'Server error. Please contact support if the issue persists.',
-  TICKER_NOT_FOUND: (ticker) => `❌ Ticker "${ticker}" not found. Please check the symbol and try again.`
+  SERVER_ERROR: 'Server error. Please contact support if the issue persists.'
 }
+
+// Helper function for ticker not found error
+export const getTickerNotFoundError = (ticker) => 
+  `❌ Ticker "${ticker}" not found. Please check the symbol and try again.`
 
 // Success messages
 export const SUCCESS_MESSAGES = {
@@ -198,6 +201,7 @@ export default {
   CHART_COLORS,
   getSignalFromProbability,
   getSignalColor,
+  getTickerNotFoundError,
   formatNumber,
   formatPercentage
 }

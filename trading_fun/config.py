@@ -193,7 +193,6 @@ class MarketConfig:
                 "CON.DE",
                 "BEI.DE",
                 "VNA.DE",
-                "SAP.DE",
                 "P911.DE",
                 "HNR1.DE",
             ],
