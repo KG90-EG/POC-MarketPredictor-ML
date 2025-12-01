@@ -1,5 +1,0 @@
-Legacy files moved here on 2025-11-30
-- 01_Trading_Fun/Trading_Grundlage.py
-- 01_Trading_Fun/Test_TradingSupport.py
-
-They were moved to avoid conflicts with the new package layout.
