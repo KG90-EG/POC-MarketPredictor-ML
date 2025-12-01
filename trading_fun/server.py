@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -30,6 +30,8 @@ from .logging_config import setup_logging, RequestLogger
 from .websocket import manager as ws_manager
 from .config import config as app_config
 from .services import StockService, ValidationService, HealthService
+from . import metrics as prom_metrics
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 # Load environment variables from .env file
 load_dotenv()
@@ -335,6 +337,16 @@ def get_country_stocks(country: str) -> List[str]:
 
 app = FastAPI()
 
+# Initialize Prometheus metrics on startup
+@app.on_event("startup")
+def startup_event():
+    """Initialize metrics and system state on startup."""
+    prom_metrics.initialize_metrics(
+        model_is_loaded=MODEL is not None,
+        openai_is_configured=OPENAI_CLIENT is not None
+    )
+    logger.info("Prometheus metrics initialized")
+
 # Enable CORS for local frontend development
 app.add_middleware(
     CORSMiddleware,
@@ -353,6 +365,30 @@ app.add_middleware(
 # Add rate limiting middleware
 rate_limiter = RateLimiter(app, requests_per_minute=app_config.api.rate_limit_rpm)
 logger.info(f"Rate limiting enabled: {app_config.api.rate_limit_rpm} requests/minute")
+
+# Add Prometheus metrics middleware
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    """Track request metrics for all HTTP requests."""
+    start_time = time.time()
+    
+    # Skip metrics for the metrics endpoint itself
+    if request.url.path == "/prometheus":
+        response = await call_next(request)
+        return response
+    
+    response = await call_next(request)
+    duration = time.time() - start_time
+    
+    # Track metrics
+    prom_metrics.track_request_metrics(
+        method=request.method,
+        endpoint=request.url.path,
+        status=response.status_code,
+        duration=duration
+    )
+    
+    return response
 
 MODEL_PATH = app_config.model.prod_model_path
 MODEL = None
@@ -434,6 +470,12 @@ def metrics():
         }
 
 
+@app.get("/prometheus")
+def prometheus_metrics():
+    """Expose Prometheus metrics in Prometheus format."""
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+
 @app.post("/predict_raw")
 def predict_raw(payload: FeaturePayload):
     if MODEL is None:
@@ -483,6 +525,8 @@ def ranking(tickers: str = "", country: str = "Global"):
     """
     if MODEL is None:
         raise HTTPException(status_code=503, detail="No model available")
+    
+    start_time = time.time()
 
     # Use country-specific stocks if no tickers provided
     if not tickers.strip():
@@ -493,6 +537,7 @@ def ranking(tickers: str = "", country: str = "Global"):
     result = []
     for t in chosen:
         try:
+            pred_start = time.time()
             raw = yf.download(t, period="300d", auto_adjust=False, progress=False)
             # Handle MultiIndex columns from yfinance
             if isinstance(raw.columns, pd.MultiIndex):
@@ -522,9 +567,20 @@ def ranking(tickers: str = "", country: str = "Global"):
             continue
         row = df.iloc[-1:]
         prob = MODEL.predict_proba(row[features].values)[0][1]
+        
+        # Track model prediction metrics
+        pred_duration = time.time() - pred_start
+        prom_metrics.track_model_prediction("random_forest", float(prob), pred_duration)
+        
         result.append({"ticker": t, "prob": float(prob)})
+    
     # sort result
     result.sort(key=lambda r: r["prob"], reverse=True)
+    
+    # Track ranking generation metrics
+    duration = time.time() - start_time
+    prom_metrics.track_ranking_generation(country, len(result), duration)
+    
     return {"ranking": result}
 
 

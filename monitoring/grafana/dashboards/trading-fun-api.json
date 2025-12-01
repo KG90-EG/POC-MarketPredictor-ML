@@ -1,0 +1,243 @@
+{
+  "dashboard": {
+    "title": "Trading Fun API - Performance Monitoring",
+    "tags": ["trading-fun", "api", "ml"],
+    "timezone": "browser",
+    "editable": true,
+    "panels": [
+      {
+        "id": 1,
+        "title": "API Request Rate",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{method}} {{endpoint}}",
+            "refId": "A"
+          }
+        ],
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "yaxes": [
+          {"format": "reqps", "label": "Requests/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 2,
+        "title": "API Response Time (p95)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{endpoint}}",
+            "refId": "A"
+          }
+        ],
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "yaxes": [
+          {"format": "s", "label": "Seconds"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Model Predictions Per Minute",
+        "targets": [
+          {
+            "expr": "rate(model_predictions_total[1m]) * 60",
+            "refId": "A"
+          }
+        ],
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 8},
+        "options": {
+          "graphMode": "area"
+        }
+      },
+      {
+        "id": 4,
+        "title": "Cache Hit Rate",
+        "targets": [
+          {
+            "expr": "rate(cache_hits_total[5m]) / (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m])) * 100",
+            "refId": "A"
+          }
+        ],
+        "type": "gauge",
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 8},
+        "options": {
+          "showThresholdLabels": true,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"value": 0, "color": "red"},
+                {"value": 50, "color": "yellow"},
+                {"value": 80, "color": "green"}
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Model Loaded Status",
+        "targets": [
+          {
+            "expr": "model_loaded",
+            "refId": "A"
+          }
+        ],
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 8},
+        "options": {
+          "colorMode": "background"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"value": 0, "text": "Not Loaded", "color": "red"},
+              {"value": 1, "text": "Loaded", "color": "green"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "OpenAI Configured",
+        "targets": [
+          {
+            "expr": "openai_configured",
+            "refId": "A"
+          }
+        ],
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 8},
+        "options": {
+          "colorMode": "background"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {"value": 0, "text": "Not Configured", "color": "red"},
+              {"value": 1, "text": "Configured", "color": "green"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Ranking Generation Time",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(ranking_generation_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{country}}",
+            "refId": "A"
+          }
+        ],
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+        "yaxes": [
+          {"format": "s", "label": "Seconds"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Model Prediction Probability Distribution",
+        "targets": [
+          {
+            "expr": "rate(model_prediction_probability_bucket[5m])",
+            "legendFormat": "{{le}}",
+            "refId": "A",
+            "format": "heatmap"
+          }
+        ],
+        "type": "heatmap",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12}
+      },
+      {
+        "id": 9,
+        "title": "Data Fetch Duration (p95)",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(data_fetch_duration_seconds_bucket[5m]))",
+            "legendFormat": "{{source}}",
+            "refId": "A"
+          }
+        ],
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+        "yaxes": [
+          {"format": "s", "label": "Seconds"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 10,
+        "title": "AI Analysis Requests",
+        "targets": [
+          {
+            "expr": "rate(ai_analysis_requests_total[5m])",
+            "legendFormat": "cached={{cached}}",
+            "refId": "A"
+          }
+        ],
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20}
+      },
+      {
+        "id": 11,
+        "title": "Rate Limit Violations",
+        "targets": [
+          {
+            "expr": "rate(rate_limit_exceeded_total[5m])",
+            "legendFormat": "{{endpoint}}",
+            "refId": "A"
+          }
+        ],
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28},
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [0], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "name": "Rate Limit Alert"
+        }
+      },
+      {
+        "id": 12,
+        "title": "Data Fetch Errors",
+        "targets": [
+          {
+            "expr": "rate(data_fetch_errors_total[5m])",
+            "legendFormat": "{{source}} - {{error_type}}",
+            "refId": "A"
+          }
+        ],
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28}
+      }
+    ],
+    "schemaVersion": 27,
+    "version": 1,
+    "refresh": "10s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    }
+  },
+  "overwrite": true
+}

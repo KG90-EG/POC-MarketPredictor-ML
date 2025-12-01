@@ -1,0 +1,49 @@
+# Prometheus configuration for Trading Fun API
+global:
+  scrape_interval: 15s  # How often to scrape targets
+  evaluation_interval: 15s  # How often to evaluate rules
+  scrape_timeout: 10s  # Timeout for scraping targets
+
+  external_labels:
+    cluster: 'trading-fun'
+    environment: 'development'
+
+# Alertmanager configuration (optional, for alerts)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+# rule_files:
+#   - "alert_rules.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # Trading Fun API
+  - job_name: 'trading-fun-api'
+    metrics_path: '/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8000']  # For Docker Desktop on Mac/Windows
+        # - targets: ['172.17.0.1:8000']  # For Docker on Linux
+        labels:
+          service: 'api'
+          environment: 'development'
+    scrape_interval: 10s  # More frequent scraping for API
+    scrape_timeout: 5s
+
+  # MLflow (if metrics are exposed)
+  - job_name: 'mlflow'
+    static_configs:
+      - targets: ['mlflow:5000']
+        labels:
+          service: 'mlflow'
+    scrape_interval: 30s
