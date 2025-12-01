@@ -47,13 +47,13 @@ def compute_macd(
     series: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9
 ) -> Tuple[pd.Series, pd.Series]:
     """Compute MACD (Moving Average Convergence Divergence) indicator.
-    
+
     Args:
         series: Price series to compute MACD on
         fast: Fast EMA period (default: 12)
         slow: Slow EMA period (default: 26)
         signal: Signal line period (default: 9)
-    
+
     Returns:
         Tuple of (MACD line, Signal line)
     """
@@ -64,13 +64,15 @@ def compute_macd(
     return macd, sig
 
 
-def compute_bollinger(series: pd.Series, window: int = 20) -> Tuple[pd.Series, pd.Series]:
+def compute_bollinger(
+    series: pd.Series, window: int = 20
+) -> Tuple[pd.Series, pd.Series]:
     """Compute Bollinger Bands.
-    
+
     Args:
         series: Price series to compute bands on
         window: Rolling window size (default: 20)
-    
+
     Returns:
         Tuple of (upper band, lower band)
     """
@@ -83,11 +85,11 @@ def compute_bollinger(series: pd.Series, window: int = 20) -> Tuple[pd.Series, p
 
 def compute_momentum(series: pd.Series, period: int = 10) -> pd.Series:
     """Compute momentum as percentage change over period.
-    
+
     Args:
         series: Price series
         period: Number of periods to look back (default: 10)
-    
+
     Returns:
         Momentum series
     """
@@ -96,11 +98,11 @@ def compute_momentum(series: pd.Series, period: int = 10) -> pd.Series:
 
 def compute_rsi(series: pd.Series, period: int = 14) -> pd.Series:
     """Compute RSI (Relative Strength Index).
-    
+
     Args:
         series: Price series
         period: RSI period (default: 14)
-    
+
     Returns:
         RSI series (0-100)
     """
@@ -113,11 +115,11 @@ def compute_rsi(series: pd.Series, period: int = 14) -> pd.Series:
 
 def load_data(ticker: str, period: str = "5y") -> Optional[pd.DataFrame]:
     """Load historical price data for a ticker.
-    
+
     Args:
         ticker: Stock ticker symbol
         period: Time period (e.g., "5y", "1y", "6mo")
-    
+
     Returns:
         DataFrame with OHLCV data, or None if failed
     """

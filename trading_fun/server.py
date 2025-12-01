@@ -346,24 +346,24 @@ app = FastAPI(
     title="Market Predictor ML API",
     description="""
     A production-ready ML trading API that provides:
-    
+
     * **Stock Analysis**: Real-time stock data and ML-based predictions
     * **Crypto Rankings**: Cryptocurrency momentum scoring and analysis
     * **AI Analysis**: OpenAI-powered company insights and recommendations
     * **Health Monitoring**: Prometheus metrics and health checks
     * **WebSocket Support**: Real-time updates for portfolio changes
-    
+
     ## Features
-    
+
     - Machine learning models for stock price predictions
     - Technical indicators (RSI, MACD, Bollinger Bands, Momentum)
     - CoinGecko integration for cryptocurrency data
     - Caching and rate limiting for optimal performance
     - Real-time health monitoring with Prometheus
     - WebSocket updates for live portfolio tracking
-    
+
     ## Rate Limits
-    
+
     API endpoints are rate limited to prevent abuse. Default: 60 requests/minute.
     """,
     version="2.0.0",
@@ -459,7 +459,7 @@ def row_from_features(feat_dict: Dict[str, Any]):
 def root():
     """
     Root endpoint with API information.
-    
+
     Returns basic information about the API and available endpoints.
     """
     return {
@@ -486,7 +486,7 @@ def root():
     summary="Health Check",
     description="""
     Comprehensive health check endpoint.
-    
+
     Returns status of:
     - ML model availability
     - OpenAI API configuration
@@ -574,12 +574,12 @@ def predict_raw(payload: FeaturePayload):
     summary="Predict Stock Movement",
     description="""
     Get ML prediction for a specific stock ticker.
-    
+
     Uses machine learning model to predict likely price movement based on:
     - Technical indicators (RSI, MACD, Bollinger Bands, Momentum)
     - Historical price patterns
     - Volume analysis
-    
+
     Returns probability (0-1) where higher values indicate higher confidence
     of upward movement.
     """,
@@ -618,12 +618,12 @@ def predict_ticker(ticker: str):
     summary="Stock Rankings",
     description="""
     Get ranked list of stocks based on ML predictions.
-    
+
     Supports filtering by:
     - Country/region (e.g., 'Switzerland', 'Germany', 'United States')
     - Custom ticker list (comma-separated)
     - Top N results
-    
+
     Returns stocks sorted by prediction probability (highest first).
     """,
 )
@@ -699,13 +699,13 @@ def ranking(tickers: str = "", country: str = "Global"):
     summary="Cryptocurrency Rankings",
     description="""
     Get ranked cryptocurrencies based on momentum scoring.
-    
+
     Scoring considers:
     - Market cap rank (top coins weighted higher)
     - 24h, 7d, 30d price changes
     - Volume/market cap ratio (liquidity)
     - Overall momentum score (0-1)
-    
+
     Data sourced from CoinGecko API (no API key required).
     """,
 )
@@ -762,12 +762,12 @@ def crypto_ranking(
     summary="Search Cryptocurrency",
     description="""
     Search for a cryptocurrency by name or symbol.
-    
+
     Examples:
     - "bitcoin" or "BTC"
     - "ethereum" or "ETH"
     - "cardano" or "ADA"
-    
+
     Returns detailed crypto information including price, market cap, and momentum score.
     """,
 )
@@ -809,9 +809,9 @@ def crypto_search(query: str):
     summary="Cryptocurrency Details",
     description="""
     Get detailed information for a specific cryptocurrency.
-    
+
     Requires CoinGecko crypto ID (e.g., "bitcoin", "ethereum", "cardano").
-    
+
     Returns comprehensive data including:
     - Current price and market data
     - Community statistics

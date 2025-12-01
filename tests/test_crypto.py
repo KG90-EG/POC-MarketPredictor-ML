@@ -1,7 +1,8 @@
 """Tests for cryptocurrency module"""
+
 import pytest
 import requests
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from trading_fun.crypto import (
     get_crypto_market_data,
     get_crypto_details,
@@ -131,9 +132,7 @@ class TestGetCryptoMarketData:
         mock_response.raise_for_status.return_value = None
         mock_get.return_value = mock_response
 
-        result = get_crypto_market_data(
-            crypto_ids=DEFAULT_CRYPTOS, include_nft=True
-        )
+        get_crypto_market_data(crypto_ids=DEFAULT_CRYPTOS, include_nft=True)
 
         # Should include both DEFAULT_CRYPTOS and NFT_TOKENS
         call_args = mock_get.call_args
@@ -373,7 +372,7 @@ class TestGetCryptoRanking:
         """Test custom limit parameter"""
         mock_get_data.return_value = mock_market_data
 
-        result = get_crypto_ranking(limit=100)
+        get_crypto_ranking(limit=100)
 
         mock_get_data.assert_called_once()
         call_args = mock_get_data.call_args
@@ -385,7 +384,7 @@ class TestGetCryptoRanking:
         mock_get_data.return_value = mock_market_data
 
         crypto_list = ["bitcoin", "ethereum"]
-        result = get_crypto_ranking(crypto_ids=crypto_list)
+        get_crypto_ranking(crypto_ids=crypto_list)
 
         mock_get_data.assert_called_once_with(
             crypto_ids=crypto_list, include_nft=True, limit=50
@@ -397,14 +396,14 @@ class TestSearchCrypto:
 
     @patch("trading_fun.crypto.requests.get")
     @patch("trading_fun.crypto.get_crypto_market_data")
-    def test_search_crypto_found(self, mock_get_data, mock_requests_get, mock_market_data):
+    def test_search_crypto_found(
+        self, mock_get_data, mock_requests_get, mock_market_data
+    ):
         """Test successful crypto search"""
         # Mock search API response
         mock_search_response = Mock()
         mock_search_response.json.return_value = {
-            "coins": [
-                {"id": "bitcoin", "name": "Bitcoin", "symbol": "BTC"}
-            ]
+            "coins": [{"id": "bitcoin", "name": "Bitcoin", "symbol": "BTC"}]
         }
         mock_search_response.raise_for_status.return_value = None
         mock_requests_get.return_value = mock_search_response
@@ -445,9 +444,7 @@ class TestSearchCrypto:
         """Test search when market data fetch fails"""
         # Mock search succeeds
         mock_search_response = Mock()
-        mock_search_response.json.return_value = {
-            "coins": [{"id": "bitcoin"}]
-        }
+        mock_search_response.json.return_value = {"coins": [{"id": "bitcoin"}]}
         mock_search_response.raise_for_status.return_value = None
         mock_requests_get.return_value = mock_search_response
 
