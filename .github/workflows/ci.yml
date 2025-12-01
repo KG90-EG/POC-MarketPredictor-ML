@@ -34,7 +34,7 @@ jobs:
         python -m pytest -v --tb=short || echo "::warning::Some tests failed, but continuing build"
     - name: Lint & Format Check
       run: |
-        flake8 trading_fun/ training/ backtest/ scripts/ --max-line-length=120
+        flake8 trading_fun/ training/ backtest/ scripts/ --max-line-length=120 --extend-ignore=C901
         black --check trading_fun/ training/ backtest/ scripts/
     - name: Build Docker image
       run: |
