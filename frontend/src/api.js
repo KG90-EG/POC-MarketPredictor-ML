@@ -12,6 +12,9 @@ const apiClient = axios.create({
   },
 })
 
+// Export apiClient for direct use
+export { apiClient }
+
 // API methods
 export const api = {
   // Health check

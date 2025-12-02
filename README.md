@@ -16,9 +16,14 @@ This repository contains a production-grade machine learning pipeline and modern
 - 🤖 **ML-Powered Stock Ranking** - RandomForest/XGBoost models predict stock performance
 - 📊 **Real-Time Market Data** - Live prices, volume, market cap via yfinance
 - 🌍 **Multi-Market Views** - Analyze stocks from 8 different markets (US, Switzerland, Germany, UK, France, Japan, Canada)
+- 🎯 **Dynamic Country Selector** - Beautiful card-based country selection with flag emojis
 - 🔄 **Dynamic Stock Discovery** - Automatically validates and ranks top companies by market cap
 - 🚀 **Auto-Load Rankings** - Top stocks ranked automatically on page load based on selected market
 - 📄 **Pagination** - Clean 10-per-page display with easy navigation
+- ⭐ **Watchlists & Portfolios (Phase 1)** - Create custom watchlists with **mixed stocks and crypto**, track favorites, get actionable insights
+- 💎 **Mixed Asset Support** - Add both stocks and cryptocurrencies to the same watchlist
+- 🔍 **Smart Asset Search** - Separate dropdowns for stocks (50+) and crypto (30+) with live filtering
+- 💰 **Investment Insights** - Live prices, buy/sell recommendations, confidence scores, momentum indicators
 - 🎯 **Automated Buy/Sell Signals** - Python-based recommendation engine with 5-tier signal system
 - 🧠 **AI Analysis** - OpenAI-powered trading recommendations with retry logic and caching
 - ⚛️ **Modern React UI** - Real-time updates with color-coded indicators and dark/light theme toggle
@@ -35,6 +40,8 @@ This repository contains a production-grade machine learning pipeline and modern
 - 🔄 **CI/CD Pipeline** - Automated testing, linting, Docker builds
 - 📈 **MLflow Integration** - Model tracking, versioning, and promotion
 - 🐳 **Docker Support** - Multi-stage builds with frontend and backend
+- 💾 **Crypto/Digital Assets** - Track 200+ cryptocurrencies with live CoinGecko data, NFT tokens included
+- 🎨 **Improved Crypto UX** - Subtle refresh button, clean interface without unnecessary toggles
 
 Quick summary:
 
@@ -88,11 +95,38 @@ cd frontend && npm run dev
 ```
 
 5. **Open browser:** Navigate to `http://localhost:5173`
-   - Select a market view (Global, Switzerland, Germany, UK, France, Japan, Canada)
+   - Select a market view with beautiful card-based country selector
    - Rankings load automatically showing top stocks from selected market
    - Browse paginated results (10 per page)
    - Click any stock for detailed analysis with country information
    - Use search to look up specific stocks
+   - **NEW: Watchlists tab** - Create custom watchlists with **mixed stocks and crypto**
+   - Add both AAPL (stocks) and bitcoin (crypto) to the same watchlist
+   - Get live prices, predictions, and investment insights for all assets
+   - Toggle between stock and crypto search modes with visual indicators
+
+### Training Your Model
+
+See [docs/TRAINING_GUIDE.md](docs/TRAINING_GUIDE.md) for comprehensive training instructions:
+
+```bash
+# Quick start - train on your watchlist stocks
+python scripts/train_watchlist.py
+
+# Train on specific tickers
+python -m training.trainer --tickers AAPL,MSFT,GOOGL --period 2y
+
+# Evaluate and promote to production
+python -m training.evaluate_and_promote
+```
+
+The training guide includes:
+
+- Quick start commands
+- Technical indicators explanation (RSI, MACD, Bollinger Bands)
+- Training workflow and best practices
+- MLflow monitoring
+- Troubleshooting tips
 
 ### Running Tests
 
@@ -118,6 +152,18 @@ pytest --cov=trading_fun --cov-report=html
 - **Buy/Sell Signals**: Each stock shows STRONG BUY, BUY, HOLD, or SELL recommendation
 - **Live Market Data**: Real-time prices, changes, volumes, market caps, and country domicile
 - **Pagination**: Clean 10-per-page display with easy navigation
+- **Watchlists & Portfolios**:
+  - Create unlimited custom watchlists with names and descriptions
+  - Smart stock search with 50+ popular stocks (Apple, Microsoft, Tesla, Swiss stocks, etc.)
+  - Live search/autocomplete - type "apple" or "AAPL" to find stocks instantly
+  - Automatic ticker validation and correction (e.g., "APPLE" → "AAPL")
+  - Real-time investment insights for each watchlist stock:
+    - Current price and 24h price change (with ▲/▼ indicators)
+    - BUY/SELL/HOLD recommendations based on ML model confidence
+    - Confidence scores (probability × 100)
+    - Momentum indicators
+    - Distance from 52-week high
+  - Easy stock management (add/remove with one click)
 - **Health Status Icon**: Real-time system health indicator in header (green/yellow/red/gray)
   - Auto-refreshes every 30 seconds
   - Click to view comprehensive diagnostics

@@ -1,0 +1,86 @@
+.market-selector {
+  margin-bottom: 24px;
+}
+
+.market-selector-title {
+  font-size: 18px;
+  margin-bottom: 16px;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.market-selector-count {
+  font-size: 14px;
+  font-weight: 400;
+  color: #666;
+  margin-left: 8px;
+}
+
+.market-loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.market-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.market-button {
+  padding: 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.market-button:hover:not(:disabled) {
+  border-color: #4CAF50;
+  background: #f9fff9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);
+}
+
+.market-button.selected {
+  border-color: #4CAF50;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+}
+
+.market-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.market-button .checkmark {
+  color: #4CAF50;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .market-buttons {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+  }
+
+  .market-button {
+    padding: 12px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .market-buttons {
+    grid-template-columns: 1fr 1fr;
+  }
+}

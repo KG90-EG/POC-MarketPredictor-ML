@@ -372,6 +372,7 @@ Professional documentation site with search, versioning, and PDF exports.
 **Guide**: [docs/operations/READTHEDOCS_SETUP.md](docs/operations/READTHEDOCS_SETUP.md)
 
 **Quick Start**:
+
 1. Sign up at [readthedocs.org](https://readthedocs.org)
 2. Connect GitHub account
 3. Import POC-MarketPredictor-ML repository
@@ -379,6 +380,7 @@ Professional documentation site with search, versioning, and PDF exports.
 5. Documentation live at: `https://poc-marketpredictor-ml.readthedocs.io`
 
 **What You Get**:
+
 - 📖 Professional documentation site
 - 🔍 Full-text search across all docs
 - 📦 Version management (stable, latest, tags)
@@ -395,6 +397,7 @@ Enable enterprise-grade security scanning and automated vulnerability management
 **Helper Script**: `./scripts/setup_github_security.sh`
 
 **Features to Enable**:
+
 1. **Dependabot Alerts** - Vulnerability notifications
 2. **Dependabot Security Updates** - Auto-PRs for vulnerable dependencies
 3. **Secret Scanning** - Detects committed secrets/tokens
@@ -402,6 +405,7 @@ Enable enterprise-grade security scanning and automated vulnerability management
 5. **CodeQL Analysis** - Static code analysis for vulnerabilities
 
 **Quick Start**:
+
 ```bash
 # Run automated setup helper
 ./scripts/setup_github_security.sh
@@ -428,6 +432,7 @@ Complete deployment automation with health checks, rollback, and verification.
    - Automatic deployment with CI/CD
 
 2. **CLI Script** (Semi-Automated)
+
    ```bash
    # Full deployment with validation
    ./scripts/deploy_production.sh --all --validate --verify
@@ -449,6 +454,7 @@ Complete deployment automation with health checks, rollback, and verification.
    - See guide for alternatives (AWS, GCP, Heroku, Netlify)
 
 **Platforms**:
+
 - **Backend**: Railway (recommended), AWS EB, Google Cloud Run, Heroku
 - **Frontend**: Vercel (recommended), Netlify, AWS Amplify, Cloudflare Pages
 

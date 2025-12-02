@@ -171,13 +171,110 @@
 
 .add-stock-form {
   display: flex;
+  flex-direction: column;
   gap: 12px;
   margin-bottom: 24px;
   padding-bottom: 24px;
   border-bottom: 2px solid #eee;
 }
 
-.add-stock-form input {
+.asset-type-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.asset-type-toggle button {
+  flex: 1;
+  padding: 10px 16px;
+  border: 2px solid #ddd;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.asset-type-toggle button:hover {
+  border-color: #4CAF50;
+  background: #f5f5f5;
+}
+
+.asset-type-toggle button.active {
+  border-color: #4CAF50;
+  background: #4CAF50;
+  color: white;
+}
+
+.form-inputs {
+  display: flex;
+  gap: 12px;
+}
+
+.stock-input-container {
+  position: relative;
+  flex: 1;
+}
+
+.stock-input-container input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.stock-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  margin-top: -1px;
+}
+
+.dropdown-item {
+  padding: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+  background: #f5f5f5;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item .ticker {
+  font-weight: 600;
+  color: #2196F3;
+  font-size: 14px;
+  min-width: 60px;
+}
+
+.dropdown-item .company-name {
+  color: #666;
+  font-size: 13px;
+  text-align: right;
+  flex: 1;
+  margin-left: 12px;
+}
+
+.add-stock-form input:not(.stock-input-container input) {
   flex: 1;
   padding: 10px;
   border: 1px solid #ddd;
@@ -207,13 +304,21 @@
   margin: 0;
 }
 
+.loading-stocks {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-style: italic;
+}
+
 .stock-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 16px;
+  align-items: flex-start;
+  padding: 20px;
   border-bottom: 1px solid #eee;
   transition: background 0.2s;
+  gap: 16px;
 }
 
 .stock-item:hover {
@@ -224,27 +329,133 @@
   border-bottom: none;
 }
 
-.stock-info {
-  display: flex;
+.stock-item.enhanced {
   flex-direction: column;
-  gap: 4px;
+  align-items: stretch;
+}
+
+.stock-main {
+  flex: 1;
+}
+
+.stock-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .stock-ticker {
-  font-weight: 600;
+  font-weight: 700;
   color: #1a1a1a;
+  font-size: 20px;
+}
+
+.stock-name {
+  font-size: 14px;
+  color: #666;
+  font-weight: 400;
+}
+
+.stock-prices {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.price-info {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.current-price {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.price-change {
   font-size: 16px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.price-change.positive {
+  color: #10b981;
+  background: #d1fae5;
+}
+
+.price-change.negative {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+.volume-info {
+  font-size: 13px;
+  color: #666;
+}
+
+.prediction-info {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 12px;
+  background: #f0f9ff;
+  border-radius: 6px;
+  border-left: 4px solid #3b82f6;
+  margin-bottom: 12px;
+}
+
+.recommendation {
+  font-weight: 700;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+}
+
+.confidence {
+  font-size: 14px;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.prediction-details {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #666;
+  margin-left: auto;
+}
+
+.prediction-details span {
+  background: white;
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
 .stock-notes {
   font-size: 13px;
   color: #666;
   font-style: italic;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #fffbeb;
+  border-radius: 4px;
+  border-left: 3px solid #f59e0b;
 }
 
-.stock-date {
-  font-size: 12px;
-  color: #999;
+.stock-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
 }
 
 .btn-remove {

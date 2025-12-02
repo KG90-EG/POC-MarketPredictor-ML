@@ -54,7 +54,7 @@ function AppContent() {
   const [portfolioView, setPortfolioView] = useState('stocks') // 'stocks', 'crypto', or 'watchlists'
   const [cryptoResults, setCryptoResults] = useState([])
   const [cryptoLoading, setCryptoLoading] = useState(false)
-  const [includeNFT, setIncludeNFT] = useState(true)
+  const [includeNFT] = useState(true) // Always include NFTs
   const [cryptoLimit, setCryptoLimit] = useState(50)
   const [cryptoPage, setCryptoPage] = useState(1)
   const [cryptoPerPage] = useState(20) // Items per page
@@ -385,9 +385,9 @@ function AppContent() {
             aria-pressed={portfolioView === 'stocks'}
           >
             <div className="icon">📈</div>
-            <div className="title">Stocks & Shares</div>
+            <div className="title">Stocks</div>
             <div className="description">
-              Traditional equities, indices & ETFs
+              Equities & ETFs
             </div>
           </button>
 
@@ -401,9 +401,9 @@ function AppContent() {
             aria-pressed={portfolioView === 'crypto'}
           >
             <div className="icon">₿</div>
-            <div className="title">Digital Assets</div>
+            <div className="title">Crypto</div>
             <div className="description">
-              Crypto, NFTs, Bitcoin, Ethereum & more
+              Bitcoin & NFTs
             </div>
           </button>
 
@@ -414,9 +414,9 @@ function AppContent() {
             aria-pressed={portfolioView === 'watchlists'}
           >
             <div className="icon">⭐</div>
-            <div className="title">My Watchlists</div>
+            <div className="title">Watchlists</div>
             <div className="description">
-              Saved stocks & portfolios
+              Saved favorites
             </div>
           </button>
         </div>
@@ -548,7 +548,7 @@ function AppContent() {
             includeNFT={includeNFT}
             cryptoLimit={cryptoLimit}
             onPageChange={setCryptoPage}
-            onNFTToggle={setIncludeNFT}
+            onNFTToggle={() => {}} // No-op since NFT toggle is removed
             onLimitChange={setCryptoLimit}
             onRefresh={fetchCryptoRanking}
             onRowClick={openCryptoDetail}

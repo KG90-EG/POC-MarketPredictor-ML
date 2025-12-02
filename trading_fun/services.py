@@ -3,12 +3,14 @@ Business logic services layer.
 Separates business logic from API routes for better maintainability.
 """
 
-from typing import List, Dict, Optional, Any, Tuple
-import yfinance as yf
-import logging
 import concurrent.futures
-from .config import config
+import logging
+from typing import Any, Dict, List, Optional, Tuple
+
+import yfinance as yf
+
 from .cache import cache
+from .config import config
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +38,7 @@ class StockService:
             return cached
 
         # Get seed list for country
-        seed_list = config.market.country_seeds.get(
-            country, config.market.default_stocks
-        )
+        seed_list = config.market.country_seeds.get(country, config.market.default_stocks)
 
         # Validate and rank by market cap in parallel
         validated_stocks = StockService._validate_stocks_parallel(seed_list, country)
@@ -56,9 +56,7 @@ class StockService:
         return result
 
     @staticmethod
-    def _validate_stocks_parallel(
-        tickers: List[str], country: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+    def _validate_stocks_parallel(tickers: List[str], country: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Validate stocks in parallel using ThreadPoolExecutor.
 
@@ -129,11 +127,7 @@ class StockService:
             result = {
                 "name": info.get("longName", info.get("shortName", "N/A")),
                 "price": float(current_price) if current_price else None,
-                "change": (
-                    float(current_price - prev_close)
-                    if current_price and prev_close
-                    else None
-                ),
+                "change": (float(current_price - prev_close) if current_price and prev_close else None),
                 "volume": int(info.get("volume", 0)) if info.get("volume") else None,
                 "market_cap": info.get("marketCap", None),
                 "pe_ratio": info.get("forwardPE", info.get("trailingPE", None)),
@@ -223,10 +217,26 @@ class SignalService:
 class ValidationService:
     """Service for input validation"""
 
+    # Common ticker corrections/aliases
+    TICKER_ALIASES = {
+        "APPLE": "AAPL",
+        "MICROSOFT": "MSFT",
+        "GOOGLE": "GOOGL",
+        "ALPHABET": "GOOGL",
+        "AMAZON": "AMZN",
+        "TESLA": "TSLA",
+        "META": "META",
+        "FACEBOOK": "META",
+        "NVIDIA": "NVDA",
+        "AMD": "AMD",
+        "INTEL": "INTC",
+        "NETFLIX": "NFLX",
+    }
+
     @staticmethod
     def validate_ticker(ticker: str) -> str:
         """
-        Validate and normalize ticker symbol.
+        Validate and normalize ticker symbol with smart suggestions.
 
         Args:
             ticker: Raw ticker input
@@ -235,12 +245,18 @@ class ValidationService:
             Normalized ticker symbol
 
         Raises:
-            ValueError: If ticker is invalid
+            ValueError: If ticker is invalid (with suggestion if available)
         """
         if not ticker or not isinstance(ticker, str):
             raise ValueError("Ticker must be a non-empty string")
 
         ticker = ticker.strip().upper()
+
+        # Check for common aliases and auto-correct
+        if ticker in ValidationService.TICKER_ALIASES:
+            corrected = ValidationService.TICKER_ALIASES[ticker]
+            logger.info(f"Auto-corrected ticker: {ticker} → {corrected}")
+            return corrected
 
         if len(ticker) > 10:
             raise ValueError("Ticker symbol too long (max 10 characters)")
@@ -250,6 +266,84 @@ class ValidationService:
             raise ValueError("Ticker contains invalid characters")
 
         return ticker
+
+    @staticmethod
+    def validate_and_verify_ticker(ticker: str) -> Tuple[str, Optional[str]]:
+        """
+        Validate ticker and verify it exists in the market.
+
+        Args:
+            ticker: Raw ticker input
+
+        Returns:
+            Tuple of (validated_ticker, company_name or None)
+
+        Raises:
+            ValueError: If ticker is invalid or doesn't exist
+        """
+        # First normalize/correct the ticker
+        validated = ValidationService.validate_ticker(ticker)
+
+        # Try to fetch basic info to verify it exists
+        try:
+            stock = yf.Ticker(validated)
+            info = stock.info
+
+            # Check if we got valid data
+            if not info or "symbol" not in info:
+                # Suggest similar tickers if available
+                suggestion = ValidationService._suggest_ticker(ticker)
+                if suggestion:
+                    raise ValueError(f"Ticker '{ticker}' not found. Did you mean '{suggestion}'?")
+                raise ValueError(f"Ticker '{ticker}' not found or delisted")
+
+            company_name = info.get("longName") or info.get("shortName")
+            return validated, company_name
+
+        except Exception as e:
+            # If it's already a ValueError, re-raise it
+            if isinstance(e, ValueError):
+                raise
+
+            # Try to suggest a correction
+            suggestion = ValidationService._suggest_ticker(ticker)
+            if suggestion:
+                raise ValueError(f"Cannot verify ticker '{ticker}'. Did you mean '{suggestion}'?")
+            raise ValueError(f"Cannot verify ticker '{ticker}'. Please check if it's correct.")
+
+    @staticmethod
+    def _suggest_ticker(ticker: str) -> Optional[str]:
+        """
+        Suggest a valid ticker based on input.
+
+        Args:
+            ticker: Invalid ticker
+
+        Returns:
+            Suggested ticker or None
+        """
+        ticker_upper = ticker.upper()
+
+        # Check if it's close to a known alias
+        for alias, real in ValidationService.TICKER_ALIASES.items():
+            if ticker_upper in alias or alias in ticker_upper:
+                return real
+
+        # Check if it's a substring of company name
+        common_companies = {
+            "APPLE": "AAPL",
+            "MICRO": "MSFT",
+            "GOOGLE": "GOOGL",
+            "AMAZON": "AMZN",
+            "TESLA": "TSLA",
+            "NETFLIX": "NFLX",
+        }
+
+        for keyword, symbol in common_companies.items():
+            if keyword in ticker_upper:
+                return symbol
+
+        return None
 
     @staticmethod
     def validate_country(country: str) -> str:
@@ -265,14 +359,10 @@ class ValidationService:
         Raises:
             ValueError: If country is invalid
         """
-        valid_countries = ["Global", "United States"] + list(
-            config.market.country_seeds.keys()
-        )
+        valid_countries = ["Global", "United States"] + list(config.market.country_seeds.keys())
 
         if country not in valid_countries:
-            raise ValueError(
-                f"Invalid country. Must be one of: {', '.join(valid_countries)}"
-            )
+            raise ValueError(f"Invalid country. Must be one of: {', '.join(valid_countries)}")
 
         return country
 

@@ -63,6 +63,7 @@ def init_database():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 watchlist_id INTEGER NOT NULL,
                 ticker TEXT NOT NULL,
+                asset_type TEXT DEFAULT 'stock',
                 added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 notes TEXT,
                 FOREIGN KEY (watchlist_id) REFERENCES watchlists(id) ON DELETE CASCADE,
@@ -85,6 +86,18 @@ def init_database():
             ON watchlist_items(watchlist_id)
         """
         )
+
+        # Migration: Add asset_type column to existing tables if not exists
+        try:
+            cursor.execute("SELECT asset_type FROM watchlist_items LIMIT 1")
+        except sqlite3.OperationalError:
+            logger.info("Adding asset_type column to watchlist_items table")
+            cursor.execute(
+                """
+                ALTER TABLE watchlist_items
+                ADD COLUMN asset_type TEXT DEFAULT 'stock'
+            """
+            )
 
         logger.info("Database initialized successfully")
 
@@ -187,8 +200,10 @@ class WatchlistDB:
             return cursor.rowcount > 0
 
     @staticmethod
-    def add_stock_to_watchlist(watchlist_id: int, user_id: str, ticker: str, notes: Optional[str] = None) -> bool:
-        """Add a stock to a watchlist."""
+    def add_stock_to_watchlist(
+        watchlist_id: int, user_id: str, ticker: str, notes: Optional[str] = None, asset_type: str = "stock"
+    ) -> bool:
+        """Add a stock or crypto to a watchlist."""
         with get_db_connection() as conn:
             cursor = conn.cursor()
 
@@ -199,8 +214,8 @@ class WatchlistDB:
 
             try:
                 cursor.execute(
-                    "INSERT INTO watchlist_items (watchlist_id, ticker, notes) VALUES (?, ?, ?)",
-                    (watchlist_id, ticker.upper(), notes),
+                    "INSERT INTO watchlist_items (watchlist_id, ticker, asset_type, notes) VALUES (?, ?, ?, ?)",
+                    (watchlist_id, ticker.upper(), asset_type, notes),
                 )
 
                 # Update watchlist timestamp

@@ -1,42 +1,42 @@
 import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { api } from '../api'
+import './MarketSelector.css'
 
 /**
  * Market view selector component
  * Single-selection mode: only one market can be selected at a time
  */
 export function MarketSelector({ selectedMarket, onSelectionChange, disabled = false }) {
-  const [markets, setMarkets] = useState([
-    { id: 'Global', label: '🌐 Global', description: 'Top global stocks' },
-    { id: 'United States', label: '🇺🇸 United States', description: 'US market leaders' },
-    { id: 'Switzerland', label: '🇨🇭 Switzerland', description: 'Swiss companies' },
-    { id: 'Germany', label: '🇩🇪 Germany', description: 'German companies' },
-    { id: 'United Kingdom', label: '🇬🇧 United Kingdom', description: 'UK companies' },
-    { id: 'France', label: '🇫🇷 France', description: 'French companies' },
-    { id: 'Japan', label: '🇯🇵 Japan', description: 'Japanese companies' },
-    { id: 'Canada', label: '🇨🇦 Canada', description: 'Canadian companies' }
-  ])
-  const [loading, setLoading] = useState(false)
+  const [markets, setMarkets] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Future: fetch available markets from backend
-    // This allows dynamic market addition without frontend changes
+    // Fetch available markets from backend
     const fetchMarkets = async () => {
       try {
         setLoading(true)
-        // When backend provides /api/markets endpoint, uncomment:
-        // const response = await api.get('/markets')
-        // setMarkets(response.data)
+        const response = await api.get('/countries')
+        setMarkets(response.data.countries || [])
       } catch (error) {
         console.error('Failed to fetch markets:', error)
-        // Keep default markets on error
+        // Fallback to default markets on error
+        setMarkets([
+          { id: 'Global', label: '🌐 Global', description: 'Top global stocks' },
+          { id: 'United States', label: '🇺🇸 United States', description: 'US market leaders' },
+          { id: 'Switzerland', label: '🇨🇭 Switzerland', description: 'Swiss companies' },
+          { id: 'Germany', label: '🇩🇪 Germany', description: 'German companies' },
+          { id: 'United Kingdom', label: '🇬🇧 United Kingdom', description: 'UK companies' },
+          { id: 'France', label: '🇫🇷 France', description: 'French companies' },
+          { id: 'Japan', label: '🇯🇵 Japan', description: 'Japanese companies' },
+          { id: 'Canada', label: '🇨🇦 Canada', description: 'Canadian companies' }
+        ])
       } finally {
         setLoading(false)
       }
     }
 
-    // fetchMarkets() // Uncomment when backend supports it
+    fetchMarkets()
   }, [])
 
   const selectMarket = (marketId) => {

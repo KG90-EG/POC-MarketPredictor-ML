@@ -22,28 +22,11 @@ function CryptoPortfolio({
   return (
     <>
       <h2>🪙 Digital Assets & Cryptocurrency Rankings</h2>
-      
-      <div style={{marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap'}}>
-        <label style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
-          <input 
-            type="checkbox" 
-            checked={includeNFT}
-            onChange={(e) => {
-              onNFTToggle(e.target.checked)
-              // Auto-refresh if crypto data is already loaded
-              if (cryptoResults.length > 0) {
-                onRefresh()
-              }
-            }}
-            aria-label="Include NFT-related tokens in rankings"
-            style={{width: '18px', height: '18px'}}
-          />
-          <span style={{fontSize: '0.95rem'}}>Include NFT tokens</span>
-        </label>
-        
+
+      <div style={{marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', justifyContent: 'space-between'}}>
         <label style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-          <span style={{fontSize: '0.95rem', fontWeight: '500'}}>Top:</span>
-          <select 
+          <span style={{fontSize: '0.95rem', fontWeight: '500'}}>Show top:</span>
+          <select
             value={cryptoLimit}
             onChange={(e) => {
               onLimitChange(Number(e.target.value))
@@ -67,26 +50,38 @@ function CryptoPortfolio({
             <option value={200}>200 cryptos</option>
           </select>
         </label>
-        
-        <button 
+
+        <button
           onClick={onRefresh}
           disabled={cryptoLoading}
           aria-label="Refresh cryptocurrency rankings from CoinGecko"
+          title="Refresh rankings"
           style={{
-            padding: '8px 16px',
-            background: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
-            color: 'white',
-            border: 'none',
+            padding: '6px 12px',
+            background: 'transparent',
+            color: '#666',
+            border: '1px solid #ddd',
             borderRadius: '6px',
             cursor: cryptoLoading ? 'not-allowed' : 'pointer',
-            fontWeight: '600',
-            fontSize: '0.9rem'
+            fontWeight: '500',
+            fontSize: '0.85rem',
+            transition: 'all 0.2s'
+          }}
+          onMouseOver={(e) => {
+            if (!cryptoLoading) {
+              e.currentTarget.style.background = '#f5f5f5'
+              e.currentTarget.style.borderColor = '#999'
+            }
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.background = 'transparent'
+            e.currentTarget.style.borderColor = '#ddd'
           }}
         >
-          {cryptoLoading ? '⟳ Refreshing...' : '🔄 Refresh Rankings'}
+          {cryptoLoading ? '⟳ Refreshing...' : '🔄 Refresh'}
         </button>
       </div>
-      
+
       {cryptoLoading ? (
         <div style={{textAlign: 'center', padding: '40px'}} role="status" aria-live="polite" aria-atomic="true">
           <span className="spinner"></span>
@@ -102,8 +97,8 @@ function CryptoPortfolio({
                   <th scope="col">Asset</th>
                   <th scope="col">Symbol</th>
                   <th scope="col">
-                    <Tooltip 
-                      content="Momentum score (0-100%). Higher scores indicate better recent performance, market cap rank, and liquidity. Similar to probability score for stocks." 
+                    <Tooltip
+                      content="Momentum score (0-100%). Higher scores indicate better recent performance, market cap rank, and liquidity. Similar to probability score for stocks."
                       position="top"
                     >
                       Momentum Score ⓘ
@@ -111,8 +106,8 @@ function CryptoPortfolio({
                   </th>
                   <th scope="col">Price (USD)</th>
                   <th scope="col">
-                    <Tooltip 
-                      content="24-hour price change percentage. Crypto markets are highly volatile - double-digit changes are common." 
+                    <Tooltip
+                      content="24-hour price change percentage. Crypto markets are highly volatile - double-digit changes are common."
                       position="top"
                     >
                       24h Change ⓘ
@@ -128,10 +123,10 @@ function CryptoPortfolio({
                 const actualRank = (cryptoPage - 1) * cryptoPerPage + idx + 1
                 const changeClass = crypto.change_24h > 0 ? 'positive' : crypto.change_24h < 0 ? 'negative' : ''
                 const change7dClass = crypto.change_7d > 0 ? 'positive' : crypto.change_7d < 0 ? 'negative' : ''
-                
+
                 return (
-                  <tr 
-                    key={crypto.crypto_id} 
+                  <tr
+                    key={crypto.crypto_id}
                     onClick={() => onRowClick(crypto)}
                     style={{cursor: 'pointer'}}
                     title="Click for detailed information"
@@ -149,14 +144,14 @@ function CryptoPortfolio({
                     </td>
                     <td><span className="ticker-symbol">{crypto.symbol}</span></td>
                     <td>
-                      <Tooltip 
+                      <Tooltip
                         content={`${(crypto.momentum_score * 100).toFixed(2)}% momentum. Rank #${crypto.market_cap_rank} by market cap. ${
-                          crypto.momentum_score >= 0.65 
-                            ? 'Strong bullish signal' 
-                            : crypto.momentum_score >= 0.55 
-                            ? 'Bullish momentum' 
-                            : crypto.momentum_score >= 0.45 
-                            ? 'Neutral' 
+                          crypto.momentum_score >= 0.65
+                            ? 'Strong bullish signal'
+                            : crypto.momentum_score >= 0.55
+                            ? 'Bullish momentum'
+                            : crypto.momentum_score >= 0.45
+                            ? 'Neutral'
                             : 'Weak momentum'
                         }`}
                         position="top"
@@ -168,20 +163,20 @@ function CryptoPortfolio({
                     </td>
                     <td>${crypto.price?.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 6}) || 'N/A'}</td>
                     <td>
-                      <Tooltip 
+                      <Tooltip
                         content={`${crypto.change_24h ? crypto.change_24h.toFixed(2) : 'N/A'}% in last 24 hours. ${
-                          crypto.change_24h > 10 
-                            ? '🚀 Major pump!' 
-                            : crypto.change_24h > 5 
-                            ? 'Strong gain' 
-                            : crypto.change_24h > 0 
-                            ? 'Slight increase' 
-                            : crypto.change_24h < -10 
-                            ? '⚠️ Heavy drop' 
-                            : crypto.change_24h < -5 
-                            ? 'Significant loss' 
-                            : crypto.change_24h < 0 
-                            ? 'Minor decline' 
+                          crypto.change_24h > 10
+                            ? '🚀 Major pump!'
+                            : crypto.change_24h > 5
+                            ? 'Strong gain'
+                            : crypto.change_24h > 0
+                            ? 'Slight increase'
+                            : crypto.change_24h < -10
+                            ? '⚠️ Heavy drop'
+                            : crypto.change_24h < -5
+                            ? 'Significant loss'
+                            : crypto.change_24h < 0
+                            ? 'Minor decline'
                             : 'Stable'
                         }`}
                         position="top"
@@ -198,7 +193,7 @@ function CryptoPortfolio({
                     </td>
                     <td>${crypto.market_cap ? (crypto.market_cap / 1e9).toFixed(2) + 'B' : 'N/A'}</td>
                     <td>
-                      <Tooltip 
+                      <Tooltip
                         content={`${crypto.volume_to_mcap_ratio ? crypto.volume_to_mcap_ratio.toFixed(2) : 'N/A'}% - Trading volume as % of market cap. Higher = more liquid. 20%+ is excellent, 10-20% is good, <10% is lower liquidity.`}
                         position="top"
                       >
@@ -211,12 +206,12 @@ function CryptoPortfolio({
             </tbody>
           </table>
           </div>
-          
+
           {/* Pagination Controls */}
           {cryptoResults.length > cryptoPerPage && (
             <div className="pagination">
-              <button 
-                onClick={() => onPageChange(Math.max(1, cryptoPage - 1))} 
+              <button
+                onClick={() => onPageChange(Math.max(1, cryptoPage - 1))}
                 disabled={cryptoPage === 1}
                 aria-label="Go to previous page"
               >
@@ -224,8 +219,8 @@ function CryptoPortfolio({
               </button>
               <div className="page-selector">
                 <span className="page-info">Page</span>
-                <select 
-                  value={cryptoPage} 
+                <select
+                  value={cryptoPage}
                   onChange={(e) => onPageChange(Number(e.target.value))}
                   className="page-dropdown"
                   aria-label="Select page number"
@@ -236,8 +231,8 @@ function CryptoPortfolio({
                 </select>
                 <span className="page-info">of {totalPages}</span>
               </div>
-              <button 
-                onClick={() => onPageChange(Math.min(totalPages, cryptoPage + 1))} 
+              <button
+                onClick={() => onPageChange(Math.min(totalPages, cryptoPage + 1))}
                 disabled={cryptoPage >= totalPages}
                 aria-label="Go to next page"
               >
@@ -247,7 +242,7 @@ function CryptoPortfolio({
           )}
         </div>
       )}
-      
+
       {cryptoResults.length === 0 && !cryptoLoading && (
         <p style={{color: '#666', fontSize: '0.9rem', margin: '0', textAlign: 'center', padding: '20px'}}>
           Click "Refresh Rankings" to load digital assets data

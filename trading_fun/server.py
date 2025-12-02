@@ -886,6 +886,207 @@ def ticker_info_batch(tickers: List[str]) -> Dict[str, Any]:
             raise HTTPException(status_code=500, detail=f"Batch fetch failed: {str(e)}")
 
 
+@app.get("/popular_stocks", tags=["Stocks"])
+def get_popular_stocks(limit: int = 50) -> Dict[str, Any]:
+    """Get popular stocks with company names for autocomplete."""
+    with RequestLogger("GET /popular_stocks"):
+        try:
+            # Predefined list (avoids yfinance rate limiting)
+            all_stocks = [
+                {"ticker": "AAPL", "name": "Apple Inc."},
+                {"ticker": "MSFT", "name": "Microsoft Corporation"},
+                {"ticker": "GOOGL", "name": "Alphabet Inc. (Google)"},
+                {"ticker": "AMZN", "name": "Amazon.com Inc."},
+                {"ticker": "TSLA", "name": "Tesla Inc."},
+                {"ticker": "META", "name": "Meta Platforms (Facebook)"},
+                {"ticker": "NVDA", "name": "NVIDIA Corporation"},
+                {"ticker": "JPM", "name": "JPMorgan Chase & Co."},
+                {"ticker": "V", "name": "Visa Inc."},
+                {"ticker": "WMT", "name": "Walmart Inc."},
+                {"ticker": "DIS", "name": "Walt Disney Company"},
+                {"ticker": "NFLX", "name": "Netflix Inc."},
+                {"ticker": "INTC", "name": "Intel Corporation"},
+                {"ticker": "AMD", "name": "Advanced Micro Devices"},
+                {"ticker": "BA", "name": "Boeing Company"},
+                {"ticker": "GE", "name": "General Electric"},
+                {"ticker": "F", "name": "Ford Motor Company"},
+                {"ticker": "GM", "name": "General Motors"},
+                {"ticker": "T", "name": "AT&T Inc."},
+                {"ticker": "VZ", "name": "Verizon Communications"},
+                {"ticker": "KO", "name": "Coca-Cola Company"},
+                {"ticker": "PEP", "name": "PepsiCo Inc."},
+                {"ticker": "MCD", "name": "McDonald's Corporation"},
+                {"ticker": "NKE", "name": "Nike Inc."},
+                {"ticker": "SBUX", "name": "Starbucks Corporation"},
+                {"ticker": "PYPL", "name": "PayPal Holdings Inc."},
+                {"ticker": "CSCO", "name": "Cisco Systems Inc."},
+                {"ticker": "ORCL", "name": "Oracle Corporation"},
+                {"ticker": "IBM", "name": "International Business Machines"},
+                {"ticker": "CRM", "name": "Salesforce Inc."},
+                {"ticker": "ADBE", "name": "Adobe Inc."},
+                {"ticker": "UBER", "name": "Uber Technologies Inc."},
+                {"ticker": "ABNB", "name": "Airbnb Inc."},
+                {"ticker": "SHOP", "name": "Shopify Inc."},
+                {"ticker": "SQ", "name": "Block Inc. (Square)"},
+                {"ticker": "COIN", "name": "Coinbase Global Inc."},
+                {"ticker": "ROKU", "name": "Roku Inc."},
+                {"ticker": "SPOT", "name": "Spotify Technology"},
+                {"ticker": "SNAP", "name": "Snap Inc."},
+                {"ticker": "UBS", "name": "UBS Group AG"},
+                {"ticker": "NESN.SW", "name": "Nestlé S.A."},
+                {"ticker": "NOVN.SW", "name": "Novartis AG"},
+                {"ticker": "ROG.SW", "name": "Roche Holding AG"},
+                {"ticker": "ABBN.SW", "name": "ABB Ltd"},
+                {"ticker": "ZURN.SW", "name": "Zurich Insurance Group"},
+                {"ticker": "GIVN.SW", "name": "Givaudan SA"},
+                {"ticker": "LONN.SW", "name": "Lonza Group AG"},
+                {"ticker": "SREN.SW", "name": "Swiss Re AG"},
+                {"ticker": "CSGN.SW", "name": "Credit Suisse Group AG"},
+            ]
+
+            return {"stocks": all_stocks[:limit]}
+        except Exception as e:
+            logger.error(f"Error fetching popular stocks: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/search_stocks", tags=["Stocks"])
+def search_stocks(query: str, limit: int = 10) -> Dict[str, Any]:
+    """Search stocks by ticker or company name."""
+    with RequestLogger(f"GET /search_stocks?query={query}"):
+        try:
+            if not query or len(query) < 1:
+                return {"stocks": []}
+
+            query_lower = query.lower()
+
+            # Get all popular stocks
+            popular_response = get_popular_stocks(limit=100)
+            all_stocks = popular_response["stocks"]
+
+            # Filter by query
+            matching = [
+                stock for stock in all_stocks if query_lower in stock["ticker"].lower() or query_lower in stock["name"].lower()
+            ]
+
+            return {"stocks": matching[:limit]}
+        except Exception as e:
+            logger.error(f"Error searching stocks: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/popular_cryptos", tags=["Cryptocurrency"])
+def get_popular_cryptos(limit: int = 30) -> Dict[str, Any]:
+    """Get popular cryptocurrencies for autocomplete."""
+    with RequestLogger("GET /popular_cryptos"):
+        try:
+            # Predefined list of popular cryptos with CoinGecko IDs
+            all_cryptos = [
+                {"id": "bitcoin", "name": "Bitcoin", "symbol": "BTC"},
+                {"id": "ethereum", "name": "Ethereum", "symbol": "ETH"},
+                {"id": "tether", "name": "Tether", "symbol": "USDT"},
+                {"id": "binancecoin", "name": "BNB", "symbol": "BNB"},
+                {"id": "solana", "name": "Solana", "symbol": "SOL"},
+                {"id": "usd-coin", "name": "USD Coin", "symbol": "USDC"},
+                {"id": "ripple", "name": "XRP", "symbol": "XRP"},
+                {"id": "cardano", "name": "Cardano", "symbol": "ADA"},
+                {"id": "dogecoin", "name": "Dogecoin", "symbol": "DOGE"},
+                {"id": "tron", "name": "TRON", "symbol": "TRX"},
+                {"id": "avalanche-2", "name": "Avalanche", "symbol": "AVAX"},
+                {"id": "polkadot", "name": "Polkadot", "symbol": "DOT"},
+                {"id": "chainlink", "name": "Chainlink", "symbol": "LINK"},
+                {"id": "polygon", "name": "Polygon", "symbol": "MATIC"},
+                {"id": "litecoin", "name": "Litecoin", "symbol": "LTC"},
+                {"id": "shiba-inu", "name": "Shiba Inu", "symbol": "SHIB"},
+                {"id": "uniswap", "name": "Uniswap", "symbol": "UNI"},
+                {"id": "stellar", "name": "Stellar", "symbol": "XLM"},
+                {"id": "cosmos", "name": "Cosmos", "symbol": "ATOM"},
+                {"id": "monero", "name": "Monero", "symbol": "XMR"},
+                {"id": "ethereum-classic", "name": "Ethereum Classic", "symbol": "ETC"},
+                {"id": "hedera-hashgraph", "name": "Hedera", "symbol": "HBAR"},
+                {"id": "internet-computer", "name": "Internet Computer", "symbol": "ICP"},
+                {"id": "filecoin", "name": "Filecoin", "symbol": "FIL"},
+                {"id": "aptos", "name": "Aptos", "symbol": "APT"},
+                {"id": "near", "name": "NEAR Protocol", "symbol": "NEAR"},
+                {"id": "arbitrum", "name": "Arbitrum", "symbol": "ARB"},
+                {"id": "optimism", "name": "Optimism", "symbol": "OP"},
+                {"id": "the-graph", "name": "The Graph", "symbol": "GRT"},
+                {"id": "algorand", "name": "Algorand", "symbol": "ALGO"},
+            ]
+
+            return {"cryptos": all_cryptos[:limit]}
+        except Exception as e:
+            logger.error(f"Error fetching popular cryptos: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/search_cryptos", tags=["Cryptocurrency"])
+def search_cryptos(query: str, limit: int = 10) -> Dict[str, Any]:
+    """Search cryptocurrencies by ID, name, or symbol."""
+    with RequestLogger(f"GET /search_cryptos?query={query}"):
+        try:
+            if not query or len(query) < 1:
+                return {"cryptos": []}
+
+            query_lower = query.lower()
+
+            # Get all popular cryptos
+            popular_response = get_popular_cryptos(limit=50)
+            all_cryptos = popular_response["cryptos"]
+
+            # Filter by query
+            matching = [
+                crypto
+                for crypto in all_cryptos
+                if query_lower in crypto["id"].lower()
+                or query_lower in crypto["name"].lower()
+                or query_lower in crypto["symbol"].lower()
+            ]
+
+            return {"cryptos": matching[:limit]}
+        except Exception as e:
+            logger.error(f"Error searching cryptos: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/countries", tags=["Stocks"])
+def get_countries() -> Dict[str, Any]:
+    """Get available countries/markets for stock filtering."""
+    with RequestLogger("GET /countries"):
+        try:
+            # Build country list from COUNTRY_INDICES
+            countries = [
+                {"id": "Global", "label": "🌐 Global", "description": "Top global stocks", "flag": "🌐"},
+                {"id": "United States", "label": "🇺🇸 United States", "description": "US market leaders", "flag": "🇺🇸"},
+            ]
+
+            # Add countries from COUNTRY_INDICES
+            country_flags = {
+                "Switzerland": "🇨🇭",
+                "Germany": "🇩🇪",
+                "United Kingdom": "🇬🇧",
+                "France": "🇫🇷",
+                "Japan": "🇯🇵",
+                "Canada": "🇨🇦",
+            }
+
+            for country_name in COUNTRY_INDICES.keys():
+                flag = country_flags.get(country_name, "🌍")
+                countries.append(
+                    {
+                        "id": country_name,
+                        "label": f"{flag} {country_name}",
+                        "description": f"{country_name} companies",
+                        "flag": flag,
+                    }
+                )
+
+            return {"countries": countries}
+        except Exception as e:
+            logger.error(f"Error fetching countries: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+
 class AnalysisRequest(BaseModel):
     ranking: List[Dict[str, Any]]
     user_context: Optional[str] = None
@@ -1021,10 +1222,11 @@ class WatchlistUpdate(BaseModel):
 
 
 class AddStockRequest(BaseModel):
-    """Request model for adding a stock to watchlist"""
+    """Request model for adding a stock or crypto to watchlist"""
 
     ticker: str
     notes: Optional[str] = None
+    asset_type: str = "stock"  # 'stock' or 'crypto'
 
 
 # Watchlist Endpoints
@@ -1099,14 +1301,41 @@ def delete_watchlist(watchlist_id: int, user_id: str = "default_user"):
 
 @app.post("/watchlists/{watchlist_id}/stocks", tags=["Watchlists"])
 def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: str = "default_user"):
-    """Add a stock to a watchlist."""
+    """Add a stock or crypto to a watchlist."""
     try:
+        # For crypto assets, skip validation (CoinGecko IDs don't need ticker validation)
+        if stock.asset_type == "crypto":
+            validated_ticker = stock.ticker.lower()
+            company_name = stock.ticker
+        else:
+            # Validate and verify ticker (auto-corrects common mistakes like APPLE -> AAPL)
+            validated_ticker, company_name = ValidationService.validate_and_verify_ticker(stock.ticker)
+
+        # Use company name in notes if no notes provided
+        notes = stock.notes or company_name
+
         success = WatchlistDB.add_stock_to_watchlist(
-            watchlist_id=watchlist_id, user_id=user_id, ticker=stock.ticker, notes=stock.notes
+            watchlist_id=watchlist_id,
+            user_id=user_id,
+            ticker=validated_ticker,
+            notes=notes,
+            asset_type=stock.asset_type,
         )
         if not success:
-            raise HTTPException(status_code=400, detail="Stock already in watchlist or watchlist not found")
-        return {"message": f"Stock {stock.ticker} added to watchlist"}
+            raise HTTPException(
+                status_code=400,
+                detail=f"{stock.asset_type.title()} {validated_ticker} already in watchlist or watchlist not found",
+            )
+
+        # Return corrected ticker if it was auto-corrected (stocks only)
+        response = {"message": f"{stock.asset_type.title()} {validated_ticker} added to watchlist"}
+        if stock.asset_type == "stock" and validated_ticker != stock.ticker.upper():
+            response["corrected_from"] = stock.ticker
+            response["message"] = f"Stock {stock.ticker} auto-corrected to {validated_ticker} and added to watchlist"
+        return response
+    except ValueError as e:
+        # Validation error with suggestions
+        raise HTTPException(status_code=400, detail=str(e))
     except HTTPException:
         raise
     except Exception as e:
