@@ -33,7 +33,7 @@ function BuyOpportunities() {
 
       // Get predictions for top stocks
       const stockPredictions = await Promise.all(
-        stocks.slice(0, 20).map(async (stock) => {
+        stocks.slice(0, 30).map(async (stock) => {
           try {
             const predRes = await apiClient.get(`/watchlist/prediction/${stock.ticker}?asset_type=stock`);
             return {
@@ -54,12 +54,12 @@ function BuyOpportunities() {
       const buyStocks = stockPredictions
         .filter(s => s.prediction.signal === 'BUY')
         .sort((a, b) => b.prediction.confidence - a.prediction.confidence)
-        .slice(0, 5);
+        .slice(0, 10);
 
       const sellStocks = stockPredictions
         .filter(s => s.prediction.signal === 'SELL')
         .sort((a, b) => b.prediction.confidence - a.prediction.confidence)
-        .slice(0, 5);
+        .slice(0, 10);
 
       setStockBuyOpportunities(buyStocks);
       setStockSellOpportunities(sellStocks);
@@ -70,7 +70,7 @@ function BuyOpportunities() {
 
       // Get predictions for top cryptos
       const cryptoPredictions = await Promise.all(
-        cryptos.slice(0, 20).map(async (crypto) => {
+        cryptos.slice(0, 30).map(async (crypto) => {
           try {
             const predRes = await apiClient.get(`/watchlist/prediction/${crypto.crypto_id}?asset_type=crypto`);
             return {
@@ -91,12 +91,12 @@ function BuyOpportunities() {
       const buyCryptos = cryptoPredictions
         .filter(c => c.prediction.signal === 'BUY')
         .sort((a, b) => b.prediction.confidence - a.prediction.confidence)
-        .slice(0, 5);
+        .slice(0, 10);
 
       const sellCryptos = cryptoPredictions
         .filter(c => c.prediction.signal === 'SELL')
         .sort((a, b) => b.prediction.confidence - a.prediction.confidence)
-        .slice(0, 5);
+        .slice(0, 10);
 
       setCryptoBuyOpportunities(buyCryptos);
       setCryptoSellOpportunities(sellCryptos);
@@ -233,7 +233,7 @@ function BuyOpportunities() {
           <>
             {/* Buy Opportunities */}
             <div className="opportunity-section">
-              <h3 className="section-title">🟢 Top Buy Opportunities (Max 5)</h3>
+              <h3 className="section-title">🟢 Top Buy Opportunities (Max 10)</h3>
               {stockBuyOpportunities.length === 0 ? (
                 <div className="empty-opportunities">
                   <p>😔 No strong BUY signals for stocks right now.</p>
@@ -286,7 +286,7 @@ function BuyOpportunities() {
 
             {/* Sell Opportunities */}
             <div className="opportunity-section">
-              <h3 className="section-title">🔴 Top Sell Opportunities (Max 5)</h3>
+              <h3 className="section-title">🔴 Top Sell Opportunities (Max 10)</h3>
               {stockSellOpportunities.length === 0 ? (
                 <div className="empty-opportunities">
                   <p>😔 No strong SELL signals for stocks right now.</p>
@@ -343,7 +343,7 @@ function BuyOpportunities() {
           <>
             {/* Buy Opportunities */}
             <div className="opportunity-section">
-              <h3 className="section-title">🟢 Top Buy Opportunities (Max 5)</h3>
+              <h3 className="section-title">🟢 Top Buy Opportunities (Max 10)</h3>
               {cryptoBuyOpportunities.length === 0 ? (
                 <div className="empty-opportunities">
                   <p>😔 No strong BUY signals for crypto right now.</p>
@@ -403,7 +403,7 @@ function BuyOpportunities() {
 
             {/* Sell Opportunities */}
             <div className="opportunity-section">
-              <h3 className="section-title">🔴 Top Sell Opportunities (Max 5)</h3>
+              <h3 className="section-title">🔴 Top Sell Opportunities (Max 10)</h3>
               {cryptoSellOpportunities.length === 0 ? (
                 <div className="empty-opportunities">
                   <p>😔 No strong SELL signals for crypto right now.</p>
