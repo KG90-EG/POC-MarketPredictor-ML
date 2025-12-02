@@ -1,13 +1,14 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
+import { api } from '../api'
 
 /**
  * Market view selector component
- * Allows users to select one or multiple markets to view
+ * Single-selection mode: only one market can be selected at a time
  */
-export function MarketSelector({ selectedViews, onSelectionChange, disabled = false }) {
-  const marketViews = [
-    { id: 'Global', label: '🌐 Global', description: 'Top US stocks' },
+export function MarketSelector({ selectedMarket, onSelectionChange, disabled = false }) {
+  const [markets, setMarkets] = useState([
+    { id: 'Global', label: '🌐 Global', description: 'Top global stocks' },
     { id: 'United States', label: '🇺🇸 United States', description: 'US market leaders' },
     { id: 'Switzerland', label: '🇨🇭 Switzerland', description: 'Swiss companies' },
     { id: 'Germany', label: '🇩🇪 Germany', description: 'German companies' },
@@ -15,50 +16,69 @@ export function MarketSelector({ selectedViews, onSelectionChange, disabled = fa
     { id: 'France', label: '🇫🇷 France', description: 'French companies' },
     { id: 'Japan', label: '🇯🇵 Japan', description: 'Japanese companies' },
     { id: 'Canada', label: '🇨🇦 Canada', description: 'Canadian companies' }
-  ]
+  ])
+  const [loading, setLoading] = useState(false)
 
-  const toggleView = (viewId) => {
-    if (disabled) return
-    
-    const newSelection = selectedViews.includes(viewId)
-      ? selectedViews.filter(v => v !== viewId)
-      : [...selectedViews, viewId]
-    
-    // Ensure at least one view is selected
-    if (newSelection.length > 0) {
-      onSelectionChange(newSelection)
+  useEffect(() => {
+    // Future: fetch available markets from backend
+    // This allows dynamic market addition without frontend changes
+    const fetchMarkets = async () => {
+      try {
+        setLoading(true)
+        // When backend provides /api/markets endpoint, uncomment:
+        // const response = await api.get('/markets')
+        // setMarkets(response.data)
+      } catch (error) {
+        console.error('Failed to fetch markets:', error)
+        // Keep default markets on error
+      } finally {
+        setLoading(false)
+      }
     }
+
+    // fetchMarkets() // Uncomment when backend supports it
+  }, [])
+
+  const selectMarket = (marketId) => {
+    if (disabled) return
+    // Single-selection: always replace with new selection
+    onSelectionChange(marketId)
   }
 
   return (
     <div className="market-selector">
       <h3 className="market-selector-title">
-        Select Markets
+        Select Market
         <span className="market-selector-count">
-          ({selectedViews.length} selected)
+          (Single selection)
         </span>
       </h3>
-      <div className="market-buttons">
-        {marketViews.map(view => (
-          <button
-            key={view.id}
-            className={`market-button ${selectedViews.includes(view.id) ? 'selected' : ''}`}
-            onClick={() => toggleView(view.id)}
-            disabled={disabled}
-            title={view.description}
-            aria-pressed={selectedViews.includes(view.id)}
-          >
-            {view.label}
-            {selectedViews.includes(view.id) && <span className="checkmark"> ✓</span>}
-          </button>
-        ))}
-      </div>
+      {loading ? (
+        <div className="market-loading">Loading markets...</div>
+      ) : (
+        <div className="market-buttons">
+          {markets.map(market => (
+            <button
+              key={market.id}
+              className={`market-button ${selectedMarket === market.id ? 'selected' : ''}`}
+              onClick={() => selectMarket(market.id)}
+              disabled={disabled}
+              title={market.description}
+              aria-pressed={selectedMarket === market.id}
+              aria-label={`Select ${market.label} market`}
+            >
+              {market.label}
+              {selectedMarket === market.id && <span className="checkmark"> ✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
 
 MarketSelector.propTypes = {
-  selectedViews: PropTypes.arrayOf(PropTypes.string).isRequired,
+  selectedMarket: PropTypes.string.isRequired,
   onSelectionChange: PropTypes.func.isRequired,
   disabled: PropTypes.bool
 }

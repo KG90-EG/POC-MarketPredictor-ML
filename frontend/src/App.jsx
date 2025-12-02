@@ -10,6 +10,7 @@ import CryptoDetailSidebar from './components/CryptoDetailSidebar'
 import AIAnalysisSection from './components/AIAnalysisSection'
 import StockRanking from './components/StockRanking'
 import CryptoPortfolio from './components/CryptoPortfolio'
+import MarketSelector from './components/MarketSelector'
 import './styles.css'
 
 // Create a React Query client
@@ -40,14 +41,14 @@ function AppContent() {
   const [showHelp, setShowHelp] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [selectedCrypto, setSelectedCrypto] = useState(null)
-  const [selectedViews, setSelectedViews] = useState(['Global'])
+  const [selectedMarket, setSelectedMarket] = useState('Global')
   const [showHealthPanel, setShowHealthPanel] = useState(false)
   const [healthStatus, setHealthStatus] = useState('loading')
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode')
     return saved ? JSON.parse(saved) : false
   })
-  
+
   // Digital Assets / Crypto state
   const [portfolioView, setPortfolioView] = useState('stocks') // 'stocks' or 'crypto'
   const [cryptoResults, setCryptoResults] = useState([])
@@ -57,17 +58,17 @@ function AppContent() {
   const [cryptoPage, setCryptoPage] = useState(1)
   const [cryptoPerPage] = useState(20) // Items per page
   const [cryptoSearchTerm, setCryptoSearchTerm] = useState('')
-  
+
   // Filter crypto results based on search term
   const filteredCryptoResults = React.useMemo(() => {
     if (!cryptoSearchTerm) return cryptoResults
     const term = cryptoSearchTerm.toLowerCase()
-    return cryptoResults.filter(crypto => 
-      crypto.name.toLowerCase().includes(term) || 
+    return cryptoResults.filter(crypto =>
+      crypto.name.toLowerCase().includes(term) ||
       crypto.symbol.toLowerCase().includes(term)
     )
   }, [cryptoResults, cryptoSearchTerm])
-  
+
   function handleCryptoSearchChange(e) {
     setCryptoSearchTerm(e.target.value)
     setCryptoPage(1) // Reset to page 1 when search changes
@@ -94,7 +95,7 @@ function AppContent() {
         setHealthStatus('error')
       }
     }
-    
+
     checkHealth()
     const interval = setInterval(checkHealth, 30000) // Check every 30s
     return () => clearInterval(interval)
@@ -104,35 +105,27 @@ function AppContent() {
     setDarkMode(!darkMode)
   }
 
-  async function fetchRanking(views = selectedViews) {
+  async function fetchRanking(market = selectedMarket) {
     setLoading(true)
     setAnalysis(null)
     setCurrentPage(1)
     setLoadingProgress({ current: 0, total: 0 })
-    
+
     try {
-      // Fetch ranking for each selected view and merge
-      let allRankings = []
-      for (const view of views) {
-        const resp = await api.getRanking(view)
-        allRankings = [...allRankings, ...resp.data.ranking]
-      }
-      
-      // Remove duplicates and re-sort by probability
-      const uniqueRankings = Array.from(
-        new Map(allRankings.map(item => [item.ticker, item])).values()
-      ).sort((a, b) => b.prob - a.prob)
-      
-      setResults(uniqueRankings)
-      
+      // Fetch ranking for selected market (single selection)
+      const resp = await api.getRanking(market)
+      const rankings = resp.data.ranking
+
+      setResults(rankings)
+
       // Batch fetch ticker details (much faster than sequential)
-      const tickers = uniqueRankings.map(r => r.ticker)
+      const tickers = rankings.map(r => r.ticker)
       setLoadingProgress({ current: 0, total: tickers.length })
-      
+
       try {
         const batchResp = await api.getTickerInfoBatch(tickers)
         const { results: batchResults, errors } = batchResp.data
-        
+
         // Log any errors but don't fail the whole operation
         if (Object.keys(errors).length > 0) {
           console.warn('Some tickers failed to load:', errors)
@@ -141,7 +134,7 @@ function AppContent() {
             console.warn(`High failure rate: ${failedCount}/${tickers.length} tickers failed`)
           }
         }
-        
+
         setTickerDetails(batchResults || {})
         setLoadingProgress({ current: Object.keys(batchResults || {}).length, total: tickers.length })
       } catch (batchError) {
@@ -168,7 +161,7 @@ function AppContent() {
       setLoadingProgress({ current: 0, total: 0 })
     }
   }
-  
+
   // Fallback method for sequential fetching
   async function fetchDetailsSequential(ranking) {
     const details = {}
@@ -260,7 +253,7 @@ function AppContent() {
       const error = handleApiError(e, 'Search failed')
       let errorMessage = `Unable to find ticker ${t}`
       if (error.isNetworkError) {
-        errorMessage = '⚠️ Network error: Please check your connection.'  
+        errorMessage = '⚠️ Network error: Please check your connection.'
       } else if (error.status === 404) {
         errorMessage = `❌ Ticker "${t}" not found. Please check the symbol and try again.`
       } else if (error.isRateLimit) {
@@ -298,7 +291,7 @@ function AppContent() {
       ])
       const info = infoResp.data || {}
       const prob = predResp.data?.prob || null
-      
+
       // Calculate signal
       let signal = 'HOLD'
       if (prob >= 0.65) signal = 'STRONG BUY'
@@ -306,7 +299,7 @@ function AppContent() {
       else if (prob >= 0.45) signal = 'HOLD'
       else if (prob >= 0.35) signal = 'CONSIDER SELLING'
       else signal = 'SELL'
-      
+
       setSelectedCompany({
         ticker,
         ...info,
@@ -339,19 +332,19 @@ function AppContent() {
     <div className="container">
       {/* Skip Navigation Link */}
       <a href="#main-content" className="skip-link">Skip to main content</a>
-      
+
       <header className="header" role="banner">
-        <button 
-          className="theme-toggle" 
-          onClick={toggleDarkMode} 
+        <button
+          className="theme-toggle"
+          onClick={toggleDarkMode}
           aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
           title={`Toggle ${darkMode ? 'light' : 'dark'} mode`}
         >
           {darkMode ? '☀️' : '🌙'}
         </button>
-        <button 
-          className={`health-indicator ${healthStatus}`} 
-          onClick={() => setShowHealthPanel(!showHealthPanel)} 
+        <button
+          className={`health-indicator ${healthStatus}`}
+          onClick={() => setShowHealthPanel(!showHealthPanel)}
           aria-label={`System health status: ${healthStatus}. Click to view details.`}
           aria-expanded={showHealthPanel}
           title="System Health"
@@ -361,9 +354,9 @@ function AppContent() {
           {healthStatus === 'error' && '❌'}
           {healthStatus === 'loading' && '⏳'}
         </button>
-        <button 
-          className="help-button" 
-          onClick={() => setShowHelp(true)} 
+        <button
+          className="help-button"
+          onClick={() => setShowHelp(true)}
           aria-label="Open help and usage guide"
           title="Help & Guide"
         >
@@ -372,10 +365,10 @@ function AppContent() {
         <h1><span className="emoji" aria-hidden="true">📈</span> POC Trading Overview</h1>
         <p>AI-Powered Stock Ranking & Analysis</p>
       </header>
-      
+
       {/* Health Check Section - Toggle visibility */}
       <HealthCheck isOpen={showHealthPanel} onClose={() => setShowHealthPanel(false)} />
-      
+
       <main id="main-content" role="main">
       {/* Portfolio View Toggle */}
       <section className="card" style={{marginBottom: '24px'}} role="region" aria-label="Portfolio view selector">
@@ -396,7 +389,7 @@ function AppContent() {
               Traditional equities, indices & ETFs
             </div>
           </button>
-          
+
           <button
             className={`portfolio-toggle-button crypto ${portfolioView === 'crypto' ? 'active' : ''}`}
             onClick={() => {
@@ -414,72 +407,29 @@ function AppContent() {
           </button>
         </div>
       </section>
-      
+
       {/* Market View Selector - Only for stocks */}
       {portfolioView === 'stocks' && (
       <section className="card" role="region" aria-label="Market view selector">
         <div className="card-title">
-          🌍 Market View - {selectedViews.join(', ')}
+          🌍 Market View - {selectedMarket}
           {!loading && results.length > 0 && (
             <span style={{marginLeft: '8px', color: '#667eea', fontWeight: 'bold'}}>({results.length})</span>
           )}
         </div>
-        <div style={{marginBottom: '8px', fontSize: '0.9rem', color: '#666'}}>
-          💡 Click to select multiple markets
-        </div>
-        <div style={{display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px'}}>
-          {['Global', 'United States', 'Switzerland', 'Germany', 'United Kingdom', 'France', 'Japan', 'Canada'].map(view => {
-            const isSelected = selectedViews.includes(view)
-            return (
-              <button
-                key={view}
-                onClick={() => {
-                  let newViews
-                  if (isSelected) {
-                    // Deselect if already selected (but keep at least one)
-                    newViews = selectedViews.length > 1 
-                      ? selectedViews.filter(v => v !== view)
-                      : selectedViews
-                  } else {
-                    // Add to selection
-                    newViews = [...selectedViews, view]
-                  }
-                  setSelectedViews(newViews)
-                  fetchRanking(newViews)
-                }}
-                aria-label={`${view} market view`}
-                aria-pressed={isSelected}
-                style={{
-                  padding: '10px 20px',
-                  background: isSelected ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f0f0f0',
-                  color: isSelected ? 'white' : '#333',
-                  border: isSelected ? '2px solid #764ba2' : '2px solid transparent',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: isSelected ? '600' : '400',
-                  transition: 'all 0.3s ease',
-                  boxShadow: isSelected ? '0 4px 12px rgba(102, 126, 234, 0.4)' : 'none',
-                  position: 'relative'
-                }}
-              >
-                {isSelected && <span style={{position: 'absolute', top: '-4px', right: '-4px', fontSize: '12px'}}>✓</span>}
-                {view === 'Global' ? '🌐' : 
-                 view === 'United States' ? '🇺🇸' : 
-                 view === 'Switzerland' ? '🇨🇭' : 
-                 view === 'Germany' ? '🇩🇪' : 
-                 view === 'United Kingdom' ? '🇬🇧' : 
-                 view === 'France' ? '🇫🇷' : 
-                 view === 'Japan' ? '🇯🇵' : 
-                 view === 'Canada' ? '🇨🇦' : '🌎'} {view}
-              </button>
-            )
-          })}
-        </div>
-        
+        <MarketSelector
+          selectedMarket={selectedMarket}
+          onSelectionChange={(market) => {
+            setSelectedMarket(market)
+            fetchRanking(market)
+          }}
+          disabled={loading}
+        />
+
         {loading ? (
           <div style={{textAlign: 'center', padding: '40px'}} role="status" aria-live="polite" aria-atomic="true">
             <span className="spinner"></span>
-            <p>Loading {selectedViews.join(', ')} market rankings...</p>
+            <p>Loading {selectedMarket} market rankings...</p>
             {loadingProgress.total > 0 && (
               <div style={{marginTop: '16px'}}>
                 <div style={{
@@ -575,7 +525,7 @@ function AppContent() {
               <span style={{marginLeft: '8px', color: '#f59e0b', fontWeight: 'bold'}}>({cryptoResults.length})</span>
             )}
           </div>
-          
+
           <CryptoPortfolio
             cryptoResults={filteredCryptoResults}
             cryptoLoading={cryptoLoading}
@@ -650,7 +600,7 @@ function AppContent() {
                 </tr>
               </thead>
             <tbody>
-              <tr 
+              <tr
                 onClick={() => openCompanyDetail(searchResult.ticker)}
                 style={{ cursor: 'pointer' }}
                 title="Click for detailed information"
@@ -661,7 +611,7 @@ function AppContent() {
                   <span className="country-tag">{searchResultDetails[searchResult.ticker]?.country || 'N/A'}</span>
                 </td>
                 <td>
-                  <Tooltip 
+                  <Tooltip
                     content={`${searchResult.prob != null ? `${(searchResult.prob * 100).toFixed(2)}% confidence. ${searchResult.prob >= 0.65 ? 'Strong buy signal' : searchResult.prob >= 0.55 ? 'Buy signal' : searchResult.prob >= 0.45 ? 'Hold' : searchResult.prob >= 0.35 ? 'Consider selling' : 'Sell signal'}` : 'N/A'}`}
                     position="top"
                   >
@@ -672,7 +622,7 @@ function AppContent() {
                 </td>
                 <td>{searchResultDetails[searchResult.ticker]?.price != null ? `$${searchResultDetails[searchResult.ticker].price.toFixed(2)}` : 'N/A'}</td>
                 <td>
-                  <Tooltip 
+                  <Tooltip
                     content={`${searchResultDetails[searchResult.ticker]?.change != null ? `${searchResultDetails[searchResult.ticker].change > 0 ? '+' : ''}${searchResultDetails[searchResult.ticker].change.toFixed(2)}% daily change. ${searchResultDetails[searchResult.ticker].change > 3 ? 'Strong upward move!' : searchResultDetails[searchResult.ticker].change > 0 ? 'Positive momentum' : searchResultDetails[searchResult.ticker].change < -3 ? 'Significant drop' : searchResultDetails[searchResult.ticker].change < 0 ? 'Slight decline' : 'No change'}` : 'N/A'}`}
                     position="top"
                   >
@@ -721,12 +671,12 @@ function AppContent() {
 
       {/* Company Detail Sidebar */}
       <CompanyDetailSidebar company={selectedCompany} onClose={() => setSelectedCompany(null)} />
-      
+
       {/* Crypto Detail Sidebar */}
       <CryptoDetailSidebar crypto={selectedCrypto} onClose={() => setSelectedCrypto(null)} />
-      
+
       </main>
-      
+
       {/* Footer */}
       <footer style={{
         marginTop: '40px',
