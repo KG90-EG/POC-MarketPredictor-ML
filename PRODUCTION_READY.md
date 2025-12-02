@@ -363,6 +363,97 @@ docker-compose up -d prometheus grafana
 
 ---
 
+## 📚 Additional Setup Guides
+
+### **ReadTheDocs Documentation Hosting** (10-15 minutes)
+
+Professional documentation site with search, versioning, and PDF exports.
+
+**Guide**: [docs/operations/READTHEDOCS_SETUP.md](docs/operations/READTHEDOCS_SETUP.md)
+
+**Quick Start**:
+1. Sign up at [readthedocs.org](https://readthedocs.org)
+2. Connect GitHub account
+3. Import POC-MarketPredictor-ML repository
+4. Auto-detects `.readthedocs.yaml` configuration
+5. Documentation live at: `https://poc-marketpredictor-ml.readthedocs.io`
+
+**What You Get**:
+- 📖 Professional documentation site
+- 🔍 Full-text search across all docs
+- 📦 Version management (stable, latest, tags)
+- 📄 Automatic PDF/ePub exports
+- 🌐 Custom domain support
+
+---
+
+### **GitHub Security Features** (5-10 minutes)
+
+Enable enterprise-grade security scanning and automated vulnerability management.
+
+**Guide**: [docs/operations/GITHUB_SECURITY_SETUP.md](docs/operations/GITHUB_SECURITY_SETUP.md)  
+**Helper Script**: `./scripts/setup_github_security.sh`
+
+**Features to Enable**:
+1. **Dependabot Alerts** - Vulnerability notifications
+2. **Dependabot Security Updates** - Auto-PRs for vulnerable dependencies
+3. **Secret Scanning** - Detects committed secrets/tokens
+4. **Push Protection** - Blocks pushes with secrets
+5. **CodeQL Analysis** - Static code analysis for vulnerabilities
+
+**Quick Start**:
+```bash
+# Run automated setup helper
+./scripts/setup_github_security.sh
+
+# Then follow web UI instructions to enable features
+```
+
+**Settings Page**: [Repository Security Settings](https://github.com/KG90-EG/POC-MarketPredictor-ML/settings/security_analysis)
+
+---
+
+### **Production Deployment** (10-30 minutes)
+
+Complete deployment automation with health checks, rollback, and verification.
+
+**Guide**: [docs/deployment/PRODUCTION_DEPLOYMENT.md](docs/deployment/PRODUCTION_DEPLOYMENT.md)  
+**Deployment Script**: `./scripts/deploy_production.sh`
+
+**Deployment Methods**:
+
+1. **GitHub Actions** (Fully Automated)
+   - Configure secrets in GitHub
+   - Push to main branch
+   - Automatic deployment with CI/CD
+
+2. **CLI Script** (Semi-Automated)
+   ```bash
+   # Full deployment with validation
+   ./scripts/deploy_production.sh --all --validate --verify
+
+   # Backend only
+   ./scripts/deploy_production.sh --backend-only --verify
+
+   # Frontend only
+   ./scripts/deploy_production.sh --frontend-only --verify
+
+   # Rollback
+   ./scripts/deploy_production.sh --rollback
+   ```
+
+3. **Manual** (Step-by-Step)
+   - Railway for backend
+   - Vercel for frontend
+   - Custom domain configuration
+   - See guide for alternatives (AWS, GCP, Heroku, Netlify)
+
+**Platforms**:
+- **Backend**: Railway (recommended), AWS EB, Google Cloud Run, Heroku
+- **Frontend**: Vercel (recommended), Netlify, AWS Amplify, Cloudflare Pages
+
+---
+
 ## 📞 Support & Resources
 
 **Repository**: <https://github.com/KG90-EG/POC-MarketPredictor-ML>  
