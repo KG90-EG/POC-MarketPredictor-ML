@@ -936,6 +936,7 @@ def get_popular_stocks(limit: int = 50) -> Dict[str, Any]:
                 {"ticker": "NESN.SW", "name": "Nestlé S.A."},
                 {"ticker": "NOVN.SW", "name": "Novartis AG"},
                 {"ticker": "ROG.SW", "name": "Roche Holding AG"},
+                {"ticker": "HOLN.SW", "name": "Holcim Ltd"},
                 {"ticker": "ABBN.SW", "name": "ABB Ltd"},
                 {"ticker": "ZURN.SW", "name": "Zurich Insurance Group"},
                 {"ticker": "GIVN.SW", "name": "Givaudan SA"},
