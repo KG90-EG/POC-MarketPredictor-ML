@@ -15,15 +15,17 @@ This repository contains a production-grade machine learning pipeline and modern
 
 - 🤖 **ML-Powered Stock Ranking** - RandomForest/XGBoost models predict stock performance
 - 📊 **Real-Time Market Data** - Live prices, volume, market cap via yfinance
+- 🔍 **Enhanced Stock Search** - Dynamic lookup with yfinance fallback, supports European exchanges (.SW, .DE, .L, .PA)
 - 🌍 **Multi-Market Views** - Analyze stocks from 8 different markets (US, Switzerland, Germany, UK, France, Japan, Canada)
 - 🎯 **Dynamic Country Selector** - Beautiful card-based country selection with flag emojis
 - 🔄 **Dynamic Stock Discovery** - Automatically validates and ranks top companies by market cap
 - 🚀 **Auto-Load Rankings** - Top stocks ranked automatically on page load based on selected market
 - 📄 **Pagination** - Clean 10-per-page display with easy navigation
-- ⭐ **Watchlists & Portfolios (Phase 1)** - Create custom watchlists with **mixed stocks and crypto**, track favorites, get actionable insights
+- ⭐ **Watchlists & Portfolios** - Create custom watchlists with **mixed stocks and crypto**, track favorites, get actionable insights
 - 💎 **Mixed Asset Support** - Add both stocks and cryptocurrencies to the same watchlist
 - 🔍 **Smart Asset Search** - Separate dropdowns for stocks (50+) and crypto (30+) with live filtering
 - 💰 **Investment Insights** - Live prices, buy/sell recommendations, confidence scores, momentum indicators
+- ✅ **Fixed Crypto Display** - Ethereum and other crypto assets now show accurate price/change data
 - 🎯 **Automated Buy/Sell Signals** - Python-based recommendation engine with 5-tier signal system
 - 🧠 **AI Analysis** - OpenAI-powered trading recommendations with retry logic and caching
 - ⚛️ **Modern React UI** - Real-time updates with color-coded indicators and dark/light theme toggle
@@ -41,7 +43,7 @@ This repository contains a production-grade machine learning pipeline and modern
 - 📈 **MLflow Integration** - Model tracking, versioning, and promotion
 - 🐳 **Docker Support** - Multi-stage builds with frontend and backend
 - 💾 **Crypto/Digital Assets** - Track 200+ cryptocurrencies with live CoinGecko data, NFT tokens included
-- 🎨 **Improved Crypto UX** - Subtle refresh button, clean interface without unnecessary toggles
+- 🎨 **Improved Crypto UX** - Simplified interface, removed unnecessary dropdowns, clean pagination
 
 Quick summary:
 

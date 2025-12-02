@@ -13,11 +13,16 @@ Market Predictor ML is a full-stack machine learning application for stock and c
 
 ### 1. Stock Analysis & Predictions
 
-**Backend API**: `/predict/{ticker}`, `/ticker_info/{ticker}`
+**Backend API**: `/predict/{ticker}`, `/ticker_info/{ticker}`, `/search_stocks`
 
 - Machine Learning predictions using Random Forest classifier
 - Technical indicators: RSI, MACD, Bollinger Bands, Momentum Score
 - Real-time stock data via yfinance API
+- **Enhanced Stock Search**: Dynamic ticker lookup with yfinance fallback for stocks not in popular list
+  - Searches popular stocks first (100+ companies)
+  - Falls back to live yfinance lookup if not found
+  - Auto-tries common suffixes (.SW, .DE, .L, .PA) for European stocks
+  - Supports Swiss (e.g., HOLN.SW), German, UK, and French exchanges
 - Confidence scores and probability distributions
 - 52-week high/low tracking
 
@@ -37,12 +42,14 @@ Market Predictor ML is a full-stack machine learning application for stock and c
 - Support for 200+ cryptocurrencies
 - NFT tokens included by default
 - Market cap, volume, and 24h price change tracking
+- **Fixed**: Proper nested market_data parsing for watchlist crypto display
 
 **Frontend**:
 
 - Dynamic crypto rankings table
 - Sortable columns (rank, name, price, change %, market cap)
-- Pagination with configurable results per page
+- **Simplified UI**: Removed "Show Top" dropdown (use pagination instead)
+- Pagination with 20 cryptos per page
 - Subtle refresh button (minimalist design)
 - No NFT toggle (always enabled)
 
@@ -85,11 +92,16 @@ CREATE TABLE watchlist_items (
 **Features**:
 
 - **Mixed Asset Support**: Single watchlist can contain both stocks and cryptocurrencies
+- **Fixed Crypto Data Display**: Properly parses CoinGecko API nested structure (`market_data.current_price.usd`)
+- **Client-Side Momentum Calculation**: Computes momentum score for crypto assets based on:
+  - Market cap rank (top 10/50 weighted)
+  - 24h, 7d, 30d price changes
+  - Displays accurate price, change %, and volume
 - **Smart Ticker Validation**: Auto-corrects common mistakes (e.g., APPLE → AAPL)
 - **Live Data Fetching**: Real-time prices, predictions, and confidence scores
 - **Asset Type Toggle**: Switch between stock and crypto search modes
 - **Dynamic Dropdowns**:
-  - Stock search: `/popular_stocks` (50+ companies)
+  - Stock search: `/popular_stocks` + yfinance fallback (50+ companies)
   - Crypto search: `/popular_cryptos` (30+ cryptocurrencies)
 - **Investment Insights**:
   - Current price and 24h change percentage
