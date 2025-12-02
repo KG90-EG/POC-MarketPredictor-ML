@@ -327,9 +327,9 @@ After adding secrets, verify the setup:
 
 ## 📚 Related Documentation
 
-- [Automated Deployment Guide](AUTOMATED_DEPLOYMENT.md)
+- [Automated Deployment Guide](docs/deployment/AUTOMATED_DEPLOYMENT.md)
 - [Production Ready Guide](PRODUCTION_READY.md)
-- [Deployment Guide](DEPLOYMENT_GUIDE.md)
+- [Deployment Guide](docs/deployment/DEPLOYMENT_GUIDE.md)
 - [GitHub Actions Workflows](.github/workflows/)
 
 ---

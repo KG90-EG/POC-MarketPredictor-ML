@@ -7,7 +7,9 @@
 **Status**: ✅ Production Ready (98% Complete) - [Deploy Now](../PRODUCTION_READY.md)
 
 ## Overview
+
 Trading-Fun is a **production-grade** ML-powered stock market predictor with comprehensive deployment automation, security hardening, and monitoring. It includes:
+
 - **ML Pipeline**: Feature engineering (RSI, SMA, MACD, Bollinger Bands, Momentum)
 - **FastAPI Backend**: Prediction, ranking, crypto analysis, AI insights
 - **React Frontend**: Modern UI with dark mode, accessibility (WCAG AA)
@@ -20,6 +22,7 @@ Trading-Fun is a **production-grade** ML-powered stock market predictor with com
 ## Quick Start
 
 ### Local Development
+
 ```bash
 # Backend
 pip install -r requirements.txt
@@ -30,15 +33,18 @@ cd frontend && npm install && npm run dev
 ```
 
 ### Production Deployment
+
 Choose one of 3 automated methods:
 
 **Option 1 - GitHub Actions (Recommended)**:
+
 ```bash
 # Add secrets to GitHub repo, then:
 git push origin main  # Auto-deploys to Railway + Vercel
 ```
 
 **Option 2 - CLI Script (One Command)**:
+
 ```bash
 ./scripts/deploy_production.sh
 ```
@@ -47,6 +53,7 @@ git push origin main  # Auto-deploys to Railway + Vercel
 See [DEPLOYMENT_GUIDE.md](../DEPLOYMENT_GUIDE.md) for step-by-step instructions.
 
 ### Testing & Validation
+
 ```bash
 # Run all tests
 pytest
@@ -64,6 +71,7 @@ pytest
 ## API Endpoints
 
 ### Core Endpoints
+
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/health` | GET | Service health & model loaded flag |
@@ -76,11 +84,13 @@ pytest
 | `/prometheus` | GET | Prometheus metrics (20+ metrics) |
 
 ### Documentation
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-- **OpenAPI Schema**: http://localhost:8000/openapi.json
+
+- **Swagger UI**: <http://localhost:8000/docs>
+- **ReDoc**: <http://localhost:8000/redoc>
+- **OpenAPI Schema**: <http://localhost:8000/openapi.json>
 
 ### Monitoring Endpoints
+
 | Endpoint | Description |
 |----------|-------------|
 | `/health` | Health check with model status |
@@ -89,6 +99,7 @@ pytest
 ## Security & Testing
 
 ### Security Status
+
 - ✅ **0 Vulnerabilities** (npm audit + pip-audit)
 - ✅ **CVE-2025-8869 Fixed** (pip 25.2 → 25.3)
 - ✅ **Rate Limiting** (60 requests/min with token bucket)
@@ -97,6 +108,7 @@ pytest
 - ✅ **Environment Variables** (proper secret management)
 
 ### Testing Coverage
+
 - ✅ **50+ Automated Tests** (75%+ coverage)
 - ✅ **Unit Tests**: Backend (20+), Frontend (31+)
 - ✅ **Integration Tests**: API endpoints, crypto module
@@ -104,6 +116,7 @@ pytest
 - ✅ **Deployment Tests**: Endpoint validation
 
 ### Run Tests
+
 ```bash
 # Backend tests
 pytest -v
@@ -124,6 +137,7 @@ cd frontend && npm test
 ## Monitoring & Observability
 
 ### Prometheus Metrics (20+ metrics)
+
 - API response times (p50, p95, p99)
 - Model prediction latency
 - Cache hit/miss rates
@@ -133,11 +147,13 @@ cd frontend && npm test
 - AI analysis requests
 
 ### Dashboards
-- **Prometheus**: http://localhost:9090
-- **Grafana**: http://localhost:3001 (admin/admin)
+
+- **Prometheus**: <http://localhost:9090>
+- **Grafana**: <http://localhost:3001> (admin/admin)
 - **Sentry**: Frontend error tracking
 
 ### Start Monitoring
+
 ```bash
 docker-compose up -d prometheus grafana
 ```
@@ -145,6 +161,7 @@ docker-compose up -d prometheus grafana
 ## Production Deployment
 
 ### Method 1: GitHub Actions (Recommended)
+
 1. Add secrets to GitHub repository settings:
    - `RAILWAY_TOKEN`
    - `VERCEL_TOKEN`
@@ -154,17 +171,21 @@ docker-compose up -d prometheus grafana
 2. Push to main branch → automatic deployment
 
 ### Method 2: CLI Script
+
 ```bash
 ./scripts/deploy_production.sh
 # Flags: --backend-only, --frontend-only, --help
 ```
 
 ### Method 3: Manual Deployment
+
 Follow comprehensive guides:
+
 - [DEPLOYMENT_GUIDE.md](../DEPLOYMENT_GUIDE.md) (500+ lines)
 - [AUTOMATED_DEPLOYMENT.md](../AUTOMATED_DEPLOYMENT.md) (400+ lines)
 
 ### Post-Deployment Validation
+
 ```bash
 ./scripts/test_deployment.sh https://your-app.railway.app
 ./scripts/test_rate_limit.sh
@@ -173,18 +194,21 @@ Follow comprehensive guides:
 ## Model Lifecycle
 
 ### Training & Promotion
+
 1. `training/trainer.py` - Train and save timestamped models
 2. `training/evaluate_and_promote.py` - Promote if F1 > 0.65
 3. `training/drift_check.py` - Monitor distribution shifts
 4. `training/online_trainer.py` - Online learning updates
 
 ### MLflow Integration
+
 - Model tracking and versioning
 - Experiment comparison
 - Model registry
 - Artifact storage (local or S3)
 
 ### S3 Artifacts (Optional)
+
 ```bash
 export S3_BUCKET=your-bucket-name
 python scripts/push_model_to_s3.py
@@ -193,6 +217,7 @@ python scripts/push_model_to_s3.py
 ## Frontend
 
 ### Features
+
 - ✅ **Multi-Market Views**: US, Switzerland, Germany, UK, France, Japan, Canada
 - ✅ **Crypto Portfolio**: Top cryptocurrencies with momentum scoring
 - ✅ **AI Analysis**: OpenAI-powered trading recommendations
@@ -203,6 +228,7 @@ python scripts/push_model_to_s3.py
 - ✅ **Responsive Design**: Mobile, tablet, desktop optimized
 
 ### Build & Deploy
+
 ```bash
 cd frontend
 npm install
@@ -213,17 +239,20 @@ npm run lint   # ESLint v9
 ```
 
 ### Deployment Platforms
+
 - **Vercel** (Recommended): Auto-deploy from GitHub
 - **Netlify**: Static site hosting with CDN
 - **AWS S3 + CloudFront**: Custom infrastructure
 - **Docker + Nginx**: Self-hosted option
 
-See [Frontend Deployment Guide](FRONTEND_DEPLOYMENT.md) for detailed instructions.
+See [Frontend Deployment Guide](deployment/FRONTEND_DEPLOYMENT.md) for detailed instructions.
 
 ## Docker
 
 ### Production Build
+
 Multi-stage Dockerfile builds frontend then serves via Gunicorn:
+
 ```bash
 docker build -t trading-fun:latest .
 docker run -p 8000:8000 \
@@ -232,6 +261,7 @@ docker run -p 8000:8000 \
 ```
 
 ### Docker Compose (Development)
+
 ```bash
 # Start all services (backend, frontend, prometheus, grafana)
 docker-compose up -d
@@ -247,25 +277,29 @@ docker-compose down
 ```
 
 ### Available Services
-- **Backend**: http://localhost:8000
-- **Frontend**: http://localhost:5173
-- **Prometheus**: http://localhost:9090
-- **Grafana**: http://localhost:3001
+
+- **Backend**: <http://localhost:8000>
+- **Frontend**: <http://localhost:5173>
+- **Prometheus**: <http://localhost:9090>
+- **Grafana**: <http://localhost:3001>
 
 ## Production Server
 
 ### Gunicorn (Recommended)
+
 ```bash
 gunicorn -c gunicorn_conf.py trading_fun.server:app
 ```
 
 Configuration (`gunicorn_conf.py`):
+
 - 4 workers (UvicornWorker)
 - 120s timeout
 - Structured logging
 - Auto-restart on code changes
 
 ### Uvicorn (Development)
+
 ```bash
 .venv/bin/python -m uvicorn trading_fun.server:app --reload
 ```
@@ -273,6 +307,7 @@ Configuration (`gunicorn_conf.py`):
 ## Development Workflow
 
 ### Setup
+
 ```bash
 # Clone repository
 git clone https://github.com/KG90-EG/POC-MarketPredictor-ML.git
@@ -289,6 +324,7 @@ npm install
 ```
 
 ### Code Quality
+
 ```bash
 # Python linting
 black trading_fun/
@@ -301,6 +337,7 @@ npm run format
 ```
 
 ## Pre-Commit Hooks
+
 ```bash
 pip install pre-commit
 pre-commit install
@@ -310,33 +347,39 @@ pre-commit run --all-files
 ## Documentation
 
 ### 🚀 Production & Deployment
+
 - **[PRODUCTION_READY.md](../PRODUCTION_READY.md)** - Complete production deployment guide ⭐ NEW
 - **[AUTOMATED_DEPLOYMENT.md](../AUTOMATED_DEPLOYMENT.md)** - Automated deployment (3 methods) ⭐ NEW
 - **[DEPLOYMENT_GUIDE.md](../DEPLOYMENT_GUIDE.md)** - Manual deployment guide (500+ lines) ⭐ NEW
-- [Backend Deployment](BACKEND_DEPLOYMENT.md) - Railway, Render, AWS, Docker
-- [Frontend Deployment](FRONTEND_DEPLOYMENT.md) - Vercel, Netlify, AWS S3
+- [Backend Deployment](deployment/BACKEND_DEPLOYMENT.md) - Railway, Render, AWS, Docker
+- [Frontend Deployment](deployment/FRONTEND_DEPLOYMENT.md) - Vercel, Netlify, AWS S3
 
 ### 📖 Core Documentation
+
 - [README](../README.md) - Main project documentation
 - [SPEC](../SPEC.md) - Technical specification
 - [BACKLOG](../BACKLOG.md) - Project progress (98% complete)
 - [CONTRIBUTING](../CONTRIBUTING.md) - Contributing guidelines ⭐ NEW
 
 ### 🏗️ Architecture & Design
+
 - **[ADR-001: Architecture Overview](ADR-001-architecture-overview.md)** ⭐ NEW
 - **[ADR-002: Model Training Strategy](ADR-002-model-training-strategy.md)** ⭐ NEW
 - **[ADR-003: Caching Strategy](ADR-003-caching-strategy.md)** ⭐ NEW
 
 ### 📊 Monitoring & Quality
+
 - **[Performance Monitoring](PERFORMANCE_MONITORING.md)** - Prometheus + Grafana guide ⭐ NEW
 - **[Accessibility Testing](ACCESSIBILITY_TESTING.md)** - WCAG AA compliance guide ⭐ NEW
 
 ### 🎨 Features & Components
+
 - [Production Features](PRODUCTION_FEATURES.md) - Production-ready capabilities
 - [Frontend Components](FRONTEND_COMPONENTS.md) - React component library
 - [Next Level Summary](NEXT_LEVEL_SUMMARY.md) - Advanced features
 
 ### 📜 Historical Documentation
+
 - [History Index](history/README.md) - Archived implementation docs
 - [Implementation Summary](history/IMPLEMENTATION_SUMMARY.md)
 - [Architecture Review](history/ARCHITECTURE_REVIEW.md)
@@ -346,6 +389,7 @@ pre-commit run --all-files
 ## Contributing
 
 ### Development Process
+
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/your-feature`
 3. Make your changes
@@ -356,7 +400,9 @@ pre-commit run --all-files
 8. Open a Pull Request
 
 ### Commit Convention
+
 Use [Conventional Commits](https://www.conventionalcommits.org/):
+
 - `feat:` New features
 - `fix:` Bug fixes  
 - `docs:` Documentation updates
@@ -365,6 +411,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 - `refactor:` Code refactoring
 
 ### Code Standards
+
 - **Python**: Black formatter, Flake8 (127 chars), type hints
 - **JavaScript**: ESLint v9 flat config, Prettier
 - **Testing**: pytest (backend), Vitest (frontend)
@@ -382,9 +429,10 @@ This documentation site is currently **embedded in the repository** (`docs/` fol
 
 For better scalability and maintainability, **consider migrating to a dedicated documentation platform**:
 
-#### **Recommended Options**:
+#### **Recommended Options**
 
 **1. [ReadTheDocs](https://readthedocs.org)** (Free, Open Source)
+
 - ✅ Sphinx/MkDocs integration
 - ✅ Version control for docs (v1.0, v2.0, etc.)
 - ✅ Automatic builds on commit
@@ -393,6 +441,7 @@ For better scalability and maintainability, **consider migrating to a dedicated 
 - ✅ PDF/ePub export
 
 **2. [Docusaurus](https://docusaurus.io)** (Meta, React-based)
+
 - ✅ Modern React-based UI
 - ✅ MDX support (interactive components)
 - ✅ Versioning built-in
@@ -401,6 +450,7 @@ For better scalability and maintainability, **consider migrating to a dedicated 
 - ✅ i18n (multilingual) support
 
 **3. [GitBook](https://www.gitbook.com)** (Free tier available)
+
 - ✅ Beautiful UI out of the box
 - ✅ GitHub sync
 - ✅ Collaborative editing
@@ -410,6 +460,7 @@ For better scalability and maintainability, **consider migrating to a dedicated 
 #### **Why Move Documentation Out?**
 
 **Benefits**:
+
 - ✅ **Faster Git Operations**: Repository clones are faster (no large docs assets)
 - ✅ **Independent Deployment**: Docs deploy separately from code
 - ✅ **Better Search**: Full-text search with faceted filters
@@ -421,7 +472,8 @@ For better scalability and maintainability, **consider migrating to a dedicated 
 
 **Migration Effort**: ~2-4 hours for initial setup, then automatic sync
 
-#### **Quick Migration to ReadTheDocs**:
+#### **Quick Migration to ReadTheDocs**
+
 ```bash
 # 1. Install Sphinx
 pip install sphinx sphinx-rtd-theme recommonmark
@@ -445,7 +497,7 @@ git commit -m "docs: migrate to Sphinx/ReadTheDocs"
 
 ---
 
-**Repository**: https://github.com/KG90-EG/POC-MarketPredictor-ML  
-**Documentation**: https://kg90-eg.github.io/POC-MarketPredictor-ML/  
+**Repository**: <https://github.com/KG90-EG/POC-MarketPredictor-ML>  
+**Documentation**: <https://kg90-eg.github.io/POC-MarketPredictor-ML/>  
 **Status**: ✅ Production Ready (98% Complete)  
 **Last Updated**: December 2, 2025

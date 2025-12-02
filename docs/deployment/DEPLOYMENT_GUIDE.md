@@ -10,14 +10,16 @@ This guide walks you through deploying the POC-MarketPredictor-ML application to
 ## 📋 Pre-Deployment Checklist
 
 ### Required Accounts & Keys
+
 - [x] GitHub account (for code access)
-- [ ] Railway account (https://railway.app)
-- [ ] Vercel account (https://vercel.com)
-- [ ] OpenAI API Key (https://platform.openai.com/api-keys)
+- [ ] Railway account (<https://railway.app>)
+- [ ] Vercel account (<https://vercel.com>)
+- [ ] OpenAI API Key (<https://platform.openai.com/api-keys>)
 
 ### Optional Services
-- [ ] Sentry account for error tracking (https://sentry.io)
-- [ ] Redis Cloud for distributed caching (https://redis.com)
+
+- [ ] Sentry account for error tracking (<https://sentry.io>)
+- [ ] Redis Cloud for distributed caching (<https://redis.com>)
 
 ---
 
@@ -25,7 +27,7 @@ This guide walks you through deploying the POC-MarketPredictor-ML application to
 
 ### 1.1 Create Railway Project
 
-1. **Sign up/Login** to Railway: https://railway.app
+1. **Sign up/Login** to Railway: <https://railway.app>
 2. Click **"New Project"**
 3. Select **"Deploy from GitHub repo"**
 4. Connect your GitHub account and select `KG90-EG/POC-MarketPredictor-ML`
@@ -46,16 +48,19 @@ REDIS_URL=redis://default:password@redis-xxxx.railway.internal:6379
 ### 1.3 Deploy Configuration
 
 Railway will automatically detect:
+
 - ✅ `railway.toml` (build & deploy settings)
 - ✅ `Procfile` (start command with Gunicorn)
 - ✅ `requirements.txt` (Python dependencies)
 
 **Build Command** (auto-detected):
+
 ```bash
 pip install -r requirements.txt
 ```
 
 **Start Command** (from Procfile):
+
 ```bash
 gunicorn trading_fun.server:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
 ```
@@ -63,6 +68,7 @@ gunicorn trading_fun.server:app --workers 4 --worker-class uvicorn.workers.Uvico
 ### 1.4 Health Check Configuration
 
 Railway will use the health check from `railway.toml`:
+
 - **Path**: `/health`
 - **Interval**: 30 seconds
 - **Timeout**: 10 seconds
@@ -70,6 +76,7 @@ Railway will use the health check from `railway.toml`:
 ### 1.5 Get Backend URL
 
 After deployment completes:
+
 1. Click on your service in Railway dashboard
 2. Go to **"Settings"** tab
 3. Find **"Domains"** section
@@ -96,7 +103,7 @@ curl https://your-app.railway.app/ranking?country=US&limit=20
 
 ### 2.1 Create Vercel Project
 
-1. **Sign up/Login** to Vercel: https://vercel.com
+1. **Sign up/Login** to Vercel: <https://vercel.com>
 2. Click **"Add New"** → **"Project"**
 3. Import `KG90-EG/POC-MarketPredictor-ML` from GitHub
 4. Select **"frontend"** directory as root
@@ -133,6 +140,7 @@ Click **"Deploy"** and wait for build to complete (~2-3 minutes)
 ### 2.5 Get Frontend URL
 
 After deployment:
+
 - Vercel will provide a URL like `https://your-app.vercel.app`
 - You can also set up a custom domain in Vercel settings
 
@@ -175,6 +183,7 @@ app.add_middleware(
 ```
 
 **Commit and push**:
+
 ```bash
 git add trading_fun/server.py
 git commit -m "feat: add production CORS origin"
@@ -186,6 +195,7 @@ Railway will auto-deploy the update!
 ### 3.2 Verify CORS
 
 Test from browser console on your frontend:
+
 ```javascript
 fetch('https://your-app.railway.app/health')
   .then(r => r.json())
@@ -225,6 +235,7 @@ curl "$BACKEND_URL/ticker_info?ticker=TSLA&include_ai=true"
 Visit your Vercel URL and test:
 
 **Stock Rankings**:
+
 - [x] Load US stocks
 - [x] Load EU stocks
 - [x] Load Asia stocks
@@ -234,6 +245,7 @@ Visit your Vercel URL and test:
 - [x] AI analysis loads
 
 **Crypto Rankings**:
+
 - [x] Load top cryptocurrencies
 - [x] Search crypto by name/symbol
 - [x] Pagination works
@@ -242,6 +254,7 @@ Visit your Vercel URL and test:
 - [x] Change limit (20/50/100/200)
 
 **General**:
+
 - [x] Theme toggle works (light/dark)
 - [x] Health check indicator works
 - [x] Loading states display correctly
@@ -251,16 +264,19 @@ Visit your Vercel URL and test:
 ### 4.3 Performance Tests
 
 **Response Times** (should be < 3s after warmup):
+
 - `/health`: < 100ms
 - `/ranking`: 1-3s (first call may be 20-30s for model load)
 - `/crypto/ranking`: 1-2s
 - `/predict_ticker`: 500ms-2s
 
 **Cache Verification**:
+
 - Second call to same endpoint should be much faster (< 500ms)
 - Check Railway logs for cache hits
 
 **Monitoring**:
+
 - Railway dashboard shows CPU/Memory usage
 - Check `/prometheus` endpoint for metrics (if exposed)
 
@@ -271,19 +287,24 @@ Visit your Vercel URL and test:
 ### 5.1 Sentry Error Tracking
 
 **Backend**:
-1. Create Sentry project at https://sentry.io
+
+1. Create Sentry project at <https://sentry.io>
 2. Copy DSN from project settings
 3. Add to Railway environment variables:
+
    ```
    SENTRY_DSN=https://xxxxxxxxxxxxx@sentry.io/xxxxxxxxxxxxx
    ```
 
 **Frontend**:
+
 1. Add Sentry SDK to frontend:
+
    ```bash
    cd frontend
    npm install @sentry/react @sentry/vite-plugin
    ```
+
 2. Configure in `frontend/src/main.jsx` (already set up)
 3. Add Sentry DSN to Vercel environment variables
 
@@ -292,6 +313,7 @@ Visit your Vercel URL and test:
 Railway doesn't expose custom ports, so Prometheus is best run locally or via Docker for development monitoring.
 
 **For production monitoring**, consider:
+
 - Railway's built-in metrics (CPU, Memory, Network)
 - Sentry performance monitoring
 - Custom application logs in Railway dashboard
@@ -303,20 +325,24 @@ Railway doesn't expose custom ports, so Prometheus is best run locally or via Do
 ### Backend Issues
 
 **Problem**: Railway build fails with "Module not found"
+
 - **Solution**: Check `requirements.txt` has all dependencies
 - Run `pip freeze > requirements.txt` locally to capture all packages
 
 **Problem**: Health check fails
+
 - **Solution**: Check Railway logs for startup errors
 - Verify `/health` endpoint works locally first
 - Increase health check timeout in `railway.toml`
 
 **Problem**: OpenAI API errors
+
 - **Solution**: Verify `OPENAI_API_KEY` is set correctly in Railway
 - Check OpenAI account has credits
 - Check Railway logs for specific error messages
 
 **Problem**: High response times (> 5s)
+
 - **Solution**: First call loads model (expected 20-30s)
 - Subsequent calls should use cache (< 2s)
 - Check Railway logs for performance bottlenecks
@@ -325,32 +351,38 @@ Railway doesn't expose custom ports, so Prometheus is best run locally or via Do
 ### Frontend Issues
 
 **Problem**: Vercel build fails
+
 - **Solution**: Check `package.json` scripts are correct
 - Ensure `npm install --legacy-peer-deps` is used
 - Check build logs for specific error
 
 **Problem**: API calls fail with CORS error
+
 - **Solution**: Add Vercel domain to CORS origins in `server.py`
 - Verify `VITE_API_URL` environment variable is set
 - Check browser console for exact CORS error
 
 **Problem**: Environment variables not loading
+
 - **Solution**: Vercel requires variables to start with `VITE_`
 - Redeploy after adding environment variables
 - Check build logs to verify variables are present
 
 **Problem**: 404 on page refresh
+
 - **Solution**: Vercel should handle SPA routing automatically
 - Verify `vercel.json` has correct redirects configuration
 
 ### General Issues
 
 **Problem**: API key exposed in frontend
+
 - **Solution**: Backend only! Never put API keys in frontend code
 - Use `VITE_API_URL` to point to backend
 - Backend handles all OpenAI API calls
 
 **Problem**: Slow cold starts
+
 - **Solution**: Railway free tier has cold starts (~30s)
 - Consider upgrading to paid plan for always-on service
 - First request after idle loads model (expected)
@@ -376,19 +408,22 @@ Railway doesn't expose custom ports, so Prometheus is best run locally or via Do
 ## 🔗 Important URLs
 
 **Backend (Railway)**:
-- Dashboard: https://railway.app/project/[your-project-id]
-- API: https://your-app.railway.app
-- Docs: https://your-app.railway.app/docs
-- Health: https://your-app.railway.app/health
+
+- Dashboard: <https://railway.app/project/[your-project-id>]
+- API: <https://your-app.railway.app>
+- Docs: <https://your-app.railway.app/docs>
+- Health: <https://your-app.railway.app/health>
 
 **Frontend (Vercel)**:
-- Dashboard: https://vercel.com/[username]/[project]
-- App: https://your-app.vercel.app
-- Deployments: https://vercel.com/[username]/[project]/deployments
+
+- Dashboard: <https://vercel.com/[username]/[project>]
+- App: <https://your-app.vercel.app>
+- Deployments: <https://vercel.com/[username]/[project]/deployments>
 
 **Monitoring**:
-- Sentry: https://sentry.io/organizations/[org]/projects/[project]
-- Railway Logs: https://railway.app/project/[project-id]/service/[service-id]
+
+- Sentry: <https://sentry.io/organizations/[org]/projects/[project>]
+- Railway Logs: <https://railway.app/project/[project-id]/service/[service-id>]
 
 ---
 
@@ -410,12 +445,14 @@ After successful deployment, consider:
 ## 🆘 Support
 
 **Documentation**:
-- [Backend Deployment Guide](docs/BACKEND_DEPLOYMENT.md)
-- [Frontend Deployment Guide](docs/FRONTEND_DEPLOYMENT.md)
+
+- [Backend Deployment Guide](BACKEND_DEPLOYMENT.md)
+- [Frontend Deployment Guide](FRONTEND_DEPLOYMENT.md)
 - [BACKLOG.md](BACKLOG.md)
 - [README.md](README.md)
 
 **Logs & Debugging**:
+
 - Railway logs: Real-time in dashboard
 - Vercel logs: Build logs in deployment details
 - Browser console: Frontend errors (F12)

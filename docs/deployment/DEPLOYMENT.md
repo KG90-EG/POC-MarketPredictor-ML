@@ -7,7 +7,7 @@ The documentation site deploys automatically to GitHub Pages when you push to `m
 ### First-time Setup
 
 1. **Enable GitHub Pages**:
-   - Go to your repository: https://github.com/KG90-EG/POC-MarketPredictor-ML
+   - Go to your repository: <https://github.com/KG90-EG/POC-MarketPredictor-ML>
    - Navigate to **Settings** → **Pages**
    - Under "Source", select **GitHub Actions**
    - Click **Save**
@@ -25,6 +25,7 @@ This means GitHub Pages isn't enabled yet. Follow the setup steps above.
 #### Error: "Resource not accessible by integration"
 
 Ensure the workflow has the required permissions:
+
 - Repository Settings → Actions → General → Workflow permissions
 - Select "Read and write permissions"
 - Check "Allow GitHub Actions to create and approve pull requests"
@@ -36,7 +37,7 @@ The React frontend can be deployed to Netlify.
 ### Setup Netlify Deployment
 
 1. **Create Netlify Account**:
-   - Sign up at https://netlify.com
+   - Sign up at <https://netlify.com>
 
 2. **Add Repository Secrets**:
    - Go to GitHub repository → Settings → Secrets and variables → Actions
@@ -45,17 +46,18 @@ The React frontend can be deployed to Netlify.
      - `NETLIFY_SITE_ID`: Your Netlify site ID
 
 3. **Get Netlify Credentials**:
+
    ```bash
    # Install Netlify CLI
    npm install -g netlify-cli
-   
+
    # Login
    netlify login
-   
+
    # Create site
    cd frontend
    netlify init
-   
+
    # Get your Site ID and Auth Token
    netlify status
    ```
@@ -97,7 +99,7 @@ npm install
 npm run dev
 ```
 
-Access the application at: http://localhost:5173
+Access the application at: <http://localhost:5173>
 
 ## CI/CD Workflows
 
@@ -161,6 +163,7 @@ VITE_API_URL=http://localhost:8000
 ## Support
 
 For issues or questions:
+
 - Check GitHub Actions logs for deployment failures
 - Review `DEPLOYMENT.md` for setup instructions
 - Ensure all secrets and configurations are correct

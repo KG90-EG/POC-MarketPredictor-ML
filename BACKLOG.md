@@ -219,7 +219,7 @@ This document tracks planned improvements, feature requests, and technical debt 
   - Environment variable configuration
   - API rewrites and redirects
   - Security headers
-- ✅ **Deployment Guide** (docs/FRONTEND_DEPLOYMENT.md)
+- ✅ **Deployment Guide** (docs/deployment/FRONTEND_DEPLOYMENT.md)
   - Netlify deployment (Dashboard + CLI)
   - Vercel deployment instructions
   - AWS S3 + CloudFront setup
@@ -246,7 +246,7 @@ This document tracks planned improvements, feature requests, and technical debt 
   - Gunicorn with UvicornWorker
   - 4 workers, 120s timeout
   - Structured logging
-- ✅ **Deployment Guide** (docs/BACKEND_DEPLOYMENT.md)
+- ✅ **Deployment Guide** (docs/deployment/BACKEND_DEPLOYMENT.md)
   - Railway deployment (easiest)
   - Render deployment
   - AWS Elastic Beanstalk
@@ -286,7 +286,7 @@ This document tracks planned improvements, feature requests, and technical debt 
    ```
 
    **Option C - Manual Dashboard Deployment**:
-   - Follow DEPLOYMENT_GUIDE.md step-by-step instructions
+   - Follow docs/deployment/DEPLOYMENT_GUIDE.md step-by-step instructions
    - Railway: Create project from GitHub repo
    - Vercel: Deploy frontend with root directory = `frontend`
 
@@ -843,15 +843,15 @@ pre-commit install
 - [Improvements Guide](docs/history/IMPROVEMENTS.md)
 - [GitHub Actions Fixes](docs/history/GITHUB_ACTIONS_FIXES.md)
 - [Main README](README.md)
-- [Deployment Guide](DEPLOYMENT.md)
+- [Deployment Guide](docs/deployment/DEPLOYMENT.md)
 - [Specification](SPEC.md)
 - **[Contributing Guidelines](CONTRIBUTING.md)** ⭐ NEW
 - **[Architecture Decision Records](docs/)** ⭐ NEW
   - [ADR-001: Architecture Overview](docs/ADR-001-architecture-overview.md)
   - [ADR-002: Model Training Strategy](docs/ADR-002-model-training-strategy.md)
   - [ADR-003: Caching Strategy](docs/ADR-003-caching-strategy.md)
-- **[Frontend Deployment Guide](docs/FRONTEND_DEPLOYMENT.md)** ⭐ NEW
-- **[Backend Deployment Guide](docs/BACKEND_DEPLOYMENT.md)** ⭐ NEW
+- **[Frontend Deployment Guide](docs/deployment/FRONTEND_DEPLOYMENT.md)** ⭐ NEW
+- **[Backend Deployment Guide](docs/deployment/BACKEND_DEPLOYMENT.md)** ⭐ NEW
 
 ---
 

@@ -1,4 +1,5 @@
 # POC-MarketPredictor-ML
+
 Support Trading Decision, building a POC. Ideal, with Backend and Frontend
 
 [![Production Ready](https://img.shields.io/badge/Production-Ready-brightgreen?style=for-the-badge)](PRODUCTION_READY.md)
@@ -11,6 +12,7 @@ This repository contains a production-grade machine learning pipeline and modern
 **🚀 Status**: Production Ready (98% Complete) - [Deploy Now](PRODUCTION_READY.md)
 
 ## Features
+
 - 🤖 **ML-Powered Stock Ranking** - RandomForest/XGBoost models predict stock performance
 - 📊 **Real-Time Market Data** - Live prices, volume, market cap via yfinance
 - 🌍 **Multi-Market Views** - Analyze stocks from 8 different markets (US, Switzerland, Germany, UK, France, Japan, Canada)
@@ -35,6 +37,7 @@ This repository contains a production-grade machine learning pipeline and modern
 - 🐳 **Docker Support** - Multi-stage builds with frontend and backend
 
 Quick summary:
+
 - `trading_fun/` — Python package implementing data loading, features, model training, prediction, and a FastAPI server.
 - `training/` — Retrain scripts, trainer and utilities (MLflow integration, drift-check, promotion)
 - `backtest/` — A very small backtesting helper to simulate buy-hold trades.
@@ -45,18 +48,22 @@ Quick summary:
 ## Quick Start
 
 ### Requirements
+
 - **Python 3.10 - 3.12** (recommended for best compatibility)
 - **Node.js 18+** (for frontend)
 - Note: Python 3.14 requires source builds for some dependencies
 
 ### First Time Setup
+
 1. **Install dependencies:**
+
 ```bash
 pip install -r requirements.txt
 cd frontend && npm install
 ```
 
 2. **Optional - Configure environment variables:**
+
 ```bash
 # Copy example environment file (everything works without this!)
 cp .env.example .env
@@ -69,11 +76,13 @@ cp .env.example .env
 ```
 
 3. **Start the backend:**
+
 ```bash
 uvicorn trading_fun.server:app --reload
 ```
 
 4. **Start the frontend (in new terminal):**
+
 ```bash
 cd frontend && npm run dev
 ```
@@ -86,6 +95,7 @@ cd frontend && npm run dev
    - Use search to look up specific stocks
 
 ### Running Tests
+
 ```bash
 # Run all tests
 pytest
@@ -101,6 +111,7 @@ pytest --cov=trading_fun --cov-report=html
 ```
 
 ### What You'll See
+
 - **Market View Selector**: Choose from 8 different markets (US, Switzerland, Germany, UK, France, Japan, Canada)
 - **Dynamic Rankings**: Top 30 companies from selected market, validated by market cap
 - **Diversified Portfolio**: Build portfolio from multiple countries for global diversification
@@ -120,32 +131,41 @@ pytest --cov=trading_fun --cov-report=html
   - Auto-refresh capability
 - **AI Analysis**: Optional OpenAI-powered recommendations (requires API key)
 
-## How to push to GitHub and PR (simple flow):
+## How to push to GitHub and PR (simple flow)
+
 1. Make sure you have a GitHub repo: `KG90-EG/Trading-Fun`.
 2. Commit & push on `dev` branch (we already created `dev` and pushed the changes):
+
 ```bash
 git checkout dev
 git add .
 git commit -m "WIP: features + frontend"
 git push -u origin dev
 ```
+
 3. Open a PR to `main` using the web link (or `gh` CLI):
+
 ```
 https://github.com/KG90-EG/Trading-Fun/pull/new/dev
 ```
+
 4. Review & Merge PR (squash or merge commit) — GitHub Actions will run CI.
 
 ## Configuration
 
 ### Environment Variables
+
 The application is configured via environment variables. See `.env.example` for all options:
+
 - Copy `.env.example` to `.env` to customize settings
 - **Everything works with defaults** - no configuration needed!
 - Optional features: OpenAI API, Redis caching, AWS S3 storage
 - See detailed docs in `.env.example`
 
 ### GitHub Secrets (for CI/CD)
+
 For automated deployments, add secrets in GitHub repository settings:
+
 - **NETLIFY_AUTH_TOKEN**, **NETLIFY_SITE_ID** - Frontend deployment
 - **AWS_ACCESS_KEY_ID**, **AWS_SECRET_ACCESS_KEY**, **S3_BUCKET** - Model storage
 - **CR_PAT** - Docker image publishing
@@ -154,31 +174,40 @@ For automated deployments, add secrets in GitHub repository settings:
 📚 **See [SECRETS.md](SECRETS.md) for detailed setup instructions**
 
 Deployment tips:
+
 - All secrets are **optional** - CI works without them
 - Workflows gracefully skip steps when secrets aren't configured
 - Configure only the features you need
 
 ## Lint & Format
+
 Run lint and format checks locally (CI enforces these):
+
 ```bash
 python -m pip install flake8 black
 flake8 . --max-line-length=120
 black --check .
 ```
+
 Auto-format:
+
 ```bash
 black .
 ```
 
 ## Static Frontend Serving
+
 After building the React app, the FastAPI server will serve it automatically if `frontend/dist` exists.
 Build frontend:
+
 ```bash
 cd frontend
 npm ci
 npm run build
 ```
+
 Run API (serves static files):
+
 ```bash
 uvicorn trading_fun.server:app --reload
 ```
@@ -186,33 +215,43 @@ uvicorn trading_fun.server:app --reload
 Access in browser at `http://127.0.0.1:8000` (index served) or development mode via Vite `npm run dev` at `http://localhost:5173`.
 
 ## PR Template
+
 A reusable PR template lives at `.github/PULL_REQUEST_TEMPLATE.md`.
 
 ## Pre-Commit Hooks
+
 Install and activate:
+
 ```bash
 pip install pre-commit
 pre-commit install
 ```
+
 Run on all files:
+
 ```bash
 pre-commit run --all-files
 ```
 
 ## Optional S3 Model Upload
+
 Set `S3_BUCKET` and install `boto3` (already in requirements). Training and promotion scripts will upload model artifacts:
+
 ```bash
 export S3_BUCKET=my-bucket
 python training/trainer.py
 ```
 
 ## Multi-Stage Docker Build
+
 The `Dockerfile` builds the frontend then serves via uvicorn.
 Build locally:
+
 ```bash
 docker build -t trading-fun:latest .
 docker run -p 8000:8000 trading-fun:latest
 ```
+
 Visit `http://localhost:8000`.
 
 ## Deployment
@@ -229,9 +268,11 @@ This application is **fully production-ready** with comprehensive deployment aut
    - See: [AUTOMATED_DEPLOYMENT.md](AUTOMATED_DEPLOYMENT.md)
 
 2. **CLI Script (One Command)**:
+
    ```bash
    ./scripts/deploy_production.sh
    ```
+
    - Deploys backend to Railway
    - Deploys frontend to Vercel
    - Updates CORS automatically
@@ -239,9 +280,10 @@ This application is **fully production-ready** with comprehensive deployment aut
 
 3. **Manual Deployment** (Step-by-Step):
    - Backend: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) (Railway/Render)
-   - Frontend: [docs/FRONTEND_DEPLOYMENT.md](docs/FRONTEND_DEPLOYMENT.md) (Vercel/Netlify)
+   - Frontend: [docs/deployment/FRONTEND_DEPLOYMENT.md](docs/deployment/FRONTEND_DEPLOYMENT.md) (Vercel/Netlify)
 
 **Security & Testing**:
+
 ```bash
 # Pre-deployment security check
 ./scripts/security_check.sh
@@ -263,6 +305,7 @@ This application is **fully production-ready** with comprehensive deployment aut
 ### Deployment Documentation
 
 **Comprehensive Guides**:
+
 - 📋 [PRODUCTION_READY.md](PRODUCTION_READY.md) - Complete production readiness summary
 - 🚀 [AUTOMATED_DEPLOYMENT.md](AUTOMATED_DEPLOYMENT.md) - Automated deployment guide (400+ lines)
 - 📖 [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) - Manual deployment guide (500+ lines)
@@ -270,6 +313,7 @@ This application is **fully production-ready** with comprehensive deployment aut
 - 🎨 [docs/FRONTEND_DEPLOYMENT.md](docs/FRONTEND_DEPLOYMENT.md) - Frontend deployment options
 
 **Deployment Configs**:
+
 - ✅ Railway: `railway.toml`, `Procfile`
 - ✅ Vercel: `vercel.json`
 - ✅ Netlify: `netlify.toml`
@@ -279,6 +323,7 @@ This application is **fully production-ready** with comprehensive deployment aut
 ## Environment Variables Summary
 
 **Backend Configuration:**
+
 - `PROD_MODEL_PATH`: Path to production model file (default `models/prod_model.bin`)
 - `OPENAI_API_KEY`: OpenAI API key for LLM-powered analysis (required for `/analyze` endpoint)
 - `OPENAI_MODEL`: OpenAI model to use (default: `gpt-4o-mini`)
@@ -287,13 +332,16 @@ This application is **fully production-ready** with comprehensive deployment aut
 - `REDIS_URL`: Redis connection URL (optional, falls back to in-memory cache if not set)
 
 **MLflow & Model Management:**
+
 - `MLFLOW_TRACKING_URI`: MLflow backend (default: `file:./mlruns`)
 - `S3_BUCKET`: Optional S3 bucket for artifact upload
 
 **Frontend Configuration:**
+
 - `VITE_API_URL`: Backend API URL (default: `http://localhost:8000`, set to production URL for deployment)
 
 **CI/CD & Deployment:**
+
 - `NETLIFY_AUTH_TOKEN` / `NETLIFY_SITE_ID`: Netlify deploy workflow secrets
 - `CR_PAT`: GitHub Container Registry auth token for Docker image push
 
@@ -318,6 +366,7 @@ These signals are computed in Python and provide immediate, algorithmic guidance
 The `/analyze` endpoint enriches signals with comprehensive market context:
 
 **Market Data Included:**
+
 - Stock name and current price
 - Price change percentage
 - Trading volume and market capitalization
@@ -326,6 +375,7 @@ The `/analyze` endpoint enriches signals with comprehensive market context:
 - Python-generated buy/sell signals
 
 **AI Recommendations Include:**
+
 1. **TOP 3 BUY RECOMMENDATIONS** - Specific stocks to buy NOW with reasoning
 2. **SELL/AVOID** - Stocks to exit or avoid with justification
 3. **KEY RISKS** - Important market risks to monitor
@@ -334,16 +384,19 @@ The `/analyze` endpoint enriches signals with comprehensive market context:
 ### Setup Instructions
 
 1. Set your API key:
+
 ```bash
 export OPENAI_API_KEY='your-api-key-here'
 ```
 
 Or add it to `.env` file in the project root:
+
 ```
 OPENAI_API_KEY=sk-proj-your-key-here
 ```
 
 2. (Optional) Choose a different model:
+
 ```bash
 export OPENAI_MODEL='gpt-4o'  # or gpt-3.5-turbo, etc.
 ```
@@ -351,6 +404,7 @@ export OPENAI_MODEL='gpt-4o'  # or gpt-3.5-turbo, etc.
 3. Start the server and use the "Get AI Recommendations" button in the UI.
 
 **Enhanced Features:**
+
 - **Automatic retry logic**: Retries up to 3 times with exponential backoff on failures
 - **Rate limit handling**: Returns clear error messages for OpenAI 429 errors
 - **5-minute caching**: Identical requests within 5 minutes use cached results (reduces API calls)
@@ -363,6 +417,7 @@ export OPENAI_MODEL='gpt-4o'  # or gpt-3.5-turbo, etc.
 The application supports **8 different market views** for building a diversified global portfolio:
 
 ### Available Markets
+
 - 🌐 **Global** - Top 50 US large-cap stocks (technology-dominated)
 - 🇺🇸 **United States** - US market leaders across all sectors
 - 🇨🇭 **Switzerland** - Top 30 Swiss companies (Nestle, Novartis, Roche, UBS, etc.)
@@ -386,6 +441,7 @@ Instead of hardcoded lists, the system **dynamically discovers and validates** t
 5. **Smart Caching**: Results cached for 1 hour to optimize performance and reduce API calls
 
 ### Benefits
+
 - ✅ **Always Current**: Automatically filters out delisted or invalid stocks
 - ✅ **Market Cap Validated**: Only includes companies with verified market data
 - ✅ **Global Diversification**: Build portfolios across multiple countries and regions
@@ -395,12 +451,14 @@ Instead of hardcoded lists, the system **dynamically discovers and validates** t
 ### Usage
 
 **Via UI:**
+
 1. Select a market view button at the top of the page
 2. System automatically fetches and ranks top stocks for that market
 3. View rankings with country filter dropdown for additional filtering
 4. Click any stock to see detailed company information including domicile
 
 **Via API:**
+
 ```bash
 # Get Swiss market rankings
 curl "http://localhost:8000/ranking?country=Switzerland"
@@ -415,6 +473,7 @@ curl "http://localhost:8000/ranking?country=Global"
 ## API Endpoints
 
 ### Core Endpoints
+
 - `GET /health` — Enhanced health check with dependency status (model, Redis, OpenAI)
 - `GET /metrics` — System metrics for monitoring (cache stats, rate limiter, WebSocket connections)
 - `GET /ranking?country=` — Rank stocks by ML probability with dynamic market selection
@@ -439,6 +498,7 @@ curl "http://localhost:8000/ranking?country=Global"
 ### `/analyze` Endpoint Details
 
 **Request Body:**
+
 ```json
 {
   "ranking": [{"ticker": "AAPL", "prob": 0.65}, ...],
@@ -447,6 +507,7 @@ curl "http://localhost:8000/ranking?country=Global"
 ```
 
 **Response Includes:**
+
 - Python-generated buy/sell signals (STRONG BUY, BUY, HOLD, SELL)
 - Rich market data (prices, P/E ratios, 52-week ranges, volumes)
 - AI analysis with specific buy/sell recommendations
@@ -454,6 +515,7 @@ curl "http://localhost:8000/ranking?country=Global"
 - Caching indicator (shows if result is from cache)
 
 **Example Response:**
+
 ```json
 {
   "analysis": "TOP 3 BUY RECOMMENDATIONS:\n1. AAPL - Strong buy at $278...",
@@ -467,12 +529,14 @@ curl "http://localhost:8000/ranking?country=Global"
 ### 🚄 High Performance Architecture
 
 **Batch API Endpoints**
+
 - `POST /ticker_info_batch`: Fetch multiple tickers in parallel (10 concurrent workers)
 - Reduces 30-ticker load time from ~45s to ~4s (11x improvement)
 - Graceful degradation: Falls back to sequential fetching if batch fails
 - Progress indicators show real-time loading status
 
 **Parallel Processing**
+
 - Stock validation uses ThreadPoolExecutor with 15 concurrent workers
 - Country stock discovery improved from ~60s to ~10s (6x improvement)
 - Concurrent API calls to yfinance for optimal throughput
@@ -488,6 +552,7 @@ curl "http://localhost:8000/ranking?country=Global"
 ### 💾 Redis Caching Layer
 
 **Intelligent Caching Strategy**
+
 - Primary: Redis backend for distributed caching
 - Fallback: In-memory cache if Redis unavailable
 - Automatic failover ensures zero downtime
@@ -497,12 +562,14 @@ curl "http://localhost:8000/ranking?country=Global"
   - Ticker info: Configurable
 
 **Cache Configuration**
+
 ```bash
 # .env file
 REDIS_URL=redis://localhost:6379/0  # Optional, falls back to in-memory
 ```
 
 **Benefits**
+
 - Share cache across multiple server instances
 - Persist cache through server restarts
 - Reduce external API calls (yfinance, OpenAI)
@@ -511,12 +578,14 @@ REDIS_URL=redis://localhost:6379/0  # Optional, falls back to in-memory
 ### 🔒 Rate Limiting
 
 **Built-in API Protection**
+
 - Configurable requests per minute (default: 60 RPM)
 - Per-IP, per-endpoint tracking
 - Sliding window algorithm for accuracy
 - Automatic 429 responses with `Retry-After` headers
 
 **Rate Limit Headers**
+
 ```
 X-RateLimit-Limit: 60
 X-RateLimit-Remaining: 45
@@ -524,6 +593,7 @@ X-RateLimit-Reset: 1701234567
 ```
 
 **Configuration**
+
 ```bash
 # .env file
 RATE_LIMIT_RPM=60  # Requests per minute per IP
@@ -532,18 +602,21 @@ RATE_LIMIT_RPM=60  # Requests per minute per IP
 ### 📊 Structured Logging
 
 **Comprehensive Request Tracking**
+
 - Unique request IDs for distributed tracing
 - Performance metrics (request duration, throughput)
 - Error tracking with stack traces
 - Audit trails for security and compliance
 
 **Log Format**
+
 ```
 [2024-01-15 10:30:45] [INFO    ] [a1b2c3d4] Request started: GET /ranking {"endpoint": "/ranking", "event": "request_start"}
 [2024-01-15 10:30:46] [INFO    ] [a1b2c3d4] Request completed: GET /ranking {"endpoint": "/ranking", "event": "request_complete", "duration_ms": 1234.56}
 ```
 
 **Configuration**
+
 ```bash
 # .env file
 LOG_LEVEL=INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
@@ -552,12 +625,14 @@ LOG_LEVEL=INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
 ### 🔴 WebSocket Real-Time Updates
 
 **Live Price Streaming**
+
 - WebSocket endpoint: `ws://localhost:8000/ws/{client_id}`
 - Subscribe to specific tickers for real-time updates
 - 30-second update interval
 - Automatic reconnection handling
 
 **WebSocket Protocol**
+
 ```javascript
 // Connect
 const ws = new WebSocket('ws://localhost:8000/ws/client123');
@@ -576,6 +651,7 @@ ws.send(JSON.stringify({action: 'unsubscribe', ticker: 'AAPL'}));
 ```
 
 **Features**
+
 - Multiple concurrent subscriptions per client
 - Broadcast updates only to subscribed clients
 - Automatic client cleanup on disconnect
@@ -584,6 +660,7 @@ ws.send(JSON.stringify({action: 'unsubscribe', ticker: 'AAPL'}));
 ### 📈 Monitoring & Observability
 
 **Health Check Endpoint** (`GET /health`)
+
 ```json
 {
   "status": "ok",
@@ -597,6 +674,7 @@ ws.send(JSON.stringify({action: 'unsubscribe', ticker: 'AAPL'}));
 ```
 
 **Metrics Endpoint** (`GET /metrics`)
+
 ```json
 {
   "cache_stats": {
@@ -626,6 +704,7 @@ ws.send(JSON.stringify({action: 'unsubscribe', ticker: 'AAPL'}));
 ### 🔧 Configuration Management
 
 **Environment Variables**
+
 ```bash
 # Backend API
 PROD_MODEL_PATH=models/prod_model.bin
@@ -646,6 +725,7 @@ VITE_API_URL=http://localhost:8000  # Set to production URL for deployment
 ### 🚀 Deployment Considerations
 
 **Production Checklist**
+
 - ✅ Set `VITE_API_URL` to production backend URL
 - ✅ Configure Redis for distributed caching
 - ✅ Adjust `RATE_LIMIT_RPM` based on capacity
@@ -658,6 +738,7 @@ VITE_API_URL=http://localhost:8000  # Set to production URL for deployment
 - ✅ Set up log aggregation (ELK, Splunk, CloudWatch)
 
 **Recommended Architecture**
+
 ```
 [Load Balancer]
       |
@@ -668,8 +749,8 @@ VITE_API_URL=http://localhost:8000  # Set to production URL for deployment
 [External APIs: yfinance, OpenAI]
 ```
 
-
 ## Search Individual Stocks
+
 - Enter a stock symbol in the UI search input (e.g., `AMD`, `META`, `NFLX`) and click Search
 - Backend endpoints used:
   - `GET /ticker_info/{ticker}`: live name, price, change %, volume, market cap
@@ -679,6 +760,7 @@ VITE_API_URL=http://localhost:8000  # Set to production URL for deployment
 - Supports Enter key for quick searches
 
 ## UI Features
+
 - **Multi-Market View Selector**: 8 market buttons to switch between global regions (US, Switzerland, Germany, UK, France, Japan, Canada)
 - **Auto-Load on Start**: Rankings automatically load when the app opens based on selected market view
 - **Dynamic Country Filter**: Dropdown shows only countries present in current dataset
@@ -706,14 +788,18 @@ VITE_API_URL=http://localhost:8000  # Set to production URL for deployment
 - **Loading States**: Animated spinners for better user experience
 
 ## Integration Tests
+
 Added `test_integration_server.py` to validate `/health` and `/models` using a temporary dummy model.
 Run all tests:
+
 ```bash
 python -m pytest -q
 ```
 
 ## Gunicorn (Production Option)
+
 Use process management for higher concurrency:
+
 ```bash
 gunicorn -c gunicorn_conf.py trading_fun.server:app
 ```
@@ -723,34 +809,39 @@ gunicorn -c gunicorn_conf.py trading_fun.server:app
 ### 📚 **Comprehensive Documentation** (2000+ lines)
 
 **Getting Started**:
+
 - 📖 [README.md](README.md) - Project overview and quick start
 - 🎯 [SPEC.md](SPEC.md) - Technical specification
 - 🚀 [PRODUCTION_READY.md](PRODUCTION_READY.md) - Production deployment summary
 
 **Deployment Guides**:
+
 - 🤖 [AUTOMATED_DEPLOYMENT.md](AUTOMATED_DEPLOYMENT.md) - Automated deployment (3 methods)
 - 📋 [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) - Manual deployment guide (500+ lines)
 - 🎯 [docs/BACKEND_DEPLOYMENT.md](docs/BACKEND_DEPLOYMENT.md) - Backend deployment options
 - 🎨 [docs/FRONTEND_DEPLOYMENT.md](docs/FRONTEND_DEPLOYMENT.md) - Frontend deployment options
 
 **Architecture & Development**:
+
 - 🏗️ [docs/ADR-001-architecture-overview.md](docs/ADR-001-architecture-overview.md) - Architecture decisions
 - 🤖 [docs/ADR-002-model-training-strategy.md](docs/ADR-002-model-training-strategy.md) - ML strategy
 - 💾 [docs/ADR-003-caching-strategy.md](docs/ADR-003-caching-strategy.md) - Caching implementation
 - 🤝 [CONTRIBUTING.md](CONTRIBUTING.md) - Contributing guidelines
 
 **Monitoring & Quality**:
+
 - 📊 [docs/PERFORMANCE_MONITORING.md](docs/PERFORMANCE_MONITORING.md) - Monitoring guide
 - ♿ [docs/ACCESSIBILITY_TESTING.md](docs/ACCESSIBILITY_TESTING.md) - Accessibility testing
 - 📋 [BACKLOG.md](BACKLOG.md) - Project backlog and progress tracking
 
 **API Documentation**:
-- Interactive Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-- OpenAPI schema: http://localhost:8000/openapi.json
+
+- Interactive Swagger UI: <http://localhost:8000/docs>
+- ReDoc: <http://localhost:8000/redoc>
+- OpenAPI schema: <http://localhost:8000/openapi.json>
 
 ---
 
 ## Documentation Site
-Markdown docs in `docs/` deployed to GitHub Pages via `.github/workflows/pages.yml`. After enabling Pages for the repository (Settings -> Pages) the workflow publishes updates on pushes to `main`.
 
+Markdown docs in `docs/` deployed to GitHub Pages via `.github/workflows/pages.yml`. After enabling Pages for the repository (Settings -> Pages) the workflow publishes updates on pushes to `main`.
