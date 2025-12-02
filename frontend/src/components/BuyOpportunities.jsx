@@ -260,10 +260,12 @@ function BuyOpportunities() {
                         </div>
 
                         <div className="opportunity-details">
-                          <div className="detail-item">
-                            <span className="label">ML Probability:</span>
-                            <span className="value">{(stock.probability * 100).toFixed(1)}%</span>
-                          </div>
+                          {stock.prediction?.metrics?.probability && (
+                            <div className="detail-item">
+                              <span className="label">ML Probability:</span>
+                              <span className="value">{(stock.prediction.metrics.probability * 100).toFixed(1)}%</span>
+                            </div>
+                          )}
                           {stock.current_price && (
                             <div className="detail-item">
                               <span className="label">Price:</span>
@@ -311,10 +313,12 @@ function BuyOpportunities() {
                         </div>
 
                         <div className="opportunity-details">
-                          <div className="detail-item">
-                            <span className="label">ML Probability:</span>
-                            <span className="value">{(stock.probability * 100).toFixed(1)}%</span>
-                          </div>
+                          {stock.prediction?.metrics?.probability && (
+                            <div className="detail-item">
+                              <span className="label">ML Probability:</span>
+                              <span className="value">{(stock.prediction.metrics.probability * 100).toFixed(1)}%</span>
+                            </div>
+                          )}
                           {stock.current_price && (
                             <div className="detail-item">
                               <span className="label">Price:</span>
