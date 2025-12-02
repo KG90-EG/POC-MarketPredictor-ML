@@ -8,7 +8,7 @@ This upgrade transforms Trading-Fun from a POC to a **production-grade financial
 
 ## 🚀 New Features
 
-### 1. **Redis Caching Layer** (`trading_fun/cache.py`)
+### 1. **Redis Caching Layer** (`market_predictor/cache.py`)
 **What it does:**
 - Distributed caching system with Redis backend
 - Automatic fallback to in-memory cache if Redis unavailable
@@ -32,7 +32,7 @@ REDIS_URL=redis://localhost:6379/0  # Optional
 
 ---
 
-### 2. **Rate Limiting Middleware** (`trading_fun/rate_limiter.py`)
+### 2. **Rate Limiting Middleware** (`market_predictor/rate_limiter.py`)
 **What it does:**
 - Protects API from abuse and overload
 - Tracks requests per-IP, per-endpoint
@@ -55,7 +55,7 @@ RATE_LIMIT_RPM=60  # Requests per minute per IP
 
 ---
 
-### 3. **Structured Logging** (`trading_fun/logging_config.py`)
+### 3. **Structured Logging** (`market_predictor/logging_config.py`)
 **What it does:**
 - Comprehensive request tracking with unique IDs
 - Performance metrics (duration, throughput)
@@ -81,7 +81,7 @@ LOG_LEVEL=INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 ---
 
-### 4. **WebSocket Real-Time Updates** (`trading_fun/websocket.py`)
+### 4. **WebSocket Real-Time Updates** (`market_predictor/websocket.py`)
 **What it does:**
 - Live price streaming via WebSocket connections
 - Subscribe to specific tickers for updates
@@ -533,7 +533,7 @@ brew services start redis  # macOS
 redis-server --daemonize yes
 
 # Start backend
-uvicorn trading_fun.server:app --reload
+uvicorn market_predictor.server:app --reload
 
 # Test cache
 curl http://localhost:8000/ranking?country=Switzerland  # First call (slow)
@@ -566,7 +566,7 @@ curl http://localhost:8000/metrics
 ### 5. Test Structured Logging:
 ```bash
 # Start backend and watch logs
-uvicorn trading_fun.server:app --reload
+uvicorn market_predictor.server:app --reload
 
 # Make requests and see structured logs with request IDs
 curl http://localhost:8000/ranking
@@ -575,7 +575,7 @@ curl http://localhost:8000/ranking
 ### 6. Test Frontend Health Monitoring:
 ```bash
 # Start both servers
-uvicorn trading_fun.server:app --reload  # Terminal 1
+uvicorn market_predictor.server:app --reload  # Terminal 1
 cd frontend && npm run dev                # Terminal 2
 
 # Open http://localhost:5173
@@ -642,7 +642,7 @@ cd frontend && npm run dev                # Terminal 2
 1. **Quick Start:**
    ```bash
    ./scripts/setup_production.sh
-   uvicorn trading_fun.server:app --reload
+   uvicorn market_predictor.server:app --reload
    cd frontend && npm run dev
    ```
 

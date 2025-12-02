@@ -62,7 +62,7 @@ pip install -r requirements.txt
 **Start Command** (from Procfile):
 
 ```bash
-gunicorn trading_fun.server:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
+gunicorn market_predictor.server:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120
 ```
 
 ### 1.4 Health Check Configuration
@@ -163,7 +163,7 @@ After deployment:
 
 Your frontend URL needs to be allowed in backend CORS settings.
 
-**Edit `trading_fun/server.py`**:
+**Edit `market_predictor/server.py`**:
 
 ```python
 # Find the CORS middleware section (around line 80-90)
@@ -185,7 +185,7 @@ app.add_middleware(
 **Commit and push**:
 
 ```bash
-git add trading_fun/server.py
+git add market_predictor/server.py
 git commit -m "feat: add production CORS origin"
 git push origin main
 ```

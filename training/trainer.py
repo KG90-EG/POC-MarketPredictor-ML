@@ -2,7 +2,7 @@
 
 import os
 from datetime import datetime
-from trading_fun.trading import build_dataset, train_model
+from market_predictor.trading import build_dataset, train_model
 import mlflow
 
 try:

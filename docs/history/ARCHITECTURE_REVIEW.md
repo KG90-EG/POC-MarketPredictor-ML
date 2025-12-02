@@ -46,7 +46,7 @@ The original codebase faced several challenges:
 
 ### 1. Backend Architecture
 
-#### Configuration Management (`trading_fun/config.py`)
+#### Configuration Management (`market_predictor/config.py`)
 
 **New System**: 
 ```python
@@ -71,7 +71,7 @@ class AppConfig:
 
 **Impact**: Reduced configuration-related errors by making all settings explicit and validated.
 
-#### Service Layer (`trading_fun/services.py`)
+#### Service Layer (`market_predictor/services.py`)
 
 **Four Core Services**:
 
@@ -250,7 +250,7 @@ const formatted = formatNumber(num)
 ### For Developers
 
 **Backend**:
-1. Import from new modules: `from trading_fun.config import config`
+1. Import from new modules: `from market_predictor.config import config`
 2. Use services for business logic: `StockService.get_ticker_info()`
 3. Replace magic numbers with config: `config.signal.get_signal()`
 

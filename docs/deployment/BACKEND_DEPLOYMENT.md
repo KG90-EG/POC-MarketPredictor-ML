@@ -42,7 +42,7 @@ detect-secrets scan
 ### 4. **Test Production Build**
 ```bash
 # Test with Gunicorn locally
-gunicorn trading_fun.server:app \
+gunicorn market_predictor.server:app \
   --workers 4 \
   --worker-class uvicorn.workers.UvicornWorker \
   --bind 0.0.0.0:8000
@@ -76,14 +76,14 @@ gunicorn trading_fun.server:app \
    buildCommand = "pip install -r requirements.txt"
    
    [deploy]
-   startCommand = "gunicorn trading_fun.server:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT"
+   startCommand = "gunicorn market_predictor.server:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT"
    restartPolicyType = "on_failure"
    restartPolicyMaxRetries = 10
    ```
 
 3. **Create `Procfile`** (optional, for clarity):
    ```
-   web: gunicorn trading_fun.server:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+   web: gunicorn market_predictor.server:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
    ```
 
 4. **Deploy**:
@@ -122,7 +122,7 @@ gunicorn trading_fun.server:app \
        name: marketpredictor-api
        env: python
        buildCommand: pip install -r requirements.txt
-       startCommand: gunicorn trading_fun.server:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+       startCommand: gunicorn market_predictor.server:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
        envVars:
          - key: OPENAI_API_KEY
            sync: false
@@ -173,7 +173,7 @@ gunicorn trading_fun.server:app \
    ```yaml
    option_settings:
      aws:elasticbeanstalk:container:python:
-       WSGIPath: trading_fun.server:app
+       WSGIPath: market_predictor.server:app
        NumProcesses: 4
        NumThreads: 20
      aws:elasticbeanstalk:application:environment:
@@ -182,7 +182,7 @@ gunicorn trading_fun.server:app \
 
 3. **Create `Procfile`**:
    ```
-   web: gunicorn trading_fun.server:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind :8000
+   web: gunicorn market_predictor.server:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind :8000
    ```
 
 4. **Initialize EB**:
@@ -233,7 +233,7 @@ COPY . .
 EXPOSE 8000
 
 # Start with Gunicorn
-CMD ["gunicorn", "trading_fun.server:app", \
+CMD ["gunicorn", "market_predictor.server:app", \
      "--workers", "4", \
      "--worker-class", "uvicorn.workers.UvicornWorker", \
      "--bind", "0.0.0.0:8000", \
@@ -335,7 +335,7 @@ gcloud run deploy marketpredictor-api \
 
 1. **Create `Procfile`**:
    ```
-   web: gunicorn trading_fun.server:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+   web: gunicorn market_predictor.server:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
    ```
 
 2. **Create `runtime.txt`**:
@@ -377,7 +377,7 @@ echo ".env" >> .gitignore
 ```
 
 ### 2. **CORS Configuration**
-Update allowed origins in `trading_fun/server.py`:
+Update allowed origins in `market_predictor/server.py`:
 ```python
 origins = [
     "https://your-frontend.netlify.app",
@@ -394,7 +394,7 @@ app.add_middleware(
 ```
 
 ### 3. **Rate Limiting**
-Already implemented in `trading_fun/rate_limiter.py`. Consider adding:
+Already implemented in `market_predictor/rate_limiter.py`. Consider adding:
 ```python
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -444,7 +444,7 @@ http_active_connections
 ```
 
 ### 3. **Sentry Error Tracking**
-Add to `trading_fun/server.py`:
+Add to `market_predictor/server.py`:
 ```python
 import sentry_sdk
 from sentry_sdk.integrations.fastapi import FastApiIntegration
@@ -458,7 +458,7 @@ sentry_sdk.init(
 ```
 
 ### 4. **Logging**
-Already configured in `trading_fun/logging_config.py`:
+Already configured in `market_predictor/logging_config.py`:
 ```python
 import logging
 
@@ -511,7 +511,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'trading_fun/**'
+      - 'market_predictor/**'
       - 'requirements.txt'
 
 jobs:

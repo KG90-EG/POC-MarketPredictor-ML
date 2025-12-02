@@ -1,7 +1,7 @@
 import argparse
 import joblib
 import os
-from trading_fun.trading import build_dataset
+from market_predictor.trading import build_dataset
 from sklearn.metrics import accuracy_score
 
 try:

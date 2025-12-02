@@ -53,7 +53,7 @@ fi
 
 echo ""
 echo "5. Checking CORS configuration..."
-if grep -q "# Production - Add your deployed frontend URLs" trading_fun/server.py; then
+if grep -q "# Production - Add your deployed frontend URLs" market_predictor/server.py; then
     echo -e "${GREEN}✓${NC} CORS has production placeholder comments"
 else
     echo -e "${YELLOW}⚠${NC} CORS configuration may need production URLs"

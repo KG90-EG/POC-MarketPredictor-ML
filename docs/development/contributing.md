@@ -67,7 +67,7 @@ This project adheres to a code of conduct. By participating, you are expected to
 4. **Run the application**:
    ```bash
    # Backend (from project root)
-   python3 -m uvicorn trading_fun.server:app --reload
+   python3 -m uvicorn market_predictor.server:app --reload
 
    # Frontend (in frontend/)
    npm run dev

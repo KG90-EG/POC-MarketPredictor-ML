@@ -704,7 +704,7 @@ RUN npm ci && npm run build
 # Stage 2: Python backend
 FROM python:3.10-slim AS backend
 COPY --from=frontend /frontend/dist /app/frontend/dist
-CMD ["uvicorn", "trading_fun.server:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "market_predictor.server:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 **Ports:**

@@ -12,7 +12,7 @@ The codebase has been refactored to follow modern software engineering best prac
 
 ## Backend Improvements
 
-### 1. Configuration Management (`trading_fun/config.py`)
+### 1. Configuration Management (`market_predictor/config.py`)
 
 **Problem**: Configuration values were scattered throughout the codebase as magic numbers and environment variable calls.
 
@@ -26,7 +26,7 @@ The codebase has been refactored to follow modern software engineering best prac
 
 **Usage**:
 ```python
-from trading_fun.config import config
+from market_predictor.config import config
 
 # Access configuration
 model_path = config.model.prod_model_path
@@ -42,7 +42,7 @@ signal = config.signal.get_signal(0.68)  # Returns "STRONG BUY"
 - `MarketConfig`: Stock lists and market indices
 - `LoggingConfig`: Logging levels and formats
 
-### 2. Service Layer (`trading_fun/services.py`)
+### 2. Service Layer (`market_predictor/services.py`)
 
 **Problem**: Business logic was mixed with API route handlers, making code difficult to test and reuse.
 
@@ -83,7 +83,7 @@ Health check operations:
 
 **Usage**:
 ```python
-from trading_fun.services import StockService, ValidationService
+from market_predictor.services import StockService, ValidationService
 
 # Validate and fetch ticker info
 ticker = ValidationService.validate_ticker("AAPL")
@@ -360,7 +360,7 @@ Added complete CSS for all new components with:
 model_path = os.getenv("PROD_MODEL_PATH", "models/prod_model.bin")
 
 # New
-from trading_fun.config import config
+from market_predictor.config import config
 model_path = config.model.prod_model_path
 ```
 
@@ -372,7 +372,7 @@ info = stock.info
 # ... data extraction
 
 # New
-from trading_fun.services import StockService
+from market_predictor.services import StockService
 info = StockService.get_ticker_info(ticker)
 ```
 
@@ -382,7 +382,7 @@ info = StockService.get_ticker_info(ticker)
 ticker = ticker.upper().strip()
 
 # New
-from trading_fun.services import ValidationService
+from market_predictor.services import ValidationService
 ticker = ValidationService.validate_ticker(ticker)
 ```
 

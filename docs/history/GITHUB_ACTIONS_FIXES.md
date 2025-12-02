@@ -133,7 +133,7 @@ python training/drift_check.py --tickers AAPL,MSFT,NVDA
 cd frontend && npm run build
 
 # ✅ Verified linting passes
-python -m flake8 trading_fun/ --max-line-length=120 --count
+python -m flake8 market_predictor/ --max-line-length=120 --count
 # Output: 0
 ```
 

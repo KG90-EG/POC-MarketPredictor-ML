@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 # Database file location
-DB_PATH = Path(__file__).parent.parent / "data" / "trading_fun.db"
+DB_PATH = Path(__file__).parent.parent / "data" / "market_predictor.db"
 DB_PATH.parent.mkdir(exist_ok=True)
 
 

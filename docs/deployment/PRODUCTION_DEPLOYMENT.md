@@ -582,7 +582,7 @@ railway variables
 
 **Solution**:
 ```python
-# In trading_fun/server.py, ensure correct origins
+# In market_predictor/server.py, ensure correct origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[

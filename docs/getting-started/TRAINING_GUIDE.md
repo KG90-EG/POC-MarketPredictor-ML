@@ -48,7 +48,7 @@ python training/evaluate_and_promote.py
 ### Basic Training
 
 ```python
-from trading_fun.trading import build_dataset, train_model
+from market_predictor.trading import build_dataset, train_model
 
 # Build dataset
 tickers = ["AAPL", "MSFT", "GOOGL", "UBS"]
@@ -166,14 +166,14 @@ mlflow ui
 ### Check Model Performance
 
 ```python
-from trading_fun.trading import train_model
+from market_predictor.trading import train_model
 import joblib
 
 # Load your model
 model = joblib.load('models/prod_model.bin')
 
 # Predict on new data
-from trading_fun.trading import compute_features
+from market_predictor.trading import compute_features
 features = compute_features(df)
 predictions = model.predict(features)
 probabilities = model.predict_proba(features)
@@ -241,8 +241,8 @@ Create `scripts/train_watchlist.py`:
 import sys
 sys.path.insert(0, '.')
 
-from trading_fun.database import WatchlistDB
-from trading_fun.trading import build_dataset, train_model
+from market_predictor.database import WatchlistDB
+from market_predictor.trading import build_dataset, train_model
 from datetime import datetime
 import os
 

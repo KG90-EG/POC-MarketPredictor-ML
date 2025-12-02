@@ -3,7 +3,7 @@
 import pytest
 import requests
 from unittest.mock import Mock, patch
-from trading_fun.crypto import (
+from market_predictor.crypto import (
     get_crypto_market_data,
     get_crypto_details,
     compute_crypto_features,
@@ -86,7 +86,7 @@ def mock_crypto_details():
 class TestGetCryptoMarketData:
     """Test crypto market data fetching"""
 
-    @patch("trading_fun.crypto.requests.get")
+    @patch("market_predictor.crypto.requests.get")
     def test_get_market_data_with_specific_cryptos(self, mock_get, mock_market_data):
         """Test fetching market data for specific cryptocurrencies"""
         mock_response = Mock()
@@ -106,7 +106,7 @@ class TestGetCryptoMarketData:
         assert call_args[0][0] == f"{COINGECKO_BASE_URL}/coins/markets"
         assert "bitcoin,ethereum" in call_args[1]["params"]["ids"]
 
-    @patch("trading_fun.crypto.requests.get")
+    @patch("market_predictor.crypto.requests.get")
     def test_get_market_data_top_cryptos(self, mock_get, mock_market_data):
         """Test fetching top cryptocurrencies by market cap"""
         mock_response = Mock()
@@ -124,7 +124,7 @@ class TestGetCryptoMarketData:
         assert call_args[1]["params"]["order"] == "market_cap_desc"
         assert call_args[1]["params"]["per_page"] == 50
 
-    @patch("trading_fun.crypto.requests.get")
+    @patch("market_predictor.crypto.requests.get")
     def test_get_market_data_with_nft_tokens(self, mock_get, mock_market_data):
         """Test that NFT tokens are included when requested"""
         mock_response = Mock()
@@ -139,7 +139,7 @@ class TestGetCryptoMarketData:
         ids_param = call_args[1]["params"]["ids"]
         assert len(ids_param.split(",")) == len(DEFAULT_CRYPTOS) + len(NFT_TOKENS)
 
-    @patch("trading_fun.crypto.requests.get")
+    @patch("market_predictor.crypto.requests.get")
     def test_get_market_data_request_exception(self, mock_get):
         """Test handling of request exceptions"""
         mock_get.side_effect = requests.exceptions.RequestException("API Error")
@@ -148,7 +148,7 @@ class TestGetCryptoMarketData:
 
         assert result == []
 
-    @patch("trading_fun.crypto.requests.get")
+    @patch("market_predictor.crypto.requests.get")
     def test_get_market_data_timeout(self, mock_get):
         """Test handling of timeout errors"""
         mock_get.side_effect = requests.exceptions.Timeout("Timeout")
@@ -157,7 +157,7 @@ class TestGetCryptoMarketData:
 
         assert result == []
 
-    @patch("trading_fun.crypto.requests.get")
+    @patch("market_predictor.crypto.requests.get")
     def test_get_market_data_http_error(self, mock_get):
         """Test handling of HTTP errors"""
         mock_response = Mock()
@@ -174,7 +174,7 @@ class TestGetCryptoMarketData:
 class TestGetCryptoDetails:
     """Test crypto details fetching"""
 
-    @patch("trading_fun.crypto.requests.get")
+    @patch("market_predictor.crypto.requests.get")
     def test_get_crypto_details_success(self, mock_get, mock_crypto_details):
         """Test successful fetching of crypto details"""
         mock_response = Mock()
@@ -194,7 +194,7 @@ class TestGetCryptoDetails:
         call_args = mock_get.call_args
         assert call_args[0][0] == f"{COINGECKO_BASE_URL}/coins/bitcoin"
 
-    @patch("trading_fun.crypto.requests.get")
+    @patch("market_predictor.crypto.requests.get")
     def test_get_crypto_details_not_found(self, mock_get):
         """Test handling when crypto is not found"""
         mock_response = Mock()
@@ -207,7 +207,7 @@ class TestGetCryptoDetails:
 
         assert result is None
 
-    @patch("trading_fun.crypto.requests.get")
+    @patch("market_predictor.crypto.requests.get")
     def test_get_crypto_details_exception(self, mock_get):
         """Test handling of general exceptions"""
         mock_get.side_effect = Exception("Unexpected error")
@@ -335,7 +335,7 @@ class TestComputeCryptoFeatures:
 class TestGetCryptoRanking:
     """Test crypto ranking functionality"""
 
-    @patch("trading_fun.crypto.get_crypto_market_data")
+    @patch("market_predictor.crypto.get_crypto_market_data")
     def test_get_ranking_with_filtering(self, mock_get_data, mock_market_data):
         """Test ranking with probability filtering"""
         mock_get_data.return_value = mock_market_data
@@ -347,7 +347,7 @@ class TestGetCryptoRanking:
         for crypto in result:
             assert crypto["probability"] >= 0.5
 
-    @patch("trading_fun.crypto.get_crypto_market_data")
+    @patch("market_predictor.crypto.get_crypto_market_data")
     def test_get_ranking_sorted_by_momentum(self, mock_get_data, mock_market_data):
         """Test that results are sorted by momentum score"""
         mock_get_data.return_value = mock_market_data
@@ -358,7 +358,7 @@ class TestGetCryptoRanking:
         for i in range(len(result) - 1):
             assert result[i]["probability"] >= result[i + 1]["probability"]
 
-    @patch("trading_fun.crypto.get_crypto_market_data")
+    @patch("market_predictor.crypto.get_crypto_market_data")
     def test_get_ranking_empty_data(self, mock_get_data):
         """Test handling of empty market data"""
         mock_get_data.return_value = []
@@ -367,7 +367,7 @@ class TestGetCryptoRanking:
 
         assert result == []
 
-    @patch("trading_fun.crypto.get_crypto_market_data")
+    @patch("market_predictor.crypto.get_crypto_market_data")
     def test_get_ranking_with_custom_limit(self, mock_get_data, mock_market_data):
         """Test custom limit parameter"""
         mock_get_data.return_value = mock_market_data
@@ -378,7 +378,7 @@ class TestGetCryptoRanking:
         call_args = mock_get_data.call_args
         assert call_args[1]["limit"] == 100
 
-    @patch("trading_fun.crypto.get_crypto_market_data")
+    @patch("market_predictor.crypto.get_crypto_market_data")
     def test_get_ranking_with_specific_cryptos(self, mock_get_data, mock_market_data):
         """Test ranking specific cryptocurrencies"""
         mock_get_data.return_value = mock_market_data
@@ -394,8 +394,8 @@ class TestGetCryptoRanking:
 class TestSearchCrypto:
     """Test crypto search functionality"""
 
-    @patch("trading_fun.crypto.requests.get")
-    @patch("trading_fun.crypto.get_crypto_market_data")
+    @patch("market_predictor.crypto.requests.get")
+    @patch("market_predictor.crypto.get_crypto_market_data")
     def test_search_crypto_found(
         self, mock_get_data, mock_requests_get, mock_market_data
     ):
@@ -417,7 +417,7 @@ class TestSearchCrypto:
         assert result["name"] == "Bitcoin"
         assert result["symbol"] == "BTC"
 
-    @patch("trading_fun.crypto.requests.get")
+    @patch("market_predictor.crypto.requests.get")
     def test_search_crypto_not_found(self, mock_get):
         """Test search when no results found"""
         mock_response = Mock()
@@ -429,7 +429,7 @@ class TestSearchCrypto:
 
         assert result is None
 
-    @patch("trading_fun.crypto.requests.get")
+    @patch("market_predictor.crypto.requests.get")
     def test_search_crypto_exception(self, mock_get):
         """Test search with exception"""
         mock_get.side_effect = Exception("Search failed")
@@ -438,8 +438,8 @@ class TestSearchCrypto:
 
         assert result is None
 
-    @patch("trading_fun.crypto.requests.get")
-    @patch("trading_fun.crypto.get_crypto_market_data")
+    @patch("market_predictor.crypto.requests.get")
+    @patch("market_predictor.crypto.get_crypto_market_data")
     def test_search_crypto_no_market_data(self, mock_get_data, mock_requests_get):
         """Test search when market data fetch fails"""
         # Mock search succeeds

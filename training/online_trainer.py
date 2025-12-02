@@ -9,7 +9,7 @@ except Exception:
     StandardScaler = None
     ColumnTransformer = None
 
-from trading_fun.trading import build_dataset
+from market_predictor.trading import build_dataset
 
 
 def run_online_training(tickers=["AAPL", "MSFT", "NVDA"], n_iter=1000):

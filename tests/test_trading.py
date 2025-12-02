@@ -2,7 +2,7 @@
 
 import pandas as pd
 import numpy as np
-from trading_fun.trading import (
+from market_predictor.trading import (
     compute_rsi,
     compute_macd,
     compute_bollinger,

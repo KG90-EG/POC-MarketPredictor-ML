@@ -354,7 +354,7 @@ Returns:
 ```bash
 # Backend
 pip install -r requirements.txt
-python -m trading_fun.server
+python -m market_predictor.server
 
 # Frontend
 cd frontend

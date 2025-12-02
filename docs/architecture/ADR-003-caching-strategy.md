@@ -181,7 +181,7 @@ class TTLCache:
 
 ### Usage in Endpoints
 ```python
-from trading_fun.cache import cache
+from market_predictor.cache import cache
 
 @app.get("/api/stocks/{ticker}")
 async def get_stock_data(ticker: str):
@@ -203,7 +203,7 @@ async def get_stock_data(ticker: str):
 
 ### Rate Limiter
 ```python
-from trading_fun.rate_limiter import RateLimiter
+from market_predictor.rate_limiter import RateLimiter
 
 yfinance_limiter = RateLimiter(max_calls=2, period=1.0)
 

@@ -40,11 +40,11 @@ jobs:
         python -m pytest -v --tb=short || echo "::warning::Some tests failed, but continuing build"
     - name: Lint & Format Check
       run: |
-        flake8 trading_fun/ training/ backtest/ scripts/ --max-line-length=120 --extend-ignore=C901
-        black --check trading_fun/ training/ backtest/ scripts/
+        flake8 market_predictor/ training/ backtest/ scripts/ --max-line-length=120 --extend-ignore=C901
+        black --check market_predictor/ training/ backtest/ scripts/
     - name: Build Docker image
       run: |
-        docker build -t trading_fun:latest .
+        docker build -t market_predictor:latest .
     - name: Build frontend
       run: |
         if command -v npm >/dev/null 2>&1; then
@@ -61,8 +61,8 @@ jobs:
       run: |
         if [ -n "$CR_PAT" ]; then
           echo $CR_PAT | docker login ghcr.io -u $GH_USER --password-stdin
-          docker tag trading_fun:latest ghcr.io/$GH_USER/trading_fun:latest
-          docker push ghcr.io/$GH_USER/trading_fun:latest
+          docker tag market_predictor:latest ghcr.io/$GH_USER/market_predictor:latest
+          docker push ghcr.io/$GH_USER/market_predictor:latest
           echo "✅ Docker image pushed successfully"
         else
           echo "::notice::No CR_PAT secret configured; skipping Docker push. Set CR_PAT secret to enable."

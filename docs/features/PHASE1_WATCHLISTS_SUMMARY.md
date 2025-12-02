@@ -11,7 +11,7 @@ Phase 1 successfully implements a complete watchlist/portfolio management system
 
 ## Backend Implementation
 
-### Database Module (`trading_fun/database.py`)
+### Database Module (`market_predictor/database.py`)
 
 - **285 lines** of production-ready code
 - SQLite database with context manager for safe connections
@@ -60,7 +60,7 @@ CREATE INDEX idx_watchlist_items_watchlist ON watchlist_items(watchlist_id);
 | `remove_stock_from_watchlist(watchlist_id, user_id, ticker)` | Remove stock from watchlist | `bool` |
 | `get_watchlist_tickers(watchlist_id, user_id)` | Get list of tickers | `List[str]` |
 
-### REST API Endpoints (`trading_fun/server.py`)
+### REST API Endpoints (`market_predictor/server.py`)
 
 **7 new endpoints** added with proper error handling:
 
@@ -162,8 +162,8 @@ curl "http://localhost:8000/watchlists/1?user_id=default_user"
 ```
 POC-MarketPredictor-ML/
 ├── data/
-│   └── trading_fun.db                 # SQLite database (auto-created)
-├── trading_fun/
+│   └── market_predictor.db                 # SQLite database (auto-created)
+├── market_predictor/
 │   ├── database.py                    # NEW: Database module (285 lines)
 │   └── server.py                      # UPDATED: Added watchlist endpoints
 ├── frontend/src/

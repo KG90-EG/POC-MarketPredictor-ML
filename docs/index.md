@@ -26,7 +26,7 @@ Trading-Fun is a **production-grade** ML-powered stock market predictor with com
 ```bash
 # Backend
 pip install -r requirements.txt
-.venv/bin/python -m uvicorn trading_fun.server:app --reload
+.venv/bin/python -m uvicorn market_predictor.server:app --reload
 
 # Frontend (in new terminal)
 cd frontend && npm install && npm run dev
@@ -288,7 +288,7 @@ docker-compose down
 ### Gunicorn (Recommended)
 
 ```bash
-gunicorn -c gunicorn_conf.py trading_fun.server:app
+gunicorn -c gunicorn_conf.py market_predictor.server:app
 ```
 
 Configuration (`gunicorn_conf.py`):
@@ -301,7 +301,7 @@ Configuration (`gunicorn_conf.py`):
 ### Uvicorn (Development)
 
 ```bash
-.venv/bin/python -m uvicorn trading_fun.server:app --reload
+.venv/bin/python -m uvicorn market_predictor.server:app --reload
 ```
 
 ## Development Workflow
@@ -327,8 +327,8 @@ npm install
 
 ```bash
 # Python linting
-black trading_fun/
-flake8 trading_fun/ --max-line-length=127
+black market_predictor/
+flake8 market_predictor/ --max-line-length=127
 
 # Frontend linting
 cd frontend

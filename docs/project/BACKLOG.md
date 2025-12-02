@@ -292,7 +292,7 @@ This document tracks planned improvements, feature requests, and technical debt 
    - Vercel: Deploy frontend with root directory = `frontend`
 
 3. **Configure Production CORS** (if not using automation)
-   - Add Vercel URL to `trading_fun/server.py` CORS origins
+   - Add Vercel URL to `market_predictor/server.py` CORS origins
    - Commit and push (Railway auto-deploys)
 
 4. **Production Testing**
@@ -346,8 +346,8 @@ This document tracks planned improvements, feature requests, and technical debt 
 
 **Implementation Details**:
 
-- Created `/trading_fun/metrics.py`: Centralized metrics collection module
-- Updated `/trading_fun/server.py`: Metrics middleware + `/prometheus` endpoint
+- Created `/market_predictor/metrics.py`: Centralized metrics collection module
+- Updated `/market_predictor/server.py`: Metrics middleware + `/prometheus` endpoint
 - Created Prometheus config: `/monitoring/prometheus.yml` (10s scrape interval)
 - Created Grafana provisioning: Auto-configured datasources and dashboards
 - Created 12-panel Grafana dashboard: `trading-fun-api.json`

@@ -88,7 +88,7 @@ netlify deploy --prod --dir=dist
 source .venv/bin/activate  # or `.venv\Scripts\activate` on Windows
 
 # Start backend
-uvicorn trading_fun.server:app --reload --port 8000
+uvicorn market_predictor.server:app --reload --port 8000
 ```
 
 ### Frontend (Port 5173)

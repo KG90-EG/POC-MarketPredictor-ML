@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Create GitHub repo and push current dir
 set -e
-REPO_NAME=${1:-trading_fun}
+REPO_NAME=${1:-market_predictor}
 GH_USER=${2:-}
 
 if ! command -v gh >/dev/null 2>&1; then

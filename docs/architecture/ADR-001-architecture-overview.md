@@ -105,7 +105,7 @@ We adopt a **microservices-inspired architecture** with the following components
 
 ### Backend Structure
 ```
-trading_fun/
+market_predictor/
 ├── server.py        # FastAPI app, routes, WebSocket
 ├── trading.py       # ML model, predictions, signals
 ├── cache.py         # TTL cache implementation

@@ -102,7 +102,7 @@ See: [DEPLOYMENT_GUIDE.md](docs/deployment/DEPLOYMENT_GUIDE.md) (500+ lines)
 
 **Update CORS**:
 
-- Edit `trading_fun/server.py`
+- Edit `market_predictor/server.py`
 - Add Vercel URL to `origins` list
 - Commit and push → Railway auto-deploys
 

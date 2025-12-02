@@ -322,7 +322,7 @@ App (with ErrorBoundary & QueryClientProvider)
 
 ```bash
 # Start backend
-uvicorn trading_fun.server:app --reload
+uvicorn market_predictor.server:app --reload
 
 # Start frontend
 cd frontend && npm run dev

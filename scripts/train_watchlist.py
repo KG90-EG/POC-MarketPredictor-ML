@@ -22,8 +22,8 @@ from datetime import datetime
 
 import joblib
 
-from trading_fun.database import WatchlistDB
-from trading_fun.trading import build_dataset, train_model
+from market_predictor.database import WatchlistDB
+from market_predictor.trading import build_dataset, train_model
 
 
 def main():
@@ -124,7 +124,7 @@ def main():
         print(f"\n🚀 PROMOTED TO PRODUCTION!")
         print(f"   Your watchlist model is now live at: {prod_model_path}")
         print(f"\n   Restart the server to use the new model:")
-        print(f"   pkill -f uvicorn && .venv/bin/python -m uvicorn trading_fun.server:app --reload")
+        print(f"   pkill -f uvicorn && .venv/bin/python -m uvicorn market_predictor.server:app --reload")
 
     print("\n" + "=" * 60)
     print("🎉 Done! Your personalized model is ready.")

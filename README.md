@@ -45,7 +45,7 @@ This repository contains a production-grade machine learning pipeline and modern
 
 Quick summary:
 
-- `trading_fun/` — Python package implementing data loading, features, model training, prediction, and a FastAPI server.
+- `market_predictor/` — Python package implementing data loading, features, model training, prediction, and a FastAPI server.
 - `training/` — Retrain scripts, trainer and utilities (MLflow integration, drift-check, promotion)
 - `backtest/` — A very small backtesting helper to simulate buy-hold trades.
 - `frontend/` — React UI using Vite that shows ranked tickers from the backend `/ranking` endpoint.
@@ -85,7 +85,7 @@ cp .env.example .env
 3. **Start the backend:**
 
 ```bash
-uvicorn trading_fun.server:app --reload
+uvicorn market_predictor.server:app --reload
 ```
 
 4. **Start the frontend (in new terminal):**
@@ -141,7 +141,7 @@ pytest -v
 pytest tests/test_trading.py
 
 # Run tests with coverage (if pytest-cov installed)
-pytest --cov=trading_fun --cov-report=html
+pytest --cov=market_predictor --cov-report=html
 ```
 
 ### What You'll See
@@ -255,7 +255,7 @@ npm run build
 Run API (serves static files):
 
 ```bash
-uvicorn trading_fun.server:app --reload
+uvicorn market_predictor.server:app --reload
 ```
 
 Access in browser at `http://127.0.0.1:8000` (index served) or development mode via Vite `npm run dev` at `http://localhost:5173`.
@@ -847,7 +847,7 @@ python -m pytest -q
 Use process management for higher concurrency:
 
 ```bash
-gunicorn -c gunicorn_conf.py trading_fun.server:app
+gunicorn -c gunicorn_conf.py market_predictor.server:app
 ```
 
 ## Documentation

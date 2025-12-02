@@ -13,12 +13,12 @@ Successfully implemented all recommendations to fix critical issues and improve 
 ### 1. Backend Server Hanging Issue (FIXED)
 **Problem:** The RateLimiter middleware was being instantiated and added twice, causing the `/health` endpoint to hang indefinitely.
 
-**Solution:** Removed the duplicate `app.add_middleware(RateLimiter, ...)` line in `trading_fun/server.py`.
+**Solution:** Removed the duplicate `app.add_middleware(RateLimiter, ...)` line in `market_predictor/server.py`.
 
 **Impact:** Backend now starts successfully and responds to all requests without hanging.
 
 **Files Modified:**
-- `trading_fun/server.py` (line ~355)
+- `market_predictor/server.py` (line ~355)
 
 ---
 
@@ -111,7 +111,7 @@ pytest.ini                   # Pytest configuration
 - **After:** Only connects when explicitly enabled, minimal logging
 
 **Files Modified:**
-- `trading_fun/cache.py`
+- `market_predictor/cache.py`
 
 ---
 
@@ -211,8 +211,8 @@ $ pytest -v
 - `IMPLEMENTATION_SUMMARY.md` (this file)
 
 ### Modified (4 files)
-- `trading_fun/server.py` (RateLimiter duplicate removed)
-- `trading_fun/cache.py` (Redis connection improved)
+- `market_predictor/server.py` (RateLimiter duplicate removed)
+- `market_predictor/cache.py` (Redis connection improved)
 - `.github/workflows/ci.yml` (Better error handling)
 - `README.md` (Documentation enhanced)
 

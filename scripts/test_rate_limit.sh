@@ -228,7 +228,7 @@ main() {
     fi
     
     echo ""
-    echo "Configuration File: trading_fun/config.py"
+    echo "Configuration File: market_predictor/config.py"
     echo "Current Limit: $RATE_LIMIT requests/minute"
 }
 

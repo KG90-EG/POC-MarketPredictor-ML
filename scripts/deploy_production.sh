@@ -188,28 +188,28 @@ update_cors() {
     FRONTEND_URL=$(cat .frontend-url)
     
     # Check if already configured
-    if grep -q "$FRONTEND_URL" trading_fun/server.py; then
+    if grep -q "$FRONTEND_URL" market_predictor/server.py; then
         echo -e "${GREEN}✓${NC} CORS already configured"
         return 0
     fi
     
     # Create backup
-    cp trading_fun/server.py trading_fun/server.py.bak
+    cp market_predictor/server.py market_predictor/server.py.bak
     
     # Add CORS origin (macOS compatible)
     if [[ "$OSTYPE" == "darwin"* ]]; then
         sed -i '' "/# Production - Add your deployed frontend URLs below:/a\\
         \"$FRONTEND_URL\",
-" trading_fun/server.py
+" market_predictor/server.py
     else
-        sed -i "/# Production - Add your deployed frontend URLs below:/a\        \"$FRONTEND_URL\"," trading_fun/server.py
+        sed -i "/# Production - Add your deployed frontend URLs below:/a\        \"$FRONTEND_URL\"," market_predictor/server.py
     fi
     
     echo -e "${GREEN}✓${NC} CORS configuration updated"
     
     # Commit and push
     echo "Committing CORS update..."
-    git add trading_fun/server.py
+    git add market_predictor/server.py
     git commit -m "chore: add $FRONTEND_URL to CORS origins [automated]" || echo "No changes to commit"
     git push origin main
     

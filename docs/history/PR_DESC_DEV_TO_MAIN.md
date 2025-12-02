@@ -4,8 +4,8 @@
 This PR merges the `dev` branch, which introduces a full ML workflow, backend API, and React frontend interface for ranking tickers, along with CI automation and documentation enhancements.
 
 ### Key Additions
-1. Python package `trading_fun` with feature engineering (RSI, SMA, MACD, Bollinger Bands, Momentum) and model training (XGBoost fallback to RandomForest if missing libomp).
-2. FastAPI server (`trading_fun/server.py`) exposing endpoints: `/health`, `/predict_raw`, `/predict_ticker/{ticker}`, `/ranking`.
+1. Python package `market_predictor` with feature engineering (RSI, SMA, MACD, Bollinger Bands, Momentum) and model training (XGBoost fallback to RandomForest if missing libomp).
+2. FastAPI server (`market_predictor/server.py`) exposing endpoints: `/health`, `/predict_raw`, `/predict_ticker/{ticker}`, `/ranking`.
 3. React + Vite frontend (`frontend/`) consuming `/ranking`.
 4. Training utilities (`training/`): `trainer.py`, `evaluate_and_promote.py`, `drift_check.py`, `online_trainer.py`.
 5. Backtesting helper (`backtest/backtester.py`).

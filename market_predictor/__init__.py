@@ -1,4 +1,4 @@
-"""trading_fun package init"""
+"""market_predictor package init"""
 
 from .trading import compute_rsi, load_data, build_dataset, main
 

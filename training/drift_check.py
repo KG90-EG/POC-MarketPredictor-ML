@@ -1,6 +1,6 @@
 import argparse
 import numpy as np
-from trading_fun.trading import load_data
+from market_predictor.trading import load_data
 from scipy.stats import ks_2samp
 
 

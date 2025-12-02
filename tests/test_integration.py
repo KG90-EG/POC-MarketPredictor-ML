@@ -15,7 +15,7 @@ class TestEndToEndPrediction:
         # Mock yfinance download
         mock_download.return_value = sample_stock_data
 
-        from trading_fun.trading import (
+        from market_predictor.trading import (
             compute_rsi,
             compute_macd,
             compute_bollinger,
@@ -56,7 +56,7 @@ class TestCaching:
 
     def test_cache_operations(self):
         """Test cache get/set operations"""
-        from trading_fun.cache import cache
+        from market_predictor.cache import cache
 
         # Test basic operations
         cache.set("test_key", {"value": 123}, ttl_seconds=60)
@@ -77,7 +77,7 @@ class TestRateLimiter:
 
     def test_rate_limiter_stats(self):
         """Test rate limiter statistics"""
-        from trading_fun.server import rate_limiter
+        from market_predictor.server import rate_limiter
 
         stats = rate_limiter.get_stats()
         assert "tracked_ips" in stats
@@ -91,7 +91,7 @@ class TestWebSocketManager:
 
     def test_websocket_stats(self):
         """Test WebSocket manager statistics"""
-        from trading_fun.websocket import manager
+        from market_predictor.websocket import manager
 
         stats = manager.get_stats()
         assert "active_connections" in stats

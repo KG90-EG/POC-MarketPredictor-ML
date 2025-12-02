@@ -98,7 +98,7 @@ docker-compose logs -f prometheus grafana
 
 ```bash
 # Ensure the API is running
-uvicorn trading_fun.server:app --reload --port 8000
+uvicorn market_predictor.server:app --reload --port 8000
 ```
 
 ### Step 4: Access Services
@@ -383,7 +383,7 @@ Create `monitoring/alert_rules.yml`:
 
 ```yaml
 groups:
-  - name: trading_fun_alerts
+  - name: market_predictor_alerts
     interval: 30s
     rules:
       - alert: HighErrorRate
