@@ -258,17 +258,42 @@ function WatchlistManager({ userId = 'default_user' }) {
           if (item.asset_type === 'crypto') {
             // For crypto, fetch from crypto details endpoint
             const detailsRes = await apiClient.get(`/crypto/details/${item.ticker}`);
+            const data = detailsRes.data;
+            
+            // Extract market data (CoinGecko API returns nested structure)
+            const marketData = data.market_data || {};
+            const currentPrice = marketData.current_price?.usd || 0;
+            const priceChange24h = marketData.price_change_percentage_24h || 0;
+            const totalVolume = marketData.total_volume?.usd || 0;
+            
+            // Compute momentum score for prediction
+            const priceChange7d = marketData.price_change_percentage_7d || 0;
+            const priceChange30d = marketData.price_change_percentage_30d || 0;
+            const marketCapRank = marketData.market_cap_rank || 999;
+            
+            // Simple momentum score (0-1)
+            let momentumScore = 0.0;
+            if (marketCapRank <= 10) momentumScore += 0.3;
+            else if (marketCapRank <= 50) momentumScore += 0.15;
+            if (priceChange24h > 5) momentumScore += 0.25;
+            else if (priceChange24h > 0) momentumScore += 0.15;
+            if (priceChange7d > 10) momentumScore += 0.2;
+            else if (priceChange7d > 0) momentumScore += 0.1;
+            if (priceChange30d > 20) momentumScore += 0.15;
+            else if (priceChange30d > 0) momentumScore += 0.08;
+            momentumScore = Math.min(momentumScore, 1.0);
+            
             return {
               ticker: item.ticker,
               info: {
-                name: detailsRes.data.name,
-                price: detailsRes.data.current_price,
-                change: detailsRes.data.price_change_24h,
-                volume: detailsRes.data.total_volume,
+                name: data.name || item.ticker,
+                price: currentPrice,
+                change: priceChange24h,
+                volume: totalVolume,
               },
               prediction: {
-                probability: detailsRes.data.momentum_score ? (detailsRes.data.momentum_score + 1) / 2 : 0.5,
-                momentum_score: detailsRes.data.momentum_score
+                probability: momentumScore,
+                momentum_score: momentumScore
               }
             };
           } else {

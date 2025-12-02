@@ -23,34 +23,7 @@ function CryptoPortfolio({
     <>
       <h2>🪙 Digital Assets & Cryptocurrency Rankings</h2>
 
-      <div style={{marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', justifyContent: 'space-between'}}>
-        <label style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-          <span style={{fontSize: '0.95rem', fontWeight: '500'}}>Show top:</span>
-          <select
-            value={cryptoLimit}
-            onChange={(e) => {
-              onLimitChange(Number(e.target.value))
-              // Auto-refresh if crypto data is already loaded
-              if (cryptoResults.length > 0) {
-                setTimeout(() => onRefresh(), 100)
-              }
-            }}
-            aria-label="Select number of cryptocurrencies to display"
-            style={{
-              padding: '6px 12px',
-              border: '2px solid #ddd',
-              borderRadius: '6px',
-              fontSize: '0.9rem',
-              cursor: 'pointer'
-            }}
-          >
-            <option value={20}>20 cryptos</option>
-            <option value={50}>50 cryptos</option>
-            <option value={100}>100 cryptos</option>
-            <option value={200}>200 cryptos</option>
-          </select>
-        </label>
-
+      <div style={{marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', justifyContent: 'flex-end'}}>
         <button
           onClick={onRefresh}
           disabled={cryptoLoading}

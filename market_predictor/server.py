@@ -952,13 +952,14 @@ def get_popular_stocks(limit: int = 50) -> Dict[str, Any]:
 
 @app.get("/search_stocks", tags=["Stocks"])
 def search_stocks(query: str, limit: int = 10) -> Dict[str, Any]:
-    """Search stocks by ticker or company name."""
+    """Search stocks by ticker or company name with yfinance fallback."""
     with RequestLogger(f"GET /search_stocks?query={query}"):
         try:
             if not query or len(query) < 1:
                 return {"stocks": []}
 
             query_lower = query.lower()
+            query_upper = query.upper()
 
             # Get all popular stocks
             popular_response = get_popular_stocks(limit=100)
@@ -968,6 +969,34 @@ def search_stocks(query: str, limit: int = 10) -> Dict[str, Any]:
             matching = [
                 stock for stock in all_stocks if query_lower in stock["ticker"].lower() or query_lower in stock["name"].lower()
             ]
+
+            # If no matches in popular list, try yfinance lookup
+            if len(matching) == 0:
+                try:
+                    # Try as direct ticker first
+                    ticker_obj = yf.Ticker(query_upper)
+                    info = ticker_obj.info
+                    
+                    # Check if ticker is valid (has longName or shortName)
+                    if info and (info.get('longName') or info.get('shortName')):
+                        matching.append({
+                            "ticker": query_upper,
+                            "name": info.get('longName') or info.get('shortName', query_upper)
+                        })
+                    else:
+                        # Try with common suffixes for Swiss stocks
+                        for suffix in [".SW", ".DE", ".L", ".PA"]:
+                            ticker_with_suffix = query_upper + suffix
+                            ticker_obj = yf.Ticker(ticker_with_suffix)
+                            info = ticker_obj.info
+                            if info and (info.get('longName') or info.get('shortName')):
+                                matching.append({
+                                    "ticker": ticker_with_suffix,
+                                    "name": info.get('longName') or info.get('shortName', ticker_with_suffix)
+                                })
+                                break
+                except Exception as yf_error:
+                    logger.debug(f"YFinance lookup failed for {query}: {yf_error}")
 
             return {"stocks": matching[:limit]}
         except Exception as e:

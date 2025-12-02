@@ -708,12 +708,12 @@ td:first-child {
 
   .header {
     padding-bottom: 16px;
-    padding-top: 90px; /* More space for stacked buttons */
+    padding-top: 100px; /* More space for stacked buttons */
   }
 
   .header h1 {
     font-size: 1.5rem;
-    padding: 0 120px; /* Space for buttons on sides */
+    padding: 0 140px; /* More space for buttons on sides */
   }
 
   .header p {
@@ -1373,12 +1373,12 @@ body.dark-mode .recommendation-text {
 /* Extra small devices (phones in portrait, less than 480px) */
 @media (max-width: 480px) {
   .header {
-    padding-top: 95px; /* More space for stacked buttons */
+    padding-top: 105px; /* More space for stacked buttons */
   }
 
   .header h1 {
-    font-size: 1.3rem;
-    padding: 0 100px; /* Space for buttons on sides */
+    font-size: 1.2rem;
+    padding: 0 110px; /* More space for buttons on sides */
   }
 
   .header .emoji {
