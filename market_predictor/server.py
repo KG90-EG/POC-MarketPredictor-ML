@@ -1403,26 +1403,27 @@ def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
                 prob = MODEL.predict_proba(row[features].values)[0][1]
 
                 # Determine signal based on probability
-                if prob >= 0.65:
+                # More balanced thresholds: BUY > 0.58, SELL < 0.42, HOLD in between
+                if prob >= 0.70:
                     signal = "BUY"
                     confidence = round(prob * 100, 1)
-                    reasoning = f"Strong bullish signal from ML model"
-                elif prob >= 0.55:
+                    reasoning = f"Strong bullish signal from ML model (prob: {prob:.2f})"
+                elif prob >= 0.58:
                     signal = "BUY"
                     confidence = round(prob * 100, 1)
-                    reasoning = f"Moderate bullish signal"
-                elif prob <= 0.35:
+                    reasoning = f"Moderate bullish signal (prob: {prob:.2f})"
+                elif prob <= 0.30:
                     signal = "SELL"
                     confidence = round((1 - prob) * 100, 1)
-                    reasoning = f"Bearish signal from technical indicators"
-                elif prob <= 0.45:
+                    reasoning = f"Strong bearish signal (prob: {prob:.2f})"
+                elif prob <= 0.42:
                     signal = "SELL"
                     confidence = round((1 - prob) * 100, 1)
-                    reasoning = f"Weak bearish signal"
+                    reasoning = f"Weak bearish signal (prob: {prob:.2f})"
                 else:
                     signal = "HOLD"
-                    confidence = 50
-                    reasoning = f"Neutral - no clear direction"
+                    confidence = 50 + abs(prob - 0.5) * 20
+                    reasoning = f"Neutral - no clear direction (prob: {prob:.2f})"
 
                 return {
                     "signal": signal,
