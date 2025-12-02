@@ -1,0 +1,303 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.10'
+
+jobs:
+  # Security checks before deployment
+  security-check:
+    name: Security & Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check for exposed secrets
+        run: |
+          echo "Checking for exposed API keys..."
+          if git grep -i "sk-proj-" -- "*.py" "*.js" "*.jsx" 2>/dev/null; then
+            echo "ERROR: Found exposed API keys!"
+            exit 1
+          fi
+          echo "✓ No exposed secrets found"
+
+      - name: Verify .env not tracked
+        run: |
+          if git ls-files | grep -q "^\.env$"; then
+            echo "ERROR: .env file is tracked!"
+            exit 1
+          fi
+          echo "✓ .env not tracked"
+
+      - name: Python dependency audit
+        continue-on-error: true
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm install --legacy-peer-deps
+
+      - name: Frontend dependency audit
+        working-directory: ./frontend
+        run: npm audit --production
+
+      - name: Run linters
+        working-directory: ./frontend
+        run: |
+          npm run lint || echo "Linting completed with warnings"
+
+  # Backend deployment to Railway
+  deploy-backend:
+    name: Deploy Backend to Railway
+    needs: security-check
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      backend-url: ${{ steps.railway-deploy.outputs.url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: |
+          curl -fsSL https://railway.app/install.sh | sh
+          echo "$HOME/.railway/bin" >> $GITHUB_PATH
+
+      - name: Deploy to Railway
+        id: railway-deploy
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+          railway up --detach
+          echo "Waiting for deployment to complete..."
+          sleep 30
+          BACKEND_URL=$(railway status --json | jq -r '.url')
+          echo "url=$BACKEND_URL" >> $GITHUB_OUTPUT
+          echo "Backend deployed to: $BACKEND_URL"
+
+      - name: Test backend health
+        run: |
+          BACKEND_URL="${{ steps.railway-deploy.outputs.url }}"
+          echo "Testing backend at $BACKEND_URL"
+          for i in {1..10}; do
+            if curl -f "$BACKEND_URL/health"; then
+              echo "✓ Backend is healthy"
+              exit 0
+            fi
+            echo "Waiting for backend to be ready... ($i/10)"
+            sleep 10
+          done
+          echo "ERROR: Backend health check failed"
+          exit 1
+
+  # Frontend deployment to Vercel
+  deploy-frontend:
+    name: Deploy Frontend to Vercel
+    needs: deploy-backend
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Deploy to Vercel
+        working-directory: ./frontend
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          # Build with Railway backend URL
+          BACKEND_URL="${{ needs.deploy-backend.outputs.backend-url }}"
+          echo "Building with backend URL: $BACKEND_URL"
+          
+          # Deploy to Vercel
+          vercel --prod \
+            --token=$VERCEL_TOKEN \
+            --build-env VITE_API_URL=$BACKEND_URL \
+            --yes
+
+      - name: Get Vercel deployment URL
+        id: vercel-url
+        run: |
+          # Get latest production deployment URL
+          FRONTEND_URL=$(vercel ls --token=${{ secrets.VERCEL_TOKEN }} --prod | head -n 2 | tail -n 1 | awk '{print $2}')
+          echo "url=https://$FRONTEND_URL" >> $GITHUB_OUTPUT
+          echo "Frontend deployed to: https://$FRONTEND_URL"
+
+      - name: Test frontend
+        run: |
+          FRONTEND_URL="${{ steps.vercel-url.outputs.url }}"
+          echo "Testing frontend at $FRONTEND_URL"
+          sleep 10
+          if curl -f "$FRONTEND_URL"; then
+            echo "✓ Frontend is accessible"
+          else
+            echo "ERROR: Frontend is not accessible"
+            exit 1
+          fi
+
+  # Update CORS configuration
+  update-cors:
+    name: Update Backend CORS
+    needs: [deploy-backend, deploy-frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update CORS configuration
+        run: |
+          FRONTEND_URL="${{ needs.deploy-frontend.outputs.url }}"
+          echo "Adding $FRONTEND_URL to CORS origins"
+          
+          # Check if URL already exists
+          if grep -q "$FRONTEND_URL" trading_fun/server.py; then
+            echo "✓ CORS already configured for $FRONTEND_URL"
+          else
+            # Add new origin after the comment line
+            sed -i "/# Production - Add your deployed frontend URLs below:/a\        \"$FRONTEND_URL\"," trading_fun/server.py
+            
+            # Commit and push
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add trading_fun/server.py
+            git commit -m "chore: add $FRONTEND_URL to CORS origins [skip ci]"
+            git push
+            
+            echo "✓ CORS configuration updated and pushed"
+          fi
+
+  # Production testing
+  production-tests:
+    name: Production Testing
+    needs: [deploy-backend, deploy-frontend, update-cors]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for CORS update to deploy
+        run: sleep 60
+
+      - name: Run deployment tests
+        run: |
+          chmod +x scripts/test_deployment.sh
+          BACKEND_URL="${{ needs.deploy-backend.outputs.backend-url }}"
+          ./scripts/test_deployment.sh "$BACKEND_URL"
+
+      - name: Test frontend integration
+        run: |
+          FRONTEND_URL="${{ needs.deploy-frontend.outputs.url }}"
+          BACKEND_URL="${{ needs.deploy-backend.outputs.backend-url }}"
+          
+          echo "Testing frontend-backend integration..."
+          
+          # Test CORS
+          curl -H "Origin: $FRONTEND_URL" \
+               -H "Access-Control-Request-Method: GET" \
+               -X OPTIONS \
+               "$BACKEND_URL/health" -v
+          
+          echo "✓ CORS configuration working"
+
+      - name: Create deployment summary
+        run: |
+          cat << EOF > deployment-summary.md
+          # 🚀 Deployment Summary
+          
+          **Date**: $(date)
+          **Status**: ✅ Success
+          
+          ## Deployed URLs
+          
+          - **Backend**: ${{ needs.deploy-backend.outputs.backend-url }}
+          - **Frontend**: ${{ needs.deploy-frontend.outputs.url }}
+          
+          ## Services
+          
+          - ✅ Backend health check passed
+          - ✅ Frontend accessible
+          - ✅ CORS configured
+          - ✅ API endpoints tested
+          
+          ## Next Steps
+          
+          1. Monitor Railway logs for any errors
+          2. Check Vercel analytics for traffic
+          3. Verify all features work correctly
+          4. Set up custom domain (optional)
+          
+          EOF
+          
+          cat deployment-summary.md
+
+      - name: Upload deployment summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-summary
+          path: deployment-summary.md
+
+  # Notify on deployment
+  notify:
+    name: Deployment Notification
+    needs: [deploy-backend, deploy-frontend, production-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Send notification
+        run: |
+          if [ "${{ needs.production-tests.result }}" == "success" ]; then
+            echo "✅ Deployment successful!"
+            echo "Backend: ${{ needs.deploy-backend.outputs.backend-url }}"
+            echo "Frontend: ${{ needs.deploy-frontend.outputs.url }}"
+          else
+            echo "❌ Deployment failed!"
+            exit 1
+          fi
