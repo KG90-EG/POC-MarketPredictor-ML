@@ -256,64 +256,34 @@ function WatchlistManager({ userId = 'default_user' }) {
       const dataPromises = items.map(async (item) => {
         try {
           if (item.asset_type === 'crypto') {
-            // For crypto, fetch from crypto details endpoint
-            const detailsRes = await apiClient.get(`/crypto/details/${item.ticker}`);
-            const data = detailsRes.data;
+            // For crypto, use search endpoint which returns formatted data
+            const searchRes = await apiClient.get(`/crypto/search?query=${item.ticker}`);
+            const cryptoData = searchRes.data;
             
-            console.log('Crypto data for', item.ticker, ':', data); // Debug log
+            console.log('Crypto search result for', item.ticker, ':', cryptoData); // Debug log
             
-            // Extract market data (CoinGecko API returns nested structure)
-            const marketData = data.market_data || {};
+            if (!cryptoData) {
+              console.warn('No crypto data found for', item.ticker);
+              return { ticker: item.ticker, info: null, prediction: null };
+            }
             
-            // Access nested price data with fallbacks
-            const currentPrice = marketData.current_price?.usd || 
-                                marketData.current_price?.['usd'] || 
-                                (typeof marketData.current_price === 'number' ? marketData.current_price : 0);
-            
-            const priceChange24h = marketData.price_change_percentage_24h || 
-                                  marketData.price_change_percentage_24h_in_currency?.usd ||
-                                  0;
-            
-            const totalVolume = marketData.total_volume?.usd || 
-                               marketData.total_volume?.['usd'] ||
-                               (typeof marketData.total_volume === 'number' ? marketData.total_volume : 0);
-            
-            // Compute momentum score for prediction
-            const priceChange7d = marketData.price_change_percentage_7d || 
-                                 marketData.price_change_percentage_7d_in_currency?.usd ||
-                                 0;
-            
-            const priceChange30d = marketData.price_change_percentage_30d || 
-                                  marketData.price_change_percentage_30d_in_currency?.usd ||
-                                  0;
-            
-            const marketCapRank = marketData.market_cap_rank || 999;
+            // Extract data from formatted search response
+            const currentPrice = cryptoData.price || 0;
+            const priceChange24h = cryptoData.change_24h || 0;
+            const totalVolume = cryptoData.volume || 0;
+            const momentumScore = cryptoData.probability || cryptoData.momentum_score || 0;
             
             console.log('Extracted crypto values:', { // Debug log
               currentPrice,
               priceChange24h,
               totalVolume,
-              priceChange7d,
-              priceChange30d,
-              marketCapRank
+              momentumScore
             });
-            
-            // Simple momentum score (0-1)
-            let momentumScore = 0.0;
-            if (marketCapRank <= 10) momentumScore += 0.3;
-            else if (marketCapRank <= 50) momentumScore += 0.15;
-            if (priceChange24h > 5) momentumScore += 0.25;
-            else if (priceChange24h > 0) momentumScore += 0.15;
-            if (priceChange7d > 10) momentumScore += 0.2;
-            else if (priceChange7d > 0) momentumScore += 0.1;
-            if (priceChange30d > 20) momentumScore += 0.15;
-            else if (priceChange30d > 0) momentumScore += 0.08;
-            momentumScore = Math.min(momentumScore, 1.0);
             
             return {
               ticker: item.ticker,
               info: {
-                name: data.name || item.ticker,
+                name: cryptoData.name || item.ticker,
                 price: currentPrice,
                 change: priceChange24h,
                 volume: totalVolume,
