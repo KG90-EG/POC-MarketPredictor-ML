@@ -15,12 +15,9 @@ Usage:
 
 import os
 import sys
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from datetime import datetime
 
-import joblib
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from market_predictor.database import WatchlistDB
 from market_predictor.trading import build_dataset, train_model
@@ -60,7 +57,7 @@ def main():
     print(f"   {', '.join(sorted(valid_tickers))}")
 
     # Build dataset
-    print(f"\n⏳ Downloading 2 years of historical data...")
+    print("\n⏳ Downloading 2 years of historical data...")
     try:
         data = build_dataset(valid_tickers, period="2y")
     except Exception as e:
@@ -74,7 +71,7 @@ def main():
     print(f"✓ Dataset ready: {data.shape[0]} rows, {data.shape[1]} features")
 
     # Train model
-    print(f"\n🤖 Training Random Forest model...")
+    print("\n🤖 Training Random Forest model...")
     model_path = f"models/watchlist_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.bin"
     os.makedirs("models", exist_ok=True)
 
@@ -99,10 +96,10 @@ def main():
     should_promote = False
 
     if not os.path.exists(prod_model_path):
-        print(f"\n⚠️  No production model found. This will become the production model.")
+        print("\n⚠️  No production model found. This will become the production model.")
         should_promote = True
     else:
-        print(f"\n🔍 Comparing with current production model...")
+        print("\n🔍 Comparing with current production model...")
         try:
             # Load production model and get its accuracy (stored in metrics)
             # For now, we'll promote if accuracy > 0.55 (better than random)
@@ -111,20 +108,20 @@ def main():
                 should_promote = True
             else:
                 print(f"   New model accuracy ({metrics['accuracy']:.2%}) is not good enough.")
-                print(f"   Keeping current production model.")
+                print("   Keeping current production model.")
         except Exception as e:
             print(f"   Error comparing models: {e}")
-            print(f"   Promoting anyway...")
+            print("   Promoting anyway...")
             should_promote = True
 
     if should_promote:
         import shutil
 
         shutil.copy(model_path, prod_model_path)
-        print(f"\n🚀 PROMOTED TO PRODUCTION!")
+        print("\n🚀 PROMOTED TO PRODUCTION!")
         print(f"   Your watchlist model is now live at: {prod_model_path}")
-        print(f"\n   Restart the server to use the new model:")
-        print(f"   pkill -f uvicorn && .venv/bin/python -m uvicorn market_predictor.server:app --reload")
+        print("\n   Restart the server to use the new model:")
+        print("   pkill -f uvicorn && .venv/bin/python -m uvicorn market_predictor.server:app --reload")
 
     print("\n" + "=" * 60)
     print("🎉 Done! Your personalized model is ready.")

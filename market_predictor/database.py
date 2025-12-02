@@ -10,7 +10,6 @@ This module provides SQLite database setup for user features:
 import logging
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -111,7 +110,8 @@ class WatchlistDB:
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO watchlists (user_id, name, description) VALUES (?, ?, ?)", (user_id, name, description)
+                "INSERT INTO watchlists (user_id, name, description) VALUES (?, ?, ?)",
+                (user_id, name, description),
             )
             return cursor.lastrowid
 
@@ -140,7 +140,10 @@ class WatchlistDB:
             cursor = conn.cursor()
 
             # Get watchlist info
-            cursor.execute("SELECT * FROM watchlists WHERE id = ? AND user_id = ?", (watchlist_id, user_id))
+            cursor.execute(
+                "SELECT * FROM watchlists WHERE id = ? AND user_id = ?",
+                (watchlist_id, user_id),
+            )
             watchlist = cursor.fetchone()
 
             if not watchlist:
@@ -163,7 +166,10 @@ class WatchlistDB:
 
     @staticmethod
     def update_watchlist(
-        watchlist_id: int, user_id: str, name: Optional[str] = None, description: Optional[str] = None
+        watchlist_id: int,
+        user_id: str,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
     ) -> bool:
         """Update watchlist details."""
         with get_db_connection() as conn:
@@ -196,19 +202,29 @@ class WatchlistDB:
         """Delete a watchlist and all its items."""
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM watchlists WHERE id = ? AND user_id = ?", (watchlist_id, user_id))
+            cursor.execute(
+                "DELETE FROM watchlists WHERE id = ? AND user_id = ?",
+                (watchlist_id, user_id),
+            )
             return cursor.rowcount > 0
 
     @staticmethod
     def add_stock_to_watchlist(
-        watchlist_id: int, user_id: str, ticker: str, notes: Optional[str] = None, asset_type: str = "stock"
+        watchlist_id: int,
+        user_id: str,
+        ticker: str,
+        notes: Optional[str] = None,
+        asset_type: str = "stock",
     ) -> bool:
         """Add a stock or crypto to a watchlist."""
         with get_db_connection() as conn:
             cursor = conn.cursor()
 
             # Verify watchlist ownership
-            cursor.execute("SELECT id FROM watchlists WHERE id = ? AND user_id = ?", (watchlist_id, user_id))
+            cursor.execute(
+                "SELECT id FROM watchlists WHERE id = ? AND user_id = ?",
+                (watchlist_id, user_id),
+            )
             if not cursor.fetchone():
                 return False
 
@@ -219,7 +235,10 @@ class WatchlistDB:
                 )
 
                 # Update watchlist timestamp
-                cursor.execute("UPDATE watchlists SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", (watchlist_id,))
+                cursor.execute(
+                    "UPDATE watchlists SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                    (watchlist_id,),
+                )
 
                 return True
             except sqlite3.IntegrityError:
@@ -233,15 +252,24 @@ class WatchlistDB:
             cursor = conn.cursor()
 
             # Verify watchlist ownership
-            cursor.execute("SELECT id FROM watchlists WHERE id = ? AND user_id = ?", (watchlist_id, user_id))
+            cursor.execute(
+                "SELECT id FROM watchlists WHERE id = ? AND user_id = ?",
+                (watchlist_id, user_id),
+            )
             if not cursor.fetchone():
                 return False
 
-            cursor.execute("DELETE FROM watchlist_items WHERE watchlist_id = ? AND ticker = ?", (watchlist_id, ticker.upper()))
+            cursor.execute(
+                "DELETE FROM watchlist_items WHERE watchlist_id = ? AND ticker = ?",
+                (watchlist_id, ticker.upper()),
+            )
 
             if cursor.rowcount > 0:
                 # Update watchlist timestamp
-                cursor.execute("UPDATE watchlists SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", (watchlist_id,))
+                cursor.execute(
+                    "UPDATE watchlists SET updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                    (watchlist_id,),
+                )
                 return True
 
             return False
@@ -253,11 +281,17 @@ class WatchlistDB:
             cursor = conn.cursor()
 
             # Verify watchlist ownership
-            cursor.execute("SELECT id FROM watchlists WHERE id = ? AND user_id = ?", (watchlist_id, user_id))
+            cursor.execute(
+                "SELECT id FROM watchlists WHERE id = ? AND user_id = ?",
+                (watchlist_id, user_id),
+            )
             if not cursor.fetchone():
                 return []
 
-            cursor.execute("SELECT ticker FROM watchlist_items WHERE watchlist_id = ?", (watchlist_id,))
+            cursor.execute(
+                "SELECT ticker FROM watchlist_items WHERE watchlist_id = ?",
+                (watchlist_id,),
+            )
             return [row[0] for row in cursor.fetchall()]
 
 

@@ -56,7 +56,12 @@ class AlertManager:
         self.last_momentum: Dict[str, float] = {}  # symbol -> last momentum
 
     def check_and_create_alerts(
-        self, symbol: str, name: str, asset_type: str, prediction: Dict, current_price: Optional[float] = None
+        self,
+        symbol: str,
+        name: str,
+        asset_type: str,
+        prediction: Dict,
+        current_price: Optional[float] = None,
     ) -> List[Alert]:
         """
         Check prediction data and create alerts if needed.
@@ -107,7 +112,7 @@ class AlertManager:
             alert = Alert(
                 alert_id=f"{symbol}_{AlertType.HIGH_CONFIDENCE.value}_{datetime.now().timestamp()}",
                 alert_type=AlertType.HIGH_CONFIDENCE,
-                priority=AlertPriority.HIGH if signal == "BUY" else AlertPriority.MEDIUM,
+                priority=(AlertPriority.HIGH if signal == "BUY" else AlertPriority.MEDIUM),
                 asset_type=asset_type,
                 symbol=symbol,
                 name=name,
@@ -140,7 +145,11 @@ class AlertManager:
                     name=name,
                     message=f"Price spike {direction} {abs(price_change_pct):.1f}%",
                     timestamp=datetime.now(),
-                    data={"old_price": last_price, "new_price": current_price, "change_pct": price_change_pct},
+                    data={
+                        "old_price": last_price,
+                        "new_price": current_price,
+                        "change_pct": price_change_pct,
+                    },
                 )
                 new_alerts.append(alert)
                 logger.info(f"Alert created: {symbol} price spike {price_change_pct:.1f}%")
@@ -168,7 +177,11 @@ class AlertManager:
                         name=name,
                         message=f"Momentum shifted from {last_mom:.1f} to {momentum:.1f}",
                         timestamp=datetime.now(),
-                        data={"old_momentum": last_mom, "new_momentum": momentum, "change": momentum_change},
+                        data={
+                            "old_momentum": last_mom,
+                            "new_momentum": momentum,
+                            "change": momentum_change,
+                        },
                     )
                     new_alerts.append(alert)
                     logger.info(f"Alert created: {symbol} momentum shift {momentum_change:+.1f}")

@@ -1005,7 +1005,10 @@ def search_stocks(query: str, limit: int = 10) -> Dict[str, Any]:
                         # Check if ticker is valid (has longName or shortName)
                         if info and (info.get("longName") or info.get("shortName")):
                             matching.append(
-                                {"ticker": query_upper, "name": info.get("longName") or info.get("shortName", query_upper)}
+                                {
+                                    "ticker": query_upper,
+                                    "name": info.get("longName") or info.get("shortName", query_upper),
+                                }
                             )
                         else:
                             # Try with common suffixes for Swiss stocks
@@ -1059,7 +1062,11 @@ def get_popular_cryptos(limit: int = 30) -> Dict[str, Any]:
                 {"id": "monero", "name": "Monero", "symbol": "XMR"},
                 {"id": "ethereum-classic", "name": "Ethereum Classic", "symbol": "ETC"},
                 {"id": "hedera-hashgraph", "name": "Hedera", "symbol": "HBAR"},
-                {"id": "internet-computer", "name": "Internet Computer", "symbol": "ICP"},
+                {
+                    "id": "internet-computer",
+                    "name": "Internet Computer",
+                    "symbol": "ICP",
+                },
                 {"id": "filecoin", "name": "Filecoin", "symbol": "FIL"},
                 {"id": "aptos", "name": "Aptos", "symbol": "APT"},
                 {"id": "near", "name": "NEAR Protocol", "symbol": "NEAR"},
@@ -1111,8 +1118,18 @@ def get_countries() -> Dict[str, Any]:
         try:
             # Build country list from COUNTRY_INDICES
             countries = [
-                {"id": "Global", "label": "🌐 Global", "description": "Top global stocks", "flag": "🌐"},
-                {"id": "United States", "label": "🇺🇸 United States", "description": "US market leaders", "flag": "🇺🇸"},
+                {
+                    "id": "Global",
+                    "label": "🌐 Global",
+                    "description": "Top global stocks",
+                    "flag": "🌐",
+                },
+                {
+                    "id": "United States",
+                    "label": "🇺🇸 United States",
+                    "description": "US market leaders",
+                    "flag": "🇺🇸",
+                },
             ]
 
             # Add countries from COUNTRY_INDICES
@@ -1301,7 +1318,10 @@ def create_watchlist(watchlist: WatchlistCreate, user_id: str = "default_user"):
     """Create a new watchlist."""
     try:
         watchlist_id = WatchlistDB.create_watchlist(user_id=user_id, name=watchlist.name, description=watchlist.description)
-        return {"id": watchlist_id, "message": f"Watchlist '{watchlist.name}' created successfully"}
+        return {
+            "id": watchlist_id,
+            "message": f"Watchlist '{watchlist.name}' created successfully",
+        }
     except Exception as e:
         logger.error(f"Error creating watchlist: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1337,12 +1357,21 @@ def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
             try:
                 response = requests.get(
                     f"https://api.coingecko.com/api/v3/coins/{ticker.lower()}",
-                    params={"localization": "false", "tickers": "false", "community_data": "false", "developer_data": "false"},
+                    params={
+                        "localization": "false",
+                        "tickers": "false",
+                        "community_data": "false",
+                        "developer_data": "false",
+                    },
                     timeout=10,
                 )
 
                 if response.status_code != 200:
-                    return {"signal": "HOLD", "confidence": 50, "reasoning": "Unable to fetch market data"}
+                    return {
+                        "signal": "HOLD",
+                        "confidence": 50,
+                        "reasoning": "Unable to fetch market data",
+                    }
 
                 data = response.json()
                 market_data = data.get("market_data", {})
@@ -1393,26 +1422,42 @@ def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
                 crypto_name = data.get("name", ticker)
                 current_price = data.get("market_data", {}).get("current_price", {}).get("usd")
                 alert_manager.check_and_create_alerts(
-                    symbol=ticker, name=crypto_name, asset_type="crypto", prediction=result, current_price=current_price
+                    symbol=ticker,
+                    name=crypto_name,
+                    asset_type="crypto",
+                    prediction=result,
+                    current_price=current_price,
                 )
 
                 return result
 
             except Exception as e:
                 logger.error(f"Crypto prediction error: {e}")
-                return {"signal": "HOLD", "confidence": 50, "reasoning": "Prediction unavailable"}
+                return {
+                    "signal": "HOLD",
+                    "confidence": 50,
+                    "reasoning": "Prediction unavailable",
+                }
 
         else:
             # Stock prediction using ML model
             if MODEL is None:
-                return {"signal": "HOLD", "confidence": 50, "reasoning": "ML model not loaded"}
+                return {
+                    "signal": "HOLD",
+                    "confidence": 50,
+                    "reasoning": "ML model not loaded",
+                }
 
             try:
                 # Get latest data and compute features
                 raw = yf.download(ticker, period="300d", auto_adjust=False, progress=False)
 
                 if raw.empty:
-                    return {"signal": "HOLD", "confidence": 50, "reasoning": "No market data available"}
+                    return {
+                        "signal": "HOLD",
+                        "confidence": 50,
+                        "reasoning": "No market data available",
+                    }
 
                 # Handle MultiIndex columns
                 if isinstance(raw.columns, pd.MultiIndex):
@@ -1433,7 +1478,11 @@ def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
                 df = df.dropna()
 
                 if df.empty:
-                    return {"signal": "HOLD", "confidence": 50, "reasoning": "Insufficient data for prediction"}
+                    return {
+                        "signal": "HOLD",
+                        "confidence": 50,
+                        "reasoning": "Insufficient data for prediction",
+                    }
 
                 row = df.iloc[-1:]
                 prob = MODEL.predict_proba(row[features].values)[0][1]
@@ -1467,7 +1516,7 @@ def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
                     "reasoning": reasoning,
                     "metrics": {
                         "probability": round(prob, 3),
-                        "rsi": round(float(df.iloc[-1]["RSI"]), 2) if pd.notna(df.iloc[-1]["RSI"]) else None,
+                        "rsi": (round(float(df.iloc[-1]["RSI"]), 2) if pd.notna(df.iloc[-1]["RSI"]) else None),
                         "momentum": (
                             round(float(df.iloc[-1]["Momentum_10d"]), 4) if pd.notna(df.iloc[-1]["Momentum_10d"]) else None
                         ),
@@ -1488,7 +1537,11 @@ def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
 
             except Exception as e:
                 logger.error(f"Stock prediction error for {ticker}: {e}")
-                return {"signal": "HOLD", "confidence": 50, "reasoning": "Prediction error - insufficient data"}
+                return {
+                    "signal": "HOLD",
+                    "confidence": 50,
+                    "reasoning": "Prediction error - insufficient data",
+                }
 
     except Exception as e:
         logger.error(f"Prediction error: {e}")
@@ -1500,7 +1553,10 @@ def update_watchlist(watchlist_id: int, watchlist: WatchlistUpdate, user_id: str
     """Update watchlist details."""
     try:
         success = WatchlistDB.update_watchlist(
-            watchlist_id=watchlist_id, user_id=user_id, name=watchlist.name, description=watchlist.description
+            watchlist_id=watchlist_id,
+            user_id=user_id,
+            name=watchlist.name,
+            description=watchlist.description,
         )
         if not success:
             raise HTTPException(status_code=404, detail="Watchlist not found")
@@ -1577,7 +1633,10 @@ def remove_stock_from_watchlist(watchlist_id: int, ticker: str, user_id: str = "
     try:
         success = WatchlistDB.remove_stock_from_watchlist(watchlist_id=watchlist_id, user_id=user_id, ticker=ticker)
         if not success:
-            raise HTTPException(status_code=404, detail="Stock not found in watchlist or watchlist not found")
+            raise HTTPException(
+                status_code=404,
+                detail="Stock not found in watchlist or watchlist not found",
+            )
         return {"message": f"Stock {ticker} removed from watchlist"}
     except HTTPException:
         raise
@@ -1769,7 +1828,12 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
 # Alert Management Endpoints
 @app.get("/alerts", tags=["Alerts"])
-def get_alerts(unread_only: bool = False, priority: Optional[str] = None, asset_type: Optional[str] = None, limit: int = 50):
+def get_alerts(
+    unread_only: bool = False,
+    priority: Optional[str] = None,
+    asset_type: Optional[str] = None,
+    limit: int = 50,
+):
     """
     Get alerts with optional filters.
 
@@ -1789,11 +1853,20 @@ def get_alerts(unread_only: bool = False, priority: Optional[str] = None, asset_
             except KeyError:
                 raise HTTPException(status_code=400, detail=f"Invalid priority: {priority}")
 
-        alerts = alert_manager.get_alerts(unread_only=unread_only, priority=priority_enum, asset_type=asset_type, limit=limit)
+        alerts = alert_manager.get_alerts(
+            unread_only=unread_only,
+            priority=priority_enum,
+            asset_type=asset_type,
+            limit=limit,
+        )
 
         unread_count = alert_manager.get_unread_count()
 
-        return {"alerts": alerts, "unread_count": unread_count, "total_count": len(alert_manager.alerts)}
+        return {
+            "alerts": alerts,
+            "unread_count": unread_count,
+            "total_count": len(alert_manager.alerts),
+        }
     except HTTPException:
         raise
     except Exception as e:
