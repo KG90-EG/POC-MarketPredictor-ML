@@ -844,8 +844,8 @@ pre-commit install
 - [GitHub Actions Fixes](docs/history/GITHUB_ACTIONS_FIXES.md)
 - [Main README](README.md)
 - [Deployment Guide](docs/deployment/DEPLOYMENT.md)
-- [Specification](SPEC.md)
-- **[Contributing Guidelines](CONTRIBUTING.md)** ⭐ NEW
+- [Specification](../architecture/SPECIFICATION.md)
+- **[Contributing Guidelines](../development/CONTRIBUTING.md)** ⭐ NEW
 - **[Architecture Decision Records](docs/)** ⭐ NEW
   - [ADR-001: Architecture Overview](docs/ADR-001-architecture-overview.md)
   - [ADR-002: Model Training Strategy](docs/ADR-002-model-training-strategy.md)

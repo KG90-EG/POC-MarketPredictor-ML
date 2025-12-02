@@ -448,7 +448,7 @@ After successful deployment, consider:
 
 - [Backend Deployment Guide](BACKEND_DEPLOYMENT.md)
 - [Frontend Deployment Guide](FRONTEND_DEPLOYMENT.md)
-- [BACKLOG.md](BACKLOG.md)
+- [BACKLOG.md](../project/BACKLOG.md)
 - [README.md](README.md)
 
 **Logs & Debugging**:

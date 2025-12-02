@@ -157,4 +157,3 @@ sphinx-autobuild . _build --port 8080
 - **Testing**: 30 minutes
 
 **Total**: ~3-4 hours for complete migration
-

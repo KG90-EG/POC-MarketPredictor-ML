@@ -30,4 +30,4 @@ These documents have been archived to maintain project history while keeping the
 - Evolution of the codebase architecture
 - Testing and CI/CD improvements
 
-For current project status and planned work, see [BACKLOG.md](../../BACKLOG.md) in the root directory.
+For current project status and planned work, see [BACKLOG.md](../project/BACKLOG.md).

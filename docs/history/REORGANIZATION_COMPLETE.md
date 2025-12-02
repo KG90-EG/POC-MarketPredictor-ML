@@ -80,7 +80,7 @@ Moved files to logical locations:
 ### Option 1: Deploy to ReadTheDocs (Recommended)
 
 1. **Sign up**: https://readthedocs.org/accounts/signup/
-2. **Import Project**: 
+2. **Import Project**:
    - Click "Import a Project"
    - Select "POC-MarketPredictor-ML"
    - Auto-detects `.readthedocs.yaml`

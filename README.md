@@ -811,7 +811,7 @@ gunicorn -c gunicorn_conf.py trading_fun.server:app
 **Getting Started**:
 
 - 📖 [README.md](README.md) - Project overview and quick start
-- 🎯 [SPEC.md](SPEC.md) - Technical specification
+- 🎯 [SPEC.md](docs/architecture/SPECIFICATION.md) - Technical specification
 - 🚀 [PRODUCTION_READY.md](PRODUCTION_READY.md) - Production deployment summary
 
 **Deployment Guides**:
@@ -826,13 +826,13 @@ gunicorn -c gunicorn_conf.py trading_fun.server:app
 - 🏗️ [docs/ADR-001-architecture-overview.md](docs/ADR-001-architecture-overview.md) - Architecture decisions
 - 🤖 [docs/ADR-002-model-training-strategy.md](docs/ADR-002-model-training-strategy.md) - ML strategy
 - 💾 [docs/ADR-003-caching-strategy.md](docs/ADR-003-caching-strategy.md) - Caching implementation
-- 🤝 [CONTRIBUTING.md](CONTRIBUTING.md) - Contributing guidelines
+- 🤝 [CONTRIBUTING.md](docs/development/CONTRIBUTING.md) - Contributing guidelines
 
 **Monitoring & Quality**:
 
 - 📊 [docs/PERFORMANCE_MONITORING.md](docs/PERFORMANCE_MONITORING.md) - Monitoring guide
 - ♿ [docs/ACCESSIBILITY_TESTING.md](docs/ACCESSIBILITY_TESTING.md) - Accessibility testing
-- 📋 [BACKLOG.md](BACKLOG.md) - Project backlog and progress tracking
+- 📋 [BACKLOG.md](docs/project/BACKLOG.md) - Project backlog and progress tracking
 
 **API Documentation**:
 

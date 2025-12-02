@@ -103,7 +103,7 @@ history/improvements
 - **[Production Ready Guide](../PRODUCTION_READY.md)** - Deploy in 10 minutes
 - **[API Documentation](http://localhost:8000/docs)** - Interactive Swagger UI
 - **[GitHub Repository](https://github.com/KG90-EG/POC-MarketPredictor-ML)** - Source code
-- **[Contributing Guide](../CONTRIBUTING.md)** - How to contribute
+- **[Contributing Guide](development/CONTRIBUTING.md)** - How to contribute
 
 ---
 
@@ -137,9 +137,9 @@ A production-grade machine learning application that provides:
 
 ## 📊 Project Status
 
-**Version**: 1.0.0  
-**Status**: Production Ready  
-**Completion**: 98%  
+**Version**: 1.0.0
+**Status**: Production Ready
+**Completion**: 98%
 **Last Updated**: December 2, 2025
 
 ### Completed
@@ -161,7 +161,7 @@ A production-grade machine learning application that provides:
 
 - **Issues**: [GitHub Issues](https://github.com/KG90-EG/POC-MarketPredictor-ML/issues)
 - **Security**: [Security Policy](https://github.com/KG90-EG/POC-MarketPredictor-ML/security)
-- **Contributing**: [Contributing Guide](../CONTRIBUTING.md)
+- **Contributing**: [Contributing Guide](development/CONTRIBUTING.md)
 - **Deployment**: [Production Ready Guide](../PRODUCTION_READY.md)
 
 ---

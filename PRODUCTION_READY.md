@@ -205,11 +205,11 @@ docker-compose up -d prometheus grafana
 **Comprehensive Documentation**: 2000+ lines
 
 - ✅ [README.md](README.md) - Project overview
-- ✅ [SPEC.md](SPEC.md) - Technical specification
+- ✅ [SPEC.md](docs/architecture/SPECIFICATION.md) - Technical specification
 - ✅ [DEPLOYMENT_GUIDE.md](docs/deployment/DEPLOYMENT_GUIDE.md) - Manual deployment (500+ lines)
 - ✅ [AUTOMATED_DEPLOYMENT.md](docs/deployment/AUTOMATED_DEPLOYMENT.md) - Automation guide (400+ lines)
-- ✅ [CONTRIBUTING.md](CONTRIBUTING.md) - Contributing guidelines
-- ✅ [BACKLOG.md](BACKLOG.md) - Project backlog and progress
+- ✅ [CONTRIBUTING.md](docs/development/CONTRIBUTING.md) - Contributing guidelines
+- ✅ [BACKLOG.md](docs/project/BACKLOG.md) - Project backlog and progress
 - ✅ [ADR-001: Architecture Overview](docs/ADR-001-architecture-overview.md)
 - ✅ [ADR-002: Model Training Strategy](docs/ADR-002-model-training-strategy.md)
 - ✅ [ADR-003: Caching Strategy](docs/ADR-003-caching-strategy.md)

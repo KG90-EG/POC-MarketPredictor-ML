@@ -357,9 +357,9 @@ pre-commit run --all-files
 ### 📖 Core Documentation
 
 - [README](../README.md) - Main project documentation
-- [SPEC](../SPEC.md) - Technical specification
-- [BACKLOG](../BACKLOG.md) - Project progress (98% complete)
-- [CONTRIBUTING](../CONTRIBUTING.md) - Contributing guidelines ⭐ NEW
+- [SPEC](architecture/SPECIFICATION.md) - Technical specification
+- [BACKLOG](project/BACKLOG.md) - Project progress (98% complete)
+- [CONTRIBUTING](development/CONTRIBUTING.md) - Contributing guidelines ⭐ NEW
 
 ### 🏗️ Architecture & Design
 
@@ -417,7 +417,7 @@ Use [Conventional Commits](https://www.conventionalcommits.org/):
 - **Testing**: pytest (backend), Vitest (frontend)
 - **Accessibility**: WCAG AA compliance
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for detailed guidelines.
+See [CONTRIBUTING.md](development/CONTRIBUTING.md) for detailed guidelines.
 
 ---
 
