@@ -9,9 +9,10 @@ name: Deploy to Production
 # Setup guide: https://github.com/KG90-EG/POC-MarketPredictor-ML/blob/main/GITHUB_SECRETS.md
 
 on:
-  push:
-    branches:
-      - main
+  # Disabled automatic deployment on push - enable when secrets are configured
+  # push:
+  #   branches:
+  #     - main
   workflow_dispatch:
     inputs:
       environment:
