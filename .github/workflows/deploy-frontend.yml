@@ -1,5 +1,11 @@
 name: Deploy Frontend (Netlify)
 
+# Optional GitHub Secrets for Netlify deployment (see GITHUB_SECRETS.md):
+#   - NETLIFY_AUTH_TOKEN: Netlify API authentication (optional)
+#   - NETLIFY_SITE_ID: Netlify site identifier (optional)
+# Note: Only needed if using Netlify instead of Vercel. Default deployment uses Vercel.
+# Setup guide: https://github.com/KG90-EG/POC-MarketPredictor-ML/blob/main/GITHUB_SECRETS.md
+
 on:
   push:
     branches: [ main ]

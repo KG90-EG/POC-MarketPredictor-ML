@@ -1,5 +1,13 @@
 name: Deploy to Production
 
+# Required GitHub Secrets (see GITHUB_SECRETS.md):
+#   - RAILWAY_TOKEN: Railway API authentication
+#   - RAILWAY_PROJECT_ID: Railway project identifier
+#   - VERCEL_TOKEN: Vercel API authentication
+#   - VERCEL_ORG_ID: Vercel organization ID
+#   - VERCEL_PROJECT_ID: Vercel project ID
+# Setup guide: https://github.com/KG90-EG/POC-MarketPredictor-ML/blob/main/GITHUB_SECRETS.md
+
 on:
   push:
     branches:
@@ -99,8 +107,14 @@ jobs:
       - name: Deploy to Railway
         id: railway-deploy
         env:
+          # Required secret: Railway API token for authentication
+          # Get from: https://railway.app/account/tokens
+          # See GITHUB_SECRETS.md for setup instructions
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
+          # Required secret: Railway project ID to link deployment
+          # Get from: railway.json after running 'railway link'
+          # See GITHUB_SECRETS.md for setup instructions
           railway link ${{ secrets.RAILWAY_PROJECT_ID }}
           railway up --detach
           echo "Waiting for deployment to complete..."
@@ -145,6 +159,10 @@ jobs:
       - name: Deploy to Vercel
         working-directory: ./frontend
         env:
+          # Required: Vercel API token and project identifiers
+          # VERCEL_TOKEN: https://vercel.com/account/tokens
+          # VERCEL_ORG_ID & PROJECT_ID: Run 'vercel link', check .vercel/project.json
+          # Docs: See GITHUB_SECRETS.md for complete setup guide
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -152,7 +170,7 @@ jobs:
           # Build with Railway backend URL
           BACKEND_URL="${{ needs.deploy-backend.outputs.backend-url }}"
           echo "Building with backend URL: $BACKEND_URL"
-          
+
           # Deploy to Vercel
           vercel --prod \
             --token=$VERCEL_TOKEN \
@@ -195,21 +213,21 @@ jobs:
         run: |
           FRONTEND_URL="${{ needs.deploy-frontend.outputs.url }}"
           echo "Adding $FRONTEND_URL to CORS origins"
-          
+
           # Check if URL already exists
           if grep -q "$FRONTEND_URL" trading_fun/server.py; then
             echo "✓ CORS already configured for $FRONTEND_URL"
           else
             # Add new origin after the comment line
             sed -i "/# Production - Add your deployed frontend URLs below:/a\        \"$FRONTEND_URL\"," trading_fun/server.py
-            
+
             # Commit and push
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add trading_fun/server.py
             git commit -m "chore: add $FRONTEND_URL to CORS origins [skip ci]"
             git push
-            
+
             echo "✓ CORS configuration updated and pushed"
           fi
 
@@ -236,46 +254,46 @@ jobs:
         run: |
           FRONTEND_URL="${{ needs.deploy-frontend.outputs.url }}"
           BACKEND_URL="${{ needs.deploy-backend.outputs.backend-url }}"
-          
+
           echo "Testing frontend-backend integration..."
-          
+
           # Test CORS
           curl -H "Origin: $FRONTEND_URL" \
                -H "Access-Control-Request-Method: GET" \
                -X OPTIONS \
                "$BACKEND_URL/health" -v
-          
+
           echo "✓ CORS configuration working"
 
       - name: Create deployment summary
         run: |
           cat << EOF > deployment-summary.md
           # 🚀 Deployment Summary
-          
+
           **Date**: $(date)
           **Status**: ✅ Success
-          
+
           ## Deployed URLs
-          
+
           - **Backend**: ${{ needs.deploy-backend.outputs.backend-url }}
           - **Frontend**: ${{ needs.deploy-frontend.outputs.url }}
-          
+
           ## Services
-          
+
           - ✅ Backend health check passed
           - ✅ Frontend accessible
           - ✅ CORS configured
           - ✅ API endpoints tested
-          
+
           ## Next Steps
-          
+
           1. Monitor Railway logs for any errors
           2. Check Vercel analytics for traffic
           3. Verify all features work correctly
           4. Set up custom domain (optional)
-          
+
           EOF
-          
+
           cat deployment-summary.md
 
       - name: Upload deployment summary

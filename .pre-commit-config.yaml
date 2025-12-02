@@ -1,16 +1,110 @@
+# Pre-commit hooks configuration
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
-    hooks:
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
+  # Python code formatting with Black
   - repo: https://github.com/psf/black
     rev: 24.3.0
     hooks:
       - id: black
-        language_version: python3.10
+        language_version: python3
+        args: ['--line-length=127']
+
+  # Python linting with Flake8
   - repo: https://github.com/pycqa/flake8
     rev: 6.0.0
     hooks:
       - id: flake8
-        additional_dependencies: []
+        args: ['--max-line-length=127', '--extend-ignore=E203,W503']
+        additional_dependencies: [flake8-docstrings]
+
+  # Python import sorting
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ['--profile', 'black', '--line-length', '127']
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      # Fix trailing whitespace
+      - id: trailing-whitespace
+        args: ['--markdown-linebreak-ext=md']
+
+      # Ensure files end with newline
+      - id: end-of-file-fixer
+
+      # Check YAML syntax
+      - id: check-yaml
+        args: ['--unsafe']
+
+      # Check JSON syntax
+      - id: check-json
+
+      # Check TOML syntax
+      - id: check-toml
+
+      # Prevent large files
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+
+      # Check for merge conflicts
+      - id: check-merge-conflict
+
+      # Check for debug statements
+      - id: debug-statements
+
+      # Check Python AST
+      - id: check-ast
+
+      # Fix mixed line endings
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+      # Detect private keys
+      - id: detect-private-key
+
+  # Secret detection
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: package-lock.json
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.38.0
+    hooks:
+      - id: markdownlint
+        args: ['--fix']
+        files: \.(md|markdown)$
+
+  # YAML linting
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.33.0
+    hooks:
+      - id: yamllint
+        args: ['-d', '{extends: default, rules: {line-length: {max: 127}}}']
+
+# Exclude patterns
+exclude: |
+  (?x)^(
+    .*\.min\.js|
+    .*\.min\.css|
+    node_modules/|
+    .venv/|
+    venv/|
+    __pycache__/|
+    \.git/|
+    \.pytest_cache/|
+    \.mypy_cache/|
+    models/.*\.bin|
+    mlruns/|
+    docs/api/openapi\.json|
+    frontend/dist/|
+    frontend/node_modules/
+  )

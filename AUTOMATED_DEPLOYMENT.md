@@ -4,65 +4,94 @@ This guide covers automated deployment using GitHub Actions and CLI scripts.
 
 ---
 
+## 📋 Prerequisites
+
+### GitHub Secrets Configuration
+
+**Required for GitHub Actions deployment**. See **[GITHUB_SECRETS.md](GITHUB_SECRETS.md)** for detailed setup instructions.
+
+**Quick Summary**:
+
+- `RAILWAY_TOKEN` - Railway API authentication ⚠️ Required
+- `RAILWAY_PROJECT_ID` - Railway project identifier ⚠️ Required
+- `VERCEL_TOKEN` - Vercel API authentication ⚠️ Required
+- `VERCEL_ORG_ID` - Vercel organization ID ⚠️ Required
+- `VERCEL_PROJECT_ID` - Vercel project ID ⚠️ Required
+- `OPENAI_API_KEY` - OpenAI API key for AI analysis ⚠️ Required
+
+**Optional Secrets**:
+
+- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET` - For S3 model storage
+- `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID` - For Netlify deployment
+- `CR_PAT` - For GitHub Container Registry
+- `MLFLOW_TRACKING_URI` - For remote MLflow server
+
+📚 **Full Documentation**: [GITHUB_SECRETS.md](GITHUB_SECRETS.md)
+
+---
+
 ## Option 1: GitHub Actions (Recommended)
 
 ### Setup (One-time)
 
-1. **Get Railway Token**
+1. **Configure GitHub Secrets**
+
+   Follow the comprehensive guide: **[GITHUB_SECRETS.md](GITHUB_SECRETS.md)**
+
+   Or quick setup:
+
    ```bash
-   # Visit https://railway.app/account/tokens
-   # Create new token with full access
+   # Navigate to repository secrets
+   open https://github.com/KG90-EG/POC-MarketPredictor-ML/settings/secrets/actions
    ```
 
-2. **Get Vercel Token**
-   ```bash
-   # Visit https://vercel.com/account/tokens
-   # Create new token
-   ```
+2. **Get Railway Token & Project ID**
 
-3. **Add GitHub Secrets**
-   
-   Go to: `https://github.com/KG90-EG/POC-MarketPredictor-ML/settings/secrets/actions`
-   
-   Add these secrets:
-   ```
-   RAILWAY_TOKEN=your-railway-token
-   RAILWAY_PROJECT_ID=your-railway-project-id
-   VERCEL_TOKEN=your-vercel-token
-   VERCEL_ORG_ID=your-vercel-org-id
-   VERCEL_PROJECT_ID=your-vercel-project-id
-   OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxx
-   ```
-
-4. **Get Railway Project ID**
    ```bash
+   # Get token from: https://railway.app/account/tokens
    railway login
    railway link
    # Copy project ID from railway.json
    ```
 
-5. **Get Vercel IDs**
+3. **Get Vercel Token & IDs**
+
    ```bash
+   # Get token from: https://vercel.com/account/tokens
    cd frontend
    vercel link
    # Copy org ID and project ID from .vercel/project.json
    ```
 
+4. **Add all secrets to GitHub**
+
+   ```
+   RAILWAY_TOKEN=railway_xxxxxxxxxxxx
+   RAILWAY_PROJECT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+   VERCEL_TOKEN=xxxxxxxxxxxxxxxxxxxx
+   VERCEL_ORG_ID=team_xxxxxxxxxxxx
+   VERCEL_PROJECT_ID=prj_xxxxxxxxxxxx
+   OPENAI_API_KEY=sk-proj-xxxxxxxxxxxx
+   ```
+
 ### Deploy
 
 **Automatic** (on every push to main):
+
 ```bash
 git push origin main
 # GitHub Actions will automatically deploy
 ```
 
 **Manual** (via GitHub UI):
+
 1. Go to: `https://github.com/KG90-EG/POC-MarketPredictor-ML/actions`
 2. Click "Deploy to Production"
 3. Click "Run workflow"
 4. Select branch and click "Run workflow"
 
 **Monitor**:
+
 ```bash
 # Watch deployment progress at:
 https://github.com/KG90-EG/POC-MarketPredictor-ML/actions
@@ -108,6 +137,7 @@ cd /path/to/POC-MarketPredictor-ML
 ```
 
 This script will:
+
 1. ✅ Run security checks
 2. ✅ Deploy backend to Railway
 3. ✅ Deploy frontend to Vercel
@@ -118,11 +148,13 @@ This script will:
 ### Deploy Individual Services
 
 **Backend only**:
+
 ```bash
 ./scripts/deploy_production.sh --backend-only
 ```
 
 **Frontend only**:
+
 ```bash
 ./scripts/deploy_production.sh --frontend-only
 ```
@@ -190,11 +222,13 @@ vercel logs
 ### Railway (Backend)
 
 Required in Railway dashboard → Variables:
+
 ```bash
 OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxx
 ```
 
 Optional:
+
 ```bash
 SENTRY_DSN=https://xxxxxxxxxxxxx@sentry.io/xxxxxxxxxxxxx
 REDIS_URL=redis://default:password@host:6379
@@ -203,11 +237,13 @@ REDIS_URL=redis://default:password@host:6379
 ### Vercel (Frontend)
 
 Required in Vercel dashboard → Settings → Environment Variables:
+
 ```bash
 VITE_API_URL=https://your-backend.railway.app
 ```
 
 Optional:
+
 ```bash
 NODE_VERSION=18
 VITE_APP_VERSION=1.0.0
@@ -234,18 +270,20 @@ vercel logs --follow
 
 ### Monitor
 
-- **Railway**: https://railway.app/project/[your-project]/deployments
-- **Vercel**: https://vercel.com/[username]/[project]/deployments
-- **Sentry** (if configured): https://sentry.io
+- **Railway**: <https://railway.app/project/[your-project]/deployments>
+- **Vercel**: <https://vercel.com/[username]/[project]/deployments>
+- **Sentry** (if configured): <https://sentry.io>
 
 ### Rollback
 
 **Railway**:
+
 ```bash
 railway rollback
 ```
 
 **Vercel**:
+
 ```bash
 vercel rollback
 # or via dashboard: Deployments → Previous deployment → Promote
@@ -265,6 +303,7 @@ vercel rollback
 ### CLI Script Fails
 
 1. **Check tokens**:
+
    ```bash
    echo $RAILWAY_TOKEN  # Should show your token
    railway whoami       # Should show your account
@@ -272,12 +311,14 @@ vercel rollback
    ```
 
 2. **Check connectivity**:
+
    ```bash
    railway status  # Should connect
    vercel ls       # Should list projects
    ```
 
 3. **View detailed logs**:
+
    ```bash
    bash -x ./scripts/deploy_production.sh  # Debug mode
    ```
@@ -287,11 +328,14 @@ vercel rollback
 1. **Check CORS**: Verify frontend URL in backend CORS origins
 2. **Check environment variables**: Railway and Vercel dashboards
 3. **Check logs**:
+
    ```bash
    railway logs --tail 100
    vercel logs --follow
    ```
+
 4. **Test endpoints**:
+
    ```bash
    curl https://your-backend.railway.app/health
    curl https://your-backend.railway.app/docs
@@ -304,11 +348,13 @@ vercel rollback
 ### Custom Domains
 
 **Railway**:
+
 ```bash
 railway domain add your-api-domain.com
 ```
 
 **Vercel**:
+
 ```bash
 vercel domains add your-app-domain.com
 ```
@@ -316,12 +362,14 @@ vercel domains add your-app-domain.com
 ### Preview Deployments
 
 **Automatic preview** on pull requests:
+
 - Vercel: Automatic preview URLs
 - Railway: PR environments (configure in settings)
 
 ### Environment-Specific Deployments
 
 **Staging environment**:
+
 ```yaml
 # In GitHub Actions, use:
 on:
@@ -335,6 +383,7 @@ on:
 ### Deployment Notifications
 
 Add to `.github/workflows/deploy.yml`:
+
 ```yaml
 - name: Notify Slack
   uses: slackapi/slack-github-action@v1
@@ -351,11 +400,13 @@ Add to `.github/workflows/deploy.yml`:
 ## Cost Optimization
 
 ### Railway
+
 - **Starter Plan**: $5/month (500 hours)
 - **Pro Plan**: $20/month (no limits)
 - Tip: Use sleep/wake for dev environments
 
 ### Vercel
+
 - **Hobby**: Free (non-commercial)
 - **Pro**: $20/month per user
 - Tip: Optimize build times (<10 min for free tier)
@@ -376,24 +427,28 @@ Add to `.github/workflows/deploy.yml`:
 ## Quick Reference
 
 **Check deployment status**:
+
 ```bash
 railway status
 vercel ls --prod
 ```
 
 **View logs**:
+
 ```bash
 railway logs --tail
 vercel logs
 ```
 
 **Redeploy**:
+
 ```bash
 railway up
 vercel --prod
 ```
 
 **Environment variables**:
+
 ```bash
 railway variables
 vercel env ls

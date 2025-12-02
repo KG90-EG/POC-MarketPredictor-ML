@@ -1,5 +1,12 @@
 name: Model Promotion
 
+# Optional GitHub Secrets for S3 model storage (see GITHUB_SECRETS.md):
+#   - AWS_ACCESS_KEY_ID: AWS IAM access key (optional)
+#   - AWS_SECRET_ACCESS_KEY: AWS IAM secret key (optional)
+#   - S3_BUCKET: S3 bucket name for model artifacts (optional)
+# Note: S3 storage is optional. Models can be stored locally without these secrets.
+# Setup guide: https://github.com/KG90-EG/POC-MarketPredictor-ML/blob/main/GITHUB_SECRETS.md
+
 on:
   schedule:
     - cron: '0 4 * * *'  # daily 4:00 UTC
