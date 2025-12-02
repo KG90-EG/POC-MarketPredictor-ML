@@ -1333,20 +1333,20 @@ def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
                 # Calculate momentum score
                 momentum = price_change_24h * 0.5 + price_change_7d * 0.3 + price_change_30d * 0.2
 
-                # Determine signal - More aggressive thresholds for more opportunities
-                if momentum > 8 and price_change_24h > 2 and market_cap_rank <= 100:
+                # Determine signal - Very aggressive thresholds for maximum opportunities
+                if momentum > 5 and price_change_24h > 1 and market_cap_rank <= 150:
                     signal = "BUY"
                     confidence = min(85, 60 + abs(momentum))
-                    reasoning = f"Strong upward momentum ({momentum:.1f}%), top-100 crypto"
-                elif momentum > 2 and price_change_7d > 0:
+                    reasoning = f"Strong upward momentum ({momentum:.1f}%), top-150 crypto"
+                elif momentum > 0 and price_change_7d > -2:
                     signal = "BUY"
-                    confidence = min(75, 55 + abs(momentum))
+                    confidence = min(75, 50 + abs(momentum))
                     reasoning = f"Positive trend ({price_change_7d:.1f}% weekly)"
-                elif momentum > 0 and price_change_24h > 0:
+                elif momentum > -2 and price_change_24h > -1:
                     signal = "BUY"
-                    confidence = min(65, 50 + abs(momentum))
+                    confidence = min(60, 48 + abs(momentum))
                     reasoning = f"Mild positive momentum ({momentum:.1f}%)"
-                elif momentum < -8 or price_change_24h < -4:
+                elif momentum < -5 or price_change_24h < -3:
                     signal = "SELL"
                     confidence = min(80, 60 + abs(momentum))
                     reasoning = f"Negative momentum ({momentum:.1f}%)"
@@ -1407,20 +1407,20 @@ def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
                 prob = MODEL.predict_proba(row[features].values)[0][1]
 
                 # Determine signal based on probability
-                # More aggressive thresholds for more opportunities: BUY > 0.48, SELL < 0.38, HOLD in between
-                if prob >= 0.65:
+                # Very aggressive thresholds for maximum opportunities: BUY > 0.40, SELL < 0.35
+                if prob >= 0.60:
                     signal = "BUY"
                     confidence = round(prob * 100, 1)
                     reasoning = f"Strong bullish signal from ML model (prob: {prob:.2f})"
-                elif prob >= 0.48:
+                elif prob >= 0.40:
                     signal = "BUY"
                     confidence = round(prob * 100, 1)
                     reasoning = f"Moderate bullish signal (prob: {prob:.2f})"
-                elif prob <= 0.25:
+                elif prob <= 0.20:
                     signal = "SELL"
                     confidence = round((1 - prob) * 100, 1)
                     reasoning = f"Strong bearish signal (prob: {prob:.2f})"
-                elif prob <= 0.38:
+                elif prob <= 0.35:
                     signal = "SELL"
                     confidence = round((1 - prob) * 100, 1)
                     reasoning = f"Weak bearish signal (prob: {prob:.2f})"

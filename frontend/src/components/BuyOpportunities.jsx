@@ -163,7 +163,7 @@ function BuyOpportunities() {
   return (
     <div className="buy-opportunities">
       <div className="opportunities-header">
-        <h2>🎯 Top Trading Opportunities</h2>
+        <h2>🎯 Buy/Sell Now - Trading Opportunities</h2>
         <button 
           className="refresh-btn" 
           onClick={handleRefresh} 
@@ -277,6 +277,25 @@ function BuyOpportunities() {
                         <div className="opportunity-reasoning">
                           {stock.prediction.reasoning}
                         </div>
+
+                        <div className="opportunity-actions">
+                          <a 
+                            href={`https://finance.yahoo.com/quote/${stock.ticker}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="chart-link"
+                          >
+                            📊 View Chart
+                          </a>
+                          <a 
+                            href={`https://www.google.com/finance/quote/${stock.ticker}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="market-link"
+                          >
+                            🔗 Market Info
+                          </a>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -329,6 +348,25 @@ function BuyOpportunities() {
 
                         <div className="opportunity-reasoning">
                           {stock.prediction.reasoning}
+                        </div>
+
+                        <div className="opportunity-actions">
+                          <a 
+                            href={`https://finance.yahoo.com/quote/${stock.ticker}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="chart-link"
+                          >
+                            📊 View Chart
+                          </a>
+                          <a 
+                            href={`https://www.google.com/finance/quote/${stock.ticker}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="market-link"
+                          >
+                            🔗 Market Info
+                          </a>
                         </div>
                       </div>
                     </div>
@@ -394,6 +432,25 @@ function BuyOpportunities() {
                         <div className="opportunity-reasoning">
                           {crypto.prediction.reasoning}
                         </div>
+
+                        <div className="opportunity-actions">
+                          <a 
+                            href={`https://www.coingecko.com/en/coins/${crypto.crypto_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="chart-link"
+                          >
+                            📊 View Chart
+                          </a>
+                          <a 
+                            href={`https://coinmarketcap.com/currencies/${crypto.crypto_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="market-link"
+                          >
+                            🔗 Market Info
+                          </a>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -453,6 +510,25 @@ function BuyOpportunities() {
 
                         <div className="opportunity-reasoning">
                           {crypto.prediction.reasoning}
+                        </div>
+
+                        <div className="opportunity-actions">
+                          <a 
+                            href={`https://www.coingecko.com/en/coins/${crypto.crypto_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="chart-link"
+                          >
+                            📊 View Chart
+                          </a>
+                          <a 
+                            href={`https://coinmarketcap.com/currencies/${crypto.crypto_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="market-link"
+                          >
+                            🔗 Market Info
+                          </a>
                         </div>
                       </div>
                     </div>
