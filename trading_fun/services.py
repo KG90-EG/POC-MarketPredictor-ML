@@ -50,7 +50,7 @@ class StockService:
         result = [s["ticker"] for s in validated_stocks[:limit]]
 
         # Cache result
-        cache.set(cache_key, result, ttl=config.cache.country_stocks_ttl)
+        cache.set(cache_key, result, ttl_seconds=config.cache.country_stocks_ttl)
 
         logger.info(f"Validated {len(result)} stocks for {country}")
         return result
@@ -143,7 +143,7 @@ class StockService:
             }
 
             # Cache result
-            cache.set(cache_key, result, ttl=config.cache.ticker_info_ttl)
+            cache.set(cache_key, result, ttl_seconds=config.cache.ticker_info_ttl)
 
             return result
 
@@ -328,7 +328,7 @@ class HealthService:
         if config.api.redis_url:
             try:
                 # Try to set/get a test value
-                cache.set("health_check", "ok", ttl=5)
+                cache.set("health_check", "ok", ttl_seconds=5)
                 test_val = cache.get("health_check")
                 redis_status = "connected" if test_val == "ok" else "error"
             except Exception:

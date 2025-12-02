@@ -1,5 +1,3 @@
-# Vercel Configuration for POC-MarketPredictor-ML Frontend
-
 {
   "version": 2,
   "name": "poc-marketpredictor-ml",

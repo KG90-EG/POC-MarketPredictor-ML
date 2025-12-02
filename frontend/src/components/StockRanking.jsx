@@ -31,23 +31,24 @@ function StockRanking({
     <>
       {/* Ranked Stocks Table */}
       <h2>Ranked Stocks</h2>
-      <table aria-label="Ranked stocks results table">
-        <thead>
-          <tr>
-            <th scope="col">Rank</th>
-            <th scope="col">Stock</th>
-            <th scope="col">Name</th>
-            <th scope="col">Country</th>
-            <th scope="col">Signal</th>
-            <th scope="col">
-              <Tooltip 
-                content="AI confidence score (0-100%). Higher scores indicate stronger buy signals based on technical indicators, price trends, and market data. 65%+ is strong buy, 55-65% is buy, 45-55% is hold, 35-45% consider selling, below 35% is sell." 
-                position="top"
-              >
-                Probability ⓘ
-              </Tooltip>
-            </th>
-            <th scope="col">Price</th>
+      <div className="table-wrapper">
+        <table aria-label="Ranked stocks results table">
+          <thead>
+            <tr>
+              <th scope="col">Rank</th>
+              <th scope="col">Stock</th>
+              <th scope="col">Name</th>
+              <th scope="col">Country</th>
+              <th scope="col">Signal</th>
+              <th scope="col">
+                <Tooltip 
+                  content="AI confidence score (0-100%). Higher scores indicate stronger buy signals based on technical indicators, price trends, and market data. 65%+ is strong buy, 55-65% is buy, 45-55% is hold, 35-45% consider selling, below 35% is sell." 
+                  position="top"
+                >
+                  Probability ⓘ
+                </Tooltip>
+              </th>
+              <th scope="col">Price</th>
             <th scope="col">
               <Tooltip 
                 content="Daily price change percentage. Positive (+) values indicate the stock is up today, negative (-) values mean it's down. Strong moves are typically ±3% or more for established stocks." 
@@ -152,6 +153,7 @@ function StockRanking({
           })}
         </tbody>
       </table>
+      </div>
 
       {/* Pagination Controls */}
       {results.length > itemsPerPage && (

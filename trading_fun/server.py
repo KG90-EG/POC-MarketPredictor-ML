@@ -658,7 +658,11 @@ def ranking(tickers: str = "", country: str = "Global"):
 
         # Ensure we have a DataFrame with proper column access
         df = pd.DataFrame()
-        df["Adj Close"] = raw["Adj Close"]
+        # Extract as Series to avoid MultiIndex issues
+        adj_close = raw["Adj Close"]
+        if isinstance(adj_close, pd.DataFrame):
+            adj_close = adj_close.iloc[:, 0]  # Take first column if DataFrame
+        df["Adj Close"] = adj_close
 
         df["SMA50"] = df["Adj Close"].rolling(50).mean()
         df["SMA200"] = df["Adj Close"].rolling(200).mean()

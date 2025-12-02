@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types'
+import { useState, useMemo } from 'react'
 import Tooltip from './Tooltip'
 
 function CryptoPortfolio({
@@ -11,14 +12,60 @@ function CryptoPortfolio({
   onPageChange,
   onNFTToggle,
   onLimitChange,
-  onRefresh
+  onRefresh,
+  onRowClick
 }) {
-  const totalPages = Math.ceil(cryptoResults.length / cryptoPerPage)
-  const paginatedResults = cryptoResults.slice((cryptoPage - 1) * cryptoPerPage, cryptoPage * cryptoPerPage)
+  const [searchTerm, setSearchTerm] = useState('')
+  
+  // Filter crypto results based on search term
+  const filteredResults = useMemo(() => {
+    if (!searchTerm) return cryptoResults
+    const term = searchTerm.toLowerCase()
+    return cryptoResults.filter(crypto => 
+      crypto.name.toLowerCase().includes(term) || 
+      crypto.symbol.toLowerCase().includes(term)
+    )
+  }, [cryptoResults, searchTerm])
+  
+  const totalPages = Math.ceil(filteredResults.length / cryptoPerPage)
+  const paginatedResults = filteredResults.slice((cryptoPage - 1) * cryptoPerPage, cryptoPage * cryptoPerPage)
+
+  // Reset to page 1 when search term changes
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value)
+    onPageChange(1)
+  }
 
   return (
     <>
       <h2>🪙 Digital Assets & Cryptocurrency Rankings</h2>
+      
+      {/* Search Bar */}
+      <div style={{marginBottom: '16px'}}>
+        <input
+          type="text"
+          placeholder="🔍 Search by name or symbol (e.g., Bitcoin, BTC)..."
+          value={searchTerm}
+          onChange={handleSearchChange}
+          aria-label="Search cryptocurrencies by name or symbol"
+          style={{
+            width: '100%',
+            padding: '12px 16px',
+            border: '2px solid #ddd',
+            borderRadius: '8px',
+            fontSize: '0.95rem',
+            outline: 'none',
+            transition: 'border-color 0.3s ease'
+          }}
+          onFocus={(e) => e.target.style.borderColor = '#f59e0b'}
+          onBlur={(e) => e.target.style.borderColor = '#ddd'}
+        />
+        {searchTerm && (
+          <p style={{marginTop: '8px', fontSize: '0.85rem', color: '#666'}}>
+            Found {filteredResults.length} result{filteredResults.length !== 1 ? 's' : ''} for "{searchTerm}"
+          </p>
+        )}
+      </div>
       
       <div style={{marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap'}}>
         <label style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
@@ -90,34 +137,52 @@ function CryptoPortfolio({
           <p>Loading digital assets rankings...</p>
         </div>
       ) : cryptoResults.length > 0 ? (
-        <div>
-          <div style={{marginBottom: '16px', padding: '12px', background: '#fef3c7', borderRadius: '8px', fontSize: '0.9rem'}}>
-            ℹ️ <strong>Digital Assets powered by CoinGecko API.</strong> Momentum scores consider market cap rank, price trends (24h/7d/30d), and liquidity.
+        filteredResults.length === 0 ? (
+          <div style={{textAlign: 'center', padding: '40px', color: '#666'}}>
+            <p style={{fontSize: '1.2rem', marginBottom: '8px'}}>🔍</p>
+            <p>No cryptocurrencies found matching "{searchTerm}"</p>
+            <button 
+              onClick={() => setSearchTerm('')}
+              style={{
+                marginTop: '12px',
+                padding: '8px 16px',
+                background: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: '600'
+              }}
+            >
+              Clear Search
+            </button>
           </div>
-          
-          <table aria-label="Digital assets and cryptocurrency rankings table">
-            <thead>
-              <tr>
-                <th scope="col">Rank</th>
-                <th scope="col">Asset</th>
-                <th scope="col">Symbol</th>
-                <th scope="col">
-                  <Tooltip 
-                    content="Momentum score (0-100%). Higher scores indicate better recent performance, market cap rank, and liquidity. Similar to probability score for stocks." 
-                    position="top"
-                  >
-                    Momentum Score ⓘ
-                  </Tooltip>
-                </th>
-                <th scope="col">Price (USD)</th>
-                <th scope="col">
-                  <Tooltip 
-                    content="24-hour price change percentage. Crypto markets are highly volatile - double-digit changes are common." 
-                    position="top"
-                  >
-                    24h Change ⓘ
-                  </Tooltip>
-                </th>
+        ) : (
+        <div>
+          <div className="table-wrapper">
+            <table aria-label="Digital assets and cryptocurrency rankings table">
+              <thead>
+                <tr>
+                  <th scope="col">Rank</th>
+                  <th scope="col">Asset</th>
+                  <th scope="col">Symbol</th>
+                  <th scope="col">
+                    <Tooltip 
+                      content="Momentum score (0-100%). Higher scores indicate better recent performance, market cap rank, and liquidity. Similar to probability score for stocks." 
+                      position="top"
+                    >
+                      Momentum Score ⓘ
+                    </Tooltip>
+                  </th>
+                  <th scope="col">Price (USD)</th>
+                  <th scope="col">
+                    <Tooltip 
+                      content="24-hour price change percentage. Crypto markets are highly volatile - double-digit changes are common." 
+                      position="top"
+                    >
+                      24h Change ⓘ
+                    </Tooltip>
+                  </th>
                 <th scope="col">7d Change</th>
                 <th scope="col">Market Cap</th>
                 <th scope="col">Volume/MCap</th>
@@ -130,7 +195,12 @@ function CryptoPortfolio({
                 const change7dClass = crypto.change_7d > 0 ? 'positive' : crypto.change_7d < 0 ? 'negative' : ''
                 
                 return (
-                  <tr key={crypto.crypto_id} style={{cursor: 'default'}}>
+                  <tr 
+                    key={crypto.crypto_id} 
+                    onClick={() => onRowClick(crypto)}
+                    style={{cursor: 'pointer'}}
+                    title="Click for detailed information"
+                  >
                     <td>
                       <span className={actualRank <= 3 ? 'rank-badge gold' : 'rank-badge'}>{actualRank}</span>
                     </td>
@@ -205,61 +275,43 @@ function CryptoPortfolio({
               })}
             </tbody>
           </table>
+          </div>
           
           {/* Pagination Controls */}
           {cryptoResults.length > cryptoPerPage && (
-            <nav aria-label="Cryptocurrency results pagination" style={{
-              marginTop: '20px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
-              <button
-                onClick={() => onPageChange(Math.max(1, cryptoPage - 1))}
+            <div className="pagination">
+              <button 
+                onClick={() => onPageChange(Math.max(1, cryptoPage - 1))} 
                 disabled={cryptoPage === 1}
                 aria-label="Go to previous page"
-                style={{
-                  padding: '8px 16px',
-                  background: cryptoPage === 1 ? '#e0e0e0' : 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
-                  color: cryptoPage === 1 ? '#999' : 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: cryptoPage === 1 ? 'not-allowed' : 'pointer',
-                  fontWeight: '600',
-                  fontSize: '0.9rem'
-                }}
               >
                 ← Previous
               </button>
-              
-              <span style={{fontSize: '0.9rem', fontWeight: '500'}} aria-live="polite" aria-atomic="true">
-                Page {cryptoPage} of {totalPages} 
-                <span style={{color: '#666', marginLeft: '8px'}}>
-                  ({(cryptoPage - 1) * cryptoPerPage + 1}-{Math.min(cryptoPage * cryptoPerPage, cryptoResults.length)} of {cryptoResults.length})
-                </span>
-              </span>
-              
-              <button
-                onClick={() => onPageChange(Math.min(totalPages, cryptoPage + 1))}
+              <div className="page-selector">
+                <span className="page-info">Page</span>
+                <select 
+                  value={cryptoPage} 
+                  onChange={(e) => onPageChange(Number(e.target.value))}
+                  className="page-dropdown"
+                  aria-label="Select page number"
+                >
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                    <option key={pageNum} value={pageNum}>{pageNum}</option>
+                  ))}
+                </select>
+                <span className="page-info">of {totalPages}</span>
+              </div>
+              <button 
+                onClick={() => onPageChange(Math.min(totalPages, cryptoPage + 1))} 
                 disabled={cryptoPage >= totalPages}
                 aria-label="Go to next page"
-                style={{
-                  padding: '8px 16px',
-                  background: cryptoPage >= totalPages ? '#e0e0e0' : 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
-                  color: cryptoPage >= totalPages ? '#999' : 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: cryptoPage >= totalPages ? 'not-allowed' : 'pointer',
-                  fontWeight: '600',
-                  fontSize: '0.9rem'
-                }}
               >
                 Next →
               </button>
-            </nav>
+            </div>
           )}
         </div>
+        )
       ) : (
         <p style={{color: '#666', fontSize: '0.9rem', margin: '0', textAlign: 'center', padding: '20px'}}>
           Click "Refresh Rankings" to load digital assets data
@@ -291,7 +343,8 @@ CryptoPortfolio.propTypes = {
   onPageChange: PropTypes.func.isRequired,
   onNFTToggle: PropTypes.func.isRequired,
   onLimitChange: PropTypes.func.isRequired,
-  onRefresh: PropTypes.func.isRequired
+  onRefresh: PropTypes.func.isRequired,
+  onRowClick: PropTypes.func.isRequired
 }
 
 export default CryptoPortfolio

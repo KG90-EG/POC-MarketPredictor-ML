@@ -567,6 +567,40 @@ table {
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
+/* Table wrapper for responsive horizontal scrolling */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  border-radius: 12px;
+  margin-top: 16px;
+  position: relative;
+}
+
+.table-wrapper table {
+  margin-top: 0; /* Remove margin since wrapper has it */
+}
+
+/* Add scroll indicator for mobile */
+@media (max-width: 768px) {
+  .table-wrapper::after {
+    content: '← Scroll →';
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(102, 126, 234, 0.95);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    pointer-events: none;
+    opacity: 0.85;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+}
+
+
 td, th { 
   padding: 16px;
   text-align: left;
@@ -672,8 +706,33 @@ td:first-child {
     padding: 20px;
   }
   
+  .header {
+    padding-bottom: 16px;
+    padding-top: 90px; /* More space for stacked buttons */
+  }
+  
   .header h1 {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
+  }
+  
+  .header p {
+    font-size: 0.9rem;
+  }
+  
+  .theme-toggle {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+    right: 10px;
+    top: 10px;
+  }
+  
+  .health-indicator {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+    right: 10px;
+    top: 55px; /* Stack below theme toggle */
   }
   
   .search-controls {
@@ -685,12 +744,57 @@ td:first-child {
     width: 100%;
   }
   
+  /* Make tables horizontally scrollable on mobile */
   table {
-    font-size: 14px;
+    font-size: 0.85rem;
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  }
+  
+  thead, tbody, tr {
+    display: table;
+    width: 100%;
+    table-layout: auto; /* Allow columns to adjust */
   }
   
   td, th {
-    padding: 10px 8px;
+    padding: 12px 8px;
+    font-size: 0.85rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal !important; /* Allow text wrapping */
+  }
+  
+  th {
+    font-size: 0.75rem;
+  }
+  
+  /* Smaller text for specific column types */
+  .ticker-symbol {
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+  
+  .country-tag {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
+  
+  .rank-badge {
+    width: 30px;
+    height: 30px;
+    font-size: 0.85rem;
+  }
+  
+  /* Make probability and change values more readable */
+  .high-prob,
+  .positive,
+  .negative {
+    font-size: 0.85rem;
+    padding: 4px 8px;
+    white-space: nowrap;
   }
 }
 
@@ -1122,6 +1226,169 @@ body.dark-mode .detail-value {
 body.dark-mode .recommendation-text {
   color: #b0b6c0;
   background: #22262d;
+}
+
+/* Portfolio View Toggle Styles */
+.portfolio-toggle-container {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.portfolio-toggle-button {
+  flex: 1;
+  padding: 16px 24px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  min-width: 0; /* Allow flex items to shrink below content size */
+}
+
+.portfolio-toggle-button .icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.portfolio-toggle-button .title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.portfolio-toggle-button .description {
+  font-size: 0.75rem;
+  margin-top: 4px;
+  opacity: 0.9;
+}
+
+/* Stocks button */
+.portfolio-toggle-button.stocks {
+  background: #f0f0f0;
+  color: #333;
+  border: 2px solid #ddd;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.portfolio-toggle-button.stocks.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: 3px solid #764ba2;
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+  transform: scale(1.02);
+}
+
+/* Crypto button */
+.portfolio-toggle-button.crypto {
+  background: #f0f0f0;
+  color: #333;
+  border: 2px solid #ddd;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.portfolio-toggle-button.crypto.active {
+  background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+  color: white;
+  border: 3px solid #ea580c;
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.5);
+  transform: scale(1.02);
+}
+
+@media (max-width: 768px) {
+  .portfolio-toggle-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .portfolio-toggle-button {
+    padding: 12px 16px;
+  }
+  
+  .portfolio-toggle-button .icon {
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+  }
+  
+  .portfolio-toggle-button .title {
+    font-size: 0.9rem;
+  }
+  
+  .portfolio-toggle-button .description {
+    font-size: 0.7rem;
+  }
+}
+
+/* Extra small devices (phones in portrait, less than 480px) */
+@media (max-width: 480px) {
+  .header {
+    padding-top: 95px; /* More space for stacked buttons */
+  }
+  
+  .header h1 {
+    font-size: 1.3rem;
+  }
+  
+  .header .emoji {
+    font-size: 1.5rem;
+  }
+  
+  .header p {
+    font-size: 0.85rem;
+  }
+  
+  .theme-toggle,
+  .health-indicator {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+  
+  .theme-toggle {
+    right: 8px;
+    top: 8px;
+  }
+  
+  .health-indicator {
+    right: 8px;
+    top: 50px; /* Stack below theme toggle */
+  }
+  
+  /* Even larger, more readable table text for phones */
+  table {
+    font-size: 0.8rem;
+  }
+  
+  td, th {
+    padding: 10px 6px;
+    font-size: 0.8rem;
+  }
+  
+  th {
+    font-size: 0.7rem;
+    line-height: 1.3;
+  }
+  
+  .ticker-symbol {
+    font-size: 0.85rem;
+  }
+  
+  .country-tag {
+    font-size: 0.65rem;
+    padding: 3px 6px;
+  }
+  
+  .rank-badge {
+    width: 26px;
+    height: 26px;
+    font-size: 0.75rem;
+  }
+  
+  .high-prob,
+  .positive,
+  .negative {
+    font-size: 0.8rem;
+    padding: 3px 6px;
+  }
 }
 
 @media (max-width: 768px) {

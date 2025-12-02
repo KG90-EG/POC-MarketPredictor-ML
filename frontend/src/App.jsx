@@ -6,6 +6,7 @@ import HealthCheck from './components/HealthCheck'
 import Tooltip from './components/Tooltip'
 import HelpModal from './components/HelpModal'
 import CompanyDetailSidebar from './components/CompanyDetailSidebar'
+import CryptoDetailSidebar from './components/CryptoDetailSidebar'
 import AIAnalysisSection from './components/AIAnalysisSection'
 import StockRanking from './components/StockRanking'
 import CryptoPortfolio from './components/CryptoPortfolio'
@@ -38,6 +39,7 @@ function AppContent() {
   const [itemsPerPage] = useState(10)
   const [showHelp, setShowHelp] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState(null)
+  const [selectedCrypto, setSelectedCrypto] = useState(null)
   const [selectedViews, setSelectedViews] = useState(['Global'])
   const [showHealthPanel, setShowHealthPanel] = useState(false)
   const [healthStatus, setHealthStatus] = useState('loading')
@@ -309,6 +311,14 @@ function AppContent() {
     }
   }
 
+  function openCryptoDetail(crypto) {
+    // Crypto data is already complete from CoinGecko, just set it
+    setSelectedCrypto({
+      ...crypto,
+      loading: false
+    })
+  }
+
   return (
     <div className="container">
       {/* Skip Navigation Link */}
@@ -354,69 +364,35 @@ function AppContent() {
       {/* Portfolio View Toggle */}
       <section className="card" style={{marginBottom: '24px'}} role="region" aria-label="Portfolio view selector">
         <div className="card-title">📊 Portfolio View</div>
-        <div style={{display: 'flex', gap: '16px', marginTop: '12px'}}>
+        <div className="portfolio-toggle-container">
           <button
+            className={`portfolio-toggle-button stocks ${portfolioView === 'stocks' ? 'active' : ''}`}
             onClick={() => {
               setPortfolioView('stocks')
               if (results.length === 0) fetchRanking()
             }}
             aria-label="Switch to stocks and shares portfolio view"
             aria-pressed={portfolioView === 'stocks'}
-            style={{
-              flex: 1,
-              padding: '16px 24px',
-              background: portfolioView === 'stocks' 
-                ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
-                : '#f0f0f0',
-              color: portfolioView === 'stocks' ? 'white' : '#333',
-              border: portfolioView === 'stocks' ? '3px solid #764ba2' : '2px solid #ddd',
-              borderRadius: '12px',
-              cursor: 'pointer',
-              fontWeight: '600',
-              fontSize: '1rem',
-              transition: 'all 0.3s ease',
-              boxShadow: portfolioView === 'stocks' 
-                ? '0 6px 16px rgba(102, 126, 234, 0.5)' 
-                : '0 2px 8px rgba(0, 0, 0, 0.1)',
-              transform: portfolioView === 'stocks' ? 'scale(1.02)' : 'scale(1)'
-            }}
           >
-            <div style={{fontSize: '2rem', marginBottom: '8px'}}>📈</div>
-            <div>Stocks & Shares</div>
-            <div style={{fontSize: '0.75rem', marginTop: '4px', opacity: 0.9}}>
+            <div className="icon">📈</div>
+            <div className="title">Stocks & Shares</div>
+            <div className="description">
               Traditional equities, indices & ETFs
             </div>
           </button>
           
           <button
+            className={`portfolio-toggle-button crypto ${portfolioView === 'crypto' ? 'active' : ''}`}
             onClick={() => {
               setPortfolioView('crypto')
               if (cryptoResults.length === 0) fetchCryptoRanking()
             }}
             aria-label="Switch to digital assets and cryptocurrency portfolio view"
             aria-pressed={portfolioView === 'crypto'}
-            style={{
-              flex: 1,
-              padding: '16px 24px',
-              background: portfolioView === 'crypto' 
-                ? 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)' 
-                : '#f0f0f0',
-              color: portfolioView === 'crypto' ? 'white' : '#333',
-              border: portfolioView === 'crypto' ? '3px solid #ea580c' : '2px solid #ddd',
-              borderRadius: '12px',
-              cursor: 'pointer',
-              fontWeight: '600',
-              fontSize: '1rem',
-              transition: 'all 0.3s ease',
-              boxShadow: portfolioView === 'crypto' 
-                ? '0 6px 16px rgba(245, 158, 11, 0.5)' 
-                : '0 2px 8px rgba(0, 0, 0, 0.1)',
-              transform: portfolioView === 'crypto' ? 'scale(1.02)' : 'scale(1)'
-            }}
           >
-            <div style={{fontSize: '2rem', marginBottom: '8px'}}>₿</div>
-            <div>Digital Assets</div>
-            <div style={{fontSize: '0.75rem', marginTop: '4px', opacity: 0.9}}>
+            <div className="icon">₿</div>
+            <div className="title">Digital Assets</div>
+            <div className="description">
               Crypto, NFTs, Bitcoin, Ethereum & more
             </div>
           </button>
@@ -544,6 +520,7 @@ function AppContent() {
             onNFTToggle={setIncludeNFT}
             onLimitChange={setCryptoLimit}
             onRefresh={fetchCryptoRanking}
+            onRowClick={openCryptoDetail}
           />
         </section>
       )}
@@ -581,27 +558,28 @@ function AppContent() {
       {searchResult && searchResultDetails && (
         <section className="search-result" role="region" aria-label="Stock search results">
           <h2>🎯 Search Result</h2>
-          <table aria-label="Search result details table">
-            <thead>
-              <tr>
-                <th scope="col">Stock</th>
-                <th scope="col">Name</th>
-                <th scope="col">Country</th>
-                <th scope="col">
-                  <Tooltip content="AI confidence score (0-100%). Higher scores indicate stronger buy signals based on technical indicators, price trends, and market data. 65%+ is strong buy, 55-65% is buy, 45-55% is hold, 35-45% consider selling, below 35% is sell." position="top">
-                    Probability ⓘ
-                  </Tooltip>
-                </th>
-                <th scope="col">Price</th>
-                <th scope="col">
-                  <Tooltip content="Daily price change percentage. Positive (+) values indicate the stock is up today, negative (-) values mean it's down. Strong moves are typically ±3% or more for established stocks." position="top">
-                    Change % ⓘ
-                  </Tooltip>
-                </th>
-                <th scope="col">Volume</th>
-                <th scope="col">Market Cap</th>
-              </tr>
-            </thead>
+          <div className="table-wrapper">
+            <table aria-label="Search result details table">
+              <thead>
+                <tr>
+                  <th scope="col">Stock</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Country</th>
+                  <th scope="col">
+                    <Tooltip content="AI confidence score (0-100%). Higher scores indicate stronger buy signals based on technical indicators, price trends, and market data. 65%+ is strong buy, 55-65% is buy, 45-55% is hold, 35-45% consider selling, below 35% is sell." position="top">
+                      Probability ⓘ
+                    </Tooltip>
+                  </th>
+                  <th scope="col">Price</th>
+                  <th scope="col">
+                    <Tooltip content="Daily price change percentage. Positive (+) values indicate the stock is up today, negative (-) values mean it's down. Strong moves are typically ±3% or more for established stocks." position="top">
+                      Change % ⓘ
+                    </Tooltip>
+                  </th>
+                  <th scope="col">Volume</th>
+                  <th scope="col">Market Cap</th>
+                </tr>
+              </thead>
             <tbody>
               <tr 
                 onClick={() => openCompanyDetail(searchResult.ticker)}
@@ -639,6 +617,7 @@ function AppContent() {
               </tr>
             </tbody>
           </table>
+          </div>
         </section>
       )}
       </>
@@ -673,6 +652,9 @@ function AppContent() {
 
       {/* Company Detail Sidebar */}
       <CompanyDetailSidebar company={selectedCompany} onClose={() => setSelectedCompany(null)} />
+      
+      {/* Crypto Detail Sidebar */}
+      <CryptoDetailSidebar crypto={selectedCrypto} onClose={() => setSelectedCrypto(null)} />
       
       </main>
       
