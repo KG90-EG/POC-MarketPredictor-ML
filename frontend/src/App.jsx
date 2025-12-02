@@ -377,6 +377,19 @@ function AppContent() {
         <div className="card-title">📊 Portfolio View</div>
         <div className="portfolio-toggle-container">
           <button
+            className={`portfolio-toggle-button buy-opportunities ${portfolioView === 'buy-opportunities' ? 'active' : ''}`}
+            onClick={() => setPortfolioView('buy-opportunities')}
+            aria-label="Switch to buy opportunities view"
+            aria-pressed={portfolioView === 'buy-opportunities'}
+          >
+            <div className="icon">🎯</div>
+            <div className="title">Buy Now</div>
+            <div className="description">
+              Best opportunities
+            </div>
+          </button>
+
+          <button
             className={`portfolio-toggle-button stocks ${portfolioView === 'stocks' ? 'active' : ''}`}
             onClick={() => {
               setPortfolioView('stocks')
@@ -418,19 +431,6 @@ function AppContent() {
             <div className="title">Watchlists</div>
             <div className="description">
               Saved favorites
-            </div>
-          </button>
-
-          <button
-            className={`portfolio-toggle-button buy-opportunities ${portfolioView === 'buy-opportunities' ? 'active' : ''}`}
-            onClick={() => setPortfolioView('buy-opportunities')}
-            aria-label="Switch to buy opportunities view"
-            aria-pressed={portfolioView === 'buy-opportunities'}
-          >
-            <div className="icon">🎯</div>
-            <div className="title">Buy Now</div>
-            <div className="description">
-              Best opportunities
             </div>
           </button>
         </div>
