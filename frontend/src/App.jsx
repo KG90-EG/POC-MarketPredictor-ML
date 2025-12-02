@@ -11,6 +11,7 @@ import AIAnalysisSection from './components/AIAnalysisSection'
 import StockRanking from './components/StockRanking'
 import CryptoPortfolio from './components/CryptoPortfolio'
 import MarketSelector from './components/MarketSelector'
+import WatchlistManager from './components/WatchlistManager'
 import './styles.css'
 
 // Create a React Query client
@@ -50,7 +51,7 @@ function AppContent() {
   })
 
   // Digital Assets / Crypto state
-  const [portfolioView, setPortfolioView] = useState('stocks') // 'stocks' or 'crypto'
+  const [portfolioView, setPortfolioView] = useState('stocks') // 'stocks', 'crypto', or 'watchlists'
   const [cryptoResults, setCryptoResults] = useState([])
   const [cryptoLoading, setCryptoLoading] = useState(false)
   const [includeNFT, setIncludeNFT] = useState(true)
@@ -405,6 +406,19 @@ function AppContent() {
               Crypto, NFTs, Bitcoin, Ethereum & more
             </div>
           </button>
+
+          <button
+            className={`portfolio-toggle-button watchlists ${portfolioView === 'watchlists' ? 'active' : ''}`}
+            onClick={() => setPortfolioView('watchlists')}
+            aria-label="Switch to watchlists view"
+            aria-pressed={portfolioView === 'watchlists'}
+          >
+            <div className="icon">⭐</div>
+            <div className="title">My Watchlists</div>
+            <div className="description">
+              Saved stocks & portfolios
+            </div>
+          </button>
         </div>
       </section>
 
@@ -542,6 +556,11 @@ function AppContent() {
           />
         </section>
         </>
+      )}
+
+      {/* Watchlists View */}
+      {portfolioView === 'watchlists' && (
+        <WatchlistManager userId="default_user" />
       )}
 
       {/* Search Section - Only for stocks */}

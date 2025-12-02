@@ -1,0 +1,294 @@
+.watchlist-manager {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.watchlist-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.watchlist-header h2 {
+  margin: 0;
+  color: #1a1a1a;
+}
+
+.btn-create {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.btn-create:hover:not(:disabled) {
+  background: #45a049;
+}
+
+.btn-create:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  border-left: 4px solid #c33;
+}
+
+.create-watchlist-form {
+  background: #f5f5f5;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.create-watchlist-form input,
+.create-watchlist-form textarea {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.create-watchlist-form button {
+  background: #2196F3;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.create-watchlist-form button:hover:not(:disabled) {
+  background: #1976D2;
+}
+
+.watchlist-container {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  min-height: 400px;
+}
+
+.watchlist-sidebar {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.watchlist-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.watchlist-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.watchlist-list li.active {
+  background: #e3f2fd;
+}
+
+.watchlist-item {
+  flex: 1;
+  padding: 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.watchlist-item:hover {
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.watchlist-name {
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.watchlist-count {
+  font-size: 12px;
+  color: #666;
+}
+
+.btn-delete {
+  background: none;
+  border: none;
+  color: #c33;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0 12px;
+  transition: color 0.2s;
+}
+
+.btn-delete:hover {
+  color: #a00;
+}
+
+.watchlist-details {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.details-header h3 {
+  margin: 0 0 8px 0;
+  color: #1a1a1a;
+}
+
+.details-header .description {
+  color: #666;
+  margin: 0 0 20px 0;
+  font-size: 14px;
+}
+
+.add-stock-form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid #eee;
+}
+
+.add-stock-form input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.add-stock-form button {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s;
+  white-space: nowrap;
+}
+
+.add-stock-form button:hover:not(:disabled) {
+  background: #45a049;
+}
+
+.stocks-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.stock-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #eee;
+  transition: background 0.2s;
+}
+
+.stock-item:hover {
+  background: #f9f9f9;
+}
+
+.stock-item:last-child {
+  border-bottom: none;
+}
+
+.stock-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stock-ticker {
+  font-weight: 600;
+  color: #1a1a1a;
+  font-size: 16px;
+}
+
+.stock-notes {
+  font-size: 13px;
+  color: #666;
+  font-style: italic;
+}
+
+.stock-date {
+  font-size: 12px;
+  color: #999;
+}
+
+.btn-remove {
+  background: none;
+  border: 1px solid #ddd;
+  color: #666;
+  padding: 6px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.btn-remove:hover {
+  background: #fee;
+  border-color: #c33;
+  color: #c33;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #999;
+  font-size: 14px;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+@media (max-width: 768px) {
+  .watchlist-container {
+    grid-template-columns: 1fr;
+  }
+
+  .add-stock-form {
+    flex-direction: column;
+  }
+
+  .stock-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}

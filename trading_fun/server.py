@@ -1,44 +1,30 @@
-from fastapi import (
-    FastAPI,
-    HTTPException,
-    WebSocket,
-    WebSocketDisconnect,
-    Request,
-    Response,
-)
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Dict, Any, List, Optional
-import joblib
+import hashlib
 import os
-from dotenv import load_dotenv
-from .trading import (
-    features,
-    compute_rsi,
-    compute_macd,
-    compute_bollinger,
-    compute_momentum,
-)
-from .crypto import (
-    get_crypto_ranking,
-    search_crypto,
-    get_crypto_details,
-)
+import time
+from typing import Any, Dict, List, Optional
+
+import joblib
 import pandas as pd
 import yfinance as yf
-import hashlib
-import time
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from pydantic import BaseModel
+
+from . import metrics as prom_metrics
 
 # Import new modules
 from .cache import cache
-from .rate_limiter import RateLimiter
-from .logging_config import setup_logging, RequestLogger
-from .websocket import manager as ws_manager
 from .config import config as app_config
-from .services import StockService, ValidationService, HealthService
-from . import metrics as prom_metrics
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from .crypto import get_crypto_details, get_crypto_ranking, search_crypto
+from .database import WatchlistDB
+from .logging_config import RequestLogger, setup_logging
+from .rate_limiter import RateLimiter
+from .services import HealthService, StockService, ValidationService
+from .trading import compute_bollinger, compute_macd, compute_momentum, compute_rsi, features
+from .websocket import manager as ws_manager
 
 # Load environment variables from .env file
 load_dotenv()
@@ -748,9 +734,7 @@ def crypto_ranking(
         # Parse crypto IDs if provided
         crypto_list = None
         if crypto_ids.strip():
-            crypto_list = [
-                cid.strip().lower() for cid in crypto_ids.split(",") if cid.strip()
-            ]
+            crypto_list = [cid.strip().lower() for cid in crypto_ids.split(",") if cid.strip()]
 
         # Get ranked cryptocurrencies
         rankings = get_crypto_ranking(
@@ -764,9 +748,7 @@ def crypto_ranking(
 
     except Exception as e:
         logger.error(f"Error in crypto_ranking endpoint: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to fetch crypto rankings: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to fetch crypto rankings: {str(e)}")
 
 
 @app.get(
@@ -801,9 +783,7 @@ def crypto_search(query: str):
         result = search_crypto(query.strip())
 
         if result is None:
-            raise HTTPException(
-                status_code=404, detail=f"Cryptocurrency '{query}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Cryptocurrency '{query}' not found")
 
         return result
 
@@ -811,9 +791,7 @@ def crypto_search(query: str):
         raise
     except Exception as e:
         logger.error(f"Error in crypto_search endpoint: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to search crypto: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to search crypto: {str(e)}")
 
 
 @app.get(
@@ -846,9 +824,7 @@ def crypto_details(crypto_id: str):
         details = get_crypto_details(crypto_id)
 
         if details is None:
-            raise HTTPException(
-                status_code=404, detail=f"Cryptocurrency '{crypto_id}' not found"
-            )
+            raise HTTPException(status_code=404, detail=f"Cryptocurrency '{crypto_id}' not found")
 
         return details
 
@@ -856,9 +832,7 @@ def crypto_details(crypto_id: str):
         raise
     except Exception as e:
         logger.error(f"Error in crypto_details endpoint: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to fetch crypto details: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to fetch crypto details: {str(e)}")
 
 
 @app.get("/models")
@@ -866,9 +840,7 @@ def list_models() -> Dict[str, Any]:
     """List available model artifacts in the models directory.
     Returns current loaded model filename and list of other model files with sizes.
     """
-    models_dir = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "models")
-    )
+    models_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "models"))
     items: List[Dict[str, Any]] = []
     if os.path.isdir(models_dir):
         for fname in sorted(os.listdir(models_dir)):
@@ -899,9 +871,7 @@ def ticker_info(ticker: str) -> Dict[str, Any]:
             raise HTTPException(status_code=400, detail=str(e))
         except Exception as e:
             logger.error(f"Error fetching info for {ticker}: {e}")
-            raise HTTPException(
-                status_code=404, detail=f"Unable to fetch info: {str(e)}"
-            )
+            raise HTTPException(status_code=404, detail=f"Unable to fetch info: {str(e)}")
 
 
 @app.post("/ticker_info_batch")
@@ -1035,18 +1005,138 @@ class CryptoRanking(BaseModel):
         }
 
 
+# Watchlist Models
+class WatchlistCreate(BaseModel):
+    """Request model for creating a watchlist"""
+
+    name: str
+    description: Optional[str] = None
+
+
+class WatchlistUpdate(BaseModel):
+    """Request model for updating a watchlist"""
+
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+
+class AddStockRequest(BaseModel):
+    """Request model for adding a stock to watchlist"""
+
+    ticker: str
+    notes: Optional[str] = None
+
+
+# Watchlist Endpoints
+@app.get("/watchlists", tags=["Watchlists"])
+def get_watchlists(user_id: str = "default_user"):
+    """Get all watchlists for a user."""
+    try:
+        watchlists = WatchlistDB.get_user_watchlists(user_id)
+        return {"watchlists": watchlists}
+    except Exception as e:
+        logger.error(f"Error fetching watchlists: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/watchlists", tags=["Watchlists"])
+def create_watchlist(watchlist: WatchlistCreate, user_id: str = "default_user"):
+    """Create a new watchlist."""
+    try:
+        watchlist_id = WatchlistDB.create_watchlist(user_id=user_id, name=watchlist.name, description=watchlist.description)
+        return {"id": watchlist_id, "message": f"Watchlist '{watchlist.name}' created successfully"}
+    except Exception as e:
+        logger.error(f"Error creating watchlist: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/watchlists/{watchlist_id}", tags=["Watchlists"])
+def get_watchlist(watchlist_id: int, user_id: str = "default_user"):
+    """Get a specific watchlist with all its stocks."""
+    try:
+        watchlist = WatchlistDB.get_watchlist(watchlist_id, user_id)
+        if not watchlist:
+            raise HTTPException(status_code=404, detail="Watchlist not found")
+        return watchlist
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching watchlist: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/watchlists/{watchlist_id}", tags=["Watchlists"])
+def update_watchlist(watchlist_id: int, watchlist: WatchlistUpdate, user_id: str = "default_user"):
+    """Update watchlist details."""
+    try:
+        success = WatchlistDB.update_watchlist(
+            watchlist_id=watchlist_id, user_id=user_id, name=watchlist.name, description=watchlist.description
+        )
+        if not success:
+            raise HTTPException(status_code=404, detail="Watchlist not found")
+        return {"message": "Watchlist updated successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating watchlist: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/watchlists/{watchlist_id}", tags=["Watchlists"])
+def delete_watchlist(watchlist_id: int, user_id: str = "default_user"):
+    """Delete a watchlist and all its items."""
+    try:
+        success = WatchlistDB.delete_watchlist(watchlist_id, user_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Watchlist not found")
+        return {"message": "Watchlist deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting watchlist: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/watchlists/{watchlist_id}/stocks", tags=["Watchlists"])
+def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: str = "default_user"):
+    """Add a stock to a watchlist."""
+    try:
+        success = WatchlistDB.add_stock_to_watchlist(
+            watchlist_id=watchlist_id, user_id=user_id, ticker=stock.ticker, notes=stock.notes
+        )
+        if not success:
+            raise HTTPException(status_code=400, detail="Stock already in watchlist or watchlist not found")
+        return {"message": f"Stock {stock.ticker} added to watchlist"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error adding stock to watchlist: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/watchlists/{watchlist_id}/stocks/{ticker}", tags=["Watchlists"])
+def remove_stock_from_watchlist(watchlist_id: int, ticker: str, user_id: str = "default_user"):
+    """Remove a stock from a watchlist."""
+    try:
+        success = WatchlistDB.remove_stock_from_watchlist(watchlist_id=watchlist_id, user_id=user_id, ticker=ticker)
+        if not success:
+            raise HTTPException(status_code=404, detail="Stock not found in watchlist or watchlist not found")
+        return {"message": f"Stock {ticker} removed from watchlist"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error removing stock from watchlist: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/analyze", tags=["AI Analysis"])
 def analyze(request: AnalysisRequest) -> Dict[str, Any]:
     """Use LLM to analyze ranking and provide buy/sell recommendations."""
     if not OPENAI_CLIENT:
-        raise HTTPException(
-            status_code=503, detail="LLM not configured (set OPENAI_API_KEY)"
-        )
+        raise HTTPException(status_code=503, detail="LLM not configured (set OPENAI_API_KEY)")
 
     # Create cache key from ranking + context
-    cache_key = hashlib.md5(
-        f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()
-    ).hexdigest()
+    cache_key = hashlib.md5(f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()).hexdigest()
 
     # Check cache
     cached_data = cache.get(f"analysis:{cache_key}")
@@ -1098,11 +1188,7 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
                     "rank": rank,
                     "ticker": r["ticker"],
                     "prob": r["prob"],
-                    "signal": (
-                        "BUY"
-                        if r["prob"] >= 0.55
-                        else "HOLD" if r["prob"] >= 0.45 else "SELL"
-                    ),
+                    "signal": ("BUY" if r["prob"] >= 0.55 else "HOLD" if r["prob"] >= 0.45 else "SELL"),
                 }
             )
 
@@ -1169,8 +1255,7 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
                     else:
                         raise HTTPException(
                             status_code=429,
-                            detail="OpenAI rate limit exceeded. "
-                            "Please wait a moment and try again.",
+                            detail="OpenAI rate limit exceeded. " "Please wait a moment and try again.",
                         )
                 else:
                     raise
@@ -1205,18 +1290,12 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
             if action == "subscribe" and ticker:
                 ws_manager.subscribe(client_id, ticker)
-                await ws_manager.send_personal_message(
-                    {"type": "subscribed", "ticker": ticker}, client_id
-                )
+                await ws_manager.send_personal_message({"type": "subscribed", "ticker": ticker}, client_id)
             elif action == "unsubscribe" and ticker:
                 ws_manager.unsubscribe(client_id, ticker)
-                await ws_manager.send_personal_message(
-                    {"type": "unsubscribed", "ticker": ticker}, client_id
-                )
+                await ws_manager.send_personal_message({"type": "unsubscribed", "ticker": ticker}, client_id)
             elif action == "ping":
-                await ws_manager.send_personal_message(
-                    {"type": "pong", "timestamp": time.time()}, client_id
-                )
+                await ws_manager.send_personal_message({"type": "pong", "timestamp": time.time()}, client_id)
             else:
                 await ws_manager.send_personal_message(
                     {"type": "error", "message": "Invalid action or missing ticker"},
@@ -1233,8 +1312,6 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
 # Mount frontend static files LAST so API routes take precedence
 # This must come after all route definitions to avoid catching API routes
-FRONTEND_DIST = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
-)
+FRONTEND_DIST = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
 if os.path.isdir(FRONTEND_DIST):
     app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
