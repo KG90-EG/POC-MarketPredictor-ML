@@ -1,0 +1,1 @@
+../../AUTOMATED_DEPLOYMENT.md
