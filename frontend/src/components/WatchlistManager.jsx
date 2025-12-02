@@ -260,16 +260,43 @@ function WatchlistManager({ userId = 'default_user' }) {
             const detailsRes = await apiClient.get(`/crypto/details/${item.ticker}`);
             const data = detailsRes.data;
             
+            console.log('Crypto data for', item.ticker, ':', data); // Debug log
+            
             // Extract market data (CoinGecko API returns nested structure)
             const marketData = data.market_data || {};
-            const currentPrice = marketData.current_price?.usd || 0;
-            const priceChange24h = marketData.price_change_percentage_24h || 0;
-            const totalVolume = marketData.total_volume?.usd || 0;
+            
+            // Access nested price data with fallbacks
+            const currentPrice = marketData.current_price?.usd || 
+                                marketData.current_price?.['usd'] || 
+                                (typeof marketData.current_price === 'number' ? marketData.current_price : 0);
+            
+            const priceChange24h = marketData.price_change_percentage_24h || 
+                                  marketData.price_change_percentage_24h_in_currency?.usd ||
+                                  0;
+            
+            const totalVolume = marketData.total_volume?.usd || 
+                               marketData.total_volume?.['usd'] ||
+                               (typeof marketData.total_volume === 'number' ? marketData.total_volume : 0);
             
             // Compute momentum score for prediction
-            const priceChange7d = marketData.price_change_percentage_7d || 0;
-            const priceChange30d = marketData.price_change_percentage_30d || 0;
+            const priceChange7d = marketData.price_change_percentage_7d || 
+                                 marketData.price_change_percentage_7d_in_currency?.usd ||
+                                 0;
+            
+            const priceChange30d = marketData.price_change_percentage_30d || 
+                                  marketData.price_change_percentage_30d_in_currency?.usd ||
+                                  0;
+            
             const marketCapRank = marketData.market_cap_rank || 999;
+            
+            console.log('Extracted crypto values:', { // Debug log
+              currentPrice,
+              priceChange24h,
+              totalVolume,
+              priceChange7d,
+              priceChange30d,
+              marketCapRank
+            });
             
             // Simple momentum score (0-1)
             let momentumScore = 0.0;
