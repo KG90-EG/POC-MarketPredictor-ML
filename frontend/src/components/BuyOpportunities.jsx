@@ -163,7 +163,7 @@ function BuyOpportunities() {
   return (
     <div className="buy-opportunities">
       <div className="opportunities-header">
-        <h2>🎯 Buy/Sell Now - Trading Opportunities</h2>
+        <h2>🎯 Trading Opportunities</h2>
         <button 
           className="refresh-btn" 
           onClick={handleRefresh} 
@@ -266,12 +266,10 @@ function BuyOpportunities() {
                               <span className="value">{(stock.prediction.metrics.probability * 100).toFixed(1)}%</span>
                             </div>
                           )}
-                          {stock.current_price && (
-                            <div className="detail-item">
-                              <span className="label">Price:</span>
-                              <span className="value">${stock.current_price.toFixed(2)}</span>
-                            </div>
-                          )}
+                          <div className="detail-item">
+                            <span className="label">Price:</span>
+                            <span className="value">${stock.current_price ? stock.current_price.toFixed(2) : 'N/A'}</span>
+                          </div>
                         </div>
 
                         <div className="opportunity-reasoning">
@@ -338,12 +336,10 @@ function BuyOpportunities() {
                               <span className="value">{(stock.prediction.metrics.probability * 100).toFixed(1)}%</span>
                             </div>
                           )}
-                          {stock.current_price && (
-                            <div className="detail-item">
-                              <span className="label">Price:</span>
-                              <span className="value">${stock.current_price.toFixed(2)}</span>
-                            </div>
-                          )}
+                          <div className="detail-item">
+                            <span className="label">Price:</span>
+                            <span className="value">${stock.current_price ? stock.current_price.toFixed(2) : 'N/A'}</span>
+                          </div>
                         </div>
 
                         <div className="opportunity-reasoning">

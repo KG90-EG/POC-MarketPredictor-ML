@@ -383,9 +383,9 @@ function AppContent() {
             aria-pressed={portfolioView === 'buy-opportunities'}
           >
             <div className="icon">🎯</div>
-            <div className="title">Buy Now</div>
+            <div className="title">Buy / Sell</div>
             <div className="description">
-              Best opportunities
+              Trading signals
             </div>
           </button>
 
