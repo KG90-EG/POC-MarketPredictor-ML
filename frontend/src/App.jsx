@@ -56,6 +56,22 @@ function AppContent() {
   const [cryptoLimit, setCryptoLimit] = useState(50)
   const [cryptoPage, setCryptoPage] = useState(1)
   const [cryptoPerPage] = useState(20) // Items per page
+  const [cryptoSearchTerm, setCryptoSearchTerm] = useState('')
+  
+  // Filter crypto results based on search term
+  const filteredCryptoResults = React.useMemo(() => {
+    if (!cryptoSearchTerm) return cryptoResults
+    const term = cryptoSearchTerm.toLowerCase()
+    return cryptoResults.filter(crypto => 
+      crypto.name.toLowerCase().includes(term) || 
+      crypto.symbol.toLowerCase().includes(term)
+    )
+  }, [cryptoResults, cryptoSearchTerm])
+  
+  function handleCryptoSearchChange(e) {
+    setCryptoSearchTerm(e.target.value)
+    setCryptoPage(1) // Reset to page 1 when search changes
+  }
 
   useEffect(() => {
     document.body.classList.toggle('dark-mode', darkMode)
@@ -501,6 +517,57 @@ function AppContent() {
 
       {/* Digital Assets / Crypto View */}
       {portfolioView === 'crypto' && (
+        <>
+        {/* Crypto Search Section */}
+        <section className="card" role="region" aria-label="Search for digital assets and cryptocurrencies">
+          <div className="card-title">🔍 Search Digital Assets</div>
+          <div style={{marginBottom: '8px', fontSize: '0.9rem', color: '#666'}}>
+            💡 Search by name or symbol (e.g., Bitcoin, BTC, Ethereum, ETH)
+          </div>
+          <div style={{marginTop: '16px'}}>
+            <input
+              type="text"
+              placeholder="🔍 Search by name or symbol..."
+              value={cryptoSearchTerm}
+              onChange={handleCryptoSearchChange}
+              aria-label="Search cryptocurrencies by name or symbol"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                border: '2px solid #ddd',
+                borderRadius: '8px',
+                fontSize: '0.95rem',
+                outline: 'none',
+                transition: 'border-color 0.3s ease'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#f59e0b'}
+              onBlur={(e) => e.target.style.borderColor = '#ddd'}
+            />
+            {cryptoSearchTerm && (
+              <p style={{marginTop: '8px', fontSize: '0.85rem', color: '#666'}}>
+                Found {filteredCryptoResults.length} result{filteredCryptoResults.length !== 1 ? 's' : ''} for "{cryptoSearchTerm}"
+                {filteredCryptoResults.length > 0 && (
+                  <button
+                    onClick={() => setCryptoSearchTerm('')}
+                    style={{
+                      marginLeft: '12px',
+                      padding: '4px 12px',
+                      background: '#f0f0f0',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    ✕ Clear
+                  </button>
+                )}
+              </p>
+            )}
+          </div>
+        </section>
+
+        {/* Crypto Rankings Section */}
         <section className="card" role="region" aria-label="Digital assets and cryptocurrency rankings">
           <div className="card-title">
             ₿ Digital Assets Rankings
@@ -510,7 +577,7 @@ function AppContent() {
           </div>
           
           <CryptoPortfolio
-            cryptoResults={cryptoResults}
+            cryptoResults={filteredCryptoResults}
             cryptoLoading={cryptoLoading}
             cryptoPage={cryptoPage}
             cryptoPerPage={cryptoPerPage}
@@ -521,8 +588,10 @@ function AppContent() {
             onLimitChange={setCryptoLimit}
             onRefresh={fetchCryptoRanking}
             onRowClick={openCryptoDetail}
+            searchTerm={cryptoSearchTerm}
           />
         </section>
+        </>
       )}
 
       {/* Search Section - Only for stocks */}

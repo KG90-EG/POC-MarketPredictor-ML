@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types'
-import { useState, useMemo } from 'react'
 import Tooltip from './Tooltip'
 
 function CryptoPortfolio({
@@ -13,59 +12,16 @@ function CryptoPortfolio({
   onNFTToggle,
   onLimitChange,
   onRefresh,
-  onRowClick
+  onRowClick,
+  searchTerm
 }) {
-  const [searchTerm, setSearchTerm] = useState('')
-  
-  // Filter crypto results based on search term
-  const filteredResults = useMemo(() => {
-    if (!searchTerm) return cryptoResults
-    const term = searchTerm.toLowerCase()
-    return cryptoResults.filter(crypto => 
-      crypto.name.toLowerCase().includes(term) || 
-      crypto.symbol.toLowerCase().includes(term)
-    )
-  }, [cryptoResults, searchTerm])
-  
-  const totalPages = Math.ceil(filteredResults.length / cryptoPerPage)
-  const paginatedResults = filteredResults.slice((cryptoPage - 1) * cryptoPerPage, cryptoPage * cryptoPerPage)
-
-  // Reset to page 1 when search term changes
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value)
-    onPageChange(1)
-  }
+  // cryptoResults is already filtered in parent (App.jsx)
+  const totalPages = Math.ceil(cryptoResults.length / cryptoPerPage)
+  const paginatedResults = cryptoResults.slice((cryptoPage - 1) * cryptoPerPage, cryptoPage * cryptoPerPage)
 
   return (
     <>
       <h2>🪙 Digital Assets & Cryptocurrency Rankings</h2>
-      
-      {/* Search Bar */}
-      <div style={{marginBottom: '16px'}}>
-        <input
-          type="text"
-          placeholder="🔍 Search by name or symbol (e.g., Bitcoin, BTC)..."
-          value={searchTerm}
-          onChange={handleSearchChange}
-          aria-label="Search cryptocurrencies by name or symbol"
-          style={{
-            width: '100%',
-            padding: '12px 16px',
-            border: '2px solid #ddd',
-            borderRadius: '8px',
-            fontSize: '0.95rem',
-            outline: 'none',
-            transition: 'border-color 0.3s ease'
-          }}
-          onFocus={(e) => e.target.style.borderColor = '#f59e0b'}
-          onBlur={(e) => e.target.style.borderColor = '#ddd'}
-        />
-        {searchTerm && (
-          <p style={{marginTop: '8px', fontSize: '0.85rem', color: '#666'}}>
-            Found {filteredResults.length} result{filteredResults.length !== 1 ? 's' : ''} for "{searchTerm}"
-          </p>
-        )}
-      </div>
       
       <div style={{marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap'}}>
         <label style={{display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
@@ -136,28 +92,7 @@ function CryptoPortfolio({
           <span className="spinner"></span>
           <p>Loading digital assets rankings...</p>
         </div>
-      ) : cryptoResults.length > 0 ? (
-        filteredResults.length === 0 ? (
-          <div style={{textAlign: 'center', padding: '40px', color: '#666'}}>
-            <p style={{fontSize: '1.2rem', marginBottom: '8px'}}>🔍</p>
-            <p>No cryptocurrencies found matching "{searchTerm}"</p>
-            <button 
-              onClick={() => setSearchTerm('')}
-              style={{
-                marginTop: '12px',
-                padding: '8px 16px',
-                background: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: '600'
-              }}
-            >
-              Clear Search
-            </button>
-          </div>
-        ) : (
+      ) : cryptoResults.length > 0 && (
         <div>
           <div className="table-wrapper">
             <table aria-label="Digital assets and cryptocurrency rankings table">
@@ -311,8 +246,9 @@ function CryptoPortfolio({
             </div>
           )}
         </div>
-        )
-      ) : (
+      )}
+      
+      {cryptoResults.length === 0 && !cryptoLoading && (
         <p style={{color: '#666', fontSize: '0.9rem', margin: '0', textAlign: 'center', padding: '20px'}}>
           Click "Refresh Rankings" to load digital assets data
         </p>
@@ -344,7 +280,8 @@ CryptoPortfolio.propTypes = {
   onNFTToggle: PropTypes.func.isRequired,
   onLimitChange: PropTypes.func.isRequired,
   onRefresh: PropTypes.func.isRequired,
-  onRowClick: PropTypes.func.isRequired
+  onRowClick: PropTypes.func.isRequired,
+  searchTerm: PropTypes.string
 }
 
 export default CryptoPortfolio

@@ -392,15 +392,24 @@ def startup_event():
     logger.info("Prometheus metrics initialized")
 
 
-# Enable CORS for local frontend development
+# Enable CORS for local frontend development and production
+# Add your production frontend URLs here after deployment:
+# - Vercel: https://your-app.vercel.app
+# - Netlify: https://your-app.netlify.app
+# - Custom domain: https://yourdomain.com
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        # Local development
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:5174",
         "http://localhost:3000",
         "null",  # For file:// protocol
+        # Production - Add your deployed frontend URLs below:
+        # "https://your-app.vercel.app",
+        # "https://your-app.netlify.app",
+        # "https://yourdomain.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
