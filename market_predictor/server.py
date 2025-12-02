@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 
 import joblib
 import pandas as pd
+import requests
 import yfinance as yf
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
@@ -977,24 +978,25 @@ def search_stocks(query: str, limit: int = 10) -> Dict[str, Any]:
                     # Try as direct ticker first
                     ticker_obj = yf.Ticker(query_upper)
                     info = ticker_obj.info
-                    
+
                     # Check if ticker is valid (has longName or shortName)
-                    if info and (info.get('longName') or info.get('shortName')):
-                        matching.append({
-                            "ticker": query_upper,
-                            "name": info.get('longName') or info.get('shortName', query_upper)
-                        })
+                    if info and (info.get("longName") or info.get("shortName")):
+                        matching.append(
+                            {"ticker": query_upper, "name": info.get("longName") or info.get("shortName", query_upper)}
+                        )
                     else:
                         # Try with common suffixes for Swiss stocks
                         for suffix in [".SW", ".DE", ".L", ".PA"]:
                             ticker_with_suffix = query_upper + suffix
                             ticker_obj = yf.Ticker(ticker_with_suffix)
                             info = ticker_obj.info
-                            if info and (info.get('longName') or info.get('shortName')):
-                                matching.append({
-                                    "ticker": ticker_with_suffix,
-                                    "name": info.get('longName') or info.get('shortName', ticker_with_suffix)
-                                })
+                            if info and (info.get("longName") or info.get("shortName")):
+                                matching.append(
+                                    {
+                                        "ticker": ticker_with_suffix,
+                                        "name": info.get("longName") or info.get("shortName", ticker_with_suffix),
+                                    }
+                                )
                                 break
                 except Exception as yf_error:
                     logger.debug(f"YFinance lookup failed for {query}: {yf_error}")
@@ -1294,6 +1296,153 @@ def get_watchlist(watchlist_id: int, user_id: str = "default_user"):
         raise
     except Exception as e:
         logger.error(f"Error fetching watchlist: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/watchlist/prediction/{ticker}", tags=["Watchlists", "Predictions"])
+def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
+    """Get buy/sell/hold prediction for a watchlist item (stock or crypto).
+
+    Returns:
+    - signal: BUY, SELL, or HOLD
+    - confidence: 0-100 percentage
+    - reasoning: Brief explanation
+    """
+    try:
+        if asset_type == "crypto":
+            # Crypto prediction based on momentum and trends
+            try:
+                response = requests.get(
+                    f"https://api.coingecko.com/api/v3/coins/{ticker.lower()}",
+                    params={"localization": "false", "tickers": "false", "community_data": "false", "developer_data": "false"},
+                    timeout=10,
+                )
+
+                if response.status_code != 200:
+                    return {"signal": "HOLD", "confidence": 50, "reasoning": "Unable to fetch market data"}
+
+                data = response.json()
+                market_data = data.get("market_data", {})
+
+                # Extract key metrics
+                price_change_24h = market_data.get("price_change_percentage_24h", 0)
+                price_change_7d = market_data.get("price_change_percentage_7d", 0)
+                price_change_30d = market_data.get("price_change_percentage_30d", 0)
+                market_cap_rank = data.get("market_cap_rank", 999)
+
+                # Calculate momentum score
+                momentum = price_change_24h * 0.5 + price_change_7d * 0.3 + price_change_30d * 0.2
+
+                # Determine signal
+                if momentum > 10 and price_change_24h > 3 and market_cap_rank <= 50:
+                    signal = "BUY"
+                    confidence = min(85, 60 + abs(momentum))
+                    reasoning = f"Strong upward momentum ({momentum:.1f}%), top-50 crypto"
+                elif momentum > 5 and price_change_7d > 2:
+                    signal = "BUY"
+                    confidence = min(75, 55 + abs(momentum))
+                    reasoning = f"Positive trend ({price_change_7d:.1f}% weekly)"
+                elif momentum < -10 or price_change_24h < -5:
+                    signal = "SELL"
+                    confidence = min(80, 60 + abs(momentum))
+                    reasoning = f"Negative momentum ({momentum:.1f}%)"
+                else:
+                    signal = "HOLD"
+                    confidence = 50 + abs(momentum) / 2
+                    reasoning = f"Neutral trend ({momentum:.1f}%)"
+
+                return {
+                    "signal": signal,
+                    "confidence": round(confidence, 1),
+                    "reasoning": reasoning,
+                    "metrics": {
+                        "price_change_24h": round(price_change_24h, 2),
+                        "price_change_7d": round(price_change_7d, 2),
+                        "momentum": round(momentum, 2),
+                    },
+                }
+
+            except Exception as e:
+                logger.error(f"Crypto prediction error: {e}")
+                return {"signal": "HOLD", "confidence": 50, "reasoning": "Prediction unavailable"}
+
+        else:
+            # Stock prediction using ML model
+            if MODEL is None:
+                return {"signal": "HOLD", "confidence": 50, "reasoning": "ML model not loaded"}
+
+            try:
+                # Get latest data and compute features
+                raw = yf.download(ticker, period="300d", auto_adjust=False, progress=False)
+
+                if raw.empty:
+                    return {"signal": "HOLD", "confidence": 50, "reasoning": "No market data available"}
+
+                # Handle MultiIndex columns
+                if isinstance(raw.columns, pd.MultiIndex):
+                    raw.columns = raw.columns.get_level_values(0)
+
+                df = pd.DataFrame({"Adj Close": raw["Adj Close"]})
+                df["SMA50"] = df["Adj Close"].rolling(50).mean()
+                df["SMA200"] = df["Adj Close"].rolling(200).mean()
+                df["RSI"] = compute_rsi(df["Adj Close"])
+                df["Volatility"] = df["Adj Close"].pct_change().rolling(30).std()
+                df["Momentum_10d"] = compute_momentum(df["Adj Close"], 10)
+                macd, macd_sig = compute_macd(df["Adj Close"])
+                df["MACD"] = macd
+                df["MACD_signal"] = macd_sig
+                bb_up, bb_low = compute_bollinger(df["Adj Close"])
+                df["BB_upper"] = bb_up
+                df["BB_lower"] = bb_low
+                df = df.dropna()
+
+                if df.empty:
+                    return {"signal": "HOLD", "confidence": 50, "reasoning": "Insufficient data for prediction"}
+
+                row = df.iloc[-1:]
+                prob = MODEL.predict_proba(row[features].values)[0][1]
+
+                # Determine signal based on probability
+                if prob >= 0.65:
+                    signal = "BUY"
+                    confidence = round(prob * 100, 1)
+                    reasoning = f"Strong bullish signal from ML model"
+                elif prob >= 0.55:
+                    signal = "BUY"
+                    confidence = round(prob * 100, 1)
+                    reasoning = f"Moderate bullish signal"
+                elif prob <= 0.35:
+                    signal = "SELL"
+                    confidence = round((1 - prob) * 100, 1)
+                    reasoning = f"Bearish signal from technical indicators"
+                elif prob <= 0.45:
+                    signal = "SELL"
+                    confidence = round((1 - prob) * 100, 1)
+                    reasoning = f"Weak bearish signal"
+                else:
+                    signal = "HOLD"
+                    confidence = 50
+                    reasoning = f"Neutral - no clear direction"
+
+                return {
+                    "signal": signal,
+                    "confidence": confidence,
+                    "reasoning": reasoning,
+                    "metrics": {
+                        "probability": round(prob, 3),
+                        "rsi": round(float(df.iloc[-1]["RSI"]), 2) if pd.notna(df.iloc[-1]["RSI"]) else None,
+                        "momentum": (
+                            round(float(df.iloc[-1]["Momentum_10d"]), 4) if pd.notna(df.iloc[-1]["Momentum_10d"]) else None
+                        ),
+                    },
+                }
+
+            except Exception as e:
+                logger.error(f"Stock prediction error for {ticker}: {e}")
+                return {"signal": "HOLD", "confidence": 50, "reasoning": "Prediction error - insufficient data"}
+
+    except Exception as e:
+        logger.error(f"Prediction error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

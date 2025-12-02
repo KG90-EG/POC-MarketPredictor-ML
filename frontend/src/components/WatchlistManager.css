@@ -1,6 +1,6 @@
 .watchlist-manager {
   padding: 20px;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -82,7 +82,7 @@
 
 .watchlist-container {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: 280px 1fr;
   gap: 20px;
   min-height: 400px;
 }
@@ -403,13 +403,13 @@
 
 .prediction-info {
   display: flex;
-  gap: 16px;
-  align-items: center;
-  padding: 12px;
-  background: #f0f9ff;
-  border-radius: 6px;
-  border-left: 4px solid #3b82f6;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
   margin-bottom: 12px;
+  border: 1px solid #e2e8f0;
 }
 
 .recommendation {
@@ -419,12 +419,28 @@
   border-radius: 6px;
   font-size: 14px;
   letter-spacing: 0.5px;
+  cursor: help;
+  transition: transform 0.2s;
+}
+
+.recommendation:hover {
+  transform: scale(1.02);
 }
 
 .confidence {
   font-size: 14px;
   color: #1a1a1a;
   font-weight: 600;
+}
+
+.prediction-reasoning {
+  font-size: 13px;
+  color: #64748b;
+  font-style: italic;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  border-left: 3px solid #cbd5e1;
 }
 
 .prediction-details {
@@ -439,6 +455,21 @@
   background: white;
   padding: 4px 8px;
   border-radius: 4px;
+}
+
+.asset-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  transition: transform 0.2s;
+}
+
+.asset-badge:hover {
+  transform: scale(1.05);
 }
 
 .stock-notes {

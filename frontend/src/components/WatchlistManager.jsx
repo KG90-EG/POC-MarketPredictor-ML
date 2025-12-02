@@ -129,8 +129,8 @@ function WatchlistManager({ userId = 'default_user' }) {
     if (!value.trim()) {
       const combined = [
         ...popularStocks.slice(0, 5),
-        ...popularCryptos.slice(0, 5).map(c => ({ 
-          ticker: c.id, 
+        ...popularCryptos.slice(0, 5).map(c => ({
+          ticker: c.id,
           name: `${c.name} (${c.symbol})`,
           asset_type: 'crypto'
         }))
@@ -149,17 +149,17 @@ function WatchlistManager({ userId = 'default_user' }) {
 
       const stocks = stocksRes.data.stocks || [];
       const cryptos = cryptosRes.data.cryptos || [];
-      
+
       // Combine results with asset_type marker
       const combined = [
         ...stocks.map(s => ({ ...s, asset_type: 'stock' })),
-        ...cryptos.map(c => ({ 
-          ticker: c.id, 
+        ...cryptos.map(c => ({
+          ticker: c.id,
           name: `${c.name} (${c.symbol})`,
           asset_type: 'crypto'
         }))
       ];
-      
+
       setFilteredStocks(combined);
       setShowDropdown(true);
     } catch (err) {
@@ -265,30 +265,25 @@ function WatchlistManager({ userId = 'default_user' }) {
       const dataPromises = items.map(async (item) => {
         try {
           if (item.asset_type === 'crypto') {
-            // For crypto, use search endpoint which returns formatted data
-            const searchRes = await apiClient.get(`/crypto/search?query=${item.ticker}`);
+            // For crypto, use search endpoint which returns formatted data and get prediction
+            const [searchRes, predictionRes] = await Promise.all([
+              apiClient.get(`/crypto/search?query=${item.ticker}`),
+              apiClient.get(`/watchlist/prediction/${item.ticker}?asset_type=crypto`).catch(() => ({ data: null }))
+            ]);
+
             const cryptoData = searchRes.data;
-            
-            console.log('Crypto search result for', item.ticker, ':', cryptoData); // Debug log
-            
+            const predictionData = predictionRes.data;
+
             if (!cryptoData) {
               console.warn('No crypto data found for', item.ticker);
               return { ticker: item.ticker, info: null, prediction: null };
             }
-            
+
             // Extract data from formatted search response
             const currentPrice = cryptoData.price || 0;
             const priceChange24h = cryptoData.change_24h || 0;
             const totalVolume = cryptoData.volume || 0;
-            const momentumScore = cryptoData.probability || cryptoData.momentum_score || 0;
-            
-            console.log('Extracted crypto values:', { // Debug log
-              currentPrice,
-              priceChange24h,
-              totalVolume,
-              momentumScore
-            });
-            
+
             return {
               ticker: item.ticker,
               info: {
@@ -297,22 +292,27 @@ function WatchlistManager({ userId = 'default_user' }) {
                 change: priceChange24h,
                 volume: totalVolume,
               },
-              prediction: {
-                probability: momentumScore,
-                momentum_score: momentumScore
+              prediction: predictionData || {
+                signal: 'HOLD',
+                confidence: 50,
+                reasoning: 'No prediction available'
               }
             };
           } else {
-            // For stocks, use existing endpoints
-            const [infoRes, predRes] = await Promise.all([
+            // For stocks, use existing endpoints plus prediction
+            const [infoRes, predictionRes] = await Promise.all([
               api.getTickerInfo(item.ticker),
-              api.predictTicker(item.ticker)
+              apiClient.get(`/watchlist/prediction/${item.ticker}?asset_type=stock`).catch(() => ({ data: null }))
             ]);
 
             return {
               ticker: item.ticker,
               info: infoRes.data,
-              prediction: predRes.data
+              prediction: predictionRes.data || {
+                signal: 'HOLD',
+                confidence: 50,
+                reasoning: 'No prediction available'
+              }
             };
           }
         } catch (err) {
@@ -435,8 +435,8 @@ function WatchlistManager({ userId = 'default_user' }) {
                         // Show popular items on focus
                         const combined = [
                           ...popularStocks.slice(0, 5),
-                          ...popularCryptos.slice(0, 5).map(c => ({ 
-                            ticker: c.id, 
+                          ...popularCryptos.slice(0, 5).map(c => ({
+                            ticker: c.id,
                             name: `${c.name} (${c.symbol})`,
                             asset_type: 'crypto'
                           }))
@@ -485,16 +485,26 @@ function WatchlistManager({ userId = 'default_user' }) {
                       const data = stockData[item.ticker];
                       const info = data?.info;
                       const prediction = data?.prediction;
-                      const probability = prediction?.probability || 0;
-                      const recommendation = probability > 0.6 ? 'BUY' : probability < 0.4 ? 'SELL' : 'HOLD';
-                      const recColor = probability > 0.6 ? '#10b981' : probability < 0.4 ? '#ef4444' : '#f59e0b';
+
+                      // Get signal from prediction
+                      const signal = prediction?.signal || 'HOLD';
+                      const confidence = prediction?.confidence || 50;
+                      const reasoning = prediction?.reasoning || 'No prediction available';
+
+                      // Signal colors and icons
+                      const signalConfig = {
+                        'BUY': { icon: '🟢', color: '#10b981', bgColor: '#d1fae5' },
+                        'SELL': { icon: '🔴', color: '#ef4444', bgColor: '#fee2e2' },
+                        'HOLD': { icon: '🟡', color: '#f59e0b', bgColor: '#fef3c7' }
+                      };
+
+                      const config = signalConfig[signal] || signalConfig['HOLD'];
 
                       // Map backend response to expected fields
                       const price = info?.price;
                       const change = info?.change;
                       const changePercent = (change && price) ? (change / (price - change)) * 100 : 0;
                       const volume = info?.volume;
-                      const fiftyTwoWeekHigh = info?.fifty_two_week_high;
 
                       return (
                         <li key={item.id} className="stock-item enhanced">
@@ -504,6 +514,16 @@ function WatchlistManager({ userId = 'default_user' }) {
                               {info?.name && (
                                 <span className="stock-name">{info.name}</span>
                               )}
+                              <span className="asset-badge" style={{
+                                backgroundColor: item.asset_type === 'crypto' ? '#8b5cf6' : '#3b82f6',
+                                color: 'white',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '0.75rem',
+                                marginLeft: '8px'
+                              }}>
+                                {item.asset_type === 'crypto' ? '₿ Crypto' : '📈 Stock'}
+                              </span>
                             </div>
 
                             {info && price && (
@@ -525,17 +545,40 @@ function WatchlistManager({ userId = 'default_user' }) {
 
                             {prediction && (
                               <div className="prediction-info">
-                                <div className="recommendation" style={{backgroundColor: recColor}}>
-                                  {recommendation}
+                                <div
+                                  className="recommendation"
+                                  style={{
+                                    backgroundColor: config.bgColor,
+                                    color: config.color,
+                                    border: `2px solid ${config.color}`,
+                                    padding: '8px 12px',
+                                    borderRadius: '8px',
+                                    fontWeight: 'bold',
+                                    fontSize: '1rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    marginBottom: '8px'
+                                  }}
+                                  title={reasoning}
+                                >
+                                  <span style={{fontSize: '1.2rem'}}>{config.icon}</span>
+                                  {signal}
                                 </div>
-                                <div className="confidence">
-                                  Confidence: {(probability * 100).toFixed(1)}%
+                                <div className="confidence" style={{
+                                  fontSize: '0.9rem',
+                                  color: '#666',
+                                  marginBottom: '4px'
+                                }}>
+                                  Confidence: {confidence.toFixed(1)}%
                                 </div>
-                                <div className="prediction-details">
-                                  <span>Momentum: {prediction.momentum_score?.toFixed(2)}</span>
-                                  {fiftyTwoWeekHigh && price && (
-                                    <span>From 52w High: {((price / fiftyTwoWeekHigh - 1) * 100).toFixed(1)}%</span>
-                                  )}
+                                <div className="prediction-reasoning" style={{
+                                  fontSize: '0.85rem',
+                                  color: '#888',
+                                  fontStyle: 'italic',
+                                  marginTop: '4px'
+                                }}>
+                                  {reasoning}
                                 </div>
                               </div>
                             )}
