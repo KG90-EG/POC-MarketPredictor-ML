@@ -683,15 +683,6 @@ function AppContent() {
       {/* Results Section - Only for stocks */}
       {portfolioView === 'stocks' && results.length > 0 && (
         <>
-          {/* AI Analysis Section */}
-          <AIAnalysisSection
-            userContext={userContext}
-            onContextChange={setUserContext}
-            onAnalyze={requestAnalysis}
-            analyzing={analyzing}
-            analysis={analysis}
-          />
-
           {/* Ranked Stocks Table */}
           <StockRanking
             results={results}
