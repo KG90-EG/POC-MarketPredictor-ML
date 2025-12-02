@@ -473,7 +473,6 @@ function WatchlistManager({ userId = 'default_user' }) {
                     Add
                   </button>
                 </div>
-              </form>>
               </form>
 
               <div className="stocks-list">
