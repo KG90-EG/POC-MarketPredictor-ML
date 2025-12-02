@@ -12,6 +12,7 @@ import StockRanking from './components/StockRanking'
 import CryptoPortfolio from './components/CryptoPortfolio'
 import MarketSelector from './components/MarketSelector'
 import WatchlistManager from './components/WatchlistManager'
+import BuyOpportunities from './components/BuyOpportunities'
 import './styles.css'
 
 // Create a React Query client
@@ -419,6 +420,19 @@ function AppContent() {
               Saved favorites
             </div>
           </button>
+
+          <button
+            className={`portfolio-toggle-button buy-opportunities ${portfolioView === 'buy-opportunities' ? 'active' : ''}`}
+            onClick={() => setPortfolioView('buy-opportunities')}
+            aria-label="Switch to buy opportunities view"
+            aria-pressed={portfolioView === 'buy-opportunities'}
+          >
+            <div className="icon">🎯</div>
+            <div className="title">Buy Now</div>
+            <div className="description">
+              Best opportunities
+            </div>
+          </button>
         </div>
       </section>
 
@@ -561,6 +575,11 @@ function AppContent() {
       {/* Watchlists View */}
       {portfolioView === 'watchlists' && (
         <WatchlistManager userId="default_user" />
+      )}
+
+      {/* Buy Opportunities View */}
+      {portfolioView === 'buy-opportunities' && (
+        <BuyOpportunities />
       )}
 
       {/* Search Section - Only for stocks */}

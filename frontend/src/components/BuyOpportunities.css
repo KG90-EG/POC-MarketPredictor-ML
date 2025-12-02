@@ -1,0 +1,325 @@
+.buy-opportunities {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.opportunities-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.opportunities-header h2 {
+  margin: 0;
+  color: #1a1a1a;
+  font-size: 1.8rem;
+}
+
+.refresh-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.loading-opportunities {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 20px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #4CAF50;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-opportunities p {
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid #c33;
+}
+
+.opportunities-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s;
+  position: relative;
+  bottom: -2px;
+}
+
+.tab-btn:hover {
+  color: #4CAF50;
+}
+
+.tab-btn.active {
+  color: #4CAF50;
+  border-bottom-color: #4CAF50;
+}
+
+.opportunities-content {
+  min-height: 400px;
+}
+
+.empty-opportunities {
+  text-align: center;
+  padding: 60px 20px;
+  background: #f9f9f9;
+  border-radius: 12px;
+  border: 2px dashed #ddd;
+}
+
+.empty-opportunities p {
+  font-size: 1.2rem;
+  color: #666;
+  margin: 12px 0;
+}
+
+.empty-opportunities .hint {
+  font-size: 0.95rem;
+  color: #888;
+  font-style: italic;
+  max-width: 500px;
+  margin: 16px auto 0;
+}
+
+.opportunity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+.opportunity-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s;
+  position: relative;
+  border: 2px solid #e0e0e0;
+}
+
+.opportunity-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(76, 175, 80, 0.15);
+  border-color: #4CAF50;
+}
+
+.opportunity-rank {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.opportunity-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.opportunity-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 50px;
+}
+
+.crypto-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.opportunity-ticker {
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: #1a1a1a;
+}
+
+.opportunity-name {
+  font-size: 0.95rem;
+  color: #666;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.opportunity-signal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.signal-badge {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.signal-badge.buy {
+  background: #d1fae5;
+  color: #10b981;
+  border: 2px solid #10b981;
+}
+
+.confidence-score {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #4CAF50;
+}
+
+.opportunity-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.detail-item .label {
+  color: #666;
+  font-weight: 500;
+}
+
+.detail-item .value {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.detail-item .value.positive {
+  color: #10b981;
+}
+
+.detail-item .value.negative {
+  color: #ef4444;
+}
+
+.opportunity-reasoning {
+  font-size: 0.9rem;
+  color: #64748b;
+  font-style: italic;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  border-left: 3px solid #4CAF50;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .opportunities-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .opportunities-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .opportunity-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .opportunities-tabs {
+    overflow-x: auto;
+  }
+
+  .tab-btn {
+    padding: 10px 16px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .buy-opportunities {
+    padding: 16px;
+  }
+
+  .opportunities-header h2 {
+    font-size: 1.3rem;
+  }
+
+  .opportunity-card {
+    padding: 16px;
+  }
+
+  .opportunity-ticker {
+    font-size: 1.1rem;
+  }
+}
