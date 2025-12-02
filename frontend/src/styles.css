@@ -713,6 +713,7 @@ td:first-child {
 
   .header h1 {
     font-size: 1.5rem;
+    padding: 0 120px; /* Space for buttons on sides */
   }
 
   .header p {
@@ -733,6 +734,14 @@ td:first-child {
     font-size: 1.1rem;
     right: 10px;
     top: 55px; /* Stack below theme toggle */
+  }
+
+  .help-button {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+    right: 60px;
+    top: 10px;
   }
 
   .search-controls {
@@ -1369,6 +1378,7 @@ body.dark-mode .recommendation-text {
 
   .header h1 {
     font-size: 1.3rem;
+    padding: 0 100px; /* Space for buttons on sides */
   }
 
   .header .emoji {
@@ -1380,7 +1390,8 @@ body.dark-mode .recommendation-text {
   }
 
   .theme-toggle,
-  .health-indicator {
+  .health-indicator,
+  .help-button {
     width: 36px;
     height: 36px;
     font-size: 0.9rem;
@@ -1394,6 +1405,11 @@ body.dark-mode .recommendation-text {
   .health-indicator {
     right: 8px;
     top: 50px; /* Stack below theme toggle */
+  }
+
+  .help-button {
+    right: 52px;
+    top: 8px;
   }
 
   /* Even larger, more readable table text for phones */
