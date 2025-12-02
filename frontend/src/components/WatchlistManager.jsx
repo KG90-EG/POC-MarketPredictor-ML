@@ -125,38 +125,46 @@ function WatchlistManager({ userId = 'default_user' }) {
   const handleAssetInputChange = async (value) => {
     setNewStockTicker(value);
 
-    // If empty, show popular items based on asset type
+    // If empty, show both stocks and cryptos
     if (!value.trim()) {
-      if (assetType === 'crypto') {
-        setFilteredStocks(popularCryptos.slice(0, 10).map(c => ({ ticker: c.id, name: `${c.name} (${c.symbol})` })));
-      } else {
-        setFilteredStocks(popularStocks.slice(0, 10));
-      }
+      const combined = [
+        ...popularStocks.slice(0, 5),
+        ...popularCryptos.slice(0, 5).map(c => ({ 
+          ticker: c.id, 
+          name: `${c.name} (${c.symbol})`,
+          asset_type: 'crypto'
+        }))
+      ];
+      setFilteredStocks(combined);
       setShowDropdown(true);
       return;
     }
 
-    // Search dynamically from API for better results
+    // Search both stocks and cryptos simultaneously
     try {
-      const endpoint = assetType === 'crypto' ? '/search_cryptos' : '/search_stocks';
-      const response = await apiClient.get(`${endpoint}?query=${encodeURIComponent(value)}&limit=10`);
+      const [stocksRes, cryptosRes] = await Promise.all([
+        apiClient.get(`/search_stocks?query=${encodeURIComponent(value)}&limit=5`).catch(() => ({ data: { stocks: [] } })),
+        apiClient.get(`/search_cryptos?query=${encodeURIComponent(value)}&limit=5`).catch(() => ({ data: { cryptos: [] } }))
+      ]);
 
-      if (assetType === 'crypto') {
-        const cryptos = response.data.cryptos || [];
-        setFilteredStocks(cryptos.map(c => ({ ticker: c.id, name: `${c.name} (${c.symbol})` })));
-      } else {
-        setFilteredStocks(response.data.stocks || []);
-      }
+      const stocks = stocksRes.data.stocks || [];
+      const cryptos = cryptosRes.data.cryptos || [];
+      
+      // Combine results with asset_type marker
+      const combined = [
+        ...stocks.map(s => ({ ...s, asset_type: 'stock' })),
+        ...cryptos.map(c => ({ 
+          ticker: c.id, 
+          name: `${c.name} (${c.symbol})`,
+          asset_type: 'crypto'
+        }))
+      ];
+      
+      setFilteredStocks(combined);
       setShowDropdown(true);
     } catch (err) {
       console.error('Search failed:', err);
-      // Fallback to client-side filtering
-      const searchTerm = value.toLowerCase();
-      const filtered = popularStocks.filter(stock =>
-        stock.ticker.toLowerCase().includes(searchTerm) ||
-        stock.name.toLowerCase().includes(searchTerm)
-      );
-      setFilteredStocks(filtered.slice(0, 10));
+      setFilteredStocks([]);
       setShowDropdown(true);
     }
   };
@@ -164,6 +172,7 @@ function WatchlistManager({ userId = 'default_user' }) {
   const handleStockSelect = (stock) => {
     setNewStockTicker(stock.ticker);
     setNewStockNotes(stock.name);
+    setAssetType(stock.asset_type || 'stock'); // Auto-detect from search result
     setShowDropdown(false);
   };
 
@@ -414,45 +423,25 @@ function WatchlistManager({ userId = 'default_user' }) {
                   <p className="description">{selectedWatchlist.description}</p>
                 )}
               </div>
-
               <form className="add-stock-form" onSubmit={handleAddStock}>
-                <div className="asset-type-toggle">
-                  <button
-                    type="button"
-                    className={assetType === 'stock' ? 'active' : ''}
-                    onClick={() => {
-                      setAssetType('stock');
-                      setNewStockTicker('');
-                      setFilteredStocks([]);
-                    }}
-                  >
-                    📈 Stocks
-                  </button>
-                  <button
-                    type="button"
-                    className={assetType === 'crypto' ? 'active' : ''}
-                    onClick={() => {
-                      setAssetType('crypto');
-                      setNewStockTicker('');
-                      setFilteredStocks([]);
-                    }}
-                  >
-                    ₿ Crypto
-                  </button>
-                </div>
                 <div className="form-inputs">
                   <div className="stock-input-container">
                     <input
                       type="text"
-                      placeholder={assetType === 'stock' ? "Search stocks (e.g., Apple, AAPL)" : "Search crypto (e.g., Bitcoin, BTC)"}
+                      placeholder="Search stocks or crypto (e.g., Apple, Bitcoin, AAPL, BTC)"
                       value={newStockTicker}
                       onChange={(e) => handleAssetInputChange(e.target.value)}
                       onFocus={() => {
-                        if (assetType === 'crypto') {
-                          setFilteredStocks(popularCryptos.slice(0, 10).map(c => ({ ticker: c.id, name: `${c.name} (${c.symbol})` })));
-                        } else {
-                          setFilteredStocks(popularStocks.slice(0, 10));
-                        }
+                        // Show popular items on focus
+                        const combined = [
+                          ...popularStocks.slice(0, 5),
+                          ...popularCryptos.slice(0, 5).map(c => ({ 
+                            ticker: c.id, 
+                            name: `${c.name} (${c.symbol})`,
+                            asset_type: 'crypto'
+                          }))
+                        ];
+                        setFilteredStocks(combined);
                         setShowDropdown(true);
                       }}
                       onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
@@ -481,9 +470,10 @@ function WatchlistManager({ userId = 'default_user' }) {
                     onChange={(e) => setNewStockNotes(e.target.value)}
                   />
                   <button type="submit" disabled={loading}>
-                    Add {assetType === 'stock' ? 'Stock' : 'Crypto'}
+                    Add
                   </button>
                 </div>
+              </form>>
               </form>
 
               <div className="stocks-list">
