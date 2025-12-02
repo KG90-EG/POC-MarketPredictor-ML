@@ -54,12 +54,12 @@ function BuyOpportunities() {
       const buyStocks = stockPredictions
         .filter(s => s.prediction.signal === 'BUY')
         .sort((a, b) => b.prediction.confidence - a.prediction.confidence)
-        .slice(0, 10);
+        .slice(0, 6);
 
       const sellStocks = stockPredictions
         .filter(s => s.prediction.signal === 'SELL')
         .sort((a, b) => b.prediction.confidence - a.prediction.confidence)
-        .slice(0, 10);
+        .slice(0, 6);
 
       setStockBuyOpportunities(buyStocks);
       setStockSellOpportunities(sellStocks);
@@ -91,12 +91,12 @@ function BuyOpportunities() {
       const buyCryptos = cryptoPredictions
         .filter(c => c.prediction.signal === 'BUY')
         .sort((a, b) => b.prediction.confidence - a.prediction.confidence)
-        .slice(0, 10);
+        .slice(0, 6);
 
       const sellCryptos = cryptoPredictions
         .filter(c => c.prediction.signal === 'SELL')
         .sort((a, b) => b.prediction.confidence - a.prediction.confidence)
-        .slice(0, 10);
+        .slice(0, 6);
 
       setCryptoBuyOpportunities(buyCryptos);
       setCryptoSellOpportunities(sellCryptos);
@@ -118,7 +118,7 @@ function BuyOpportunities() {
     setAnalysis(null);
 
     try {
-      const currentOpportunities = activeTab === 'stocks' 
+      const currentOpportunities = activeTab === 'stocks'
         ? [...stockBuyOpportunities, ...stockSellOpportunities]
         : [...cryptoBuyOpportunities, ...cryptoSellOpportunities];
 
@@ -164,9 +164,9 @@ function BuyOpportunities() {
     <div className="buy-opportunities">
       <div className="opportunities-header">
         <h2>🎯 Trading Opportunities</h2>
-        <button 
-          className="refresh-btn" 
-          onClick={handleRefresh} 
+        <button
+          className="refresh-btn"
+          onClick={handleRefresh}
           disabled={loading}
           title="Refresh opportunities"
         >
@@ -249,7 +249,7 @@ function BuyOpportunities() {
                           <span className="opportunity-ticker">{stock.ticker}</span>
                           <span className="opportunity-name">{stock.name || stock.ticker}</span>
                         </div>
-                        
+
                         <div className="opportunity-signal">
                           <div className="signal-badge buy">
                             🟢 BUY
@@ -260,7 +260,7 @@ function BuyOpportunities() {
                         </div>
 
                         <div className="opportunity-details">
-                          {stock.prediction?.metrics?.probability && (
+                          {stock.prediction?.metrics?.probability != null && (
                             <div className="detail-item">
                               <span className="label">ML Probability:</span>
                               <span className="value">{(stock.prediction.metrics.probability * 100).toFixed(1)}%</span>
@@ -268,7 +268,7 @@ function BuyOpportunities() {
                           )}
                           <div className="detail-item">
                             <span className="label">Price:</span>
-                            <span className="value">${stock.current_price ? stock.current_price.toFixed(2) : 'N/A'}</span>
+                            <span className="value">{stock.current_price != null ? `$${stock.current_price.toFixed(2)}` : 'N/A'}</span>
                           </div>
                         </div>
 
@@ -277,7 +277,7 @@ function BuyOpportunities() {
                         </div>
 
                         <div className="opportunity-actions">
-                          <a 
+                          <a
                             href={`https://finance.yahoo.com/quote/${stock.ticker}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -285,7 +285,7 @@ function BuyOpportunities() {
                           >
                             📊 View Chart
                           </a>
-                          <a 
+                          <a
                             href={`https://www.google.com/finance/quote/${stock.ticker}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -319,7 +319,7 @@ function BuyOpportunities() {
                           <span className="opportunity-ticker">{stock.ticker}</span>
                           <span className="opportunity-name">{stock.name || stock.ticker}</span>
                         </div>
-                        
+
                         <div className="opportunity-signal">
                           <div className="signal-badge sell">
                             🔴 SELL
@@ -330,7 +330,7 @@ function BuyOpportunities() {
                         </div>
 
                         <div className="opportunity-details">
-                          {stock.prediction?.metrics?.probability && (
+                          {stock.prediction?.metrics?.probability != null && (
                             <div className="detail-item">
                               <span className="label">ML Probability:</span>
                               <span className="value">{(stock.prediction.metrics.probability * 100).toFixed(1)}%</span>
@@ -338,7 +338,7 @@ function BuyOpportunities() {
                           )}
                           <div className="detail-item">
                             <span className="label">Price:</span>
-                            <span className="value">${stock.current_price ? stock.current_price.toFixed(2) : 'N/A'}</span>
+                            <span className="value">{stock.current_price != null ? `$${stock.current_price.toFixed(2)}` : 'N/A'}</span>
                           </div>
                         </div>
 
@@ -347,7 +347,7 @@ function BuyOpportunities() {
                         </div>
 
                         <div className="opportunity-actions">
-                          <a 
+                          <a
                             href={`https://finance.yahoo.com/quote/${stock.ticker}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -355,7 +355,7 @@ function BuyOpportunities() {
                           >
                             📊 View Chart
                           </a>
-                          <a 
+                          <a
                             href={`https://www.google.com/finance/quote/${stock.ticker}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -390,15 +390,15 @@ function BuyOpportunities() {
                       <div className="opportunity-rank">#{index + 1}</div>
                       <div className="opportunity-main">
                         <div className="opportunity-header">
-                          <img 
-                            src={crypto.image} 
+                          <img
+                            src={crypto.image}
                             alt={crypto.name}
                             className="crypto-icon"
                           />
                           <span className="opportunity-ticker">{crypto.symbol.toUpperCase()}</span>
                           <span className="opportunity-name">{crypto.name}</span>
                         </div>
-                        
+
                         <div className="opportunity-signal">
                           <div className="signal-badge buy">
                             🟢 BUY
@@ -430,7 +430,7 @@ function BuyOpportunities() {
                         </div>
 
                         <div className="opportunity-actions">
-                          <a 
+                          <a
                             href={`https://www.coingecko.com/en/coins/${crypto.crypto_id}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -438,7 +438,7 @@ function BuyOpportunities() {
                           >
                             📊 View Chart
                           </a>
-                          <a 
+                          <a
                             href={`https://coinmarketcap.com/currencies/${crypto.crypto_id}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -469,15 +469,15 @@ function BuyOpportunities() {
                       <div className="opportunity-rank">#{index + 1}</div>
                       <div className="opportunity-main">
                         <div className="opportunity-header">
-                          <img 
-                            src={crypto.image} 
+                          <img
+                            src={crypto.image}
                             alt={crypto.name}
                             className="crypto-icon"
                           />
                           <span className="opportunity-ticker">{crypto.symbol.toUpperCase()}</span>
                           <span className="opportunity-name">{crypto.name}</span>
                         </div>
-                        
+
                         <div className="opportunity-signal">
                           <div className="signal-badge sell">
                             🔴 SELL
@@ -509,7 +509,7 @@ function BuyOpportunities() {
                         </div>
 
                         <div className="opportunity-actions">
-                          <a 
+                          <a
                             href={`https://www.coingecko.com/en/coins/${crypto.crypto_id}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -517,7 +517,7 @@ function BuyOpportunities() {
                           >
                             📊 View Chart
                           </a>
-                          <a 
+                          <a
                             href={`https://coinmarketcap.com/currencies/${crypto.crypto_id}`}
                             target="_blank"
                             rel="noopener noreferrer"

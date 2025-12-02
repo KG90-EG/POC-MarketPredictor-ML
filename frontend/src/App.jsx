@@ -13,6 +13,7 @@ import CryptoPortfolio from './components/CryptoPortfolio'
 import MarketSelector from './components/MarketSelector'
 import WatchlistManager from './components/WatchlistManager'
 import BuyOpportunities from './components/BuyOpportunities'
+import AlertPanel from './components/AlertPanel'
 import './styles.css'
 
 // Create a React Query client
@@ -58,7 +59,7 @@ function AppContent() {
   const [includeNFT] = useState(true) // Always include NFTs
   const [cryptoLimit, setCryptoLimit] = useState(50)
   const [cryptoPage, setCryptoPage] = useState(1)
-  const [cryptoPerPage] = useState(20) // Items per page
+  const [cryptoPerPage] = useState(10) // Items per page
   const [cryptoSearchTerm, setCryptoSearchTerm] = useState('')
 
   // Filter crypto results based on search term
@@ -356,6 +357,7 @@ function AppContent() {
           {healthStatus === 'error' && '❌'}
           {healthStatus === 'loading' && '⏳'}
         </button>
+        <AlertPanel />
         <button
           className="help-button"
           onClick={() => setShowHelp(true)}

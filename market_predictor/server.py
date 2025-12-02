@@ -15,6 +15,7 @@ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from pydantic import BaseModel
 
 from . import metrics as prom_metrics
+from .alerts import alert_manager
 
 # Import new modules
 from .cache import cache
@@ -677,11 +678,14 @@ def ranking(tickers: str = "", country: str = "Global"):
         row = df.iloc[-1:]
         prob = MODEL.predict_proba(row[features].values)[0][1]
 
+        # Get current price
+        current_price = float(df["Adj Close"].iloc[-1])
+
         # Track model prediction metrics
         pred_duration = time.time() - pred_start
         prom_metrics.track_model_prediction("random_forest", float(prob), pred_duration)
 
-        result.append({"ticker": t, "prob": float(prob)})
+        result.append({"ticker": t, "prob": float(prob), "current_price": current_price})
 
     # sort result
     result.sort(key=lambda r: r["prob"], reverse=True)
@@ -972,32 +976,51 @@ def search_stocks(query: str, limit: int = 10) -> Dict[str, Any]:
                 stock for stock in all_stocks if query_lower in stock["ticker"].lower() or query_lower in stock["name"].lower()
             ]
 
-            # If no matches in popular list, try yfinance lookup
+            # If no matches in popular list, try yfinance search and lookup
             if len(matching) == 0:
                 try:
-                    # Try as direct ticker first
-                    ticker_obj = yf.Ticker(query_upper)
-                    info = ticker_obj.info
+                    # First try yfinance search API (finds by company name like "Amazon")
+                    import yfinance as yf_module
 
-                    # Check if ticker is valid (has longName or shortName)
-                    if info and (info.get("longName") or info.get("shortName")):
-                        matching.append(
-                            {"ticker": query_upper, "name": info.get("longName") or info.get("shortName", query_upper)}
-                        )
-                    else:
-                        # Try with common suffixes for Swiss stocks
-                        for suffix in [".SW", ".DE", ".L", ".PA"]:
-                            ticker_with_suffix = query_upper + suffix
-                            ticker_obj = yf.Ticker(ticker_with_suffix)
-                            info = ticker_obj.info
-                            if info and (info.get("longName") or info.get("shortName")):
-                                matching.append(
-                                    {
-                                        "ticker": ticker_with_suffix,
-                                        "name": info.get("longName") or info.get("shortName", ticker_with_suffix),
-                                    }
-                                )
-                                break
+                    search_results = yf_module.Search(query, max_results=5)
+
+                    if search_results and hasattr(search_results, "quotes") and search_results.quotes:
+                        for result in search_results.quotes:
+                            try:
+                                ticker = result.get("symbol", "")
+                                if not ticker:
+                                    continue
+                                name = result.get("longname", result.get("shortname", ""))
+                                if ticker and name:
+                                    matching.append({"ticker": ticker, "name": name})
+                            except Exception as search_error:
+                                logger.debug(f"Error processing search result: {search_error}")
+                                continue
+
+                    # If search didn't work, try as direct ticker
+                    if len(matching) == 0:
+                        ticker_obj = yf.Ticker(query_upper)
+                        info = ticker_obj.info
+
+                        # Check if ticker is valid (has longName or shortName)
+                        if info and (info.get("longName") or info.get("shortName")):
+                            matching.append(
+                                {"ticker": query_upper, "name": info.get("longName") or info.get("shortName", query_upper)}
+                            )
+                        else:
+                            # Try with common suffixes for Swiss stocks
+                            for suffix in [".SW", ".DE", ".L", ".PA"]:
+                                ticker_with_suffix = query_upper + suffix
+                                ticker_obj = yf.Ticker(ticker_with_suffix)
+                                info = ticker_obj.info
+                                if info and (info.get("longName") or info.get("shortName")):
+                                    matching.append(
+                                        {
+                                            "ticker": ticker_with_suffix,
+                                            "name": info.get("longName") or info.get("shortName", ticker_with_suffix),
+                                        }
+                                    )
+                                    break
                 except Exception as yf_error:
                     logger.debug(f"YFinance lookup failed for {query}: {yf_error}")
 
@@ -1355,7 +1378,7 @@ def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
                     confidence = 50 + abs(momentum) / 2
                     reasoning = f"Neutral trend ({momentum:.1f}%)"
 
-                return {
+                result = {
                     "signal": signal,
                     "confidence": round(confidence, 1),
                     "reasoning": reasoning,
@@ -1365,6 +1388,15 @@ def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
                         "momentum": round(momentum, 2),
                     },
                 }
+
+                # Check for alerts (crypto)
+                crypto_name = data.get("name", ticker)
+                current_price = data.get("market_data", {}).get("current_price", {}).get("usd")
+                alert_manager.check_and_create_alerts(
+                    symbol=ticker, name=crypto_name, asset_type="crypto", prediction=result, current_price=current_price
+                )
+
+                return result
 
             except Exception as e:
                 logger.error(f"Crypto prediction error: {e}")
@@ -1441,6 +1473,18 @@ def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
                         ),
                     },
                 }
+
+                # Check for alerts (stock)
+                current_price = float(df["Adj Close"].iloc[-1])
+                alert_manager.check_and_create_alerts(
+                    symbol=ticker,
+                    name=ticker,  # Could fetch company name from yfinance
+                    asset_type="stock",
+                    prediction=result,
+                    current_price=current_price,
+                )
+
+                return result
 
             except Exception as e:
                 logger.error(f"Stock prediction error for {ticker}: {e}")
@@ -1721,6 +1765,72 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     except Exception as e:
         logger.error(f"WebSocket error for client {client_id}: {e}")
         ws_manager.disconnect(client_id)
+
+
+# Alert Management Endpoints
+@app.get("/alerts", tags=["Alerts"])
+def get_alerts(unread_only: bool = False, priority: Optional[str] = None, asset_type: Optional[str] = None, limit: int = 50):
+    """
+    Get alerts with optional filters.
+
+    Query Parameters:
+    - unread_only: Only return unread alerts (default: False)
+    - priority: Filter by priority (low, medium, high, critical)
+    - asset_type: Filter by asset type (stock, crypto)
+    - limit: Maximum number of alerts to return (default: 50)
+    """
+    try:
+        from .alerts import AlertPriority
+
+        priority_enum = None
+        if priority:
+            try:
+                priority_enum = AlertPriority[priority.upper()]
+            except KeyError:
+                raise HTTPException(status_code=400, detail=f"Invalid priority: {priority}")
+
+        alerts = alert_manager.get_alerts(unread_only=unread_only, priority=priority_enum, asset_type=asset_type, limit=limit)
+
+        unread_count = alert_manager.get_unread_count()
+
+        return {"alerts": alerts, "unread_count": unread_count, "total_count": len(alert_manager.alerts)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching alerts: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/alerts/mark-read", tags=["Alerts"])
+def mark_alerts_read(alert_ids: List[str]):
+    """
+    Mark alerts as read.
+
+    Body:
+    - alert_ids: List of alert IDs to mark as read
+    """
+    try:
+        marked = alert_manager.mark_as_read(alert_ids)
+        return {"message": f"Marked {marked} alerts as read", "marked_count": marked}
+    except Exception as e:
+        logger.error(f"Error marking alerts as read: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/alerts/clear", tags=["Alerts"])
+def clear_old_alerts(older_than_days: int = 7):
+    """
+    Clear old alerts.
+
+    Query Parameters:
+    - older_than_days: Remove alerts older than this many days (default: 7)
+    """
+    try:
+        removed = alert_manager.clear_alerts(older_than_days)
+        return {"message": f"Cleared {removed} old alerts", "removed_count": removed}
+    except Exception as e:
+        logger.error(f"Error clearing alerts: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Mount frontend static files LAST so API routes take precedence
