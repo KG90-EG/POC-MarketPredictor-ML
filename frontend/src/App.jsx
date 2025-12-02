@@ -10,6 +10,7 @@ import CryptoDetailSidebar from './components/CryptoDetailSidebar'
 import AIAnalysisSection from './components/AIAnalysisSection'
 import StockRanking from './components/StockRanking'
 import CryptoPortfolio from './components/CryptoPortfolio'
+import MarketSelector from './components/MarketSelector'
 import './styles.css'
 
 // Create a React Query client
@@ -40,7 +41,7 @@ function AppContent() {
   const [showHelp, setShowHelp] = useState(false)
   const [selectedCompany, setSelectedCompany] = useState(null)
   const [selectedCrypto, setSelectedCrypto] = useState(null)
-  const [selectedViews, setSelectedViews] = useState(['Global'])
+  const [selectedView, setSelectedView] = useState('Global')
   const [showHealthPanel, setShowHealthPanel] = useState(false)
   const [healthStatus, setHealthStatus] = useState('loading')
   const [darkMode, setDarkMode] = useState(() => {
@@ -81,6 +82,7 @@ function AppContent() {
   // Auto-load ranking on mount
   useEffect(() => {
     fetchRanking()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Check health status periodically
@@ -104,29 +106,21 @@ function AppContent() {
     setDarkMode(!darkMode)
   }
 
-  async function fetchRanking(views = selectedViews) {
+  async function fetchRanking(view = selectedView) {
     setLoading(true)
     setAnalysis(null)
     setCurrentPage(1)
     setLoadingProgress({ current: 0, total: 0 })
     
     try {
-      // Fetch ranking for each selected view and merge
-      let allRankings = []
-      for (const view of views) {
-        const resp = await api.getRanking(view)
-        allRankings = [...allRankings, ...resp.data.ranking]
-      }
+      // Fetch ranking for the selected view
+      const resp = await api.getRanking(view)
+      const rankings = resp.data.ranking
       
-      // Remove duplicates and re-sort by probability
-      const uniqueRankings = Array.from(
-        new Map(allRankings.map(item => [item.ticker, item])).values()
-      ).sort((a, b) => b.prob - a.prob)
-      
-      setResults(uniqueRankings)
+      setResults(rankings)
       
       // Batch fetch ticker details (much faster than sequential)
-      const tickers = uniqueRankings.map(r => r.ticker)
+      const tickers = rankings.map(r => r.ticker)
       setLoadingProgress({ current: 0, total: tickers.length })
       
       try {
@@ -151,7 +145,7 @@ function AppContent() {
           alert('⚠️ Network error: Please check your connection and try again.')
         }
         // Fallback to sequential if batch fails
-        await fetchDetailsSequential(uniqueRankings)
+        await fetchDetailsSequential(rankings)
       }
     } catch (e) {
       const error = handleApiError(e, 'Error fetching ranking')
@@ -419,67 +413,28 @@ function AppContent() {
       {portfolioView === 'stocks' && (
       <section className="card" role="region" aria-label="Market view selector">
         <div className="card-title">
-          🌍 Market View - {selectedViews.join(', ')}
+          🌍 Market View - {selectedView}
           {!loading && results.length > 0 && (
             <span style={{marginLeft: '8px', color: '#667eea', fontWeight: 'bold'}}>({results.length})</span>
           )}
         </div>
-        <div style={{marginBottom: '8px', fontSize: '0.9rem', color: '#666'}}>
-          💡 Click to select multiple markets
+        <div style={{marginBottom: '16px', fontSize: '0.9rem', color: '#666'}}>
+          💡 Select a market to view top performers
         </div>
-        <div style={{display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px'}}>
-          {['Global', 'United States', 'Switzerland', 'Germany', 'United Kingdom', 'France', 'Japan', 'Canada'].map(view => {
-            const isSelected = selectedViews.includes(view)
-            return (
-              <button
-                key={view}
-                onClick={() => {
-                  let newViews
-                  if (isSelected) {
-                    // Deselect if already selected (but keep at least one)
-                    newViews = selectedViews.length > 1 
-                      ? selectedViews.filter(v => v !== view)
-                      : selectedViews
-                  } else {
-                    // Add to selection
-                    newViews = [...selectedViews, view]
-                  }
-                  setSelectedViews(newViews)
-                  fetchRanking(newViews)
-                }}
-                aria-label={`${view} market view`}
-                aria-pressed={isSelected}
-                style={{
-                  padding: '10px 20px',
-                  background: isSelected ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f0f0f0',
-                  color: isSelected ? 'white' : '#333',
-                  border: isSelected ? '2px solid #764ba2' : '2px solid transparent',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: isSelected ? '600' : '400',
-                  transition: 'all 0.3s ease',
-                  boxShadow: isSelected ? '0 4px 12px rgba(102, 126, 234, 0.4)' : 'none',
-                  position: 'relative'
-                }}
-              >
-                {isSelected && <span style={{position: 'absolute', top: '-4px', right: '-4px', fontSize: '12px'}}>✓</span>}
-                {view === 'Global' ? '🌐' : 
-                 view === 'United States' ? '🇺🇸' : 
-                 view === 'Switzerland' ? '🇨🇭' : 
-                 view === 'Germany' ? '🇩🇪' : 
-                 view === 'United Kingdom' ? '🇬🇧' : 
-                 view === 'France' ? '🇫🇷' : 
-                 view === 'Japan' ? '🇯🇵' : 
-                 view === 'Canada' ? '🇨🇦' : '🌎'} {view}
-              </button>
-            )
-          })}
-        </div>
+        
+        <MarketSelector 
+          selectedView={selectedView}
+          onSelectionChange={(view) => {
+            setSelectedView(view)
+            fetchRanking(view)
+          }}
+          disabled={loading}
+        />
         
         {loading ? (
           <div style={{textAlign: 'center', padding: '40px'}} role="status" aria-live="polite" aria-atomic="true">
             <span className="spinner"></span>
-            <p>Loading {selectedViews.join(', ')} market rankings...</p>
+            <p>Loading {selectedView} market rankings...</p>
             {loadingProgress.total > 0 && (
               <div style={{marginTop: '16px'}}>
                 <div style={{
@@ -509,7 +464,7 @@ function AppContent() {
           </div>
         ) : (
           <p style={{color: '#666', fontSize: '0.9rem', margin: '0'}}>
-            Select a market view above to analyze top performers for a diversified portfolio
+            Select a market view above to analyze top performers
           </p>
         )}
       </section>
