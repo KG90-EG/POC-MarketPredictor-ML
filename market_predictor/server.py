@@ -8,7 +8,14 @@ import pandas as pd
 import requests
 import yfinance as yf
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Request,
+    Response,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
@@ -25,7 +32,13 @@ from .database import WatchlistDB
 from .logging_config import RequestLogger, setup_logging
 from .rate_limiter import RateLimiter
 from .services import HealthService, StockService, ValidationService
-from .trading import compute_bollinger, compute_macd, compute_momentum, compute_rsi, features
+from .trading import (
+    compute_bollinger,
+    compute_macd,
+    compute_momentum,
+    compute_rsi,
+    features,
+)
 from .websocket import manager as ws_manager
 
 # Load environment variables from .env file
@@ -685,7 +698,9 @@ def ranking(tickers: str = "", country: str = "Global"):
         pred_duration = time.time() - pred_start
         prom_metrics.track_model_prediction("random_forest", float(prob), pred_duration)
 
-        result.append({"ticker": t, "prob": float(prob), "current_price": current_price})
+        result.append(
+            {"ticker": t, "prob": float(prob), "current_price": current_price}
+        )
 
     # sort result
     result.sort(key=lambda r: r["prob"], reverse=True)
@@ -739,7 +754,9 @@ def crypto_ranking(
         # Parse crypto IDs if provided
         crypto_list = None
         if crypto_ids.strip():
-            crypto_list = [cid.strip().lower() for cid in crypto_ids.split(",") if cid.strip()]
+            crypto_list = [
+                cid.strip().lower() for cid in crypto_ids.split(",") if cid.strip()
+            ]
 
         # Get ranked cryptocurrencies
         rankings = get_crypto_ranking(
@@ -753,7 +770,9 @@ def crypto_ranking(
 
     except Exception as e:
         logger.error(f"Error in crypto_ranking endpoint: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch crypto rankings: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch crypto rankings: {str(e)}"
+        )
 
 
 @app.get(
@@ -788,7 +807,9 @@ def crypto_search(query: str):
         result = search_crypto(query.strip())
 
         if result is None:
-            raise HTTPException(status_code=404, detail=f"Cryptocurrency '{query}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Cryptocurrency '{query}' not found"
+            )
 
         return result
 
@@ -796,7 +817,9 @@ def crypto_search(query: str):
         raise
     except Exception as e:
         logger.error(f"Error in crypto_search endpoint: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to search crypto: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to search crypto: {str(e)}"
+        )
 
 
 @app.get(
@@ -829,7 +852,9 @@ def crypto_details(crypto_id: str):
         details = get_crypto_details(crypto_id)
 
         if details is None:
-            raise HTTPException(status_code=404, detail=f"Cryptocurrency '{crypto_id}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Cryptocurrency '{crypto_id}' not found"
+            )
 
         return details
 
@@ -837,7 +862,9 @@ def crypto_details(crypto_id: str):
         raise
     except Exception as e:
         logger.error(f"Error in crypto_details endpoint: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch crypto details: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch crypto details: {str(e)}"
+        )
 
 
 @app.get("/models")
@@ -845,7 +872,9 @@ def list_models() -> Dict[str, Any]:
     """List available model artifacts in the models directory.
     Returns current loaded model filename and list of other model files with sizes.
     """
-    models_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "models"))
+    models_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "models")
+    )
     items: List[Dict[str, Any]] = []
     if os.path.isdir(models_dir):
         for fname in sorted(os.listdir(models_dir)):
@@ -876,7 +905,9 @@ def ticker_info(ticker: str) -> Dict[str, Any]:
             raise HTTPException(status_code=400, detail=str(e))
         except Exception as e:
             logger.error(f"Error fetching info for {ticker}: {e}")
-            raise HTTPException(status_code=404, detail=f"Unable to fetch info: {str(e)}")
+            raise HTTPException(
+                status_code=404, detail=f"Unable to fetch info: {str(e)}"
+            )
 
 
 @app.post("/ticker_info_batch")
@@ -973,7 +1004,10 @@ def search_stocks(query: str, limit: int = 10) -> Dict[str, Any]:
 
             # Filter by query
             matching = [
-                stock for stock in all_stocks if query_lower in stock["ticker"].lower() or query_lower in stock["name"].lower()
+                stock
+                for stock in all_stocks
+                if query_lower in stock["ticker"].lower()
+                or query_lower in stock["name"].lower()
             ]
 
             # If no matches in popular list, try yfinance search and lookup
@@ -984,17 +1018,25 @@ def search_stocks(query: str, limit: int = 10) -> Dict[str, Any]:
 
                     search_results = yf_module.Search(query, max_results=5)
 
-                    if search_results and hasattr(search_results, "quotes") and search_results.quotes:
+                    if (
+                        search_results
+                        and hasattr(search_results, "quotes")
+                        and search_results.quotes
+                    ):
                         for result in search_results.quotes:
                             try:
                                 ticker = result.get("symbol", "")
                                 if not ticker:
                                     continue
-                                name = result.get("longname", result.get("shortname", ""))
+                                name = result.get(
+                                    "longname", result.get("shortname", "")
+                                )
                                 if ticker and name:
                                     matching.append({"ticker": ticker, "name": name})
                             except Exception as search_error:
-                                logger.debug(f"Error processing search result: {search_error}")
+                                logger.debug(
+                                    f"Error processing search result: {search_error}"
+                                )
                                 continue
 
                     # If search didn't work, try as direct ticker
@@ -1007,7 +1049,8 @@ def search_stocks(query: str, limit: int = 10) -> Dict[str, Any]:
                             matching.append(
                                 {
                                     "ticker": query_upper,
-                                    "name": info.get("longName") or info.get("shortName", query_upper),
+                                    "name": info.get("longName")
+                                    or info.get("shortName", query_upper),
                                 }
                             )
                         else:
@@ -1016,11 +1059,16 @@ def search_stocks(query: str, limit: int = 10) -> Dict[str, Any]:
                                 ticker_with_suffix = query_upper + suffix
                                 ticker_obj = yf.Ticker(ticker_with_suffix)
                                 info = ticker_obj.info
-                                if info and (info.get("longName") or info.get("shortName")):
+                                if info and (
+                                    info.get("longName") or info.get("shortName")
+                                ):
                                     matching.append(
                                         {
                                             "ticker": ticker_with_suffix,
-                                            "name": info.get("longName") or info.get("shortName", ticker_with_suffix),
+                                            "name": info.get("longName")
+                                            or info.get(
+                                                "shortName", ticker_with_suffix
+                                            ),
                                         }
                                     )
                                     break
@@ -1317,7 +1365,9 @@ def get_watchlists(user_id: str = "default_user"):
 def create_watchlist(watchlist: WatchlistCreate, user_id: str = "default_user"):
     """Create a new watchlist."""
     try:
-        watchlist_id = WatchlistDB.create_watchlist(user_id=user_id, name=watchlist.name, description=watchlist.description)
+        watchlist_id = WatchlistDB.create_watchlist(
+            user_id=user_id, name=watchlist.name, description=watchlist.description
+        )
         return {
             "id": watchlist_id,
             "message": f"Watchlist '{watchlist.name}' created successfully",
@@ -1383,13 +1433,19 @@ def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
                 market_cap_rank = data.get("market_cap_rank", 999)
 
                 # Calculate momentum score
-                momentum = price_change_24h * 0.5 + price_change_7d * 0.3 + price_change_30d * 0.2
+                momentum = (
+                    price_change_24h * 0.5
+                    + price_change_7d * 0.3
+                    + price_change_30d * 0.2
+                )
 
                 # Determine signal - Very aggressive thresholds for maximum opportunities
                 if momentum > 5 and price_change_24h > 1 and market_cap_rank <= 150:
                     signal = "BUY"
                     confidence = min(85, 60 + abs(momentum))
-                    reasoning = f"Strong upward momentum ({momentum:.1f}%), top-150 crypto"
+                    reasoning = (
+                        f"Strong upward momentum ({momentum:.1f}%), top-150 crypto"
+                    )
                 elif momentum > 0 and price_change_7d > -2:
                     signal = "BUY"
                     confidence = min(75, 50 + abs(momentum))
@@ -1420,7 +1476,9 @@ def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
 
                 # Check for alerts (crypto)
                 crypto_name = data.get("name", ticker)
-                current_price = data.get("market_data", {}).get("current_price", {}).get("usd")
+                current_price = (
+                    data.get("market_data", {}).get("current_price", {}).get("usd")
+                )
                 alert_manager.check_and_create_alerts(
                     symbol=ticker,
                     name=crypto_name,
@@ -1450,7 +1508,9 @@ def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
 
             try:
                 # Get latest data and compute features
-                raw = yf.download(ticker, period="300d", auto_adjust=False, progress=False)
+                raw = yf.download(
+                    ticker, period="300d", auto_adjust=False, progress=False
+                )
 
                 if raw.empty:
                     return {
@@ -1492,7 +1552,9 @@ def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
                 if prob >= 0.60:
                     signal = "BUY"
                     confidence = round(prob * 100, 1)
-                    reasoning = f"Strong bullish signal from ML model (prob: {prob:.2f})"
+                    reasoning = (
+                        f"Strong bullish signal from ML model (prob: {prob:.2f})"
+                    )
                 elif prob >= 0.40:
                     signal = "BUY"
                     confidence = round(prob * 100, 1)
@@ -1516,9 +1578,15 @@ def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
                     "reasoning": reasoning,
                     "metrics": {
                         "probability": round(prob, 3),
-                        "rsi": (round(float(df.iloc[-1]["RSI"]), 2) if pd.notna(df.iloc[-1]["RSI"]) else None),
+                        "rsi": (
+                            round(float(df.iloc[-1]["RSI"]), 2)
+                            if pd.notna(df.iloc[-1]["RSI"])
+                            else None
+                        ),
                         "momentum": (
-                            round(float(df.iloc[-1]["Momentum_10d"]), 4) if pd.notna(df.iloc[-1]["Momentum_10d"]) else None
+                            round(float(df.iloc[-1]["Momentum_10d"]), 4)
+                            if pd.notna(df.iloc[-1]["Momentum_10d"])
+                            else None
                         ),
                     },
                 }
@@ -1549,7 +1617,9 @@ def get_watchlist_prediction(ticker: str, asset_type: str = "stock"):
 
 
 @app.put("/watchlists/{watchlist_id}", tags=["Watchlists"])
-def update_watchlist(watchlist_id: int, watchlist: WatchlistUpdate, user_id: str = "default_user"):
+def update_watchlist(
+    watchlist_id: int, watchlist: WatchlistUpdate, user_id: str = "default_user"
+):
     """Update watchlist details."""
     try:
         success = WatchlistDB.update_watchlist(
@@ -1584,7 +1654,9 @@ def delete_watchlist(watchlist_id: int, user_id: str = "default_user"):
 
 
 @app.post("/watchlists/{watchlist_id}/stocks", tags=["Watchlists"])
-def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: str = "default_user"):
+def add_stock_to_watchlist(
+    watchlist_id: int, stock: AddStockRequest, user_id: str = "default_user"
+):
     """Add a stock or crypto to a watchlist."""
     try:
         # For crypto assets, skip validation (CoinGecko IDs don't need ticker validation)
@@ -1593,7 +1665,9 @@ def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: s
             company_name = stock.ticker
         else:
             # Validate and verify ticker (auto-corrects common mistakes like APPLE -> AAPL)
-            validated_ticker, company_name = ValidationService.validate_and_verify_ticker(stock.ticker)
+            validated_ticker, company_name = (
+                ValidationService.validate_and_verify_ticker(stock.ticker)
+            )
 
         # Use company name in notes if no notes provided
         notes = stock.notes or company_name
@@ -1612,10 +1686,14 @@ def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: s
             )
 
         # Return corrected ticker if it was auto-corrected (stocks only)
-        response = {"message": f"{stock.asset_type.title()} {validated_ticker} added to watchlist"}
+        response = {
+            "message": f"{stock.asset_type.title()} {validated_ticker} added to watchlist"
+        }
         if stock.asset_type == "stock" and validated_ticker != stock.ticker.upper():
             response["corrected_from"] = stock.ticker
-            response["message"] = f"Stock {stock.ticker} auto-corrected to {validated_ticker} and added to watchlist"
+            response["message"] = (
+                f"Stock {stock.ticker} auto-corrected to {validated_ticker} and added to watchlist"
+            )
         return response
     except ValueError as e:
         # Validation error with suggestions
@@ -1628,10 +1706,14 @@ def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: s
 
 
 @app.delete("/watchlists/{watchlist_id}/stocks/{ticker}", tags=["Watchlists"])
-def remove_stock_from_watchlist(watchlist_id: int, ticker: str, user_id: str = "default_user"):
+def remove_stock_from_watchlist(
+    watchlist_id: int, ticker: str, user_id: str = "default_user"
+):
     """Remove a stock from a watchlist."""
     try:
-        success = WatchlistDB.remove_stock_from_watchlist(watchlist_id=watchlist_id, user_id=user_id, ticker=ticker)
+        success = WatchlistDB.remove_stock_from_watchlist(
+            watchlist_id=watchlist_id, user_id=user_id, ticker=ticker
+        )
         if not success:
             raise HTTPException(
                 status_code=404,
@@ -1649,10 +1731,14 @@ def remove_stock_from_watchlist(watchlist_id: int, ticker: str, user_id: str = "
 def analyze(request: AnalysisRequest) -> Dict[str, Any]:
     """Use LLM to analyze ranking and provide buy/sell recommendations."""
     if not OPENAI_CLIENT:
-        raise HTTPException(status_code=503, detail="LLM not configured (set OPENAI_API_KEY)")
+        raise HTTPException(
+            status_code=503, detail="LLM not configured (set OPENAI_API_KEY)"
+        )
 
     # Create cache key from ranking + context
-    cache_key = hashlib.md5(f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()).hexdigest()
+    cache_key = hashlib.md5(
+        f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()
+    ).hexdigest()
 
     # Check cache
     cached_data = cache.get(f"analysis:{cache_key}")
@@ -1704,7 +1790,11 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
                     "rank": rank,
                     "ticker": r["ticker"],
                     "prob": r["prob"],
-                    "signal": ("BUY" if r["prob"] >= 0.55 else "HOLD" if r["prob"] >= 0.45 else "SELL"),
+                    "signal": (
+                        "BUY"
+                        if r["prob"] >= 0.55
+                        else "HOLD" if r["prob"] >= 0.45 else "SELL"
+                    ),
                 }
             )
 
@@ -1771,7 +1861,8 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
                     else:
                         raise HTTPException(
                             status_code=429,
-                            detail="OpenAI rate limit exceeded. " "Please wait a moment and try again.",
+                            detail="OpenAI rate limit exceeded. "
+                            "Please wait a moment and try again.",
                         )
                 else:
                     raise
@@ -1806,12 +1897,18 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
             if action == "subscribe" and ticker:
                 ws_manager.subscribe(client_id, ticker)
-                await ws_manager.send_personal_message({"type": "subscribed", "ticker": ticker}, client_id)
+                await ws_manager.send_personal_message(
+                    {"type": "subscribed", "ticker": ticker}, client_id
+                )
             elif action == "unsubscribe" and ticker:
                 ws_manager.unsubscribe(client_id, ticker)
-                await ws_manager.send_personal_message({"type": "unsubscribed", "ticker": ticker}, client_id)
+                await ws_manager.send_personal_message(
+                    {"type": "unsubscribed", "ticker": ticker}, client_id
+                )
             elif action == "ping":
-                await ws_manager.send_personal_message({"type": "pong", "timestamp": time.time()}, client_id)
+                await ws_manager.send_personal_message(
+                    {"type": "pong", "timestamp": time.time()}, client_id
+                )
             else:
                 await ws_manager.send_personal_message(
                     {"type": "error", "message": "Invalid action or missing ticker"},
@@ -1851,7 +1948,9 @@ def get_alerts(
             try:
                 priority_enum = AlertPriority[priority.upper()]
             except KeyError:
-                raise HTTPException(status_code=400, detail=f"Invalid priority: {priority}")
+                raise HTTPException(
+                    status_code=400, detail=f"Invalid priority: {priority}"
+                )
 
         alerts = alert_manager.get_alerts(
             unread_only=unread_only,
@@ -1908,6 +2007,8 @@ def clear_old_alerts(older_than_days: int = 7):
 
 # Mount frontend static files LAST so API routes take precedence
 # This must come after all route definitions to avoid catching API routes
-FRONTEND_DIST = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
+FRONTEND_DIST = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+)
 if os.path.isdir(FRONTEND_DIST):
     app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")

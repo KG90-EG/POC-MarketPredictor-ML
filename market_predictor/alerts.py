@@ -101,7 +101,9 @@ class AlertManager:
                 },
             )
             new_alerts.append(alert)
-            logger.info(f"Alert created: {symbol} signal changed {last_signal} -> {signal}")
+            logger.info(
+                f"Alert created: {symbol} signal changed {last_signal} -> {signal}"
+            )
 
         # Update last signal
         self.last_signals[symbol] = signal
@@ -112,7 +114,9 @@ class AlertManager:
             alert = Alert(
                 alert_id=f"{symbol}_{AlertType.HIGH_CONFIDENCE.value}_{datetime.now().timestamp()}",
                 alert_type=AlertType.HIGH_CONFIDENCE,
-                priority=(AlertPriority.HIGH if signal == "BUY" else AlertPriority.MEDIUM),
+                priority=(
+                    AlertPriority.HIGH if signal == "BUY" else AlertPriority.MEDIUM
+                ),
                 asset_type=asset_type,
                 symbol=symbol,
                 name=name,
@@ -126,7 +130,9 @@ class AlertManager:
                 },
             )
             new_alerts.append(alert)
-            logger.info(f"Alert created: {symbol} high confidence {signal} ({confidence:.0f}%)")
+            logger.info(
+                f"Alert created: {symbol} high confidence {signal} ({confidence:.0f}%)"
+            )
 
         # Check for price spikes (stocks only)
         if current_price and symbol in self.last_prices:
@@ -134,7 +140,11 @@ class AlertManager:
             price_change_pct = ((current_price - last_price) / last_price) * 100
 
             if abs(price_change_pct) >= 5:  # 5% or more change
-                priority = AlertPriority.HIGH if abs(price_change_pct) >= 10 else AlertPriority.MEDIUM
+                priority = (
+                    AlertPriority.HIGH
+                    if abs(price_change_pct) >= 10
+                    else AlertPriority.MEDIUM
+                )
                 direction = "up" if price_change_pct > 0 else "down"
                 alert = Alert(
                     alert_id=f"{symbol}_{AlertType.PRICE_SPIKE.value}_{datetime.now().timestamp()}",
@@ -152,7 +162,9 @@ class AlertManager:
                     },
                 )
                 new_alerts.append(alert)
-                logger.info(f"Alert created: {symbol} price spike {price_change_pct:.1f}%")
+                logger.info(
+                    f"Alert created: {symbol} price spike {price_change_pct:.1f}%"
+                )
 
         # Update last price
         if current_price:
@@ -167,7 +179,9 @@ class AlertManager:
 
                 # Alert on significant momentum shift (crossing thresholds)
                 if (last_mom <= 0 and momentum > 5) or (last_mom > 5 and momentum <= 0):
-                    priority = AlertPriority.HIGH if momentum > 5 else AlertPriority.MEDIUM
+                    priority = (
+                        AlertPriority.HIGH if momentum > 5 else AlertPriority.MEDIUM
+                    )
                     alert = Alert(
                         alert_id=f"{symbol}_{AlertType.MOMENTUM_SHIFT.value}_{datetime.now().timestamp()}",
                         alert_type=AlertType.MOMENTUM_SHIFT,
@@ -184,7 +198,9 @@ class AlertManager:
                         },
                     )
                     new_alerts.append(alert)
-                    logger.info(f"Alert created: {symbol} momentum shift {momentum_change:+.1f}")
+                    logger.info(
+                        f"Alert created: {symbol} momentum shift {momentum_change:+.1f}"
+                    )
 
             # Update last momentum
             if momentum is not None:
