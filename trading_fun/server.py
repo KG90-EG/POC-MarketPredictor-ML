@@ -7,7 +7,14 @@ import joblib
 import pandas as pd
 import yfinance as yf
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request, Response, WebSocket, WebSocketDisconnect
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Request,
+    Response,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
@@ -23,7 +30,13 @@ from .database import WatchlistDB
 from .logging_config import RequestLogger, setup_logging
 from .rate_limiter import RateLimiter
 from .services import HealthService, StockService, ValidationService
-from .trading import compute_bollinger, compute_macd, compute_momentum, compute_rsi, features
+from .trading import (
+    compute_bollinger,
+    compute_macd,
+    compute_momentum,
+    compute_rsi,
+    features,
+)
 from .websocket import manager as ws_manager
 
 # Load environment variables from .env file
@@ -734,7 +747,9 @@ def crypto_ranking(
         # Parse crypto IDs if provided
         crypto_list = None
         if crypto_ids.strip():
-            crypto_list = [cid.strip().lower() for cid in crypto_ids.split(",") if cid.strip()]
+            crypto_list = [
+                cid.strip().lower() for cid in crypto_ids.split(",") if cid.strip()
+            ]
 
         # Get ranked cryptocurrencies
         rankings = get_crypto_ranking(
@@ -748,7 +763,9 @@ def crypto_ranking(
 
     except Exception as e:
         logger.error(f"Error in crypto_ranking endpoint: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch crypto rankings: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch crypto rankings: {str(e)}"
+        )
 
 
 @app.get(
@@ -783,7 +800,9 @@ def crypto_search(query: str):
         result = search_crypto(query.strip())
 
         if result is None:
-            raise HTTPException(status_code=404, detail=f"Cryptocurrency '{query}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Cryptocurrency '{query}' not found"
+            )
 
         return result
 
@@ -791,7 +810,9 @@ def crypto_search(query: str):
         raise
     except Exception as e:
         logger.error(f"Error in crypto_search endpoint: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to search crypto: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to search crypto: {str(e)}"
+        )
 
 
 @app.get(
@@ -824,7 +845,9 @@ def crypto_details(crypto_id: str):
         details = get_crypto_details(crypto_id)
 
         if details is None:
-            raise HTTPException(status_code=404, detail=f"Cryptocurrency '{crypto_id}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Cryptocurrency '{crypto_id}' not found"
+            )
 
         return details
 
@@ -832,7 +855,9 @@ def crypto_details(crypto_id: str):
         raise
     except Exception as e:
         logger.error(f"Error in crypto_details endpoint: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch crypto details: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch crypto details: {str(e)}"
+        )
 
 
 @app.get("/models")
@@ -840,7 +865,9 @@ def list_models() -> Dict[str, Any]:
     """List available model artifacts in the models directory.
     Returns current loaded model filename and list of other model files with sizes.
     """
-    models_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "models"))
+    models_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "models")
+    )
     items: List[Dict[str, Any]] = []
     if os.path.isdir(models_dir):
         for fname in sorted(os.listdir(models_dir)):
@@ -871,7 +898,9 @@ def ticker_info(ticker: str) -> Dict[str, Any]:
             raise HTTPException(status_code=400, detail=str(e))
         except Exception as e:
             logger.error(f"Error fetching info for {ticker}: {e}")
-            raise HTTPException(status_code=404, detail=f"Unable to fetch info: {str(e)}")
+            raise HTTPException(
+                status_code=404, detail=f"Unable to fetch info: {str(e)}"
+            )
 
 
 @app.post("/ticker_info_batch")
@@ -966,7 +995,10 @@ def search_stocks(query: str, limit: int = 10) -> Dict[str, Any]:
 
             # Filter by query
             matching = [
-                stock for stock in all_stocks if query_lower in stock["ticker"].lower() or query_lower in stock["name"].lower()
+                stock
+                for stock in all_stocks
+                if query_lower in stock["ticker"].lower()
+                or query_lower in stock["name"].lower()
             ]
 
             return {"stocks": matching[:limit]}
@@ -1004,7 +1036,11 @@ def get_popular_cryptos(limit: int = 30) -> Dict[str, Any]:
                 {"id": "monero", "name": "Monero", "symbol": "XMR"},
                 {"id": "ethereum-classic", "name": "Ethereum Classic", "symbol": "ETC"},
                 {"id": "hedera-hashgraph", "name": "Hedera", "symbol": "HBAR"},
-                {"id": "internet-computer", "name": "Internet Computer", "symbol": "ICP"},
+                {
+                    "id": "internet-computer",
+                    "name": "Internet Computer",
+                    "symbol": "ICP",
+                },
                 {"id": "filecoin", "name": "Filecoin", "symbol": "FIL"},
                 {"id": "aptos", "name": "Aptos", "symbol": "APT"},
                 {"id": "near", "name": "NEAR Protocol", "symbol": "NEAR"},
@@ -1056,8 +1092,18 @@ def get_countries() -> Dict[str, Any]:
         try:
             # Build country list from COUNTRY_INDICES
             countries = [
-                {"id": "Global", "label": "🌐 Global", "description": "Top global stocks", "flag": "🌐"},
-                {"id": "United States", "label": "🇺🇸 United States", "description": "US market leaders", "flag": "🇺🇸"},
+                {
+                    "id": "Global",
+                    "label": "🌐 Global",
+                    "description": "Top global stocks",
+                    "flag": "🌐",
+                },
+                {
+                    "id": "United States",
+                    "label": "🇺🇸 United States",
+                    "description": "US market leaders",
+                    "flag": "🇺🇸",
+                },
             ]
 
             # Add countries from COUNTRY_INDICES
@@ -1245,8 +1291,13 @@ def get_watchlists(user_id: str = "default_user"):
 def create_watchlist(watchlist: WatchlistCreate, user_id: str = "default_user"):
     """Create a new watchlist."""
     try:
-        watchlist_id = WatchlistDB.create_watchlist(user_id=user_id, name=watchlist.name, description=watchlist.description)
-        return {"id": watchlist_id, "message": f"Watchlist '{watchlist.name}' created successfully"}
+        watchlist_id = WatchlistDB.create_watchlist(
+            user_id=user_id, name=watchlist.name, description=watchlist.description
+        )
+        return {
+            "id": watchlist_id,
+            "message": f"Watchlist '{watchlist.name}' created successfully",
+        }
     except Exception as e:
         logger.error(f"Error creating watchlist: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1268,11 +1319,16 @@ def get_watchlist(watchlist_id: int, user_id: str = "default_user"):
 
 
 @app.put("/watchlists/{watchlist_id}", tags=["Watchlists"])
-def update_watchlist(watchlist_id: int, watchlist: WatchlistUpdate, user_id: str = "default_user"):
+def update_watchlist(
+    watchlist_id: int, watchlist: WatchlistUpdate, user_id: str = "default_user"
+):
     """Update watchlist details."""
     try:
         success = WatchlistDB.update_watchlist(
-            watchlist_id=watchlist_id, user_id=user_id, name=watchlist.name, description=watchlist.description
+            watchlist_id=watchlist_id,
+            user_id=user_id,
+            name=watchlist.name,
+            description=watchlist.description,
         )
         if not success:
             raise HTTPException(status_code=404, detail="Watchlist not found")
@@ -1300,7 +1356,9 @@ def delete_watchlist(watchlist_id: int, user_id: str = "default_user"):
 
 
 @app.post("/watchlists/{watchlist_id}/stocks", tags=["Watchlists"])
-def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: str = "default_user"):
+def add_stock_to_watchlist(
+    watchlist_id: int, stock: AddStockRequest, user_id: str = "default_user"
+):
     """Add a stock or crypto to a watchlist."""
     try:
         # For crypto assets, skip validation (CoinGecko IDs don't need ticker validation)
@@ -1309,7 +1367,9 @@ def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: s
             company_name = stock.ticker
         else:
             # Validate and verify ticker (auto-corrects common mistakes like APPLE -> AAPL)
-            validated_ticker, company_name = ValidationService.validate_and_verify_ticker(stock.ticker)
+            validated_ticker, company_name = (
+                ValidationService.validate_and_verify_ticker(stock.ticker)
+            )
 
         # Use company name in notes if no notes provided
         notes = stock.notes or company_name
@@ -1328,10 +1388,14 @@ def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: s
             )
 
         # Return corrected ticker if it was auto-corrected (stocks only)
-        response = {"message": f"{stock.asset_type.title()} {validated_ticker} added to watchlist"}
+        response = {
+            "message": f"{stock.asset_type.title()} {validated_ticker} added to watchlist"
+        }
         if stock.asset_type == "stock" and validated_ticker != stock.ticker.upper():
             response["corrected_from"] = stock.ticker
-            response["message"] = f"Stock {stock.ticker} auto-corrected to {validated_ticker} and added to watchlist"
+            response["message"] = (
+                f"Stock {stock.ticker} auto-corrected to {validated_ticker} and added to watchlist"
+            )
         return response
     except ValueError as e:
         # Validation error with suggestions
@@ -1344,12 +1408,19 @@ def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: s
 
 
 @app.delete("/watchlists/{watchlist_id}/stocks/{ticker}", tags=["Watchlists"])
-def remove_stock_from_watchlist(watchlist_id: int, ticker: str, user_id: str = "default_user"):
+def remove_stock_from_watchlist(
+    watchlist_id: int, ticker: str, user_id: str = "default_user"
+):
     """Remove a stock from a watchlist."""
     try:
-        success = WatchlistDB.remove_stock_from_watchlist(watchlist_id=watchlist_id, user_id=user_id, ticker=ticker)
+        success = WatchlistDB.remove_stock_from_watchlist(
+            watchlist_id=watchlist_id, user_id=user_id, ticker=ticker
+        )
         if not success:
-            raise HTTPException(status_code=404, detail="Stock not found in watchlist or watchlist not found")
+            raise HTTPException(
+                status_code=404,
+                detail="Stock not found in watchlist or watchlist not found",
+            )
         return {"message": f"Stock {ticker} removed from watchlist"}
     except HTTPException:
         raise
@@ -1362,10 +1433,14 @@ def remove_stock_from_watchlist(watchlist_id: int, ticker: str, user_id: str = "
 def analyze(request: AnalysisRequest) -> Dict[str, Any]:
     """Use LLM to analyze ranking and provide buy/sell recommendations."""
     if not OPENAI_CLIENT:
-        raise HTTPException(status_code=503, detail="LLM not configured (set OPENAI_API_KEY)")
+        raise HTTPException(
+            status_code=503, detail="LLM not configured (set OPENAI_API_KEY)"
+        )
 
     # Create cache key from ranking + context
-    cache_key = hashlib.md5(f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()).hexdigest()
+    cache_key = hashlib.md5(
+        f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()
+    ).hexdigest()
 
     # Check cache
     cached_data = cache.get(f"analysis:{cache_key}")
@@ -1417,7 +1492,11 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
                     "rank": rank,
                     "ticker": r["ticker"],
                     "prob": r["prob"],
-                    "signal": ("BUY" if r["prob"] >= 0.55 else "HOLD" if r["prob"] >= 0.45 else "SELL"),
+                    "signal": (
+                        "BUY"
+                        if r["prob"] >= 0.55
+                        else "HOLD" if r["prob"] >= 0.45 else "SELL"
+                    ),
                 }
             )
 
@@ -1484,7 +1563,8 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
                     else:
                         raise HTTPException(
                             status_code=429,
-                            detail="OpenAI rate limit exceeded. " "Please wait a moment and try again.",
+                            detail="OpenAI rate limit exceeded. "
+                            "Please wait a moment and try again.",
                         )
                 else:
                     raise
@@ -1519,12 +1599,18 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
             if action == "subscribe" and ticker:
                 ws_manager.subscribe(client_id, ticker)
-                await ws_manager.send_personal_message({"type": "subscribed", "ticker": ticker}, client_id)
+                await ws_manager.send_personal_message(
+                    {"type": "subscribed", "ticker": ticker}, client_id
+                )
             elif action == "unsubscribe" and ticker:
                 ws_manager.unsubscribe(client_id, ticker)
-                await ws_manager.send_personal_message({"type": "unsubscribed", "ticker": ticker}, client_id)
+                await ws_manager.send_personal_message(
+                    {"type": "unsubscribed", "ticker": ticker}, client_id
+                )
             elif action == "ping":
-                await ws_manager.send_personal_message({"type": "pong", "timestamp": time.time()}, client_id)
+                await ws_manager.send_personal_message(
+                    {"type": "pong", "timestamp": time.time()}, client_id
+                )
             else:
                 await ws_manager.send_personal_message(
                     {"type": "error", "message": "Invalid action or missing ticker"},
@@ -1546,6 +1632,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 # Import simulation modules
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from market_predictor.simulation import TradingSimulation, calculate_position_size
@@ -1554,6 +1641,7 @@ from market_predictor.simulation_db import SimulationDB
 
 class SimulationCreateRequest(BaseModel):
     """Request model for creating a simulation."""
+
     user_id: str = "default_user"
     initial_capital: float = 10000.0
     mode: str = "auto"
@@ -1561,6 +1649,7 @@ class SimulationCreateRequest(BaseModel):
 
 class SimulationTradeRequest(BaseModel):
     """Request model for executing a trade."""
+
     ticker: str
     action: str
     quantity: int
@@ -1573,12 +1662,12 @@ class SimulationTradeRequest(BaseModel):
 async def create_simulation(request: SimulationCreateRequest):
     """
     Create a new trading simulation.
-    
+
     Args:
         user_id: User identifier (default: "default_user")
         initial_capital: Starting capital (default: $10,000)
         mode: 'auto' or 'manual' trading mode
-    
+
     Returns:
         Simulation metadata with ID
     """
@@ -1586,11 +1675,11 @@ async def create_simulation(request: SimulationCreateRequest):
         sim_id = SimulationDB.create_simulation(
             user_id=request.user_id,
             initial_capital=request.initial_capital,
-            mode=request.mode
+            mode=request.mode,
         )
-        
+
         sim = SimulationDB.get_simulation(sim_id)
-        
+
         return {
             "simulation_id": sim_id,
             "user_id": request.user_id,
@@ -1598,7 +1687,7 @@ async def create_simulation(request: SimulationCreateRequest):
             "current_cash": request.initial_capital,
             "mode": request.mode,
             "positions": {},
-            "created_at": sim.created_at.isoformat()
+            "created_at": sim.created_at.isoformat(),
         }
     except Exception as e:
         logger.error(f"Error creating simulation: {e}")
@@ -1609,7 +1698,7 @@ async def create_simulation(request: SimulationCreateRequest):
 async def get_simulation(simulation_id: int):
     """
     Get simulation details.
-    
+
     Returns:
         Full simulation state including positions, trades, and metrics
     """
@@ -1617,7 +1706,7 @@ async def get_simulation(simulation_id: int):
         sim = SimulationDB.get_simulation(simulation_id)
         if not sim:
             raise HTTPException(status_code=404, detail="Simulation not found")
-        
+
         # Get current prices for metrics
         current_prices = {}
         for ticker in sim.positions.keys():
@@ -1625,16 +1714,13 @@ async def get_simulation(simulation_id: int):
                 stock = yf.Ticker(ticker)
                 hist = stock.history(period="1d")
                 if not hist.empty:
-                    current_prices[ticker] = float(hist['Close'].iloc[-1])
+                    current_prices[ticker] = float(hist["Close"].iloc[-1])
             except Exception as e:
                 logger.error(f"Error fetching price for {ticker}: {e}")
-        
+
         metrics = sim.get_performance_metrics(current_prices)
-        
-        return {
-            **sim.to_dict(),
-            "metrics": metrics
-        }
+
+        return {**sim.to_dict(), "metrics": metrics}
     except HTTPException:
         raise
     except Exception as e:
@@ -1646,10 +1732,10 @@ async def get_simulation(simulation_id: int):
 async def get_recommendations(simulation_id: int):
     """
     Get AI trading recommendations for simulation.
-    
+
     Uses ML model predictions to generate buy/sell recommendations
     based on confidence thresholds and risk management rules.
-    
+
     Returns:
         List of recommendations with action, ticker, confidence, reason
     """
@@ -1657,59 +1743,59 @@ async def get_recommendations(simulation_id: int):
         sim = SimulationDB.get_simulation(simulation_id)
         if not sim:
             raise HTTPException(status_code=404, detail="Simulation not found")
-        
+
         if not MODEL:
             raise HTTPException(status_code=503, detail="ML model not loaded")
-        
+
         # Get predictions for watchlist stocks or default stocks
         stocks = DEFAULT_STOCKS[:20]  # Limit to top 20 for performance
-        
+
         predictions = []
         current_prices = {}
-        
+
         for ticker in stocks:
             try:
                 # Get stock data
                 stock = yf.Ticker(ticker)
                 hist = stock.history(period="60d")
-                
+
                 if len(hist) < 30:
                     continue
-                
+
                 # Compute features
                 df = hist.copy()
                 df["RSI"] = compute_rsi(df["Close"])
                 df["MACD"], df["Signal"] = compute_macd(df["Close"])
-                df["BB_upper"], df["BB_middle"], df["BB_lower"] = compute_bollinger(df["Close"])
+                df["BB_upper"], df["BB_middle"], df["BB_lower"] = compute_bollinger(
+                    df["Close"]
+                )
                 df["Momentum"] = compute_momentum(df["Close"])
-                
+
                 df.dropna(inplace=True)
-                
+
                 if df.empty:
                     continue
-                
+
                 # Make prediction
                 X = df[features].iloc[-1:].values
                 prediction = MODEL.predict_proba(X)[0]
                 confidence = float(max(prediction))
                 signal = "UP" if prediction[1] > 0.5 else "DOWN"
-                
-                predictions.append({
-                    'ticker': ticker,
-                    'confidence': confidence,
-                    'signal': signal
-                })
-                
-                current_prices[ticker] = float(hist['Close'].iloc[-1])
-                
+
+                predictions.append(
+                    {"ticker": ticker, "confidence": confidence, "signal": signal}
+                )
+
+                current_prices[ticker] = float(hist["Close"].iloc[-1])
+
             except Exception as e:
                 logger.error(f"Error predicting {ticker}: {e}")
-        
+
         # Get recommendations from simulation
         recommendations = sim.get_ai_recommendations(predictions, current_prices)
-        
+
         return {"recommendations": recommendations}
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1721,7 +1807,7 @@ async def get_recommendations(simulation_id: int):
 async def execute_trade(simulation_id: int, request: SimulationTradeRequest):
     """
     Execute a trade in the simulation.
-    
+
     Args:
         ticker: Stock ticker symbol
         action: 'BUY' or 'SELL'
@@ -1729,7 +1815,7 @@ async def execute_trade(simulation_id: int, request: SimulationTradeRequest):
         price: Execution price per share
         reason: Trade rationale
         ml_confidence: ML prediction confidence (optional)
-    
+
     Returns:
         Trade confirmation with updated portfolio
     """
@@ -1737,7 +1823,7 @@ async def execute_trade(simulation_id: int, request: SimulationTradeRequest):
         sim = SimulationDB.get_simulation(simulation_id)
         if not sim:
             raise HTTPException(status_code=404, detail="Simulation not found")
-        
+
         # Execute trade
         trade = sim.execute_trade(
             ticker=request.ticker.upper(),
@@ -1745,23 +1831,20 @@ async def execute_trade(simulation_id: int, request: SimulationTradeRequest):
             quantity=request.quantity,
             price=request.price,
             reason=request.reason,
-            ml_confidence=request.ml_confidence
+            ml_confidence=request.ml_confidence,
         )
-        
+
         # Save to database
         SimulationDB.save_simulation(sim)
         SimulationDB.save_trade(simulation_id, trade)
-        
+
         return {
             "success": True,
-            "trade": {
-                **trade,
-                "timestamp": trade['timestamp'].isoformat()
-            },
+            "trade": {**trade, "timestamp": trade["timestamp"].isoformat()},
             "updated_cash": sim.cash,
-            "updated_positions": sim.positions
+            "updated_positions": sim.positions,
         }
-        
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except HTTPException:
@@ -1775,7 +1858,7 @@ async def execute_trade(simulation_id: int, request: SimulationTradeRequest):
 async def get_portfolio(simulation_id: int):
     """
     Get current portfolio state with live prices.
-    
+
     Returns:
         Portfolio summary with positions, cash, total value, and P&L
     """
@@ -1783,7 +1866,7 @@ async def get_portfolio(simulation_id: int):
         sim = SimulationDB.get_simulation(simulation_id)
         if not sim:
             raise HTTPException(status_code=404, detail="Simulation not found")
-        
+
         # Get current prices
         current_prices = {}
         for ticker in sim.positions.keys():
@@ -1791,31 +1874,33 @@ async def get_portfolio(simulation_id: int):
                 stock = yf.Ticker(ticker)
                 hist = stock.history(period="1d")
                 if not hist.empty:
-                    current_prices[ticker] = float(hist['Close'].iloc[-1])
+                    current_prices[ticker] = float(hist["Close"].iloc[-1])
             except Exception as e:
                 logger.error(f"Error fetching price for {ticker}: {e}")
-        
+
         portfolio_value = sim.get_portfolio_value(current_prices)
-        
+
         # Calculate position details
         positions_detail = []
         for ticker, pos in sim.positions.items():
-            current_price = current_prices.get(ticker, pos['current_price'])
-            value = pos['quantity'] * current_price
-            cost_basis = pos['quantity'] * pos['avg_cost']
+            current_price = current_prices.get(ticker, pos["current_price"])
+            value = pos["quantity"] * current_price
+            cost_basis = pos["quantity"] * pos["avg_cost"]
             pnl = value - cost_basis
             pnl_pct = (pnl / cost_basis * 100) if cost_basis > 0 else 0
-            
-            positions_detail.append({
-                'ticker': ticker,
-                'quantity': pos['quantity'],
-                'avg_cost': pos['avg_cost'],
-                'current_price': current_price,
-                'value': value,
-                'pnl': pnl,
-                'pnl_percent': pnl_pct
-            })
-        
+
+            positions_detail.append(
+                {
+                    "ticker": ticker,
+                    "quantity": pos["quantity"],
+                    "avg_cost": pos["avg_cost"],
+                    "current_price": current_price,
+                    "value": value,
+                    "pnl": pnl,
+                    "pnl_percent": pnl_pct,
+                }
+            )
+
         return {
             "simulation_id": simulation_id,
             "cash": sim.cash,
@@ -1823,9 +1908,11 @@ async def get_portfolio(simulation_id: int):
             "total_value": portfolio_value,
             "initial_capital": sim.initial_capital,
             "total_pnl": portfolio_value - sim.initial_capital,
-            "total_pnl_percent": ((portfolio_value - sim.initial_capital) / sim.initial_capital * 100)
+            "total_pnl_percent": (
+                (portfolio_value - sim.initial_capital) / sim.initial_capital * 100
+            ),
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1837,7 +1924,7 @@ async def get_portfolio(simulation_id: int):
 async def get_trade_history(simulation_id: int):
     """
     Get trade history for simulation.
-    
+
     Returns:
         List of all executed trades with timestamps
     """
@@ -1845,17 +1932,14 @@ async def get_trade_history(simulation_id: int):
         sim = SimulationDB.get_simulation(simulation_id)
         if not sim:
             raise HTTPException(status_code=404, detail="Simulation not found")
-        
+
         trades = [
-            {
-                **trade,
-                "timestamp": trade['timestamp'].isoformat()
-            }
+            {**trade, "timestamp": trade["timestamp"].isoformat()}
             for trade in sim.trades
         ]
-        
+
         return {"trades": trades}
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -1880,7 +1964,7 @@ async def delete_simulation(simulation_id: int):
 async def reset_simulation(simulation_id: int):
     """
     Reset simulation to initial state.
-    
+
     Clears all trades and positions, resets cash to initial capital.
     """
     try:
@@ -1891,8 +1975,52 @@ async def reset_simulation(simulation_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ===== Alert Endpoints =====
+# TODO: Implement full alert system with database storage and alert generation
+# For now, these are stub endpoints to prevent frontend errors
+
+
+@app.get("/alerts", tags=["Alerts"])
+async def get_alerts(
+    user_id: str = "default_user",
+    unread_only: bool = False,
+    priority: Optional[str] = None,
+    asset_type: Optional[str] = None,
+    limit: int = 50,
+):
+    """
+    Get user alerts (stub implementation).
+
+    TODO: Implement with alert database table and filtering logic.
+    """
+    # Return empty alerts for now
+    return {"alerts": [], "unread_count": 0, "total": 0}
+
+
+@app.post("/alerts/mark-read", tags=["Alerts"])
+async def mark_alerts_read(alert_ids: List[int]):
+    """
+    Mark alerts as read (stub implementation).
+
+    TODO: Implement with alert database table.
+    """
+    return {"success": True, "marked_count": len(alert_ids)}
+
+
+@app.delete("/alerts/clear", tags=["Alerts"])
+async def clear_old_alerts(older_than_days: int = 7, user_id: str = "default_user"):
+    """
+    Clear old alerts (stub implementation).
+
+    TODO: Implement with alert database table.
+    """
+    return {"success": True, "deleted_count": 0}
+
+
 # Mount frontend static files LAST so API routes take precedence
 # This must come after all route definitions to avoid catching API routes
-FRONTEND_DIST = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
+FRONTEND_DIST = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+)
 if os.path.isdir(FRONTEND_DIST):
     app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")

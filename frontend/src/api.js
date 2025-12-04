@@ -3,6 +3,20 @@ import axios from 'axios'
 // API base URL - use environment variable or fallback to localhost
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
+// Generate a unique user ID for this browser session if not already set
+const getUserId = () => {
+  let userId = localStorage.getItem('market_predictor_user_id');
+  if (!userId) {
+    // Generate a unique ID based on timestamp and random string
+    userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem('market_predictor_user_id', userId);
+  }
+  return userId;
+};
+
+// Export the current user ID
+export const CURRENT_USER_ID = getUserId();
+
 // Create axios instance with default config
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -76,25 +90,25 @@ export const api = {
   getCryptoDetails: (cryptoId) => apiClient.get(`/crypto/details/${cryptoId}`),
 
   // Watchlist endpoints
-  getWatchlists: (userId = 'default_user') =>
+  getWatchlists: (userId = CURRENT_USER_ID) =>
     apiClient.get(`/watchlists?user_id=${userId}`),
 
-  createWatchlist: (userId, data) =>
+  createWatchlist: (userId = CURRENT_USER_ID, data) =>
     apiClient.post(`/watchlists?user_id=${userId}`, data),
 
-  getWatchlist: (userId, watchlistId) =>
+  getWatchlist: (userId = CURRENT_USER_ID, watchlistId) =>
     apiClient.get(`/watchlists/${watchlistId}?user_id=${userId}`),
 
-  updateWatchlist: (userId, watchlistId, data) =>
+  updateWatchlist: (userId = CURRENT_USER_ID, watchlistId, data) =>
     apiClient.put(`/watchlists/${watchlistId}?user_id=${userId}`, data),
 
-  deleteWatchlist: (userId, watchlistId) =>
+  deleteWatchlist: (userId = CURRENT_USER_ID, watchlistId) =>
     apiClient.delete(`/watchlists/${watchlistId}?user_id=${userId}`),
 
-  addStockToWatchlist: (userId, watchlistId, data) =>
+  addStockToWatchlist: (userId = CURRENT_USER_ID, watchlistId, data) =>
     apiClient.post(`/watchlists/${watchlistId}/stocks?user_id=${userId}`, data),
 
-  removeStockFromWatchlist: (userId, watchlistId, ticker) =>
+  removeStockFromWatchlist: (userId = CURRENT_USER_ID, watchlistId, ticker) =>
     apiClient.delete(`/watchlists/${watchlistId}/stocks/${ticker}?user_id=${userId}`),
 
   // Simulation endpoints
@@ -124,27 +138,27 @@ export const api = {
 }
 
 // Convenience functions for watchlist operations
-export const fetchWatchlists = async (userId = 'default_user') => {
+export const fetchWatchlists = async (userId = CURRENT_USER_ID) => {
   const response = await api.getWatchlists(userId);
   return response.data;
 };
 
-export const createWatchlist = async (userId, data) => {
+export const createWatchlist = async (userId = CURRENT_USER_ID, data) => {
   const response = await api.createWatchlist(userId, data);
   return response.data;
 };
 
-export const deleteWatchlist = async (userId, watchlistId) => {
+export const deleteWatchlist = async (userId = CURRENT_USER_ID, watchlistId) => {
   const response = await api.deleteWatchlist(userId, watchlistId);
   return response.data;
 };
 
-export const addStockToWatchlist = async (userId, watchlistId, data) => {
+export const addStockToWatchlist = async (userId = CURRENT_USER_ID, watchlistId, data) => {
   const response = await api.addStockToWatchlist(userId, watchlistId, data);
   return response.data;
 };
 
-export const removeStockFromWatchlist = async (userId, watchlistId, ticker) => {
+export const removeStockFromWatchlist = async (userId = CURRENT_USER_ID, watchlistId, ticker) => {
   const response = await api.removeStockFromWatchlist(userId, watchlistId, ticker);
   return response.data;
 }

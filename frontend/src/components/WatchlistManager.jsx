@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { api, apiClient, fetchWatchlists, createWatchlist, deleteWatchlist, addStockToWatchlist, removeStockFromWatchlist } from '../api';
+import { api, apiClient, fetchWatchlists, createWatchlist, deleteWatchlist, addStockToWatchlist, removeStockFromWatchlist, CURRENT_USER_ID } from '../api';
 import './WatchlistManager.css';
 
-function WatchlistManager({ userId = 'default_user' }) {
+function WatchlistManager({ userId = CURRENT_USER_ID }) {
   const [watchlists, setWatchlists] = useState([]);
   const [selectedWatchlist, setSelectedWatchlist] = useState(null);
   const [loading, setLoading] = useState(false);
