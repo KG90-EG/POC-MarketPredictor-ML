@@ -302,7 +302,7 @@ function SimulationDashboard() {
             <div className="card metric-card">
               <div className="metric-label">Cash</div>
               <div className="metric-value">
-                {currentSim ? formatCurrency(currentSim.cash) : '...'}
+                {portfolio ? formatCurrency(portfolio.cash) : '...'}
               </div>
             </div>
 
