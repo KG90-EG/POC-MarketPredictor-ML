@@ -67,10 +67,10 @@ Track prediction accuracy, integrate with simulation
 ## 🔗 Full Documentation
 
 For complete backlog with all features, see:
+
 - Technical Infrastructure
 - Security Enhancements
 - UI/UX Improvements
 - Deployment & DevOps
 
 **Next Steps**: Implement Trading Simulation MVP (Week 1: Backend + API, Week 2: Frontend + Polish)
-
