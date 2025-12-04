@@ -85,5 +85,18 @@ def initialize_metrics(model_is_loaded: bool, openai_is_configured: bool):
 
 def track_request_metrics(method: str, endpoint: str, status_code: int, duration: float):
     """Track HTTP request metrics."""
+    http_requests_total.labels(method=method, endpoint=endpoint, status=status_code).inc()
+    http_request_duration_seconds.labels(method=method, endpoint=endpoint).observe(duration)
+
+
+def track_model_prediction(model_name: str, confidence: float, duration: float):
+    """Track model prediction metrics."""
+    outcome = 'high_confidence' if confidence > 0.7 else 'low_confidence'
+    model_predictions_total.labels(model=model_name, outcome=outcome).inc()
+    model_prediction_confidence.labels(model=model_name).observe(confidence)
+
+
+def track_request_metrics(method: str, endpoint: str, status_code: int, duration: float):
+    """Track HTTP request metrics."""
     http_requests_total.labels(method=method, endpoint=endpoint, status=str(status_code)).inc()
     http_request_duration_seconds.labels(method=method, endpoint=endpoint).observe(duration)

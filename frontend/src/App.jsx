@@ -449,13 +449,6 @@ function AppContent() {
               Paper trading
             </div>
           </button>
-          >
-            <div className="icon">⭐</div>
-            <div className="title">Watchlists</div>
-            <div className="description">
-              Saved favorites
-            </div>
-          </button>
         </div>
       </section>
 
