@@ -14,6 +14,7 @@ import MarketSelector from './components/MarketSelector'
 import WatchlistManager from './components/WatchlistManager'
 import BuyOpportunities from './components/BuyOpportunities'
 import AlertPanel from './components/AlertPanel'
+import SimulationDashboard from './components/SimulationDashboard'
 import './styles.css'
 
 // Create a React Query client
@@ -53,7 +54,7 @@ function AppContent() {
   })
 
   // Digital Assets / Crypto state
-  const [portfolioView, setPortfolioView] = useState('stocks') // 'stocks', 'crypto', or 'watchlists'
+  const [portfolioView, setPortfolioView] = useState('stocks') // 'stocks', 'crypto', 'watchlists', 'simulation', or 'buy-opportunities'
   const [cryptoResults, setCryptoResults] = useState([])
   const [cryptoLoading, setCryptoLoading] = useState(false)
   const [includeNFT] = useState(true) // Always include NFTs
@@ -432,6 +433,26 @@ function AppContent() {
             <div className="icon">⭐</div>
             <div className="title">Watchlists</div>
             <div className="description">
+              Custom lists
+            </div>
+          </button>
+
+          <button
+            className={`portfolio-toggle-button simulation ${portfolioView === 'simulation' ? 'active' : ''}`}
+            onClick={() => setPortfolioView('simulation')}
+            aria-label="Switch to trading simulation view"
+            aria-pressed={portfolioView === 'simulation'}
+          >
+            <div className="icon">🎮</div>
+            <div className="title">Simulation</div>
+            <div className="description">
+              Paper trading
+            </div>
+          </button>
+          >
+            <div className="icon">⭐</div>
+            <div className="title">Watchlists</div>
+            <div className="description">
               Saved favorites
             </div>
           </button>
@@ -577,6 +598,11 @@ function AppContent() {
       {/* Watchlists View */}
       {portfolioView === 'watchlists' && (
         <WatchlistManager userId="default_user" />
+      )}
+
+      {/* Trading Simulation View */}
+      {portfolioView === 'simulation' && (
+        <SimulationDashboard />
       )}
 
       {/* Buy Opportunities View */}

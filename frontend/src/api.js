@@ -96,6 +96,31 @@ export const api = {
 
   removeStockFromWatchlist: (userId, watchlistId, ticker) =>
     apiClient.delete(`/watchlists/${watchlistId}/stocks/${ticker}?user_id=${userId}`),
+
+  // Simulation endpoints
+  createSimulation: (data) =>
+    apiClient.post('/api/simulations', data),
+
+  getSimulation: (simulationId) =>
+    apiClient.get(`/api/simulations/${simulationId}`),
+
+  getSimulationPortfolio: (simulationId) =>
+    apiClient.get(`/api/simulations/${simulationId}/portfolio`),
+
+  getSimulationRecommendations: (simulationId) =>
+    apiClient.post(`/api/simulations/${simulationId}/recommendations`),
+
+  executeSimulationTrade: (simulationId, tradeData) =>
+    apiClient.post(`/api/simulations/${simulationId}/trades`, tradeData),
+
+  getSimulationHistory: (simulationId) =>
+    apiClient.get(`/api/simulations/${simulationId}/history`),
+
+  resetSimulation: (simulationId) =>
+    apiClient.post(`/api/simulations/${simulationId}/reset`),
+
+  deleteSimulation: (simulationId) =>
+    apiClient.delete(`/api/simulations/${simulationId}`),
 }
 
 // Convenience functions for watchlist operations
