@@ -1854,6 +1854,105 @@ async def execute_trade(simulation_id: int, request: SimulationTradeRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/simulations/{simulation_id}/auto-trade", tags=["Simulation"])
+async def auto_trade(simulation_id: int, max_trades: int = 3):
+    """
+    Execute AI recommendations automatically.
+    
+    Args:
+        max_trades: Maximum number of trades to execute (default: 3)
+        
+    Returns:
+        List of executed trades
+    """
+    try:
+        sim = SimulationDB.get_simulation(simulation_id)
+        if not sim:
+            raise HTTPException(status_code=404, detail="Simulation not found")
+            
+        if not MODEL:
+            raise HTTPException(status_code=503, detail="ML model not loaded")
+            
+        # Get recommendations
+        stocks = DEFAULT_STOCKS[:20]
+        predictions = []
+        current_prices = {}
+        
+        for ticker in stocks:
+            try:
+                stock = yf.Ticker(ticker)
+                hist = stock.history(period="60d")
+                
+                if len(hist) < 30:
+                    continue
+                    
+                df = hist.copy()
+                df["RSI"] = compute_rsi(df["Close"])
+                df["MACD"], df["Signal"] = compute_macd(df["Close"])
+                df["BB_upper"], df["BB_middle"], df["BB_lower"] = compute_bollinger(
+                    df["Close"]
+                )
+                df["Momentum"] = compute_momentum(df["Close"])
+                df.dropna(inplace=True)
+                
+                if df.empty:
+                    continue
+                    
+                X = df[features].iloc[-1:].values
+                prediction = MODEL.predict_proba(X)[0]
+                confidence = float(max(prediction))
+                signal = "UP" if prediction[1] > 0.5 else "DOWN"
+                
+                predictions.append(
+                    {"ticker": ticker, "confidence": confidence, "signal": signal}
+                )
+                current_prices[ticker] = float(hist["Close"].iloc[-1])
+                
+            except Exception as e:
+                logger.error(f"Error predicting {ticker}: {e}")
+                
+        # Get recommendations
+        recommendations = sim.get_ai_recommendations(predictions, current_prices)
+        
+        # Execute top recommendations
+        executed_trades = []
+        for rec in recommendations[:max_trades]:
+            try:
+                trade = sim.execute_trade(
+                    ticker=rec["ticker"],
+                    action=rec["action"],
+                    quantity=rec["quantity"],
+                    price=rec["price"],
+                    reason=rec["reason"],
+                    ml_confidence=rec["confidence"]
+                )
+                
+                SimulationDB.save_trade(simulation_id, trade)
+                executed_trades.append({
+                    **trade,
+                    "timestamp": trade["timestamp"].isoformat()
+                })
+                
+            except ValueError as e:
+                logger.warning(f"Could not execute trade for {rec['ticker']}: {e}")
+                
+        # Save simulation state
+        SimulationDB.save_simulation(sim)
+        
+        return {
+            "success": True,
+            "trades_executed": len(executed_trades),
+            "trades": executed_trades,
+            "updated_cash": sim.cash
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in auto-trade: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/simulations/{simulation_id}/portfolio", tags=["Simulation"])
 async def get_portfolio(simulation_id: int):
     """

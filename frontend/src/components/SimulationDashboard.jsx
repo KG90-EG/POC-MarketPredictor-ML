@@ -177,6 +177,36 @@ function SimulationDashboard() {
     setTradeForm({ ticker: '', action: 'BUY', quantity: 10, price: 0 });
   };
 
+  const executeAutoTrade = async () => {
+    if (!currentSim) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.post(
+        `/api/simulations/${currentSim.simulation_id}/auto-trade`,
+        { max_trades: 3 }
+      );
+
+      // Refresh all data
+      await loadPortfolio();
+      await loadTradeHistory();
+      await loadSimulation(currentSim.simulation_id);
+
+      const { trades_executed, trades } = response.data;
+      if (trades_executed > 0) {
+        const summary = trades.map(t => `${t.action} ${t.quantity} ${t.ticker}`).join(', ');
+        alert(`✓ ${trades_executed} Trades ausgeführt:\n${summary}`);
+      } else {
+        alert('Keine Trades empfohlen');
+      }
+    } catch (err) {
+      setError(`Auto-Trade Fehler: ${err.response?.data?.detail || err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const executeRecommendation = async (rec) => {
     if (!confirm(`${rec.action} ${rec.ticker}?\nConfidence: ${(rec.confidence * 100).toFixed(1)}%\nReason: ${rec.reason}`)) {
       return;
@@ -412,13 +442,23 @@ function SimulationDashboard() {
                 <div className="card">
                   <div className="card-header">
                     <h3>AI Trading Empfehlungen</h3>
-                    <button
-                      onClick={loadRecommendations}
-                      disabled={loading}
-                      className="btn btn-secondary"
-                    >
-                      {loading ? 'Lade...' : '🤖 Empfehlungen laden'}
-                    </button>
+                    <div>
+                      <button
+                        onClick={loadRecommendations}
+                        disabled={loading}
+                        className="btn btn-secondary"
+                        style={{marginRight: '10px'}}
+                      >
+                        {loading ? 'Lade...' : '🤖 Empfehlungen laden'}
+                      </button>
+                      <button
+                        onClick={executeAutoTrade}
+                        disabled={loading}
+                        className="btn btn-primary"
+                      >
+                        {loading ? 'Führe aus...' : '⚡ Auto-Trade (Top 3)'}
+                      </button>
+                    </div>
                   </div>
 
                   {recommendations.length > 0 ? (
@@ -525,7 +565,15 @@ function SimulationDashboard() {
             {activeTab === 'history' && (
               <div className="history-tab">
                 <div className="card">
-                  <h3>Trade History</h3>
+                  <div className="card-header">
+                    <h3>Trade History</h3>
+                    <button
+                      onClick={loadTradeHistory}
+                      className="btn btn-secondary"
+                    >
+                      🔄 Aktualisieren
+                    </button>
+                  </div>
                   {tradeHistory.length > 0 ? (
                     <table className="history-table">
                       <thead>
@@ -535,6 +583,7 @@ function SimulationDashboard() {
                           <th>Ticker</th>
                           <th>Quantity</th>
                           <th>Price</th>
+                          <th>Total</th>
                           <th>Confidence</th>
                           <th>Reason</th>
                         </tr>
@@ -542,13 +591,14 @@ function SimulationDashboard() {
                       <tbody>
                         {tradeHistory.map((trade, idx) => (
                           <tr key={idx}>
-                            <td>{new Date(trade.timestamp).toLocaleString()}</td>
+                            <td>{new Date(trade.timestamp).toLocaleString('de-DE')}</td>
                             <td className={trade.action === 'BUY' ? 'buy' : 'sell'}>
                               {trade.action}
                             </td>
                             <td className="ticker">{trade.ticker}</td>
                             <td>{trade.quantity}</td>
                             <td>{formatCurrency(trade.price)}</td>
+                            <td>{formatCurrency(trade.price * trade.quantity)}</td>
                             <td>
                               {trade.ml_confidence
                                 ? `${(trade.ml_confidence * 100).toFixed(1)}%`
@@ -562,6 +612,7 @@ function SimulationDashboard() {
                   ) : (
                     <div className="empty-state">
                       <p>Keine Trades vorhanden</p>
+                      <small>Starte Auto-Trade oder führe manuelle Trades aus</small>
                     </div>
                   )}
                 </div>
