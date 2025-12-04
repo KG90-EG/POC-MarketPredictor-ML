@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api';
+import { translations, getTranslation } from '../translations';
 import './SimulationDashboard.css';
 
 /**
@@ -22,6 +23,7 @@ function SimulationDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [language, setLanguage] = useState(localStorage.getItem('app_language') || 'de');
 
   // Form states
   const [newSimCapital, setNewSimCapital] = useState(10000);
@@ -73,9 +75,9 @@ function SimulationDashboard() {
       setNewSimCapital(10000); // Reset form
 
       // Show success message
-      alert(`Simulation #${newSim.simulation_id} erstellt mit $${newSim.initial_capital.toLocaleString()}`);
+      alert(`${t('simulationCreated')} #${newSim.simulation_id}: $${newSim.initial_capital.toLocaleString()}`);
     } catch (err) {
-      setError('Fehler beim Erstellen der Simulation: ' + err.message);
+      setError(t('errorCreating') + ': ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -88,7 +90,7 @@ function SimulationDashboard() {
       const response = await apiClient.get(`/api/simulations/${simId}`);
       setCurrentSim(response.data);
     } catch (err) {
-      setError('Fehler beim Laden der Simulation: ' + err.message);
+      setError(t('errorLoading') + ': ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -102,7 +104,7 @@ function SimulationDashboard() {
       setPortfolio(response.data);
     } catch (err) {
       console.error('Error loading portfolio:', err);
-      setError('Fehler beim Laden des Portfolios');
+      setError(t('errorPortfolio'));
     }
   };
 
@@ -115,7 +117,7 @@ function SimulationDashboard() {
       const response = await apiClient.post(`/api/simulations/${currentSim.simulation_id}/recommendations`);
       setRecommendations(response.data.recommendations || []);
     } catch (err) {
-      setError('Fehler beim Laden der Empfehlungen: ' + err.message);
+      setError(t('errorRecommendations') + ': ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -155,9 +157,9 @@ function SimulationDashboard() {
       await loadTradeHistory();
       await loadSimulation(currentSim.simulation_id);
 
-      alert(`✓ ${action} ${quantity} ${ticker} @ $${price.toFixed(2)}`);
+      alert(`✓ ${t('tradeSuccess')}: ${action} ${quantity} ${ticker} @ $${price.toFixed(2)}`);
     } catch (err) {
-      setError(`Fehler beim Trade: ${err.response?.data?.detail || err.message}`);
+      setError(`${t('errorTrade')}: ${err.response?.data?.detail || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -195,13 +197,13 @@ function SimulationDashboard() {
 
       const { trades_executed, trades } = response.data;
       if (trades_executed > 0) {
-        const summary = trades.map(t => `${t.action} ${t.quantity} ${t.ticker}`).join(', ');
-        alert(`✓ ${trades_executed} Trades ausgeführt:\n${summary}`);
+        const summary = trades.map(trade => `${trade.action} ${trade.quantity} ${trade.ticker}`).join(', ');
+        alert(`✓ ${trades_executed} ${t('tradesExecuted')}:\n${summary}`);
       } else {
-        alert('Keine Trades empfohlen');
+        alert(t('noTradesRecommended'));
       }
     } catch (err) {
-      setError(`Auto-Trade Fehler: ${err.response?.data?.detail || err.message}`);
+      setError(`${t('errorAutoTrade')}: ${err.response?.data?.detail || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -245,6 +247,13 @@ function SimulationDashboard() {
   };
 
   // Helper functions
+  const t = (key) => getTranslation(language, key);
+  
+  const changeLanguage = (lang) => {
+    setLanguage(lang);
+    localStorage.setItem('app_language', lang);
+  };
+  
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -262,7 +271,17 @@ function SimulationDashboard() {
     <div className="simulation-dashboard">
       <div className="dashboard-header">
         <h2>📊 Trading Simulation</h2>
-        <p className="subtitle">Test ML predictions with virtual capital</p>
+        <div className="header-controls">
+          <div className="language-selector">
+            <label>{t('language')}: </label>
+            <select value={language} onChange={(e) => changeLanguage(e.target.value)}>
+              <option value="de">🇩🇪 DE</option>
+              <option value="en">🇬🇧 EN</option>
+              <option value="it">🇮🇹 IT</option>
+              <option value="es">🇪🇸 ES</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {error && (
@@ -277,10 +296,10 @@ function SimulationDashboard() {
         <div className="create-simulation">
           <div className="card">
             <h3>Neue Simulation erstellen</h3>
-            <p>Starte eine virtuelle Trading-Simulation mit ML-basierten Empfehlungen</p>
+            <p>Start a virtual trading simulation with ML-based recommendations</p>
 
             <div className="form-group">
-              <label>Startkapital</label>
+              <label>{t('initialCapital')}</label>
               <input
                 type="number"
                 value={newSimCapital}
@@ -297,18 +316,18 @@ function SimulationDashboard() {
               disabled={loading}
               className="btn btn-primary"
             >
-              {loading ? 'Erstelle...' : 'Simulation starten'}
+              {loading ? t('creating') : t('startSimulation')}
             </button>
           </div>
 
           <div className="info-card">
-            <h4>Features</h4>
+            <h4>{t('features')}</h4>)}</h4>
             <ul>
-              <li>✓ KI-basierte Kauf/Verkauf Empfehlungen</li>
-              <li>✓ Automatisches Portfolio-Management</li>
-              <li>✓ Stop-Loss & Take-Profit Strategien</li>
-              <li>✓ Performance Tracking & Metriken</li>
-              <li>✓ Trade History & Begründungen</li>
+              <li>✓ {t('feature1')}</li>
+              <li>✓ {t('feature2')}</li>
+              <li>✓ {t('feature3')}</li>
+              <li>✓ {t('feature4')}</li>
+              <li>✓ {t('feature5')}</li>
             </ul>
           </div>
         </div>
@@ -318,7 +337,7 @@ function SimulationDashboard() {
           {/* Summary Cards */}
           <div className="summary-cards">
             <div className="card metric-card">
-              <div className="metric-label">Portfolio Wert</div>
+              <div className="metric-label">{t('portfolioValue')}</div>
               <div className="metric-value">
                 {portfolio ? formatCurrency(portfolio.total_value) : '...'}
               </div>
@@ -330,21 +349,21 @@ function SimulationDashboard() {
             </div>
 
             <div className="card metric-card">
-              <div className="metric-label">Cash</div>
+              <div className="metric-label">{t('cash')}</div>
               <div className="metric-value">
                 {portfolio ? formatCurrency(portfolio.cash) : '...'}
               </div>
             </div>
 
             <div className="card metric-card">
-              <div className="metric-label">Positionen</div>
+              <div className="metric-label">{t('positions')}</div>
               <div className="metric-value">
                 {portfolio ? portfolio.positions.length : 0}
               </div>
             </div>
 
             <div className="card metric-card">
-              <div className="metric-label">Win Rate</div>
+              <div className="metric-label">{t('winRate')}</div>
               <div className="metric-value">
                 {currentSim?.metrics?.win_rate_percent
                   ? `${currentSim.metrics.win_rate_percent.toFixed(1)}%`
@@ -359,25 +378,25 @@ function SimulationDashboard() {
               className={activeTab === 'overview' ? 'active' : ''}
               onClick={() => setActiveTab('overview')}
             >
-              Übersicht
+              {t('overview')}
             </button>
             <button
               className={activeTab === 'recommendations' ? 'active' : ''}
               onClick={() => setActiveTab('recommendations')}
             >
-              AI Empfehlungen
+              {t('recommendations')}
             </button>
             <button
               className={activeTab === 'trade' ? 'active' : ''}
               onClick={() => setActiveTab('trade')}
             >
-              Trade
+              {t('trade')}
             </button>
             <button
               className={activeTab === 'history' ? 'active' : ''}
               onClick={() => setActiveTab('history')}
             >
-              History
+              {t('history')}
             </button>
           </div>
 
@@ -391,11 +410,11 @@ function SimulationDashboard() {
                     <table className="holdings-table">
                       <thead>
                         <tr>
-                          <th>Ticker</th>
-                          <th>Quantity</th>
-                          <th>Avg Cost</th>
-                          <th>Current Price</th>
-                          <th>Value</th>
+                          <th>{t('ticker')}</th>
+                          <th>{t('quantity')}</th>
+                          <th>{t('avgCost')}</th>
+                          <th>{t('currentPrice')}</th>
+                          <th>{t('value')}</th>
                           <th>P&L</th>
                           <th>P&L %</th>
                         </tr>
@@ -420,18 +439,18 @@ function SimulationDashboard() {
                     </table>
                   ) : (
                     <div className="empty-state">
-                      <p>Keine Positionen vorhanden</p>
-                      <small>Erstelle Trades über AI Empfehlungen oder manuell</small>
+                      <p>{t('noPositions')}</p>
+                      <small>{t('noPositionsHint')}</small>
                     </div>
                   )}
                 </div>
 
                 <div className="actions">
                   <button onClick={loadPortfolio} className="btn btn-secondary">
-                    🔄 Aktualisieren
+                    🔄 {t('refresh')}
                   </button>
                   <button onClick={resetSimulation} className="btn btn-danger">
-                    Reset Simulation
+                    {t('reset')}
                   </button>
                 </div>
               </div>
@@ -441,7 +460,7 @@ function SimulationDashboard() {
               <div className="recommendations-tab">
                 <div className="card">
                   <div className="card-header">
-                    <h3>AI Trading Empfehlungen</h3>
+                    <h3>{t('aiRecommendations')}</h3>
                     <div>
                       <button
                         onClick={loadRecommendations}
@@ -449,14 +468,14 @@ function SimulationDashboard() {
                         className="btn btn-secondary"
                         style={{marginRight: '10px'}}
                       >
-                        {loading ? 'Lade...' : '🤖 Empfehlungen laden'}
+                        {loading ? t('loading') : '🤖 ' + t('loadRecommendations')}
                       </button>
                       <button
                         onClick={executeAutoTrade}
                         disabled={loading}
                         className="btn btn-primary"
                       >
-                        {loading ? 'Führe aus...' : '⚡ Auto-Trade (Top 3)'}
+                        {loading ? t('executing') : '⚡ ' + t('autoTrade')}
                       </button>
                     </div>
                   </div>
@@ -499,7 +518,7 @@ function SimulationDashboard() {
             {activeTab === 'trade' && (
               <div className="trade-tab">
                 <div className="card">
-                  <h3>Manueller Trade</h3>
+                  <h3>{t('manualTrade')}</h3>
                   <form onSubmit={handleManualTrade}>
                     <div className="form-row">
                       <div className="form-group">
@@ -514,7 +533,7 @@ function SimulationDashboard() {
                       </div>
 
                       <div className="form-group">
-                        <label>Action</label>
+                        <label>{t('action')}</label>
                         <select
                           value={tradeForm.action}
                           onChange={(e) => setTradeForm({...tradeForm, action: e.target.value})}
@@ -527,7 +546,7 @@ function SimulationDashboard() {
 
                     <div className="form-row">
                       <div className="form-group">
-                        <label>Quantity</label>
+                        <label>{t('quantity')}</label>
                         <input
                           type="number"
                           value={tradeForm.quantity}
@@ -538,7 +557,7 @@ function SimulationDashboard() {
                       </div>
 
                       <div className="form-group">
-                        <label>Price</label>
+                        <label>{t('price')}</label>
                         <input
                           type="number"
                           value={tradeForm.price}
@@ -555,7 +574,7 @@ function SimulationDashboard() {
                       disabled={loading}
                       className="btn btn-primary"
                     >
-                      {loading ? 'Executing...' : 'Execute Trade'}
+                      {loading ? t('executing') : t('executeTrade')}
                     </button>
                   </form>
                 </div>
@@ -566,26 +585,26 @@ function SimulationDashboard() {
               <div className="history-tab">
                 <div className="card">
                   <div className="card-header">
-                    <h3>Trade History</h3>
+                    <h3>{t('tradeHistory')}</h3>
                     <button
                       onClick={loadTradeHistory}
                       className="btn btn-secondary"
                     >
-                      🔄 Aktualisieren
+                      🔄 {t('refresh')}
                     </button>
                   </div>
                   {tradeHistory.length > 0 ? (
                     <table className="history-table">
                       <thead>
                         <tr>
-                          <th>Zeit</th>
-                          <th>Action</th>
-                          <th>Ticker</th>
-                          <th>Quantity</th>
-                          <th>Price</th>
-                          <th>Total</th>
-                          <th>Confidence</th>
-                          <th>Reason</th>
+                          <th>{t('time')}</th>
+                          <th>{t('action')}</th>
+                          <th>{t('ticker')}</th>
+                          <th>{t('quantity')}</th>
+                          <th>{t('price')}</th>
+                          <th>{t('total')}</th>
+                          <th>{t('confidence')}</th>
+                          <th>{t('reason')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -611,8 +630,8 @@ function SimulationDashboard() {
                     </table>
                   ) : (
                     <div className="empty-state">
-                      <p>Keine Trades vorhanden</p>
-                      <small>Starte Auto-Trade oder führe manuelle Trades aus</small>
+                      <p>{t('noTrades')}</p>
+                      <small>{t('noTradesHint')}</small>
                     </div>
                   )}
                 </div>
