@@ -30,6 +30,7 @@ This repository contains a production-grade machine learning pipeline and modern
 - 🧠 **AI Analysis** - OpenAI-powered trading recommendations with retry logic and caching
 - ⚛️ **Modern React UI** - Real-time updates with color-coded indicators and dark/light theme toggle
 - 🌓 **Dark Mode Support** - Persistent theme toggle with smooth transitions
+- 🌐 **Multi-Language UI** - Switch between **English, German, Italian, and Spanish** via the header dropdown (preference saved)
 - 🔍 **Company Detail Sidebar** - Comprehensive stock information with country domicile
 - 💊 **Health Status Indicator** - Real-time system health monitoring with icon-based status display
 - 📋 **Health Check Modal** - Comprehensive system diagnostics overlay with performance metrics
@@ -106,6 +107,7 @@ cd frontend && npm run dev
    - Add both AAPL (stocks) and bitcoin (crypto) to the same watchlist
    - Get live prices, predictions, and investment insights for all assets
    - Toggle between stock and crypto search modes with visual indicators
+   - **Language selector** in the header to switch between English, German, Italian, and Spanish (saved to local preference)
 
 ### Training Your Model
 

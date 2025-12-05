@@ -17,6 +17,7 @@ This document describes the React components in the Trading-Fun frontend applica
 - Stock rankings display with pagination
 - Company detail sidebar
 - Theme toggle (light/dark mode)
+- Simulation dashboard language dropdown (EN/DE/IT/ES) with persisted preference
 - Health status indicator integration
 - Error handling with user-friendly messages
 
@@ -28,6 +29,10 @@ This document describes the React components in the Trading-Fun frontend applica
 - `darkMode`: Theme preference (persisted to localStorage)
 - `showHealthPanel`: Controls health modal visibility
 - `healthStatus`: Current system health status
+
+**Localization:**
+- Strings are organized by language in `frontend/src/translations.js`.
+- The simulation dashboard stores the chosen language in `localStorage` (`app_language`) so subsequent visits reuse the same locale.
 
 **Health Indicator Implementation:**
 ```jsx

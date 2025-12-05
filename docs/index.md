@@ -13,6 +13,7 @@ Trading-Fun is a **production-grade** ML-powered stock market predictor with com
 - **ML Pipeline**: Feature engineering (RSI, SMA, MACD, Bollinger Bands, Momentum)
 - **FastAPI Backend**: Prediction, ranking, crypto analysis, AI insights
 - **React Frontend**: Modern UI with dark mode, accessibility (WCAG AA)
+- **Localization**: Built-in language selector with **English, German, Italian, Spanish** (preference persisted)
 - **Monitoring**: Prometheus metrics (20+), Grafana dashboards, Sentry error tracking
 - **Security**: 0 vulnerabilities, rate limiting (60 req/min), secret scanning
 - **Deployment**: 3 automated methods (GitHub Actions, CLI script, manual)
@@ -67,6 +68,11 @@ pytest
 # Deployment validation
 ./scripts/test_deployment.sh <production-url>
 ```
+
+### Localization
+
+- Switch the UI between **English, German, Italian, and Spanish** using the built-in language dropdown; your choice is saved in `localStorage` as `app_language` for future visits.
+- All translated strings live in `frontend/src/translations.js`; add a new language by duplicating a block and wiring the new key into the selector.
 
 ## API Endpoints
 
