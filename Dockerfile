@@ -4,7 +4,7 @@ WORKDIR /frontend
 COPY frontend/package*.json ./
 RUN npm ci || true
 COPY frontend/ ./
-RUN npm run build || echo "Frontend build skipped"
+RUN npm run build || (mkdir -p dist && echo "Frontend build skipped; created empty dist")
 
 FROM python:3.10-slim AS backend
 WORKDIR /app
