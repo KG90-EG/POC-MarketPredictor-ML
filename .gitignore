@@ -9,4 +9,3 @@ mlruns/
 .env
 node_modules/
 frontend/dist/
-POC-MarketPredictor-ML.wiki/
