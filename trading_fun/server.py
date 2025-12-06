@@ -1633,6 +1633,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 # SIMULATION API ENDPOINTS
 # ============================================================================
 
+
 class SimulationCreateRequest(BaseModel):
     """Request model for creating a simulation."""
 
@@ -1918,14 +1919,13 @@ async def auto_trade(simulation_id: int, max_trades: int = 3):
                     quantity=rec["quantity"],
                     price=rec["price"],
                     reason=rec["reason"],
-                    ml_confidence=rec["confidence"]
+                    ml_confidence=rec["confidence"],
                 )
 
                 SimulationDB.save_trade(simulation_id, trade)
-                executed_trades.append({
-                    **trade,
-                    "timestamp": trade["timestamp"].isoformat()
-                })
+                executed_trades.append(
+                    {**trade, "timestamp": trade["timestamp"].isoformat()}
+                )
 
             except ValueError as e:
                 logger.warning(f"Could not execute trade for {rec['ticker']}: {e}")
@@ -1937,7 +1937,7 @@ async def auto_trade(simulation_id: int, max_trades: int = 3):
             "success": True,
             "trades_executed": len(executed_trades),
             "trades": executed_trades,
-            "updated_cash": sim.cash
+            "updated_cash": sim.cash,
         }
 
     except HTTPException:
