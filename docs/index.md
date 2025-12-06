@@ -11,6 +11,7 @@ This site captures the essentials for developing, deploying, and stabilizing the
 - [Backlog & Priorities](project/backlog.md)
 - [Architecture Spec](architecture/SPECIFICATION.md)
 - [Deployment Guide](deployment/DEPLOYMENT_GUIDE.md)
+- [Simulation API Reference](api/simulation.md)
 - [Getting Started](../README.md)
 - [Historical Notes](history/)
 
