@@ -321,7 +321,7 @@ function SimulationDashboard() {
           </div>
 
           <div className="info-card">
-            <h4>{t('features')}</h4>)}</h4>
+            <h4>{t('features')}</h4>
             <ul>
               <li>✓ {t('feature1')}</li>
               <li>✓ {t('feature2')}</li>
