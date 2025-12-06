@@ -4,6 +4,8 @@ import pytest
 import sys
 from pathlib import Path
 
+from fastapi.testclient import TestClient
+
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
@@ -36,3 +38,12 @@ def mock_model():
     model.predict_proba.return_value = [[0.3, 0.7]]
     model.predict.return_value = [1]
     return model
+
+
+@pytest.fixture(scope="session")
+def client():
+    """Session-scoped FastAPI test client for API endpoint tests."""
+    from market_predictor.server import app
+
+    with TestClient(app) as test_client:
+        yield test_client
