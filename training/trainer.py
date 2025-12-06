@@ -1,7 +1,15 @@
 """Trainer script that can be used by CI/CD or a scheduled job to retrain and save models."""
 
 import os
+import sys
+from pathlib import Path
 from datetime import datetime
+
+# Ensure repository root is on sys.path so imports work when running directly
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 from market_predictor.trading import build_dataset, train_model
 import mlflow
 
