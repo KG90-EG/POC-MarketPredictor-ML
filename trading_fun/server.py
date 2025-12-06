@@ -1,5 +1,6 @@
 import hashlib
 import os
+import sys
 import time
 from typing import Any, Dict, List, Optional
 
@@ -38,6 +39,9 @@ from .trading import (
     features,
 )
 from .websocket import manager as ws_manager
+
+from market_predictor.simulation import TradingSimulation, calculate_position_size
+from market_predictor.simulation_db import SimulationDB
 
 # Load environment variables from .env file
 load_dotenv()
@@ -1629,16 +1633,6 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 # SIMULATION API ENDPOINTS
 # ============================================================================
 
-# Import simulation modules
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from market_predictor.simulation import TradingSimulation, calculate_position_size
-from market_predictor.simulation_db import SimulationDB
-
-
 class SimulationCreateRequest(BaseModel):
     """Request model for creating a simulation."""
 
@@ -1858,10 +1852,10 @@ async def execute_trade(simulation_id: int, request: SimulationTradeRequest):
 async def auto_trade(simulation_id: int, max_trades: int = 3):
     """
     Execute AI recommendations automatically.
-    
+
     Args:
         max_trades: Maximum number of trades to execute (default: 3)
-        
+
     Returns:
         List of executed trades
     """
@@ -1869,23 +1863,23 @@ async def auto_trade(simulation_id: int, max_trades: int = 3):
         sim = SimulationDB.get_simulation(simulation_id)
         if not sim:
             raise HTTPException(status_code=404, detail="Simulation not found")
-            
+
         if not MODEL:
             raise HTTPException(status_code=503, detail="ML model not loaded")
-            
+
         # Get recommendations
         stocks = DEFAULT_STOCKS[:20]
         predictions = []
         current_prices = {}
-        
+
         for ticker in stocks:
             try:
                 stock = yf.Ticker(ticker)
                 hist = stock.history(period="60d")
-                
+
                 if len(hist) < 30:
                     continue
-                    
+
                 df = hist.copy()
                 df["RSI"] = compute_rsi(df["Close"])
                 df["MACD"], df["Signal"] = compute_macd(df["Close"])
@@ -1894,26 +1888,26 @@ async def auto_trade(simulation_id: int, max_trades: int = 3):
                 )
                 df["Momentum"] = compute_momentum(df["Close"])
                 df.dropna(inplace=True)
-                
+
                 if df.empty:
                     continue
-                    
+
                 X = df[features].iloc[-1:].values
                 prediction = MODEL.predict_proba(X)[0]
                 confidence = float(max(prediction))
                 signal = "UP" if prediction[1] > 0.5 else "DOWN"
-                
+
                 predictions.append(
                     {"ticker": ticker, "confidence": confidence, "signal": signal}
                 )
                 current_prices[ticker] = float(hist["Close"].iloc[-1])
-                
+
             except Exception as e:
                 logger.error(f"Error predicting {ticker}: {e}")
-                
+
         # Get recommendations
         recommendations = sim.get_ai_recommendations(predictions, current_prices)
-        
+
         # Execute top recommendations
         executed_trades = []
         for rec in recommendations[:max_trades]:
@@ -1926,26 +1920,26 @@ async def auto_trade(simulation_id: int, max_trades: int = 3):
                     reason=rec["reason"],
                     ml_confidence=rec["confidence"]
                 )
-                
+
                 SimulationDB.save_trade(simulation_id, trade)
                 executed_trades.append({
                     **trade,
                     "timestamp": trade["timestamp"].isoformat()
                 })
-                
+
             except ValueError as e:
                 logger.warning(f"Could not execute trade for {rec['ticker']}: {e}")
-                
+
         # Save simulation state
         SimulationDB.save_simulation(sim)
-        
+
         return {
             "success": True,
             "trades_executed": len(executed_trades),
             "trades": executed_trades,
             "updated_cash": sim.cash
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
