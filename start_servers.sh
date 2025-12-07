@@ -15,7 +15,7 @@ sleep 2
 
 echo "🚀 Starting backend on port $BACKEND_PORT..."
 cd "$PROJECT_DIR"
-.venv/bin/python -m uvicorn trading_fun.server:app --host 0.0.0.0 --port $BACKEND_PORT --reload > /tmp/backend.log 2>&1 &
+.venv/bin/python -m uvicorn market_predictor.server:app --host 0.0.0.0 --port $BACKEND_PORT --reload > /tmp/backend.log 2>&1 &
 BACKEND_PID=$!
 
 echo "🚀 Starting frontend on port $FRONTEND_PORT..."

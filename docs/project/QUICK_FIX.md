@@ -45,7 +45,7 @@ sleep 2
 
 # 2. Backend starten
 cd /Users/kevingarcia/Documents/POC-MarketPredictor-ML
-.venv/bin/python -m uvicorn trading_fun.server:app --host 0.0.0.0 --port 8000 --reload &
+.venv/bin/python -m uvicorn market_predictor.server:app --host 0.0.0.0 --port 8000 --reload &
 
 # 3. Frontend neu bauen und starten
 cd frontend
