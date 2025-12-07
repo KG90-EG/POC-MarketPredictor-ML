@@ -6,10 +6,10 @@ import os
 import sys
 
 # -- Project information -----------------------------------------------------
-project = 'Trading-Fun ML'
-copyright = '2025, KG90-EG'
-author = 'KG90-EG'
-release = '1.0.0'
+project = 'POC-MarketPredictor-ML'
+copyright = '2025, POC-MarketPredictor-ML contributors'
+author = 'POC-MarketPredictor-ML contributors'
+release = '0.9.0'
 
 # -- General configuration ---------------------------------------------------
 extensions = [
