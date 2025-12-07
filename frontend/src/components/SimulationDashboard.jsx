@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { apiClient } from '../api';
 import { translations, getTranslation } from '../translations';
 import './SimulationDashboard.css';
@@ -14,7 +14,7 @@ import './SimulationDashboard.css';
  * - Track performance metrics
  */
 
-function SimulationDashboard() {
+function SimulationDashboard({ language = 'en', onLanguageChange }) {
   const [simulations, setSimulations] = useState([]);
   const [currentSim, setCurrentSim] = useState(null);
   const [portfolio, setPortfolio] = useState(null);
@@ -23,7 +23,6 @@ function SimulationDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
-  const [language, setLanguage] = useState(localStorage.getItem('app_language') || 'de');
 
   // Form states
   const [newSimCapital, setNewSimCapital] = useState(10000);
@@ -34,10 +33,104 @@ function SimulationDashboard() {
     price: 0
   });
 
+  const t = useCallback((key) => getTranslation(language, key), [language]);
+
+  const languageLocale = useMemo(() => ({
+    de: 'de-DE',
+    en: 'en-US',
+    it: 'it-IT',
+    es: 'es-ES',
+    fr: 'fr-FR'
+  }), []);
+
+  const formatTimestamp = useCallback(
+    (value) => new Date(value).toLocaleString(languageLocale[language] || 'en-US'),
+    [language, languageLocale]
+  );
+
+  const loadSimulation = useCallback(
+    async (simId) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await apiClient.get(`/api/simulations/${simId}`);
+        setCurrentSim(response.data);
+      } catch (err) {
+        setError(t('errorLoading') + ': ' + err.message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [t]
+  );
+
+  const loadPortfolio = useCallback(
+    async (simId = currentSim?.simulation_id) => {
+      if (!simId) return;
+
+      try {
+        const response = await apiClient.get(`/api/simulations/${simId}/portfolio`);
+        setPortfolio(response.data);
+      } catch (err) {
+        console.error('Error loading portfolio:', err);
+        setError(t('errorPortfolio'));
+      }
+    },
+    [currentSim?.simulation_id, t]
+  );
+
+  const loadTradeHistory = useCallback(
+    async (simId = currentSim?.simulation_id) => {
+      if (!simId) return;
+
+      try {
+        const response = await apiClient.get(`/api/simulations/${simId}/history`);
+        setTradeHistory(response.data.trades || []);
+      } catch (err) {
+        console.error('Error loading trade history:', err);
+      }
+    },
+    [currentSim?.simulation_id]
+  );
+
+  const loadRecommendations = useCallback(
+    async () => {
+      if (!currentSim) return;
+
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await apiClient.post(`/api/simulations/${currentSim.simulation_id}/recommendations`);
+        setRecommendations(response.data.recommendations || []);
+      } catch (err) {
+        setError(t('errorRecommendations') + ': ' + err.message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [currentSim, t]
+  );
+
+  const loadUserSimulations = useCallback(
+    async () => {
+      try {
+        // Note: In production, use actual user_id from auth
+        const userId = 'default_user';
+        // This endpoint doesn't exist yet, we'll load individual sim for now
+        if (currentSim) {
+          await loadSimulation(currentSim.simulation_id);
+        }
+      } catch (err) {
+        console.error('Error loading simulations:', err);
+      }
+    },
+    [currentSim, loadSimulation]
+  );
+
   // Load simulations on mount
   useEffect(() => {
     loadUserSimulations();
-  }, []);
+  }, [loadUserSimulations]);
 
   // Load portfolio when simulation changes
   useEffect(() => {
@@ -45,20 +138,7 @@ function SimulationDashboard() {
       loadPortfolio();
       loadTradeHistory();
     }
-  }, [currentSim]);
-
-  const loadUserSimulations = async () => {
-    try {
-      // Note: In production, use actual user_id from auth
-      const userId = 'default_user';
-      // This endpoint doesn't exist yet, we'll load individual sim for now
-      if (currentSim) {
-        await loadSimulation(currentSim.simulation_id);
-      }
-    } catch (err) {
-      console.error('Error loading simulations:', err);
-    }
-  };
+  }, [currentSim, loadPortfolio, loadTradeHistory]);
 
   const createSimulation = async () => {
     setLoading(true);
@@ -83,57 +163,6 @@ function SimulationDashboard() {
     }
   };
 
-  const loadSimulation = async (simId) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await apiClient.get(`/api/simulations/${simId}`);
-      setCurrentSim(response.data);
-    } catch (err) {
-      setError(t('errorLoading') + ': ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadPortfolio = async () => {
-    if (!currentSim) return;
-
-    try {
-      const response = await apiClient.get(`/api/simulations/${currentSim.simulation_id}/portfolio`);
-      setPortfolio(response.data);
-    } catch (err) {
-      console.error('Error loading portfolio:', err);
-      setError(t('errorPortfolio'));
-    }
-  };
-
-  const loadRecommendations = async () => {
-    if (!currentSim) return;
-
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await apiClient.post(`/api/simulations/${currentSim.simulation_id}/recommendations`);
-      setRecommendations(response.data.recommendations || []);
-    } catch (err) {
-      setError(t('errorRecommendations') + ': ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadTradeHistory = async () => {
-    if (!currentSim) return;
-
-    try {
-      const response = await apiClient.get(`/api/simulations/${currentSim.simulation_id}/history`);
-      setTradeHistory(response.data.trades || []);
-    } catch (err) {
-      console.error('Error loading trade history:', err);
-    }
-  };
-
   const executeTrade = async (ticker, action, quantity, price, reason, mlConfidence = null) => {
     if (!currentSim) return;
 
@@ -152,10 +181,12 @@ function SimulationDashboard() {
         }
       );
 
-      // Refresh portfolio and history
-      await loadPortfolio();
-      await loadTradeHistory();
-      await loadSimulation(currentSim.simulation_id);
+      // Refresh portfolio and history concurrently
+      await Promise.all([
+        loadPortfolio(currentSim.simulation_id),
+        loadTradeHistory(currentSim.simulation_id),
+        loadSimulation(currentSim.simulation_id)
+      ]);
 
       alert(`✓ ${t('tradeSuccess')}: ${action} ${quantity} ${ticker} @ $${price.toFixed(2)}`);
     } catch (err) {
@@ -191,9 +222,11 @@ function SimulationDashboard() {
       );
 
       // Refresh all data
-      await loadPortfolio();
-      await loadTradeHistory();
-      await loadSimulation(currentSim.simulation_id);
+      await Promise.all([
+        loadPortfolio(currentSim.simulation_id),
+        loadTradeHistory(currentSim.simulation_id),
+        loadSimulation(currentSim.simulation_id)
+      ]);
 
       const { trades_executed, trades } = response.data;
       if (trades_executed > 0) {
@@ -249,9 +282,11 @@ function SimulationDashboard() {
     setLoading(true);
     try {
       await apiClient.post(`/api/simulations/${currentSim.simulation_id}/reset`);
-      await loadSimulation(currentSim.simulation_id);
-      await loadPortfolio();
-      await loadTradeHistory();
+      await Promise.all([
+        loadSimulation(currentSim.simulation_id),
+        loadPortfolio(currentSim.simulation_id),
+        loadTradeHistory(currentSim.simulation_id)
+      ]);
       alert('✓ Simulation zurückgesetzt');
     } catch (err) {
       setError('Fehler beim Zurücksetzen: ' + err.message);
@@ -260,13 +295,14 @@ function SimulationDashboard() {
     }
   };
 
-  // Helper functions
-  const t = (key) => getTranslation(language, key);
-  
-  const changeLanguage = (lang) => {
-    setLanguage(lang);
-    localStorage.setItem('app_language', lang);
-  };
+  const changeLanguage = useCallback(
+    (lang) => {
+      if (onLanguageChange) {
+        onLanguageChange(lang);
+      }
+    },
+    [onLanguageChange]
+  );
   
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-US', {
@@ -281,6 +317,53 @@ function SimulationDashboard() {
     return `${sign}${value.toFixed(2)}%`;
   };
 
+  const startingValue = useMemo(() => {
+    const positionsValue = portfolio?.positions?.reduce((sum, pos) => sum + (pos.value || 0), 0) || 0;
+    const cashBalance =
+      portfolio?.cash ?? currentSim?.available_cash ?? currentSim?.initial_capital ?? 0;
+
+    return positionsValue + cashBalance;
+  }, [portfolio, currentSim]);
+
+  const annotatedHistory = useMemo(() => {
+    let position = 0;
+    let costBasis = 0;
+    let cash = currentSim?.initial_capital ?? portfolio?.cash ?? currentSim?.available_cash ?? 0;
+    const baseValue = startingValue || cash;
+
+    return tradeHistory.map((trade) => {
+      const tradeValue = trade.price * trade.quantity;
+      let realizedPnl = 0;
+      const averageCostBefore = position > 0 ? costBasis / position : 0;
+
+      if (trade.action === 'BUY') {
+        position += trade.quantity;
+        costBasis += tradeValue;
+        cash -= tradeValue;
+      } else {
+        const portionCost = position > 0 ? averageCostBefore * trade.quantity : 0;
+        realizedPnl = tradeValue - portionCost;
+        position -= trade.quantity;
+        costBasis = Math.max(0, costBasis - portionCost);
+        cash += tradeValue;
+      }
+
+      const avgCost = position > 0 ? costBasis / position : 0;
+      const portfolioValue = cash + position * trade.price;
+      const cumulativePnl = portfolioValue - baseValue;
+
+      return {
+        ...trade,
+        avgCost,
+        positionAfter: position,
+        cashAfter: cash,
+        portfolioValue,
+        realizedPnl,
+        cumulativePnl
+      };
+    });
+  }, [tradeHistory, currentSim, portfolio, startingValue]);
+
   return (
     <div className="simulation-dashboard">
       <div className="dashboard-header">
@@ -293,6 +376,7 @@ function SimulationDashboard() {
               <option value="en">🇬🇧 EN</option>
               <option value="it">🇮🇹 IT</option>
               <option value="es">🇪🇸 ES</option>
+              <option value="fr">🇫🇷 FR</option>
             </select>
           </div>
         </div>
@@ -607,7 +691,7 @@ function SimulationDashboard() {
                       🔄 {t('refresh')}
                     </button>
                   </div>
-                  {tradeHistory.length > 0 ? (
+                  {annotatedHistory.length > 0 ? (
                     <table className="history-table">
                       <thead>
                         <tr>
@@ -619,12 +703,17 @@ function SimulationDashboard() {
                           <th>{t('total')}</th>
                           <th>{t('confidence')}</th>
                           <th>{t('reason')}</th>
+                          <th>{t('positionAfter')}</th>
+                          <th>{t('avgCostAfter')}</th>
+                          <th>{t('cashBalance')}</th>
+                          <th>{t('portfolioValue')}</th>
+                          <th>{t('cumulativePnl')}</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {tradeHistory.map((trade, idx) => (
-                          <tr key={idx}>
-                            <td>{new Date(trade.timestamp).toLocaleString('de-DE')}</td>
+                        {annotatedHistory.map((trade, idx) => (
+                          <tr key={`${trade.timestamp}-${idx}`}>
+                            <td>{formatTimestamp(trade.timestamp)}</td>
                             <td className={trade.action === 'BUY' ? 'buy' : 'sell'}>
                               {trade.action}
                             </td>
@@ -638,6 +727,13 @@ function SimulationDashboard() {
                                 : '-'}
                             </td>
                             <td className="reason">{trade.reason}</td>
+                            <td>{trade.positionAfter}</td>
+                            <td>{trade.avgCost ? formatCurrency(trade.avgCost) : '-'}</td>
+                            <td>{formatCurrency(trade.cashAfter)}</td>
+                            <td>{formatCurrency(trade.portfolioValue)}</td>
+                            <td className={trade.cumulativePnl >= 0 ? 'positive' : 'negative'}>
+                              {formatCurrency(trade.cumulativePnl)}
+                            </td>
                           </tr>
                         ))}
                       </tbody>

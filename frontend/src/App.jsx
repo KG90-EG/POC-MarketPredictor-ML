@@ -52,6 +52,7 @@ function AppContent() {
     const saved = localStorage.getItem('darkMode')
     return saved ? JSON.parse(saved) : false
   })
+  const [language, setLanguage] = useState(() => localStorage.getItem('app_language') || 'en')
 
   // Digital Assets / Crypto state
   const [portfolioView, setPortfolioView] = useState('stocks') // 'stocks', 'crypto', 'watchlists', 'simulation', or 'buy-opportunities'
@@ -82,6 +83,10 @@ function AppContent() {
     document.body.classList.toggle('dark-mode', darkMode)
     localStorage.setItem('darkMode', JSON.stringify(darkMode))
   }, [darkMode])
+
+  useEffect(() => {
+    localStorage.setItem('app_language', language)
+  }, [language])
 
   // Auto-load ranking on mount
   useEffect(() => {
@@ -338,14 +343,31 @@ function AppContent() {
       <a href="#main-content" className="skip-link">Skip to main content</a>
 
       <header className="header" role="banner">
-        <button
-          className="theme-toggle"
-          onClick={toggleDarkMode}
-          aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
-          title={`Toggle ${darkMode ? 'light' : 'dark'} mode`}
-        >
-          {darkMode ? '☀️' : '🌙'}
-        </button>
+        <div className="header-actions" aria-label="Display settings">
+          <div className="language-control">
+            <label htmlFor="language-select" className="sr-only">Language</label>
+            <select
+              id="language-select"
+              value={language}
+              onChange={e => setLanguage(e.target.value)}
+              aria-label="Select application language"
+            >
+              <option value="de">🇩🇪 Deutsch</option>
+              <option value="it">🇮🇹 Italiano</option>
+              <option value="en">🇬🇧 English</option>
+              <option value="es">🇪🇸 Español</option>
+              <option value="fr">🇫🇷 Français</option>
+            </select>
+          </div>
+          <button
+            className="theme-toggle"
+            onClick={toggleDarkMode}
+            aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
+            title={`Toggle ${darkMode ? 'light' : 'dark'} mode`}
+          >
+            {darkMode ? '☀️' : '🌙'}
+          </button>
+        </div>
         <button
           className={`health-indicator ${healthStatus}`}
           onClick={() => setShowHealthPanel(!showHealthPanel)}
@@ -595,7 +617,7 @@ function AppContent() {
 
       {/* Trading Simulation View */}
       {portfolioView === 'simulation' && (
-        <SimulationDashboard />
+        <SimulationDashboard language={language} onLanguageChange={setLanguage} />
       )}
 
       {/* Buy Opportunities View */}
