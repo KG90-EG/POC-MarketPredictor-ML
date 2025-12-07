@@ -94,7 +94,7 @@ class TradingSimulation:
             if p['confidence'] > 0.65
             and p['ticker'] not in self.positions
         ]
-        
+
         # Sort by confidence, limit to available slots
         max_positions = 10
         available_slots = max_positions - len(self.positions)
@@ -103,13 +103,37 @@ class TradingSimulation:
             key=lambda x: x['confidence'],
             reverse=True
         )[:available_slots]
-        
+
+        allocation_per_position = self.cash / max_positions if max_positions else 0
+
         for pred in buy_candidates:
+            current_price = current_prices.get(pred['ticker'])
+            if not current_price or current_price <= 0:
+                logger.warning(
+                    "No valid price for %s, skipping buy recommendation",
+                    pred['ticker']
+                )
+                continue
+
+            quantity = int(allocation_per_position // current_price)
+            if quantity < 1:
+                quantity = 1 if current_price <= self.cash else 0
+
+            if quantity < 1:
+                logger.info(
+                    "Skipping %s buy recommendation due to insufficient cash (price=$%.2f)",
+                    pred['ticker'],
+                    current_price,
+                )
+                continue
+
             recommendations.append({
                 'action': 'BUY',
                 'ticker': pred['ticker'],
                 'confidence': pred['confidence'],
-                'reason': f"High ML confidence ({pred['confidence']:.1%}), strong buy signal"
+                'reason': f"High ML confidence ({pred['confidence']:.1%}), strong buy signal",
+                'price': current_price,
+                'quantity': quantity,
             })
         
         # SELL opportunities: Check existing positions
@@ -141,23 +165,29 @@ class TradingSimulation:
                     'action': 'SELL',
                     'ticker': ticker,
                     'confidence': current_pred['confidence'],
-                    'reason': f"Low confidence ({current_pred['confidence']:.1%}), exit position"
+                    'reason': f"Low confidence ({current_pred['confidence']:.1%}), exit position",
+                    'price': current_price,
+                    'quantity': position['quantity'],
                 })
-            
+
             elif pnl_pct <= -0.10:
                 recommendations.append({
                     'action': 'SELL',
                     'ticker': ticker,
                     'confidence': current_pred['confidence'],
-                    'reason': f"Stop-loss triggered ({pnl_pct:.1%})"
+                    'reason': f"Stop-loss triggered ({pnl_pct:.1%})",
+                    'price': current_price,
+                    'quantity': position['quantity'],
                 })
-            
+
             elif pnl_pct >= 0.20:
                 recommendations.append({
                     'action': 'SELL',
                     'ticker': ticker,
                     'confidence': current_pred['confidence'],
-                    'reason': f"Take-profit triggered ({pnl_pct:.1%})"
+                    'reason': f"Take-profit triggered ({pnl_pct:.1%})",
+                    'price': current_price,
+                    'quantity': position['quantity'],
                 })
         
         return recommendations
