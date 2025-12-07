@@ -1,4 +1,4 @@
-// Multi-language support: DE, EN, IT, ES
+// Multi-language support: DE, EN, IT, ES, FR
 
 export const translations = {
   de: {
@@ -65,6 +65,10 @@ export const translations = {
     total: 'Gesamt',
     noTrades: 'Keine Trades vorhanden',
     noTradesHint: 'Starte Auto-Trade oder führe manuelle Trades aus',
+    positionAfter: 'Position nach Trade',
+    avgCostAfter: 'Ø Kosten (nach Trade)',
+    cashBalance: 'Kassenbestand',
+    cumulativePnl: 'Kum. P&L',
     
     // Messages
     simulationCreated: 'Simulation erstellt mit',
@@ -149,6 +153,10 @@ export const translations = {
     total: 'Total',
     noTrades: 'No trades available',
     noTradesHint: 'Start Auto-Trade or execute manual trades',
+    positionAfter: 'Position After Trade',
+    avgCostAfter: 'Avg Cost (Post-Trade)',
+    cashBalance: 'Cash Balance',
+    cumulativePnl: 'Cumulative P&L',
     
     // Messages
     simulationCreated: 'Simulation created with',
@@ -233,6 +241,10 @@ export const translations = {
     total: 'Totale',
     noTrades: 'Nessun trade disponibile',
     noTradesHint: 'Inizia Auto-Trade o esegui trade manuali',
+    positionAfter: 'Posizione dopo il trade',
+    avgCostAfter: 'Costo medio (post-trade)',
+    cashBalance: 'Saldo cassa',
+    cumulativePnl: 'P&L cumulativo',
     
     // Messages
     simulationCreated: 'Simulazione creata con',
@@ -317,6 +329,10 @@ export const translations = {
     total: 'Total',
     noTrades: 'No hay trades disponibles',
     noTradesHint: 'Inicia Auto-Trade o ejecuta trades manuales',
+    positionAfter: 'Posición después del trade',
+    avgCostAfter: 'Costo promedio (post-trade)',
+    cashBalance: 'Saldo de efectivo',
+    cumulativePnl: 'P&L acumulado',
     
     // Messages
     simulationCreated: 'Simulación creada con',
@@ -335,6 +351,94 @@ export const translations = {
     
     // Language
     language: 'Idioma',
+  },
+
+  fr: {
+    // Navigation & Tabs
+    overview: 'Vue d’ensemble',
+    recommendations: 'Recommandations IA',
+    trade: 'Transaction',
+    history: 'Historique',
+
+    // Simulation Start
+    startSimulation: 'Démarrer la simulation',
+    initialCapital: 'Capital initial',
+    creating: 'Création en cours...',
+    features: 'Fonctionnalités',
+    feature1: 'Recommandations d’achat/vente basées sur l’IA',
+    feature2: 'Gestion automatique du portefeuille',
+    feature3: 'Stratégies Stop-Loss & Take-Profit',
+    feature4: 'Suivi de performance & métriques',
+    feature5: 'Historique des trades & justifications',
+
+    // Metrics
+    portfolioValue: 'Valeur du portefeuille',
+    cash: 'Trésorerie',
+    positions: 'Positions',
+    winRate: 'Taux de réussite',
+
+    // Buttons
+    refresh: 'Actualiser',
+    reset: 'Réinitialiser la simulation',
+    loadRecommendations: 'Charger les recommandations',
+    autoTrade: 'Auto-Trade (Top 3)',
+    executeTrade: 'Exécuter la transaction',
+    loading: 'Chargement...',
+    executing: 'Exécution...',
+
+    // Overview Tab
+    holdings: 'Positions du portefeuille',
+    ticker: 'Ticker',
+    quantity: 'Quantité',
+    avgCost: 'Coût moyen',
+    currentPrice: 'Prix actuel',
+    value: 'Valeur',
+    noPositions: 'Aucune position disponible',
+    noPositionsHint: 'Créez des trades via les recommandations IA ou manuellement',
+
+    // Recommendations Tab
+    aiRecommendations: 'Recommandations de trading IA',
+    action: 'Action',
+    confidence: 'Confiance',
+    price: 'Prix',
+    reason: 'Raison',
+    execute: 'Exécuter',
+    noRecommendations: 'Aucune recommandation',
+    loadFirst: 'Cliquez sur "Charger les recommandations"',
+
+    // Trade Tab
+    manualTrade: 'Trade manuel',
+    symbol: 'Symbole',
+    enterSymbol: 'ex. AAPL',
+
+    // History Tab
+    tradeHistory: 'Historique des trades',
+    time: 'Heure',
+    total: 'Total',
+    noTrades: 'Aucun trade disponible',
+    noTradesHint: 'Lancez l’Auto-Trade ou exécutez des trades manuels',
+    positionAfter: 'Position après trade',
+    avgCostAfter: 'Coût moyen (post-trade)',
+    cashBalance: 'Solde de trésorerie',
+    cumulativePnl: 'P&L cumulatif',
+
+    // Messages
+    simulationCreated: 'Simulation créée avec',
+    tradesExecuted: 'trades exécutés',
+    noTradesRecommended: 'Aucune transaction recommandée',
+    tradeSuccess: 'Trade réussi',
+
+    // Errors
+    errorCreating: 'Erreur lors de la création de la simulation',
+    errorLoading: 'Erreur lors du chargement de la simulation',
+    errorPortfolio: 'Erreur lors du chargement du portefeuille',
+    errorRecommendations: 'Erreur lors du chargement des recommandations',
+    errorTrade: 'Erreur lors de la transaction',
+    errorAutoTrade: 'Erreur Auto-Trade',
+    missingPrice: 'Information de prix manquante',
+
+    // Language
+    language: 'Langue',
   }
 };
 
