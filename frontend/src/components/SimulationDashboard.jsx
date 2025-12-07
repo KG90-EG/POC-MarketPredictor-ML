@@ -210,19 +210,33 @@ function SimulationDashboard() {
   };
 
   const executeRecommendation = async (rec) => {
-    if (!confirm(`${rec.action} ${rec.ticker}?\nConfidence: ${(rec.confidence * 100).toFixed(1)}%\nReason: ${rec.reason}`)) {
+    const price = rec.price ?? rec.current_price ?? 0;
+    const quantity = rec.quantity ?? 10;
+
+    const confirmationMessage = [
+      `${rec.action} ${rec.ticker}?`,
+      `Confidence: ${(rec.confidence * 100).toFixed(1)}%`,
+      price ? `Price: $${price.toFixed(2)}` : null,
+      `Quantity: ${quantity}`,
+      `Reason: ${rec.reason}`
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    if (!confirm(confirmationMessage)) {
       return;
     }
 
-    // Get current price (simplified - in production, fetch real-time price)
-    const quantity = 10; // Default quantity
-    const price = 100; // TODO: Fetch real price
-
+    const tradePrice = price || tradeForm.price;
+    if (!tradePrice || tradePrice <= 0) {
+      setError(t('errorTrade') + ': ' + t('missingPrice'));
+      return;
+    }
     await executeTrade(
       rec.ticker,
       rec.action,
       quantity,
-      price,
+      tradePrice,
       rec.reason,
       rec.confidence
     );

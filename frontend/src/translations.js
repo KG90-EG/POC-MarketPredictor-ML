@@ -79,6 +79,7 @@ export const translations = {
     errorRecommendations: 'Fehler beim Laden der Empfehlungen',
     errorTrade: 'Fehler beim Trade',
     errorAutoTrade: 'Auto-Trade Fehler',
+    missingPrice: 'Preisangaben fehlen',
     
     // Language
     language: 'Sprache',
@@ -162,6 +163,7 @@ export const translations = {
     errorRecommendations: 'Error loading recommendations',
     errorTrade: 'Error executing trade',
     errorAutoTrade: 'Auto-Trade error',
+    missingPrice: 'Missing price information',
     
     // Language
     language: 'Language',
@@ -245,6 +247,7 @@ export const translations = {
     errorRecommendations: 'Errore durante il caricamento delle raccomandazioni',
     errorTrade: 'Errore durante il trade',
     errorAutoTrade: 'Errore Auto-Trade',
+    missingPrice: 'Informazioni sul prezzo mancanti',
     
     // Language
     language: 'Lingua',
@@ -328,6 +331,7 @@ export const translations = {
     errorRecommendations: 'Error al cargar las recomendaciones',
     errorTrade: 'Error al ejecutar el trade',
     errorAutoTrade: 'Error Auto-Trade',
+    missingPrice: 'Falta información de precio',
     
     // Language
     language: 'Idioma',
