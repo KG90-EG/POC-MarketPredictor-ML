@@ -25,205 +25,118 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
   const [activeTab, setActiveTab] = useState('overview');
 
   // Form states
-  const [newSimCapital, setNewSimCapital] = useState(10000);
-  const [tradeForm, setTradeForm] = useState({
-    ticker: '',
-    action: 'BUY',
-    quantity: 10,
-    price: 0
-  });
-
-  const t = useCallback((key) => getTranslation(language, key), [language]);
-
-  const languageLocale = useMemo(() => ({
-    de: 'de-DE',
-    en: 'en-US',
-    it: 'it-IT',
-    es: 'es-ES',
-    fr: 'fr-FR'
-  }), []);
-
-  const formatTimestamp = useCallback(
-    (value) => new Date(value).toLocaleString(languageLocale[language] || 'en-US'),
-    [language, languageLocale]
-  );
-
-  const loadSimulation = useCallback(
-    async (simId) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await apiClient.get(`/api/simulations/${simId}`);
-        setCurrentSim(response.data);
-      } catch (err) {
-        setError(t('errorLoading') + ': ' + err.message);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [t]
-  );
-
-  const loadPortfolio = useCallback(
-    async (simId = currentSim?.simulation_id) => {
-      if (!simId) return;
-
-      try {
-        const response = await apiClient.get(`/api/simulations/${simId}/portfolio`);
-        setPortfolio(response.data);
-      } catch (err) {
-        console.error('Error loading portfolio:', err);
-        setError(t('errorPortfolio'));
-      }
-    },
-    [currentSim?.simulation_id, t]
-  );
-
-  const loadTradeHistory = useCallback(
-    async (simId = currentSim?.simulation_id) => {
-      if (!simId) return;
-
-      try {
-        const response = await apiClient.get(`/api/simulations/${simId}/history`);
-        setTradeHistory(response.data.trades || []);
-      } catch (err) {
-        console.error('Error loading trade history:', err);
-      }
-    },
-    [currentSim?.simulation_id]
-  );
-
-  const loadRecommendations = useCallback(
-    async () => {
-      if (!currentSim) return;
-
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await apiClient.post(`/api/simulations/${currentSim.simulation_id}/recommendations`);
-        setRecommendations(response.data.recommendations || []);
-      } catch (err) {
-        setError(t('errorRecommendations') + ': ' + err.message);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [currentSim, t]
-  );
-
-  const loadUserSimulations = useCallback(
-    async () => {
-      try {
-        // Note: In production, use actual user_id from auth
-        const userId = 'default_user';
-        // This endpoint doesn't exist yet, we'll load individual sim for now
-        if (currentSim) {
-          await loadSimulation(currentSim.simulation_id);
-        }
-      } catch (err) {
-        console.error('Error loading simulations:', err);
-      }
-    },
-    [currentSim, loadSimulation]
-  );
-
-  // Load simulations on mount
-  useEffect(() => {
-    loadUserSimulations();
-  }, [loadUserSimulations]);
-
-  // Load portfolio when simulation changes
-  useEffect(() => {
-    if (currentSim) {
-      loadPortfolio();
-      loadTradeHistory();
-    }
-  }, [currentSim, loadPortfolio, loadTradeHistory]);
-
-  const createSimulation = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await apiClient.post('/api/simulations', {
-        user_id: 'default_user',
-        initial_capital: newSimCapital,
-        mode: 'auto'
-      });
-
-      const newSim = response.data;
-      setCurrentSim(newSim);
-      setNewSimCapital(10000); // Reset form
-
-      // Show success message
-      alert(`${t('simulationCreated')} #${newSim.simulation_id}: $${newSim.initial_capital.toLocaleString()}`);
-    } catch (err) {
-      setError(t('errorCreating') + ': ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const executeTrade = async (ticker, action, quantity, price, reason, mlConfidence = null) => {
-    if (!currentSim) return;
-
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await apiClient.post(
-        `/api/simulations/${currentSim.simulation_id}/trades`,
-        {
-          ticker,
-          action,
-          quantity,
-          price,
-          reason,
-          ml_confidence: mlConfidence
-        }
-      );
-
-      // Refresh portfolio and history concurrently
-      await Promise.all([
-        loadPortfolio(currentSim.simulation_id),
-        loadTradeHistory(currentSim.simulation_id),
-        loadSimulation(currentSim.simulation_id)
-      ]);
-
-      alert(`✓ ${t('tradeSuccess')}: ${action} ${quantity} ${ticker} @ $${price.toFixed(2)}`);
-    } catch (err) {
-      setError(`${t('errorTrade')}: ${err.response?.data?.detail || err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleManualTrade = async (e) => {
-    e.preventDefault();
-    await executeTrade(
-      tradeForm.ticker.toUpperCase(),
-      tradeForm.action,
-      tradeForm.quantity,
-      tradeForm.price,
-      'Manual trade'
+    // Helper functions
+    const t = useCallback((key) => getTranslation(language, key), [language]);
+    const languageLocale = useMemo(() => ({
+      de: 'de-DE',
+      en: 'en-US',
+      it: 'it-IT',
+      es: 'es-ES',
+      fr: 'fr-FR'
+    }), []);
+    const formatTimestamp = useCallback(
+      (value) => new Date(value).toLocaleString(languageLocale[language] || 'en-US'),
+      [language, languageLocale]
     );
-
-    // Reset form
-    setTradeForm({ ticker: '', action: 'BUY', quantity: 10, price: 0 });
-  };
-
-  const executeAutoTrade = async () => {
-    if (!currentSim) return;
-
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await apiClient.post(
-        `/api/simulations/${currentSim.simulation_id}/auto-trade`,
-        { max_trades: 3 }
-      );
-
-      // Refresh all data
-      await Promise.all([
-        loadPortfolio(currentSim.simulation_id),
+    const loadSimulation = useCallback(
+      async (simId) => {
+        setLoading(true);
+        setError(null);
+        try {
+          const response = await apiClient.get(`/api/simulations/${simId}`);
+          setCurrentSim(response.data);
+        } catch (err) {
+          setError(t('errorLoading') + ': ' + err.message);
+        } finally {
+          setLoading(false);
+        }
+      },
+      [t]
+    );
+    const loadPortfolio = useCallback(
+      async (simId = currentSim?.simulation_id) => {
+        if (!simId) return;
+        try {
+          const response = await apiClient.get(`/api/simulations/${simId}/portfolio`);
+          setPortfolio(response.data);
+        } catch (err) {
+          console.error('Error loading portfolio:', err);
+          setError(t('errorPortfolio'));
+        }
+      },
+      [currentSim?.simulation_id, t]
+    );
+    const loadTradeHistory = useCallback(
+      async (simId = currentSim?.simulation_id) => {
+        if (!simId) return;
+        try {
+          const response = await apiClient.get(`/api/simulations/${simId}/history`);
+          setTradeHistory(response.data.trades || []);
+        } catch (err) {
+          console.error('Error loading trade history:', err);
+        }
+      },
+      [currentSim?.simulation_id]
+    );
+    const loadRecommendations = useCallback(
+      async () => {
+        if (!currentSim) return;
+        setLoading(true);
+        setError(null);
+        try {
+          const response = await apiClient.post(`/api/simulations/${currentSim.simulation_id}/recommendations`);
+          setRecommendations(response.data.recommendations || []);
+        } catch (err) {
+          setError(t('errorRecommendations') + ': ' + err.message);
+        } finally {
+          setLoading(false);
+        }
+      },
+      [currentSim, t]
+    );
+    const loadUserSimulations = useCallback(
+      async () => {
+        try {
+          // Note: In production, use actual user_id from auth
+          const userId = 'default_user';
+          // This endpoint doesn't exist yet, we'll load individual sim for now
+          if (currentSim) {
+            await loadSimulation(currentSim.simulation_id);
+          }
+        } catch (err) {
+          console.error('Error loading simulations:', err);
+        }
+      },
+      [currentSim, loadSimulation]
+    );
+    useEffect(() => {
+      loadUserSimulations();
+    }, [loadUserSimulations]);
+    useEffect(() => {
+      if (currentSim) {
+        loadPortfolio();
+        loadTradeHistory();
+      }
+    }, [currentSim, loadPortfolio, loadTradeHistory]);
+    const createSimulation = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await apiClient.post('/api/simulations', {
+          user_id: 'default_user',
+          initial_capital: newSimCapital,
+          mode: 'auto'
+        });
+        const newSim = response.data;
+        setCurrentSim(newSim);
+        setNewSimCapital(10000); // Reset form
+        alert(`${t('simulationCreated')} #${newSim.simulation_id}: $${newSim.initial_capital.toLocaleString()}`);
+      } catch (err) {
+        setError(t('errorCreating') + ': ' + err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
         loadTradeHistory(currentSim.simulation_id),
         loadSimulation(currentSim.simulation_id)
       ]);
@@ -295,15 +208,14 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
     }
   };
 
-  const changeLanguage = useCallback(
-    (lang) => {
-      if (onLanguageChange) {
-        onLanguageChange(lang);
-      }
-    },
-    [onLanguageChange]
-  );
-  
+  // Helper functions
+  const t = (key) => getTranslation(language, key);
+
+  const changeLanguage = (lang) => {
+    setLanguage(lang);
+    localStorage.setItem('app_language', lang);
+  };
+
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -367,7 +279,7 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
   return (
     <div className="simulation-dashboard">
       <div className="dashboard-header">
-        <h2>📊 Trading Simulation</h2>
+        <h2>📊 {t('holdings')}</h2>
         <div className="header-controls">
           <div className="language-selector">
             <label>{t('language')}: </label>
@@ -393,8 +305,8 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
         // No simulation - show creation form
         <div className="create-simulation">
           <div className="card">
-            <h3>Neue Simulation erstellen</h3>
-            <p>Start a virtual trading simulation with ML-based recommendations</p>
+            <h3>{t('startSimulation')}</h3>
+            <p>{t('features')}</p>
 
             <div className="form-group">
               <label>{t('initialCapital')}</label>
@@ -503,7 +415,7 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
             {activeTab === 'overview' && (
               <div className="overview-tab">
                 <div className="card">
-                  <h3>Portfolio Holdings</h3>
+                  <h3>{t('holdings')}</h3>
                   {portfolio && portfolio.positions.length > 0 ? (
                     <table className="holdings-table">
                       <thead>
@@ -605,8 +517,8 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
                     </div>
                   ) : (
                     <div className="empty-state">
-                      <p>Keine Empfehlungen verfügbar</p>
-                      <small>Klicke auf "Empfehlungen laden" um AI-Signale zu erhalten</small>
+                      <p>{t('noRecommendations')}</p>
+                      <small>{t('loadFirst')}</small>
                     </div>
                   )}
                 </div>
