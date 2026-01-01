@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from datetime import datetime  # noqa: E402
 
-from market_predictor.database import WatchlistDB  # noqa: E402
-from market_predictor.trading import build_dataset, train_model  # noqa: E402
+from trading_fun.database import WatchlistDB  # noqa: E402
+from trading_fun.trading import build_dataset, train_model  # noqa: E402
 
 
 def main():
@@ -73,9 +73,7 @@ def main():
 
     # Train model
     print("\n🤖 Training Random Forest model...")
-    model_path = (
-        f"models/watchlist_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.bin"
-    )
+    model_path = f"models/watchlist_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}.bin"
     os.makedirs("models", exist_ok=True)
 
     try:
@@ -110,9 +108,7 @@ def main():
                 print(f"   New model accuracy ({metrics['accuracy']:.2%}) is good!")
                 should_promote = True
             else:
-                print(
-                    f"   New model accuracy ({metrics['accuracy']:.2%}) is not good enough."
-                )
+                print(f"   New model accuracy ({metrics['accuracy']:.2%}) is not good enough.")
                 print("   Keeping current production model.")
         except Exception as e:
             print(f"   Error comparing models: {e}")
@@ -126,9 +122,7 @@ def main():
         print("\n🚀 PROMOTED TO PRODUCTION!")
         print(f"   Your watchlist model is now live at: {prod_model_path}")
         print("\n   Restart the server to use the new model:")
-        print(
-            "   pkill -f uvicorn && .venv/bin/python -m uvicorn market_predictor.server:app --reload"
-        )
+        print("   pkill -f uvicorn && .venv/bin/python -m uvicorn market_predictor.server:app --reload")
 
     print("\n" + "=" * 60)
     print("🎉 Done! Your personalized model is ready.")

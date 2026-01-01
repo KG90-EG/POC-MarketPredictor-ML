@@ -1,7 +1,9 @@
 import argparse
+
 import numpy as np
-from market_predictor.trading import load_data
 from scipy.stats import ks_2samp
+
+from trading_fun.trading import load_data
 
 
 def compute_baseline(tickers, period="1y"):

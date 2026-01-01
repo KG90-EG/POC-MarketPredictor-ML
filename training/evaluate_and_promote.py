@@ -1,8 +1,10 @@
 import argparse
-import joblib
 import os
-from market_predictor.trading import build_dataset
+
+import joblib
 from sklearn.metrics import accuracy_score
+
+from trading_fun.trading import build_dataset
 
 try:
     import boto3  # optional
@@ -35,9 +37,7 @@ def promote_if_better(new_model, prod_model, tickers):
             import numpy as np
 
             data = build_dataset(tickers, period="1y")
-            arr = np.concatenate(
-                [d["Adj Close"].values for _, d in data.groupby("Ticker")]
-            )
+            arr = np.concatenate([d["Adj Close"].values for _, d in data.groupby("Ticker")])
             os.makedirs("models", exist_ok=True)
             np.save("models/baseline.npy", arr)
         except Exception:  # pragma: no cover
@@ -67,9 +67,7 @@ def main():
     parser.add_argument("--period", default="1y")
     args = parser.parse_args()
     tickers = [t.strip().upper() for t in args.tickers.split(",")]
-    promoted, new_acc, prod_acc = promote_if_better(
-        args.new_model, args.prod_model, tickers
-    )
+    promoted, new_acc, prod_acc = promote_if_better(args.new_model, args.prod_model, tickers)
     if promoted:
         print("Promoted successfully")
     else:

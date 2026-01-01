@@ -1,17 +1,19 @@
 """Tests for cryptocurrency module"""
 
+from unittest.mock import Mock, patch
+
 import pytest
 import requests
-from unittest.mock import Mock, patch
-from market_predictor.crypto import (
-    get_crypto_market_data,
-    get_crypto_details,
-    compute_crypto_features,
-    get_crypto_ranking,
-    search_crypto,
+
+from trading_fun.crypto import (
+    COINGECKO_BASE_URL,
     DEFAULT_CRYPTOS,
     NFT_TOKENS,
-    COINGECKO_BASE_URL,
+    compute_crypto_features,
+    get_crypto_details,
+    get_crypto_market_data,
+    get_crypto_ranking,
+    search_crypto,
 )
 
 
@@ -161,9 +163,7 @@ class TestGetCryptoMarketData:
     def test_get_market_data_http_error(self, mock_get):
         """Test handling of HTTP errors"""
         mock_response = Mock()
-        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-            "404 Not Found"
-        )
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("404 Not Found")
         mock_get.return_value = mock_response
 
         result = get_crypto_market_data(crypto_ids=["invalid-crypto"])
@@ -198,9 +198,7 @@ class TestGetCryptoDetails:
     def test_get_crypto_details_not_found(self, mock_get):
         """Test handling when crypto is not found"""
         mock_response = Mock()
-        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-            "404"
-        )
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("404")
         mock_get.return_value = mock_response
 
         result = get_crypto_details("invalid-crypto-id")
@@ -386,9 +384,7 @@ class TestGetCryptoRanking:
         crypto_list = ["bitcoin", "ethereum"]
         get_crypto_ranking(crypto_ids=crypto_list)
 
-        mock_get_data.assert_called_once_with(
-            crypto_ids=crypto_list, include_nft=True, limit=50
-        )
+        mock_get_data.assert_called_once_with(crypto_ids=crypto_list, include_nft=True, limit=50)
 
 
 class TestSearchCrypto:
@@ -396,15 +392,11 @@ class TestSearchCrypto:
 
     @patch("market_predictor.crypto.requests.get")
     @patch("market_predictor.crypto.get_crypto_market_data")
-    def test_search_crypto_found(
-        self, mock_get_data, mock_requests_get, mock_market_data
-    ):
+    def test_search_crypto_found(self, mock_get_data, mock_requests_get, mock_market_data):
         """Test successful crypto search"""
         # Mock search API response
         mock_search_response = Mock()
-        mock_search_response.json.return_value = {
-            "coins": [{"id": "bitcoin", "name": "Bitcoin", "symbol": "BTC"}]
-        }
+        mock_search_response.json.return_value = {"coins": [{"id": "bitcoin", "name": "Bitcoin", "symbol": "BTC"}]}
         mock_search_response.raise_for_status.return_value = None
         mock_requests_get.return_value = mock_search_response
 

@@ -1,12 +1,13 @@
 """Tests for trading functions"""
 
-import pandas as pd
 import numpy as np
-from market_predictor.trading import (
-    compute_rsi,
-    compute_macd,
+import pandas as pd
+
+from trading_fun.trading import (
     compute_bollinger,
+    compute_macd,
     compute_momentum,
+    compute_rsi,
     features,
 )
 

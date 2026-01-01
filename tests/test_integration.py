@@ -1,8 +1,9 @@
 """Integration tests for the trading system"""
 
-import pytest
 from unittest.mock import patch
+
 import pandas as pd
+import pytest
 
 
 @pytest.mark.integration
@@ -15,11 +16,11 @@ class TestEndToEndPrediction:
         # Mock yfinance download
         mock_download.return_value = sample_stock_data
 
-        from market_predictor.trading import (
-            compute_rsi,
-            compute_macd,
+        from trading_fun.trading import (
             compute_bollinger,
+            compute_macd,
             compute_momentum,
+            compute_rsi,
             features,
         )
 
@@ -56,7 +57,7 @@ class TestCaching:
 
     def test_cache_operations(self):
         """Test cache get/set operations"""
-        from market_predictor.cache import cache
+        from trading_fun.cache import cache
 
         # Test basic operations
         cache.set("test_key", {"value": 123}, ttl_seconds=60)
@@ -77,7 +78,7 @@ class TestRateLimiter:
 
     def test_rate_limiter_stats(self):
         """Test rate limiter statistics"""
-        from market_predictor.server import rate_limiter
+        from trading_fun.server import rate_limiter
 
         stats = rate_limiter.get_stats()
         assert "tracked_ips" in stats
@@ -91,7 +92,7 @@ class TestWebSocketManager:
 
     def test_websocket_stats(self):
         """Test WebSocket manager statistics"""
-        from market_predictor.websocket import manager
+        from trading_fun.websocket import manager
 
         stats = manager.get_stats()
         assert "active_connections" in stats

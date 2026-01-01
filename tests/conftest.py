@@ -1,9 +1,9 @@
 """Pytest configuration and fixtures"""
 
-import pytest
 import sys
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 # Add project root to Python path
@@ -14,8 +14,8 @@ sys.path.insert(0, str(project_root))
 @pytest.fixture
 def sample_stock_data():
     """Sample stock data for testing"""
-    import pandas as pd
     import numpy as np
+    import pandas as pd
 
     dates = pd.date_range(start="2023-01-01", periods=250, freq="D")
     data = {
@@ -43,7 +43,7 @@ def mock_model():
 @pytest.fixture(scope="session")
 def client():
     """Session-scoped FastAPI test client for API endpoint tests."""
-    from market_predictor.server import app
+    from trading_fun.server import app
 
     with TestClient(app) as test_client:
         yield test_client

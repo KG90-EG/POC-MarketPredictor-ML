@@ -2,16 +2,17 @@
 
 import os
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # Ensure repository root is on sys.path so imports work when running directly
 ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from market_predictor.trading import build_dataset, train_model
 import mlflow
+
+from trading_fun.trading import build_dataset, train_model
 
 try:
     import boto3  # optional
@@ -37,11 +38,7 @@ def main():
         print(f"ERROR: Failed to build dataset: {e}")
         return
 
-    model_path = os.path.abspath(
-        os.path.join(
-            "models", f'model_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.bin'
-        )
-    )
+    model_path = os.path.abspath(os.path.join("models", f'model_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.bin'))
     os.makedirs(os.path.dirname(model_path), exist_ok=True)
 
     # Use mlflow to track the training run

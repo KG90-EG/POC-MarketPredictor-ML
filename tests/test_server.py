@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 def client():
     """Create test client - uses real app with loaded model"""
     # Import app (it will use the real MODEL or None if not found)
-    from market_predictor.server import app
+    from trading_fun.server import app
 
     with TestClient(app) as test_client:
         yield test_client
@@ -83,9 +83,7 @@ class TestPredictEndpoint:
 class TestRateLimiting:
     """Test rate limiting functionality"""
 
-    @pytest.mark.skip(
-        reason="Rate limiter headers work in production but not in test client"
-    )
+    @pytest.mark.skip(reason="Rate limiter headers work in production but not in test client")
     def test_rate_limiter_headers(self, client):
         """Test rate limiter adds appropriate headers"""
         # Make a request to a non-health endpoint

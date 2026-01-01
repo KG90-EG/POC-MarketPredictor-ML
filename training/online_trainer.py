@@ -1,15 +1,15 @@
 """Small online learning prototype using `river` to simulate streaming updates."""
 
 try:
+    from river.compose import ColumnTransformer
     from river.linear_model import LogisticRegression
     from river.preprocessing import StandardScaler
-    from river.compose import ColumnTransformer
 except Exception:
     LogisticRegression = None
     StandardScaler = None
     ColumnTransformer = None
 
-from market_predictor.trading import build_dataset
+from trading_fun.trading import build_dataset
 
 
 def run_online_training(tickers=["AAPL", "MSFT", "NVDA"], n_iter=1000):

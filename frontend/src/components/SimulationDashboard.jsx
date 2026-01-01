@@ -195,11 +195,10 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
     setLoading(true);
     try {
       await apiClient.post(`/api/simulations/${currentSim.simulation_id}/reset`);
-      await Promise.all([
-        loadSimulation(currentSim.simulation_id),
-        loadPortfolio(currentSim.simulation_id),
-        loadTradeHistory(currentSim.simulation_id)
-      ]);
+      // Execute sequentially to avoid race conditions
+      await loadSimulation(currentSim.simulation_id);
+      await loadPortfolio(currentSim.simulation_id);
+      await loadTradeHistory(currentSim.simulation_id);
       alert('✓ Simulation zurückgesetzt');
     } catch (err) {
       setError('Fehler beim Zurücksetzen: ' + err.message);
