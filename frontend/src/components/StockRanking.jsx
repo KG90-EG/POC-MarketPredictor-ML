@@ -1,5 +1,7 @@
 import PropTypes from 'prop-types'
 import Tooltip from './Tooltip'
+import FilterBar from './FilterBar'
+import React, { useState } from 'react'
 
 function StockRanking({
   results,
@@ -9,6 +11,27 @@ function StockRanking({
   onPageChange,
   onRowClick
 }) {
+  const [filteredResults, setFilteredResults] = useState(results)
+
+  // Prepare enriched stock data with details for filtering
+  const enrichedStocks = React.useMemo(() => {
+    return results.map(r => ({
+      ...r,
+      name: tickerDetails[r.ticker]?.name || '',
+      country: tickerDetails[r.ticker]?.country || '',
+      sector: tickerDetails[r.ticker]?.sector || '',
+      price: tickerDetails[r.ticker]?.price || 0,
+      volume: tickerDetails[r.ticker]?.volume || 0,
+      market_cap: tickerDetails[r.ticker]?.market_cap || 0,
+      change: tickerDetails[r.ticker]?.change || 0,
+      rank: results.indexOf(r) + 1
+    }))
+  }, [results, tickerDetails])
+
+  const handleFilterChange = (filtered) => {
+    setFilteredResults(filtered)
+    onPageChange(1) // Reset to page 1 when filters change
+  }
   function formatNumber(num) {
     if (!num) return 'N/A'
     if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`
@@ -24,11 +47,36 @@ function StockRanking({
     return 'rank-badge'
   }
 
-  const totalPages = Math.ceil(results.length / itemsPerPage)
-  const paginatedResults = results.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  const totalPages = Math.ceil(filteredResults.length / itemsPerPage)
+  const paginatedResults = filteredResults.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
   return (
     <>
+      {/* Filter Bar */}
+      <FilterBar 
+        stocks={enrichedStocks}
+        onFilterChange={handleFilterChange}
+        showCountryFilter={true}
+        showSectorFilter={true}
+        showMarketCapFilter={true}
+      />
+
+      {/* Results Summary */}
+      {filteredResults.length < results.length && (
+        <div style={{
+          padding: '12px 16px',
+          background: 'linear-gradient(135deg, #667eea15 0%, #764ba215 100%)',
+          border: '2px solid #667eea30',
+          borderRadius: '8px',
+          marginBottom: '16px',
+          fontSize: '0.9rem',
+          color: '#667eea',
+          fontWeight: '600'
+        }}>
+          📊 Showing {filteredResults.length} of {results.length} stocks
+        </div>
+      )}
+
       {/* Ranked Stocks Table */}
       <h2>Ranked Stocks</h2>
       <div className="table-wrapper">
@@ -62,7 +110,6 @@ function StockRanking({
         </thead>
         <tbody>
           {paginatedResults.map((r) => {
-            const rank = results.indexOf(r) + 1
             const detail = tickerDetails[r.ticker] || {}
             const changeClass = detail.change > 0 ? 'positive' : detail.change < 0 ? 'negative' : ''
 
@@ -74,7 +121,7 @@ function StockRanking({
                 title="Click for detailed information"
               >
                 <td>
-                  <span className={getRankBadgeClass(rank)}>{rank}</span>
+                  <span className={getRankBadgeClass(r.rank)}>{r.rank}</span>
                 </td>
                 <td><span className="ticker-symbol">{r.ticker}</span></td>
                 <td>{detail.name || 'N/A'}</td>
@@ -136,7 +183,7 @@ function StockRanking({
       </div>
 
       {/* Pagination Controls */}
-      {results.length > itemsPerPage && (
+      {filteredResults.length > itemsPerPage && (
         <div className="pagination">
           <button
             onClick={() => onPageChange(Math.max(1, currentPage - 1))}
@@ -163,6 +210,19 @@ function StockRanking({
           >
             Next →
           </button>
+        </div>
+      )}
+
+      {/* No Results Message */}
+      {filteredResults.length === 0 && (
+        <div style={{
+          textAlign: 'center',
+          padding: '40px 20px',
+          color: '#666'
+        }}>
+          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔍</div>
+          <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No stocks match your filters</h3>
+          <p style={{ margin: 0, fontSize: '0.9rem' }}>Try adjusting your search or filter criteria</p>
         </div>
       )}
     </>
