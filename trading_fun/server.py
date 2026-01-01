@@ -380,19 +380,28 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
+    lifespan=None,  # Will be set after lifespan is defined
 )
 
 
 # Initialize Prometheus metrics on startup
-@app.on_event("startup")
-def startup_event():
-    """Initialize metrics and system state on startup."""
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app_instance: FastAPI):
+    """Application lifespan handler for startup/shutdown events."""
+    # Startup
     prom_metrics.initialize_metrics(
         model_is_loaded=MODEL is not None,
         openai_is_configured=OPENAI_CLIENT is not None,
     )
     logger.info("Prometheus metrics initialized")
+    yield
+    # Shutdown (if needed in future)
+    logger.info("Application shutting down")
 
+# Assign lifespan to app
+app.router.lifespan_context = lifespan
 
 # Enable CORS for local frontend development and production
 # Add your production frontend URLs here after deployment:
@@ -1137,8 +1146,8 @@ class HealthResponse(BaseModel):
     cache_enabled: bool
     cache_size: int
 
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "status": "ok",
                 "timestamp": 1704067200.0,
@@ -1152,6 +1161,7 @@ class HealthResponse(BaseModel):
                 "cache_size": 42,
             }
         }
+    }
 
 
 class PredictionResponse(BaseModel):
@@ -1163,8 +1173,8 @@ class PredictionResponse(BaseModel):
     technical_indicators: Optional[Dict[str, float]] = None
     cached: bool = False
 
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "ticker": "AAPL",
                 "probability": 0.73,
@@ -1178,6 +1188,7 @@ class PredictionResponse(BaseModel):
                 "cached": False,
             }
         }
+    }
 
 
 class StockRanking(BaseModel):
@@ -1190,8 +1201,8 @@ class StockRanking(BaseModel):
     market_cap: Optional[float] = None
     sector: Optional[str] = None
 
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "ticker": "AAPL",
                 "company_name": "Apple Inc.",
@@ -1201,6 +1212,7 @@ class StockRanking(BaseModel):
                 "sector": "Technology",
             }
         }
+    }
 
 
 class CryptoRanking(BaseModel):
@@ -1218,8 +1230,8 @@ class CryptoRanking(BaseModel):
     market_cap_rank: int
     image: str
 
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "crypto_id": "bitcoin",
                 "symbol": "BTC",
@@ -1234,6 +1246,7 @@ class CryptoRanking(BaseModel):
                 "image": "https://assets.coingecko.com/coins/images/1/large/bitcoin.png",
             }
         }
+    }
 
 
 # Watchlist Models
@@ -2058,6 +2071,6 @@ if __name__ == "__main__":
         "trading_fun.server:app",
         host="0.0.0.0",
         port=8000,
-        reload=True,
+        reload=False,
         log_level="info",
     )

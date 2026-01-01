@@ -25,8 +25,17 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
   const [activeTab, setActiveTab] = useState('overview');
 
   // Form states
-    // Helper functions
-    const t = useCallback((key) => getTranslation(language, key), [language]);
+  const [newSimCapital, setNewSimCapital] = useState(10000);
+  const [tradeForm, setTradeForm] = useState({
+    ticker: '',
+    action: 'BUY',
+    quantity: 10,
+    price: 0
+  });
+  const [localLanguage, setLocalLanguage] = useState(language || 'en');
+
+  // Helper functions
+  const t = useCallback((key) => getTranslation(localLanguage, key), [localLanguage]);
     const languageLocale = useMemo(() => ({
       de: 'de-DE',
       en: 'en-US',
@@ -35,8 +44,8 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
       fr: 'fr-FR'
     }), []);
     const formatTimestamp = useCallback(
-      (value) => new Date(value).toLocaleString(languageLocale[language] || 'en-US'),
-      [language, languageLocale]
+      (value) => new Date(value).toLocaleString(languageLocale[localLanguage] || 'en-US'),
+      [localLanguage, languageLocale]
     );
     const loadSimulation = useCallback(
       async (simId) => {
@@ -137,6 +146,17 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
         setLoading(false);
       }
     };
+
+  const autoTrade = async () => {
+    if (!currentSim) return;
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await apiClient.post(`/api/simulations/${currentSim.simulation_id}/auto-trade`);
+      
+      // Reload portfolio and history
+      await Promise.all([
         loadTradeHistory(currentSim.simulation_id),
         loadSimulation(currentSim.simulation_id)
       ]);
@@ -207,12 +227,35 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
     }
   };
 
-  // Helper functions
-  const t = (key) => getTranslation(language, key);
-
-  const changeLanguage = (lang) => {
-    setLanguage(lang);
-    localStorage.setItem('app_language', lang);
+  const executeTrade = async (ticker, action, quantity, price, reason = '', confidence = 0) => {
+    if (!currentSim) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await apiClient.post(`/api/simulations/${currentSim.simulation_id}/trade`, {
+        ticker,
+        action,
+        quantity,
+        price,
+        reason,
+        confidence
+      });
+      
+      // Reload data
+      await Promise.all([
+        loadPortfolio(currentSim.simulation_id),
+        loadTradeHistory(currentSim.simulation_id),
+        loadSimulation(currentSim.simulation_id)
+      ]);
+      
+      alert(`✓ ${action} ${quantity} ${ticker} @ $${price.toFixed(2)}`);
+    } catch (err) {
+      setError(`${t('errorTrade')}: ${err.response?.data?.detail || err.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatCurrency = (value) => {
