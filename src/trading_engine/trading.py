@@ -8,6 +8,8 @@ import yfinance as yf
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
+from .feature_engineering import add_all_features, get_feature_names, select_best_features
+
 try:
     from xgboost import XGBClassifier
 
@@ -31,7 +33,8 @@ tickers = [
     "PG",
     "KO",
 ]
-features = [
+# Original 9 features (kept for backward compatibility)
+features_legacy = [
     "SMA50",
     "SMA200",
     "RSI",
@@ -42,6 +45,15 @@ features = [
     "BB_upper",
     "BB_lower",
 ]
+
+# All 40+ features from feature engineering
+features = get_feature_names()
+
+# Use all features by default (can be reduced via feature selection)
+USE_ALL_FEATURES = True
+
+# Use all features by default (can be reduced via feature selection)
+USE_ALL_FEATURES = True
 
 
 def compute_macd(series: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> Tuple[pd.Series, pd.Series]:
@@ -110,37 +122,47 @@ def compute_rsi(series: pd.Series, period: int = 14) -> pd.Series:
     return 100 - (100 / (1 + rs))
 
 
-def load_data(ticker: str, period: str = "5y") -> Optional[pd.DataFrame]:
-    """Load historical price data for a ticker.
+def load_data(ticker: str, period: str = "5y", use_advanced_features: bool = True) -> Optional[pd.DataFrame]:
+    """Load historical price data for a ticker with features.
 
     Args:
         ticker: Stock ticker symbol
         period: Time period (e.g., "5y", "1y", "6mo")
+        use_advanced_features: Use 40+ features if True, else 9 legacy features
 
     Returns:
-        DataFrame with OHLCV data, or None if failed
+        DataFrame with features and target, or None if failed
     """
     try:
-        df = yf.download(ticker, period=period, interval="1d", auto_adjust=False)
+        df = yf.download(ticker, period=period, interval="1d", auto_adjust=False, progress=False)
     except Exception as e:
         logging.warning("Failed to download data for %s: %s", ticker, e)
         return None
     if df.empty:
         return None
+    
+    # Calculate target variable (outperformance)
     df["Returns_90d"] = df["Adj Close"].pct_change(90).shift(-90)
     df["Outperform"] = (df["Returns_90d"] > 0.05).astype(int)
-    df["SMA50"] = df["Adj Close"].rolling(50).mean()
-    df["SMA200"] = df["Adj Close"].rolling(200).mean()
-    df["RSI"] = compute_rsi(df["Adj Close"])
-    df["Volatility"] = df["Adj Close"].pct_change().rolling(30).std()
-    # extra features
-    df["Momentum_10d"] = compute_momentum(df["Adj Close"], period=10)
-    macd, macd_sig = compute_macd(df["Adj Close"])
-    df["MACD"] = macd
-    df["MACD_signal"] = macd_sig
-    bb_up, bb_low = compute_bollinger(df["Adj Close"], window=20)
-    df["BB_upper"] = bb_up
-    df["BB_lower"] = bb_low
+    
+    if use_advanced_features and USE_ALL_FEATURES:
+        # Use advanced feature engineering (40+ features)
+        logging.info(f"Adding 40+ features for {ticker}")
+        df = add_all_features(df, ticker=ticker)
+    else:
+        # Legacy: compute 9 original features only
+        df["SMA50"] = df["Adj Close"].rolling(50).mean()
+        df["SMA200"] = df["Adj Close"].rolling(200).mean()
+        df["RSI"] = compute_rsi(df["Adj Close"])
+        df["Volatility"] = df["Adj Close"].pct_change().rolling(30).std()
+        df["Momentum_10d"] = compute_momentum(df["Adj Close"], period=10)
+        macd, macd_sig = compute_macd(df["Adj Close"])
+        df["MACD"] = macd
+        df["MACD_signal"] = macd_sig
+        bb_up, bb_low = compute_bollinger(df["Adj Close"], window=20)
+        df["BB_upper"] = bb_up
+        df["BB_lower"] = bb_low
+    
     df["Ticker"] = ticker
     return df.dropna()
 
@@ -215,12 +237,45 @@ def parse_args():
     return parser.parse_args()
 
 
-def train_model(data, model_type="rf", save_path=None):
-    X = data[features]
+def train_model(data, model_type="rf", save_path=None, use_feature_selection=True, n_features=30):
+    """Train ML model with optional feature selection.
+    
+    Args:
+        data: Training data DataFrame
+        model_type: 'rf' or 'xgb' (default: 'rf')
+        save_path: Path to save trained model
+        use_feature_selection: Apply feature selection if True (default: True)
+        n_features: Number of features to select (default: 30)
+    
+    Returns:
+        Tuple of (model, metrics_dict)
+    """
+    # Prepare features and target
+    available_features = [f for f in features if f in data.columns]
+    
+    if len(available_features) == 0:
+        raise ValueError(f"No features found in data. Expected: {features[:5]}...")
+    
+    X = data[available_features]
     y = data["Outperform"]
+    
     if y.nunique() < 2:
         raise ValueError("Target `y` must contain at least two classes.")
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
+    
+    # Feature selection
+    selected_features = available_features
+    if use_feature_selection and USE_ALL_FEATURES and len(available_features) > n_features:
+        logging.info(f"Applying feature selection: {len(available_features)} → {n_features} features")
+        selected_features = select_best_features(X, y, k=n_features)
+        X = X[selected_features]
+        logging.info(f"Selected features: {selected_features[:10]}...")
+    
+    # Train/test split
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, stratify=y, random_state=42
+    )
+    
+    # Model selection
     if model_type == "xgb" and _USE_XGB:
         model = XGBClassifier(
             n_estimators=200,
@@ -233,13 +288,21 @@ def train_model(data, model_type="rf", save_path=None):
         )
     else:
         model = RandomForestClassifier(n_estimators=200, random_state=42)
+    
+    # Train model
     model.fit(X_train.values, y_train.values)
-    # Save model
+    
+    # Save model (and selected features)
     if save_path:
         import joblib
-
         joblib.dump(model, save_path)
-    # MLFlow tracking if available
+        
+        # Save selected features list
+        features_path = save_path.replace('.bin', '_features.txt')
+        with open(features_path, 'w') as f:
+            f.write('\n'.join(selected_features))
+        logging.info(f"Saved model to {save_path} with {len(selected_features)} features")
+    
     # Evaluate
     from sklearn.metrics import (
         accuracy_score,
