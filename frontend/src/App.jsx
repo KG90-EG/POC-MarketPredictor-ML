@@ -18,6 +18,7 @@ import SimulationDashboard from './components/SimulationDashboard'
 import EmptyState from './components/EmptyState'
 import { ToastContainer } from './components/Toast'
 import { SkeletonTable, SkeletonStockRow } from './components/SkeletonLoader'
+import AutocompleteSearch from './components/AutocompleteSearch'
 import './styles.css'
 
 // Create a React Query client
@@ -248,12 +249,13 @@ function AppContent() {
     }
   }
 
-  async function performSearch() {
-    const t = (searchTicker || '').trim().toUpperCase()
+  async function performSearch(tickerInput) {
+    const t = typeof tickerInput === 'string' ? tickerInput.trim().toUpperCase() : (searchTicker || '').trim().toUpperCase()
     if (!t) {
       showToast('Please enter a stock symbol', 'warning')
       return
     }
+    setSearchTicker(t) // Update input field
     setSearchLoading(true)
     setSearchResult(null)
     setSearchResultDetails(null)
@@ -295,6 +297,18 @@ function AppContent() {
       setSearchLoading(false)
     }
   }
+
+  // Prepare autocomplete suggestions from current results
+  const autocompleteSuggestions = React.useMemo(() => {
+    return results.map(r => ({
+      ticker: r.ticker,
+      name: tickerDetails[r.ticker]?.name || '',
+      country: tickerDetails[r.ticker]?.country || '',
+      sector: tickerDetails[r.ticker]?.sector || '',
+      price: tickerDetails[r.ticker]?.price || null,
+      change: tickerDetails[r.ticker]?.change || null
+    }))
+  }, [results, tickerDetails])
 
   function formatNumber(num) {
     if (!num) return 'N/A'
@@ -706,28 +720,13 @@ function AppContent() {
         <p style={{color: '#666', fontSize: '0.9rem', marginBottom: '16px'}}>
           Search by ticker symbol to get AI predictions and detailed analysis
         </p>
-        <div className="search-controls">
-          <label>
-            Stock symbol
-            <input
-              value={searchTicker}
-              onChange={(e) => setSearchTicker(e.target.value)}
-              onKeyPress={(e) => handleKeyPress(e, performSearch)}
-              placeholder="e.g., AMD, META, NFLX"
-              aria-label="Enter stock symbol to search"
-            />
-          </label>
-          <button onClick={performSearch} disabled={searchLoading} aria-label="Search for stock by symbol">
-            {searchLoading ? (
-              <>
-                <span className="spinner"></span>
-                Searching {searchTicker}...
-              </>
-            ) : (
-              '🔎 Search'
-            )}
-          </button>
-        </div>
+        <AutocompleteSearch
+          suggestions={autocompleteSuggestions}
+          onSearch={performSearch}
+          placeholder="e.g., AMD, META, NFLX"
+          loading={searchLoading}
+          disabled={searchLoading}
+        />
       </section>
 
       {/* Search Result */}
