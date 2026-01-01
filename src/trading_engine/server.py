@@ -22,6 +22,7 @@ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from pydantic import BaseModel
 
 from . import metrics as prom_metrics
+from .analytics_routes import router as analytics_router
 
 # Import new modules
 from .cache import cache
@@ -2087,6 +2088,9 @@ async def clear_old_alerts(older_than_days: int = 7, user_id: str = "default_use
         logger.error(f"Error clearing old alerts: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to clear old alerts: {str(e)}")
 
+
+# Include analytics router
+app.include_router(analytics_router)
 
 # Mount frontend static files LAST so API routes take precedence
 # This must come after all route definitions to avoid catching API routes

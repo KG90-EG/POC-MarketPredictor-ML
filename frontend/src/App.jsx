@@ -22,6 +22,10 @@ import InfoCard from './components/InfoCard'
 import Onboarding from './components/Onboarding'
 import OnboardingResetBtn from './components/OnboardingResetBtn'
 import KeyboardShortcuts from './components/KeyboardShortcuts'
+import UsabilityTracker from './components/UsabilityTracker'
+import { ABTestProvider, useABTest } from './components/ABTest'
+import { AnalyticsProvider } from './components/Analytics'
+import analytics, { trackWebVitals } from './components/Analytics'
 import './styles.css'
 
 // Lazy load heavy components for better performance
@@ -113,6 +117,12 @@ function AppContent() {
     localStorage.setItem('app_language', language)
   }, [language])
 
+  // Initialize analytics and track web vitals
+  useEffect(() => {
+    trackWebVitals()
+    analytics.trackPageView('Market Predictor Dashboard')
+  }, [])
+
   // Auto-load ranking on mount
   useEffect(() => {
     fetchRanking()
@@ -145,12 +155,19 @@ function AppContent() {
     setCurrentPage(1)
     setLoadingProgress({ current: 0, total: 0 })
 
+    // Track feature usage
+    analytics.trackFeature('stock_ranking', 'load', { market })
+
     try {
+      const startTime = Date.now()
       // Fetch ranking for selected market (single selection)
       const resp = await api.getRanking(market)
       const rankings = resp.data.ranking
 
       setResults(rankings)
+
+      // Track performance
+      analytics.trackPerformance('ranking_load', Date.now() - startTime)
 
       // Success toast
       showToast(`✅ Loaded ${rankings.length} ${market} stocks`, 'success', 2000)
@@ -264,6 +281,10 @@ function AppContent() {
       return
     }
     setSearchTicker(t) // Update input field
+
+    // Track search
+    analytics.trackSearch(t)
+
     setSearchLoading(true)
     setSearchResult(null)
     setSearchResultDetails(null)
@@ -389,45 +410,45 @@ function AppContent() {
       {/* Skip Navigation Link */}
       <a href="#main-content" className="skip-link">Skip to main content</a>
 
-      {/* Modern Fixed Toolbar */}
+      {/* Modern Fixed Toolbar - Option 2: Compact icons + separate language */}
       <div className="header-toolbar" aria-label="Application controls">
-        <button
-          className="toolbar-btn theme-toggle"
-          onClick={toggleDarkMode}
-          aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
-          title={`Toggle ${darkMode ? 'light' : 'dark'} mode`}
-        >
-          {darkMode ? '☀️' : '🌙'}
-        </button>
+        {/* Icon group */}
+        <div className="toolbar-icons">
+          <button
+            className={`toolbar-btn health-indicator ${healthStatus}`}
+            onClick={() => setShowHealthPanel(!showHealthPanel)}
+            aria-label={`System health: ${healthStatus}`}
+            aria-expanded={showHealthPanel}
+            title="System Health"
+          >
+            {healthStatus === 'healthy' && '✅'}
+            {healthStatus === 'warning' && '⚠️'}
+            {healthStatus === 'error' && '❌'}
+            {healthStatus === 'loading' && '⏳'}
+          </button>
 
-        <div className="toolbar-divider" aria-hidden="true"></div>
+          <button
+            className="toolbar-btn theme-toggle"
+            onClick={toggleDarkMode}
+            aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
+            title={`Toggle ${darkMode ? 'light' : 'dark'} mode`}
+          >
+            {darkMode ? '☀️' : '🌙'}
+          </button>
 
-        <button
-          className={`toolbar-btn health-indicator ${healthStatus}`}
-          onClick={() => setShowHealthPanel(!showHealthPanel)}
-          aria-label={`System health: ${healthStatus}`}
-          aria-expanded={showHealthPanel}
-          title="System Health"
-        >
-          {healthStatus === 'healthy' && '✅'}
-          {healthStatus === 'warning' && '⚠️'}
-          {healthStatus === 'error' && '❌'}
-          {healthStatus === 'loading' && '⏳'}
-        </button>
+          <AlertPanel />
 
-        <AlertPanel />
+          <button
+            className="toolbar-btn help-button"
+            onClick={() => setShowHelp(true)}
+            aria-label="Open help guide"
+            title="Help & Guide"
+          >
+            ❓
+          </button>
+        </div>
 
-        <button
-          className="toolbar-btn help-button"
-          onClick={() => setShowHelp(true)}
-          aria-label="Open help guide"
-          title="Help & Guide"
-        >
-          ❓
-        </button>
-
-        <div className="toolbar-divider" aria-hidden="true"></div>
-
+        {/* Language selector - separate */}
         <div className="language-control">
           <label htmlFor="language-select" className="sr-only">Language</label>
           <select
@@ -479,9 +500,6 @@ function AppContent() {
           >
             <div className="icon">🎯</div>
             <div className="title">Trading Signals</div>
-            <div className="description">
-              Best buy & sell opportunities
-            </div>
           </button>
 
           <button
@@ -495,9 +513,6 @@ function AppContent() {
           >
             <div className="icon">📈</div>
             <div className="title">Top Stocks</div>
-            <div className="description">
-              AI-ranked equities
-            </div>
           </button>
 
           <button
@@ -511,9 +526,6 @@ function AppContent() {
           >
             <div className="icon">₿</div>
             <div className="title">Crypto</div>
-            <div className="description">
-              Top cryptocurrencies
-            </div>
           </button>
 
           <button
@@ -523,10 +535,7 @@ function AppContent() {
             aria-pressed={portfolioView === 'watchlists'}
           >
             <div className="icon">⭐</div>
-            <div className="title">Watchlists</div>
-            <div className="description">
-              Your saved picks
-            </div>
+            <div className="title">Watchlist</div>
           </button>
 
           <button
@@ -537,9 +546,6 @@ function AppContent() {
           >
             <div className="icon">🎮</div>
             <div className="title">Practice</div>
-            <div className="description">
-              Risk-free trading
-            </div>
           </button>
         </div>
       </section>
@@ -915,17 +921,40 @@ function AppContent() {
 
       {/* Onboarding Reset Button (Dev Only) */}
       <OnboardingResetBtn />
+
+      {/* Usability Tracker */}
+      <UsabilityTracker enabled={import.meta.env.DEV || import.meta.env.VITE_ENABLE_USABILITY_TRACKING === 'true'} />
     </div>
   )
+}
+
+// Define A/B Test experiments
+const abTestExperiments = {
+  'stock_card_layout': {
+    variants: ['A', 'B'],
+    weights: [0.5, 0.5]
+  },
+  'cta_button_text': {
+    variants: ['A', 'B', 'C'],
+    weights: [0.33, 0.33, 0.34]
+  },
+  'price_chart_default': {
+    variants: ['candlestick', 'line'],
+    weights: [0.5, 0.5]
+  }
 }
 
 // Wrap with providers and error boundary
 export default function App() {
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AppContent />
-      </QueryClientProvider>
+      <AnalyticsProvider>
+        <ABTestProvider experiments={abTestExperiments}>
+          <QueryClientProvider client={queryClient}>
+            <AppContent />
+          </QueryClientProvider>
+        </ABTestProvider>
+      </AnalyticsProvider>
     </ErrorBoundary>
   )
 }
