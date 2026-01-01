@@ -228,9 +228,9 @@ start_backend() {
     # Start server
     cd "$PROJECT_ROOT"
     export PYTHONPATH="${PROJECT_ROOT}${PYTHONPATH:+:$PYTHONPATH}"
-    log_info "Running: $PYTHON_CMD -m src.trading_fun.server"
+    log_info "Running: $PYTHON_CMD -m src.trading_engine.server"
 
-    nohup "$PYTHON_CMD" -m src.trading_fun.server \
+    nohup "$PYTHON_CMD" -m src.trading_engine.server \
         > "$BACKEND_LOG" 2>&1 &
 
     local pid=$!

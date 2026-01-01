@@ -18,4 +18,4 @@ COPY --from=frontend /frontend/dist /app/frontend/dist
 USER app
 ENV PROD_MODEL_PATH=/app/models/prod_model.bin
 EXPOSE 8000
-CMD ["uvicorn", "src.trading_fun.server:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.trading_engine.server:app", "--host", "0.0.0.0", "--port", "8000"]

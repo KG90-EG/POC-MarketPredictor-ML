@@ -2099,7 +2099,7 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "trading_fun.server:app",
+        "src.trading_engine.server:app",
         host="0.0.0.0",
         port=8000,
         reload=False,

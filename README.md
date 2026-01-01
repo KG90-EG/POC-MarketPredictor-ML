@@ -25,7 +25,7 @@ AI-Powered Stock Ranking & Trading Analysis Platform
 ## 📁 Project Structure
 
 ```
-src/           # Source code (trading_fun, training, backtest)
+src/           # Source code (trading_engine, training, backtest)
 frontend/      # React UI
 tests/         # Test suite
 scripts/       # Utilities
