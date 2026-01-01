@@ -4,8 +4,11 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: '0.0.0.0',
     port: 5173,
+    strictPort: false,
     proxy: {
+      // Proxy all API requests to backend
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
@@ -16,6 +19,47 @@ export default defineConfig({
       },
       '/metrics': {
         target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/ranking': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/ticker_info': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/predict_ticker': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/analyze': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/models': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/crypto': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/watchlists': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/watchlist': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/monitoring': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+      '/ws': {
+        target: 'ws://localhost:8000',
+        ws: true,
         changeOrigin: true,
       },
     },

@@ -35,10 +35,16 @@ function BuyOpportunities() {
       const stockPredictions = await Promise.all(
         stocks.slice(0, 30).map(async (stock) => {
           try {
-            const predRes = await apiClient.get(`/watchlist/prediction/${stock.ticker}?asset_type=stock`);
+            const predRes = await apiClient.get(`/predict_ticker/${stock.ticker}`);
+            // Transform predict_ticker response to prediction format
+            const prediction = {
+              signal: predRes.data.prediction > 0.5 ? 'BUY' : 'SELL',
+              confidence: Math.round((predRes.data.probability || 0) * 100),
+              reasoning: `Prediction probability: ${(predRes.data.probability || 0).toFixed(2)}`
+            };
             return {
               ...stock,
-              prediction: predRes.data
+              prediction
             };
           } catch (err) {
             console.error(`Failed to get prediction for ${stock.ticker}:`, err);
@@ -72,10 +78,16 @@ function BuyOpportunities() {
       const cryptoPredictions = await Promise.all(
         cryptos.slice(0, 30).map(async (crypto) => {
           try {
-            const predRes = await apiClient.get(`/watchlist/prediction/${crypto.crypto_id}?asset_type=crypto`);
+            // Use momentum score from crypto ranking as prediction
+            const score = crypto.momentum_score || crypto.probability || 0.5;
+            const prediction = {
+              signal: score > 0.6 ? 'BUY' : score < 0.4 ? 'SELL' : 'HOLD',
+              confidence: Math.round(score * 100),
+              reasoning: `Momentum score: ${score.toFixed(2)}`
+            };
             return {
               ...crypto,
-              prediction: predRes.data
+              prediction
             };
           } catch (err) {
             console.error(`Failed to get prediction for ${crypto.crypto_id}:`, err);

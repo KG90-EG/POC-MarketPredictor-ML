@@ -1,7 +1,8 @@
 import hashlib
 import os
-import sys
 import time
+from contextlib import asynccontextmanager
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import joblib
@@ -29,9 +30,9 @@ from ..core.database import WatchlistDB
 from ..crypto import get_crypto_details, get_crypto_ranking, search_crypto
 from ..ml.model_retraining import get_retraining_service, start_retraining_scheduler
 from ..services import HealthService, StockService, ValidationService
-from ..simulation import TradingSimulation, calculate_position_size
 from ..simulation_db import SimulationDB
 from ..trading import (
+    add_all_features,
     compute_bollinger,
     compute_macd,
     compute_momentum,
@@ -39,6 +40,7 @@ from ..trading import (
     features,
 )
 from ..utils import metrics as prom_metrics
+from ..utils.alerts import alert_db
 from ..utils.logging_config import RequestLogger, setup_logging
 from ..utils.rate_limiter import RateLimiter
 from .analytics_routes import router as analytics_router
@@ -388,7 +390,6 @@ app = FastAPI(
 
 
 # Initialize Prometheus metrics on startup
-from contextlib import asynccontextmanager
 
 
 @asynccontextmanager
@@ -625,24 +626,30 @@ def predict_ticker(ticker: str):
     # Handle MultiIndex columns from yfinance
     if isinstance(raw.columns, pd.MultiIndex):
         raw.columns = raw.columns.get_level_values(0)
-    df = pd.DataFrame({"Adj Close": raw["Adj Close"]})
-    df["SMA50"] = df["Adj Close"].rolling(50).mean()
-    df["SMA200"] = df["Adj Close"].rolling(200).mean()
-    df["RSI"] = compute_rsi(df["Adj Close"])
-    df["Volatility"] = df["Adj Close"].pct_change().rolling(30).std()
-    df["Momentum_10d"] = compute_momentum(df["Adj Close"], 10)
-    macd, macd_sig = compute_macd(df["Adj Close"])
-    df["MACD"] = macd
-    df["MACD_signal"] = macd_sig
-    bb_up, bb_low = compute_bollinger(df["Adj Close"])
-    df["BB_upper"] = bb_up
-    df["BB_lower"] = bb_low
+
+    df = raw.copy()
+
+    # Add all features using feature engineering
+    try:
+        df = add_all_features(df, ticker=ticker)
+    except Exception as e:
+        logger.warning(f"Failed to add features for {ticker}: {e}")
+        raise HTTPException(status_code=500, detail=f"Feature engineering failed: {str(e)}")
+
     df = df.dropna()
     if df.empty:
         raise HTTPException(status_code=404, detail="No recent data for ticker")
+
+    # Check if all required features are present
+    missing_features = [f for f in features if f not in df.columns]
+    if missing_features:
+        logger.warning(f"Missing features for {ticker}: {missing_features[:5]}...")
+        raise HTTPException(status_code=500, detail=f"Missing {len(missing_features)} required features")
+
     row = df.iloc[-1:]
     prob = MODEL.predict_proba(row[features].values)[0][1]
-    return {"prob": float(prob)}
+    pred = 1 if prob > 0.5 else 0
+    return {"prediction": pred, "probability": float(prob), "ticker": ticker}
 
 
 @app.get(
@@ -668,8 +675,6 @@ def ranking(tickers: str = "", country: str = "Global"):
     if MODEL is None:
         raise HTTPException(status_code=503, detail="No model available")
 
-    start_time = time.time()
-
     # Use country-specific stocks if no tickers provided
     if not tickers.strip():
         chosen = get_country_stocks(country)
@@ -690,27 +695,25 @@ def ranking(tickers: str = "", country: str = "Global"):
             continue
 
         # Ensure we have a DataFrame with proper column access
-        df = pd.DataFrame()
-        # Extract as Series to avoid MultiIndex issues
-        adj_close = raw["Adj Close"]
-        if isinstance(adj_close, pd.DataFrame):
-            adj_close = adj_close.iloc[:, 0]  # Take first column if DataFrame
-        df["Adj Close"] = adj_close
+        df = raw.copy()
 
-        df["SMA50"] = df["Adj Close"].rolling(50).mean()
-        df["SMA200"] = df["Adj Close"].rolling(200).mean()
-        df["RSI"] = compute_rsi(df["Adj Close"])
-        df["Volatility"] = df["Adj Close"].pct_change().rolling(30).std()
-        df["Momentum_10d"] = compute_momentum(df["Adj Close"], 10)
-        macd, macd_sig = compute_macd(df["Adj Close"])
-        df["MACD"] = macd
-        df["MACD_signal"] = macd_sig
-        bb_up, bb_low = compute_bollinger(df["Adj Close"])
-        df["BB_upper"] = bb_up
-        df["BB_lower"] = bb_low
+        # Add all features using the feature engineering module
+        try:
+            df = add_all_features(df, ticker=t)
+        except Exception as e:
+            logger.warning(f"Failed to add features for {t}: {e}")
+            continue
+
         df = df.dropna()
         if df.empty:
             continue
+
+        # Check if all required features are present
+        missing_features = [f for f in features if f not in df.columns]
+        if missing_features:
+            logger.warning(f"Missing features for {t}: {missing_features[:5]}...")
+            continue
+
         row = df.iloc[-1:]
         prob = MODEL.predict_proba(row[features].values)[0][1]
 
@@ -722,10 +725,6 @@ def ranking(tickers: str = "", country: str = "Global"):
 
     # sort result
     result.sort(key=lambda r: r["prob"], reverse=True)
-
-    # Track ranking generation metrics
-    duration = time.time() - start_time
-    prom_metrics.track_ranking_generation(country, len(result), duration)
 
     return {"ranking": result}
 
@@ -2029,7 +2028,6 @@ async def reset_simulation(simulation_id: int):
 
 
 # ===== Alert Endpoints =====
-from ..utils.alerts import alert_db
 
 
 @app.get("/alerts", tags=["Alerts"])

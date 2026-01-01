@@ -14,17 +14,20 @@ function HealthCheck({ isOpen, onClose }) {
     try {
       setLoading(true);
       setError(null);
-      
+
       const [healthData, metricsData] = await Promise.all([
         api.health(),
         api.metrics()
       ]);
-      
+
       setHealth(healthData);
       setMetrics(metricsData);
       setLastChecked(new Date());
     } catch (err) {
-      setError(err.message || 'Failed to fetch health status');
+      const errorMessage = err.response?.data?.detail
+        || err.message
+        || 'Unable to connect to server. Please ensure backend is running.';
+      setError(errorMessage);
       console.error('Health check error:', err);
     } finally {
       setLoading(false);
@@ -178,7 +181,7 @@ function HealthCheck({ isOpen, onClose }) {
                     <div className="metric-row">
                       <span>Hit Rate:</span>
                       <strong>
-                        {Math.round((metrics.cache_stats.redis_hits / 
+                        {Math.round((metrics.cache_stats.redis_hits /
                           (metrics.cache_stats.redis_hits + metrics.cache_stats.redis_misses) || 0) * 100)}%
                       </strong>
                     </div>
@@ -225,7 +228,7 @@ function HealthCheck({ isOpen, onClose }) {
               </div>
             )}
           </div>
-          
+
           {lastChecked && (
             <div className="health-footer">
               <span className="last-checked">

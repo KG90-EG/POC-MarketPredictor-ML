@@ -1,7 +1,9 @@
 import axios from 'axios'
 
-// API base URL - use environment variable or fallback to localhost
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// API base URL - use environment variable or fallback to empty string for Vite proxy
+// In development, Vite proxy handles routing to backend (see vite.config.js)
+// In production, set VITE_API_URL to your backend URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
 // Generate a unique user ID for this browser session if not already set
 const getUserId = () => {
@@ -25,6 +27,24 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 })
+
+// Add response interceptor for better error handling
+apiClient.interceptors.response.use(
+  response => response,
+  error => {
+    // Log the error for debugging
+    if (import.meta.env.DEV) {
+      console.error('API Error:', {
+        url: error.config?.url,
+        baseURL: error.config?.baseURL,
+        method: error.config?.method,
+        status: error.response?.status,
+        message: error.message,
+      });
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Export apiClient for direct use
 export { apiClient }
