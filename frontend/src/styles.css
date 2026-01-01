@@ -177,45 +177,141 @@ body.dark-mode .toolbar-divider {
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
+  body {
+    padding: 12px;
+  }
+
+  .container {
+    padding: 24px 16px;
+  }
+
   .header {
-    padding-top: 54px;
+    padding-top: 60px;
+  }
+
+  .header h1 {
+    font-size: 1.8rem;
+  }
+
+  .header p {
+    font-size: 0.95rem;
   }
 
   .header-toolbar {
-    top: 8px;
-    right: 8px;
-    padding: 6px 8px;
-    gap: 4px;
+    top: 12px;
+    right: 12px;
+    padding: 6px;
+    gap: 6px;
   }
 
   .toolbar-btn {
-    width: 32px;
-    height: 32px;
-    font-size: 16px;
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    /* Larger touch target for mobile */
   }
 
   .language-control select {
-    font-size: 12px;
-    padding: 4px 8px;
-    min-width: 60px;
+    font-size: 13px;
+    padding: 6px 10px;
+    min-width: 70px;
   }
 
   .portfolio-toggle-container {
     gap: 12px;
   }
+
+  /* Make cards more compact on mobile */
+  .card {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+  }
 }
 
 @media (max-width: 480px) {
+  body {
+    padding: 8px;
+  }
+
+  .container {
+    padding: 20px 12px;
+    border-radius: 12px;
+  }
+
   .header {
     padding-top: 70px;
+    padding-bottom: 16px;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .header p {
+    font-size: 0.85rem;
   }
 
   .header-toolbar {
     flex-wrap: wrap;
-    max-width: calc(100vw - 24px);
+    max-width: calc(100vw - 32px);
     top: 8px;
-    right: 12px;
-    left: 12px;
+    right: 8px;
+    left: 8px;
+    justify-content: center;
+  }
+
+  /* Stack portfolio buttons vertically on very small screens */
+  .portfolio-toggle-container {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .portfolio-toggle-button {
+    padding: 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+    gap: 12px;
+  }
+
+  .portfolio-toggle-button .icon {
+    font-size: 2rem;
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+
+  .portfolio-toggle-button .title {
+    font-size: 1rem;
+  }
+
+  .portfolio-toggle-button .description {
+    font-size: 0.75rem;
+  }
+
+  /* Better touch targets for buttons */
+  button, .btn {
+    min-height: 44px;
+    padding: 12px 20px;
+    font-size: 0.95rem;
+  }
+
+  /* Compact tables on mobile */
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    font-size: 0.85rem;
+  }
+
+  th, td {
+    padding: 8px 6px;
   }
 }
 
@@ -1526,6 +1622,22 @@ body.dark-mode .onboarding-hint {
   background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%) !important;
   border-color: #667eea40 !important;
   color: #e6e8ec !important;
+}
+
+/* Mobile-specific onboarding */
+@media (max-width: 768px) {
+  .onboarding-hint {
+    font-size: 0.85rem !important;
+    padding: 12px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .onboarding-hint {
+    font-size: 0.8rem !important;
+    padding: 10px !important;
+    text-align: center;
+  }
 }
 
 .portfolio-toggle-button.stocks.active {
