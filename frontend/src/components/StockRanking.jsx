@@ -41,7 +41,6 @@ const StockRanking = React.memo(function StockRanking({
   }, [])
 
   const getRankBadgeClass = useCallback((rank) => {
-  function getRankBadgeClass(rank) {
     if (rank === 1) return 'rank-badge gold'
     if (rank === 2) return 'rank-badge silver'
     if (rank === 3) return 'rank-badge bronze'
