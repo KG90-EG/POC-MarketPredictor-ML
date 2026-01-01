@@ -26,7 +26,7 @@ from typing import Dict, Optional
 import joblib
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from .config import config
+from ..core.config import config
 from .trading import build_dataset, train_model
 
 logger = logging.getLogger(__name__)
