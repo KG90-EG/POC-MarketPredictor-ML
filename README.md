@@ -85,7 +85,22 @@ cp .env.example .env
 
 ### Running the Application
 
-#### Option 1: Manual Start (Development)
+#### Option 1: Automated Start (Recommended)
+
+```bash
+# Start both servers with health checks and auto-recovery
+./scripts/start_servers.sh
+
+# Check status
+./scripts/start_servers.sh --status
+
+# Stop all servers
+./scripts/start_servers.sh --stop
+```
+
+**Features:** Automatic port cleanup, health checks, process management, detailed logging
+
+#### Option 2: Manual Start (Development)
 
 ```bash
 # Terminal 1: Start Backend

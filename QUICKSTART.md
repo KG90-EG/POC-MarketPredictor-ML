@@ -72,7 +72,50 @@ cd ..
 
 ## ▶️ Step 4: Start the Application (1 minute)
 
-### Terminal 1 - Backend Server
+### Option A: Automated Start (Recommended)
+
+```bash
+# Start both servers with health checks
+./scripts/start_servers.sh
+```
+
+**Features:**
+- ✅ Automatic port cleanup
+- ✅ Health check verification  
+- ✅ Process management
+- ✅ Detailed logging
+- ✅ Status monitoring
+
+**Expected output:**
+
+```
+ℹ Starting backend server on port 8000...
+✓ Backend started successfully (PID: 12345)
+ℹ Starting frontend server on port 5173...
+✓ Frontend started successfully (PID: 12346)
+✓ All servers started successfully!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ Backend:  http://localhost:8000
+✓ Frontend: http://localhost:5173
+ℹ API Docs: http://localhost:8000/docs
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**Useful commands:**
+
+```bash
+./scripts/start_servers.sh --status    # Check server status
+./scripts/start_servers.sh --stop      # Stop all servers
+./scripts/start_servers.sh --help      # Show all options
+```
+
+### Option B: Manual Start
+
+<details>
+<summary>Click to expand manual start instructions</summary>
+
+#### Terminal 1 - Backend Server
 
 ```bash
 # Make sure you're in the project root with .venv activated
@@ -91,7 +134,7 @@ INFO:     Uvicorn running on http://127.0.0.1:8000
 
 ✅ Backend is running on **<http://localhost:8000>**
 
-### Terminal 2 - Frontend Dev Server
+#### Terminal 2 - Frontend Dev Server
 
 ```bash
 cd frontend
@@ -108,6 +151,8 @@ VITE v5.0.0  ready in 500 ms
 ```
 
 ✅ Frontend is running on **<http://localhost:5173>**
+
+</details>
 
 ---
 
