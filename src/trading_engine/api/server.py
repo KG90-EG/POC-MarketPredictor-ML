@@ -22,28 +22,27 @@ from fastapi.staticfiles import StaticFiles
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from pydantic import BaseModel
 
-from . import metrics as prom_metrics
-from .analytics_routes import router as analytics_router
-
 # Import new modules
-from .cache import cache
-from .config import config as app_config
-from .crypto import get_crypto_details, get_crypto_ranking, search_crypto
-from .database import WatchlistDB
-from .logging_config import RequestLogger, setup_logging
-from .model_retraining import get_retraining_service, start_retraining_scheduler
-from .monitoring_routes import router as monitoring_router
-from .rate_limiter import RateLimiter
-from .services import HealthService, StockService, ValidationService
-from .simulation import TradingSimulation, calculate_position_size
-from .simulation_db import SimulationDB
-from .trading import (
+from ..core.cache import cache
+from ..core.config import config as app_config
+from ..core.database import WatchlistDB
+from ..crypto import get_crypto_details, get_crypto_ranking, search_crypto
+from ..ml.model_retraining import get_retraining_service, start_retraining_scheduler
+from ..services import HealthService, StockService, ValidationService
+from ..simulation import TradingSimulation, calculate_position_size
+from ..simulation_db import SimulationDB
+from ..trading import (
     compute_bollinger,
     compute_macd,
     compute_momentum,
     compute_rsi,
     features,
 )
+from ..utils import metrics as prom_metrics
+from ..utils.logging_config import RequestLogger, setup_logging
+from ..utils.rate_limiter import RateLimiter
+from .analytics_routes import router as analytics_router
+from .monitoring_routes import router as monitoring_router
 from .websocket import manager as ws_manager
 
 # Load environment variables from .env file
@@ -2030,7 +2029,7 @@ async def reset_simulation(simulation_id: int):
 
 
 # ===== Alert Endpoints =====
-from .alerts import alert_db
+from ..utils.alerts import alert_db
 
 
 @app.get("/alerts", tags=["Alerts"])

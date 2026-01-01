@@ -9,8 +9,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import yfinance as yf
 
-from .cache import cache
-from .config import config
+from .core.cache import cache
+from .core.config import config
 
 logger = logging.getLogger(__name__)
 

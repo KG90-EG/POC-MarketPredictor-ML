@@ -8,7 +8,7 @@ import yfinance as yf
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
-from .feature_engineering import add_all_features, get_feature_names, select_best_features
+from .ml.feature_engineering import add_all_features, get_feature_names, select_best_features
 
 try:
     from xgboost import XGBClassifier

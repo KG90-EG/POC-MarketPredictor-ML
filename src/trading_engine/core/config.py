@@ -326,7 +326,7 @@ class AppConfig:
 
     def validate(self) -> None:
         """Validate configuration and log warnings for missing optional settings"""
-        from .logging_config import setup_logging
+        from ..utils.logging_config import setup_logging
 
         logger = setup_logging(self.logging.log_level)
 
