@@ -15,6 +15,8 @@ import WatchlistManager from './components/WatchlistManager'
 import BuyOpportunities from './components/BuyOpportunities'
 import AlertPanel from './components/AlertPanel'
 import SimulationDashboard from './components/SimulationDashboard'
+import EmptyState from './components/EmptyState'
+import { ToastContainer } from './components/Toast'
 import './styles.css'
 
 // Create a React Query client
@@ -53,6 +55,19 @@ function AppContent() {
     return saved ? JSON.parse(saved) : false
   })
   const [language, setLanguage] = useState(() => localStorage.getItem('app_language') || 'en')
+
+  // Toast notifications
+  const [toasts, setToasts] = useState([])
+
+  // Helper function to show toast
+  const showToast = (message, type = 'info', duration = 3000) => {
+    const id = Date.now()
+    setToasts(prev => [...prev, { id, message, type, duration }])
+  }
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id))
+  }
 
   // Digital Assets / Crypto state
   const [portfolioView, setPortfolioView] = useState('stocks') // 'stocks', 'crypto', 'watchlists', 'simulation', or 'buy-opportunities'
@@ -150,20 +165,20 @@ function AppContent() {
         console.error('Batch fetch failed, falling back to sequential', batchError)
         const error = handleApiError(batchError)
         if (error.isNetworkError) {
-          alert('⚠️ Network error: Please check your connection and try again.')
+          showToast('⚠️ Network error: Please check your connection', 'warning')
         }
         // Fallback to sequential if batch fails
-        await fetchDetailsSequential(uniqueRankings)
+        await fetchDetailsSequential(rankings)
       }
     } catch (e) {
       const error = handleApiError(e, 'Error fetching ranking')
-      let errorMessage = `Failed to load rankings: ${error.message}`
       if (error.isNetworkError) {
-        errorMessage = '⚠️ Network error: Unable to connect to the backend. Please ensure the server is running.'
+        showToast('⚠️ Unable to connect to server. Please ensure backend is running.', 'error', 5000)
       } else if (error.isRateLimit) {
-        errorMessage = '⏱️ Rate limit exceeded. Please wait a moment and try again.'
+        showToast('⏱️ Rate limit exceeded. Please wait a moment.', 'warning', 4000)
+      } else {
+        showToast(`Failed to load rankings: ${error.message}`, 'error')
       }
-      alert(errorMessage)
       console.error('Ranking fetch error:', error)
     } finally {
       setLoading(false)
@@ -196,13 +211,13 @@ function AppContent() {
       setCryptoResults(rankings)
     } catch (e) {
       const error = handleApiError(e, 'Error fetching crypto rankings')
-      let errorMessage = `Failed to load crypto rankings: ${error.message}`
       if (error.isNetworkError) {
-        errorMessage = '⚠️ Network error: Unable to connect to the backend.'
+        showToast('⚠️ Unable to connect to server', 'error')
       } else if (error.isRateLimit) {
-        errorMessage = '⏱️ Rate limit exceeded. Please wait a moment and try again.'
+        showToast('⏱️ Rate limit exceeded. Please wait.', 'warning')
+      } else {
+        showToast(`Failed to load crypto: ${error.message}`, 'error')
       }
-      alert(errorMessage)
       console.error('Crypto ranking fetch error:', error)
     } finally {
       setCryptoLoading(false)
@@ -219,9 +234,9 @@ function AppContent() {
     } catch (e) {
       const error = handleApiError(e, 'Analysis failed')
       if (error.isRateLimit) {
-        alert('⏱️ Rate limit reached. Please wait 30-60 seconds and try again.\n\n' + error.message)
+        showToast('⏱️ Rate limit reached. Please wait 30-60 seconds.', 'warning', 5000)
       } else {
-        alert(`Error: ${error.message}\n\nMake sure OPENAI_API_KEY is set correctly.`)
+        showToast(`Analysis error: ${error.message}`, 'error', 4000)
       }
     } finally {
       setAnalyzing(false)
@@ -231,7 +246,7 @@ function AppContent() {
   async function performSearch() {
     const t = (searchTicker || '').trim().toUpperCase()
     if (!t) {
-      alert('Please enter a stock symbol to search.')
+      showToast('Please enter a stock symbol', 'warning')
       return
     }
     setSearchLoading(true)
@@ -258,19 +273,18 @@ function AppContent() {
           country: info.country || 'N/A'
         }
       })
+      showToast(`✅ Found ${info.name || t}`, 'success')
     } catch (e) {
       const error = handleApiError(e, 'Search failed')
-      let errorMessage = `Unable to find ticker ${t}`
       if (error.isNetworkError) {
-        errorMessage = '⚠️ Network error: Please check your connection.'
+        showToast('⚠️ Network error: Check connection', 'error')
       } else if (error.status === 404) {
-        errorMessage = `❌ Ticker "${t}" not found. Please check the symbol and try again.`
+        showToast(`❌ Ticker "${t}" not found`, 'error', 4000)
       } else if (error.isRateLimit) {
-        errorMessage = '⏱️ Rate limit exceeded. Please wait a moment and try again.'
+        showToast('⏱️ Rate limit exceeded. Wait a moment.', 'warning')
       } else {
-        errorMessage = `Search failed: ${error.message}`
+        showToast(`Search failed: ${error.message}`, 'error')
       }
-      alert(errorMessage)
       console.error('Search error:', error)
     } finally {
       setSearchLoading(false)
@@ -399,8 +413,8 @@ function AppContent() {
       </div>
 
       <header className="header" role="banner">
-        <h1><span className="emoji" aria-hidden="true">📈</span> POC Trading Overview</h1>
-        <p>AI-Powered Stock Ranking & Analysis</p>
+        <h1><span className="emoji" aria-hidden="true">📈</span> Smart Trading Dashboard</h1>
+        <p>Find the best stocks and crypto to buy today</p>
       </header>
 
       {/* Health Check Section - Toggle visibility */}
@@ -409,18 +423,31 @@ function AppContent() {
       <main id="main-content" role="main">
       {/* Portfolio View Toggle */}
       <section className="card" style={{marginBottom: '24px'}} role="region" aria-label="Portfolio view selector">
-        <div className="card-title">📊 Portfolio View</div>
+        <div className="card-title">📊 What would you like to explore?</div>
+        {results.length === 0 && cryptoResults.length === 0 && portfolioView === 'stocks' && (
+          <div className="onboarding-hint" style={{
+            background: 'linear-gradient(135deg, #667eea15 0%, #764ba215 100%)',
+            border: '2px solid #667eea30',
+            borderRadius: '12px',
+            padding: '16px',
+            marginBottom: '16px',
+            fontSize: '0.95rem',
+            color: '#4a4a4a'
+          }}>
+            👋 <strong>New here?</strong> Start with <strong style={{color: '#667eea'}}>"Trading Signals"</strong> to see today's best opportunities, or explore <strong>"Top Stocks"</strong> ranked by AI.
+          </div>
+        )}
         <div className="portfolio-toggle-container">
           <button
-            className={`portfolio-toggle-button buy-opportunities ${portfolioView === 'buy-opportunities' ? 'active' : ''}`}
+            className={`portfolio-toggle-button buy-opportunities primary-cta ${portfolioView === 'buy-opportunities' ? 'active' : ''}`}
             onClick={() => setPortfolioView('buy-opportunities')}
-            aria-label="Switch to buy opportunities view"
+            aria-label="Switch to trading signals view"
             aria-pressed={portfolioView === 'buy-opportunities'}
           >
             <div className="icon">🎯</div>
-            <div className="title">Buy / Sell</div>
+            <div className="title">Trading Signals</div>
             <div className="description">
-              Trading signals
+              Best buy & sell opportunities
             </div>
           </button>
 
@@ -430,13 +457,13 @@ function AppContent() {
               setPortfolioView('stocks')
               if (results.length === 0) fetchRanking()
             }}
-            aria-label="Switch to stocks and shares portfolio view"
+            aria-label="Switch to top stocks portfolio view"
             aria-pressed={portfolioView === 'stocks'}
           >
             <div className="icon">📈</div>
-            <div className="title">Stocks</div>
+            <div className="title">Top Stocks</div>
             <div className="description">
-              Equities & ETFs
+              AI-ranked equities
             </div>
           </button>
 
@@ -446,13 +473,13 @@ function AppContent() {
               setPortfolioView('crypto')
               if (cryptoResults.length === 0) fetchCryptoRanking()
             }}
-            aria-label="Switch to digital assets and cryptocurrency portfolio view"
+            aria-label="Switch to cryptocurrency portfolio view"
             aria-pressed={portfolioView === 'crypto'}
           >
             <div className="icon">₿</div>
             <div className="title">Crypto</div>
             <div className="description">
-              Bitcoin & NFTs
+              Top cryptocurrencies
             </div>
           </button>
 
@@ -465,7 +492,7 @@ function AppContent() {
             <div className="icon">⭐</div>
             <div className="title">Watchlists</div>
             <div className="description">
-              Custom lists
+              Your saved picks
             </div>
           </button>
 
@@ -476,9 +503,9 @@ function AppContent() {
             aria-pressed={portfolioView === 'simulation'}
           >
             <div className="icon">🎮</div>
-            <div className="title">Simulation</div>
+            <div className="title">Practice</div>
             <div className="description">
-              Paper trading
+              Risk-free trading
             </div>
           </button>
         </div>
@@ -488,7 +515,7 @@ function AppContent() {
       {portfolioView === 'stocks' && (
       <section className="card" role="region" aria-label="Market view selector">
         <div className="card-title">
-          🌍 Market View - {selectedMarket}
+          🌍 Choose Your Market - {selectedMarket}
           {!loading && results.length > 0 && (
             <span style={{marginLeft: '8px', color: '#667eea', fontWeight: 'bold'}}>({results.length})</span>
           )}
@@ -534,9 +561,14 @@ function AppContent() {
           <div style={{marginBottom: '16px'}}>
           </div>
         ) : (
-          <p style={{color: '#666', fontSize: '0.9rem', margin: '0'}}>
-            Select a market view above to analyze top performers for a diversified portfolio
-          </p>
+          <div style={{textAlign: 'center', padding: '20px'}}>
+            <p style={{color: '#667eea', fontSize: '1.1rem', fontWeight: '600', margin: '0 0 8px 0'}}>
+              👆 Select a market to get started
+            </p>
+            <p style={{color: '#666', fontSize: '0.9rem', margin: '0'}}>
+              We'll show you the top performing stocks ranked by our AI model
+            </p>
+          </div>
         )}
       </section>
       )}
@@ -546,9 +578,9 @@ function AppContent() {
         <>
         {/* Crypto Search Section */}
         <section className="card" role="region" aria-label="Search for digital assets and cryptocurrencies">
-          <div className="card-title">🔍 Search Digital Assets</div>
+          <div className="card-title">🔍 Find Cryptocurrencies</div>
           <div style={{marginBottom: '8px', fontSize: '0.9rem', color: '#666'}}>
-            💡 Search by name or symbol (e.g., Bitcoin, BTC, Ethereum, ETH)
+            💡 Search by name or symbol • Examples: Bitcoin, BTC, Ethereum, ETH
           </div>
           <div style={{marginTop: '16px'}}>
             <input
@@ -596,7 +628,7 @@ function AppContent() {
         {/* Crypto Rankings Section */}
         <section className="card" role="region" aria-label="Digital assets and cryptocurrency rankings">
           <div className="card-title">
-            ₿ Digital Assets Rankings
+            ₿ Top Cryptocurrencies
             {!cryptoLoading && cryptoResults.length > 0 && (
               <span style={{marginLeft: '8px', color: '#f59e0b', fontWeight: 'bold'}}>({cryptoResults.length})</span>
             )}
@@ -616,6 +648,16 @@ function AppContent() {
             onRowClick={openCryptoDetail}
             searchTerm={cryptoSearchTerm}
           />
+
+          {!cryptoLoading && cryptoResults.length === 0 && (
+            <EmptyState
+              icon="₿"
+              title="No cryptocurrencies loaded"
+              description="Click the button below to load the top cryptocurrencies ranked by market cap and momentum"
+              actionLabel="Load Crypto Rankings"
+              onAction={fetchCryptoRanking}
+            />
+          )}
         </section>
         </>
       )}
@@ -639,7 +681,10 @@ function AppContent() {
       {portfolioView === 'stocks' && (
       <>
       <section className="card" role="region" aria-label="Search for individual stocks">
-        <div className="card-title">🔍 Search Individual Stock</div>
+        <div className="card-title">🔍 Look Up Any Stock</div>
+        <p style={{color: '#666', fontSize: '0.9rem', marginBottom: '16px'}}>
+          Search by ticker symbol to get AI predictions and detailed analysis
+        </p>
         <div className="search-controls">
           <label>
             Stock symbol
@@ -782,6 +827,9 @@ function AppContent() {
           © 2025 Trading Fun AI Market Predictor • Built with ML & FastAPI
         </p>
       </footer>
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   )
 }

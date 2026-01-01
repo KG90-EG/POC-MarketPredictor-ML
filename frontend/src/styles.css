@@ -1486,6 +1486,48 @@ body.dark-mode .portfolio-toggle-button {
   box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
 }
 
+/* Primary CTA - Trading Signals gets visual priority */
+.portfolio-toggle-button.primary-cta:not(.active) {
+  background: linear-gradient(135deg, #8b5cf630 0%, #7c3aed30 100%);
+  border: 2px solid #8b5cf6;
+  color: #7c3aed;
+  font-weight: 700;
+}
+
+body.dark-mode .portfolio-toggle-button.primary-cta:not(.active) {
+  background: linear-gradient(135deg, #8b5cf620 0%, #7c3aed20 100%);
+  border-color: #8b5cf6;
+  color: #a78bfa;
+}
+
+.portfolio-toggle-button.primary-cta:not(.active):hover {
+  background: linear-gradient(135deg, #8b5cf650 0%, #7c3aed50 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.25);
+}
+
+/* Onboarding hint styling */
+.onboarding-hint {
+  animation: fadeInDown 0.5s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+body.dark-mode .onboarding-hint {
+  background: linear-gradient(135deg, #667eea20 0%, #764ba220 100%) !important;
+  border-color: #667eea40 !important;
+  color: #e6e8ec !important;
+}
+
 .portfolio-toggle-button.stocks.active {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
