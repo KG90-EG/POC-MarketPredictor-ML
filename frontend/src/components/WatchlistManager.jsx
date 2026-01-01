@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { api, apiClient, fetchWatchlists, createWatchlist, deleteWatchlist, addStockToWatchlist, removeStockFromWatchlist, CURRENT_USER_ID } from '../api';
+import PriceAlert from './PriceAlert';
 import './WatchlistManager.css';
 
 function WatchlistManager({ userId = CURRENT_USER_ID }) {
@@ -21,6 +22,7 @@ function WatchlistManager({ userId = CURRENT_USER_ID }) {
   const [popularStocks, setPopularStocks] = useState([]);
   const [popularCryptos, setPopularCryptos] = useState([]);
   const [loadingPopular, setLoadingPopular] = useState(false);
+  const [priceAlerts, setPriceAlerts] = useState({}); // { ticker: { type, target_price, notification } }
 
   // Fetch popular stocks and cryptos on mount
   useEffect(() => {
@@ -30,7 +32,83 @@ function WatchlistManager({ userId = CURRENT_USER_ID }) {
 
   useEffect(() => {
     loadWatchlists();
+    loadPriceAlerts();
   }, [userId]);
+
+  const loadPriceAlerts = () => {
+    // Load from localStorage (or could be from API)
+    const saved = localStorage.getItem(`price_alerts_${userId}`)
+    if (saved) {
+      try {
+        setPriceAlerts(JSON.parse(saved))
+      } catch (e) {
+        console.error('Failed to load price alerts:', e)
+      }
+    }
+  }
+
+  const savePriceAlert = (alertData) => {
+    const newAlerts = {
+      ...priceAlerts,
+      [alertData.ticker]: {
+        type: alertData.type,
+        target_price: alertData.target_price,
+        notification: alertData.notification,
+        created_at: new Date().toISOString()
+      }
+    }
+    setPriceAlerts(newAlerts)
+    localStorage.setItem(`price_alerts_${userId}`, JSON.stringify(newAlerts))
+
+    // Request browser notification permission if needed
+    if (alertData.notification === 'browser' || alertData.notification === 'both') {
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission()
+      }
+    }
+  }
+
+  const deletePriceAlert = (ticker) => {
+    const newAlerts = { ...priceAlerts }
+    delete newAlerts[ticker]
+    setPriceAlerts(newAlerts)
+    localStorage.setItem(`price_alerts_${userId}`, JSON.stringify(newAlerts))
+  }
+
+  // Check alerts when stock data updates
+  useEffect(() => {
+    if (Object.keys(stockData).length === 0 || Object.keys(priceAlerts).length === 0) return
+
+    Object.entries(priceAlerts).forEach(([ticker, alert]) => {
+      const data = stockData[ticker]
+      if (!data || !data.price) return
+
+      const triggered = 
+        (alert.type === 'above' && data.price >= alert.target_price) ||
+        (alert.type === 'below' && data.price <= alert.target_price)
+
+      if (triggered && !alert.notified) {
+        // Send notification
+        const message = `${ticker}: Price ${alert.type === 'above' ? 'above' : 'below'} $${alert.target_price.toFixed(2)} (now $${data.price.toFixed(2)})`
+        
+        if ((alert.notification === 'browser' || alert.notification === 'both') && 'Notification' in window && Notification.permission === 'granted') {
+          new Notification('🔔 Price Alert Triggered!', {
+            body: message,
+            icon: '/favicon.ico',
+            tag: ticker
+          })
+        }
+
+        // Mark as notified
+        const newAlerts = {
+          ...priceAlerts,
+          [ticker]: { ...alert, notified: true, triggered_at: new Date().toISOString() }
+        }
+        setPriceAlerts(newAlerts)
+        localStorage.setItem(`price_alerts_${userId}`, JSON.stringify(newAlerts))
+      }
+    })
+  }, [stockData, priceAlerts, userId])
 
   const fetchPopularStocks = async () => {
     setLoadingPopular(true);
@@ -584,6 +662,15 @@ function WatchlistManager({ userId = CURRENT_USER_ID }) {
                             )}
 
                             {item.notes && <div className="stock-notes">📝 {item.notes}</div>}
+                            
+                            {/* Price Alert Component */}
+                            <PriceAlert
+                              ticker={item.ticker}
+                              currentPrice={price}
+                              existingAlert={priceAlerts[item.ticker]}
+                              onSave={savePriceAlert}
+                              onDelete={deletePriceAlert}
+                            />
                           </div>
 
                           <div className="stock-actions">
