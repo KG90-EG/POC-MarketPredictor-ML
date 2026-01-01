@@ -10,3 +10,4 @@ mlruns/
 node_modules/
 frontend/dist/
 _archive/
+*.pid

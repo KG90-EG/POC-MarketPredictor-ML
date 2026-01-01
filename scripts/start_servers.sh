@@ -235,8 +235,8 @@ start_backend() {
     local pid=$!
     save_pid "$pid" "$BACKEND_PID_FILE"
     
-    # Wait for startup
-    sleep 3
+    # Wait for startup (backend takes longer with reload mode)
+    sleep 8
     
     # Check if still running
     if ! is_process_running "$pid"; then
