@@ -237,8 +237,19 @@ def parse_args():
     return parser.parse_args()
 
 
-def train_model(data, model_type="rf", save_path=None, use_feature_selection=True, n_features=30, use_ensemble=False):
-    """Train ML model with optional feature selection and ensemble.
+def train_model(
+    data,
+    model_type="rf",
+    save_path=None,
+    use_feature_selection=True,
+    n_features=30,
+    use_ensemble=False,
+    optimize_hyperparams=False,
+    n_trials=50,
+    track_with_mlflow=False,
+    run_name=None,
+):
+    """Train ML model with optional feature selection, ensemble, and hyperparameter tuning.
 
     Args:
         data: Training data DataFrame
@@ -247,6 +258,10 @@ def train_model(data, model_type="rf", save_path=None, use_feature_selection=Tru
         use_feature_selection: Apply feature selection if True (default: True)
         n_features: Number of features to select (default: 30)
         use_ensemble: Use ensemble methods if True (default: False)
+        optimize_hyperparams: Run hyperparameter optimization if True (default: False)
+        n_trials: Number of Optuna trials for optimization (default: 50)
+        track_with_mlflow: Track run with MLflow if True (default: False)
+        run_name: Name for MLflow run (default: None)
 
     Returns:
         Tuple of (model, metrics_dict)
@@ -254,6 +269,14 @@ def train_model(data, model_type="rf", save_path=None, use_feature_selection=Tru
     # Import ensemble if needed
     if use_ensemble or model_type in ["voting", "stacking"]:
         from .ensemble_models import create_ensemble
+
+    # Import optimization/tracking if needed
+    mlflow_tracker = None
+    if track_with_mlflow:
+        from .mlflow_integration import MLflowTracker
+
+        mlflow_tracker = MLflowTracker()
+        mlflow_tracker.start_run(run_name=run_name)
 
     # Prepare features and target
     available_features = [f for f in features if f in data.columns]
@@ -278,6 +301,30 @@ def train_model(data, model_type="rf", save_path=None, use_feature_selection=Tru
     # Train/test split
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
 
+    # Hyperparameter optimization
+    optimized_params = {}
+    if optimize_hyperparams and model_type not in ["voting", "stacking"]:
+        from .hyperparameter_tuning import HyperparameterTuner
+
+        logging.info(f"Starting hyperparameter optimization for {model_type} ({n_trials} trials)")
+
+        # Map model_type to optimization name
+        optim_type_map = {
+            "rf": "random_forest",
+            "xgb": "xgboost",
+            "gb": "gradient_boosting",
+            "lgbm": "lightgbm",
+        }
+
+        if model_type in optim_type_map:
+            tuner = HyperparameterTuner(n_trials=n_trials, cv_folds=5, n_jobs=-1)
+            optimized_params = tuner.optimize_model(
+                optim_type_map[model_type], X_train, y_train, show_progress=True
+            )
+            logging.info(f"✅ Optimization complete. Best params: {optimized_params}")
+        else:
+            logging.warning(f"Hyperparameter optimization not supported for {model_type}")
+
     # Model selection
     if model_type == "voting":
         logging.info("Creating voting ensemble (XGB + RF + GB + LGBM)")
@@ -286,17 +333,23 @@ def train_model(data, model_type="rf", save_path=None, use_feature_selection=Tru
         logging.info("Creating stacking ensemble with meta-learner")
         model = create_ensemble("stacking", cv=5)
     elif model_type == "xgb" and _USE_XGB:
-        model = XGBClassifier(
-            n_estimators=200,
-            max_depth=4,
-            learning_rate=0.05,
-            subsample=0.9,
-            eval_metric="logloss",
-            use_label_encoder=False,
-            random_state=42,
-        )
+        # Use optimized params if available
+        params = optimized_params if optimized_params else {
+            "n_estimators": 200,
+            "max_depth": 4,
+            "learning_rate": 0.05,
+            "subsample": 0.9,
+            "random_state": 42,
+        }
+        params.update({"eval_metric": "logloss", "use_label_encoder": False})
+        model = XGBClassifier(**params)
     else:
-        model = RandomForestClassifier(n_estimators=200, random_state=42)
+        # RandomForest with optimized params if available
+        params = optimized_params if optimized_params else {
+            "n_estimators": 200,
+            "random_state": 42,
+        }
+        model = RandomForestClassifier(**params)
 
     # Train model
     logging.info(f"Training {model_type} model...")
@@ -352,7 +405,52 @@ def train_model(data, model_type="rf", save_path=None, use_feature_selection=Tru
         "cv_mean": float(cv_scores.mean()),
         "cv_std": float(cv_scores.std()),
     }
-    # MLFlow tracking if available
+
+    # MLflow tracking
+    if track_with_mlflow and mlflow_tracker:
+        try:
+            # Log parameters
+            params_to_log = {
+                "model_type": model_type,
+                "n_features": len(selected_features),
+                "use_feature_selection": use_feature_selection,
+                "use_ensemble": use_ensemble,
+                "optimize_hyperparams": optimize_hyperparams,
+            }
+            if optimized_params:
+                params_to_log.update({f"hp_{k}": v for k, v in optimized_params.items()})
+
+            mlflow_tracker.log_params(params_to_log)
+
+            # Log metrics
+            mlflow_tracker.log_metrics(metrics)
+
+            # Log dataset stats
+            mlflow_tracker.log_dataset_stats(X_train, y_train, prefix="train")
+            mlflow_tracker.log_dataset_stats(X_test, y_test, prefix="test")
+
+            # Log model
+            if save_path:
+                mlflow_tracker.log_model(model, artifact_path="model")
+
+            # Log feature importance
+            if hasattr(model, "feature_importances_"):
+                mlflow_tracker.log_feature_importance(
+                    selected_features, model.feature_importances_
+                )
+
+            # Log confusion matrix
+            mlflow_tracker.log_confusion_matrix(y_test, preds, labels=["Down", "Up"])
+
+            mlflow_tracker.end_run(status="FINISHED")
+            logging.info("✅ MLflow tracking complete")
+
+        except Exception as e:
+            logging.warning(f"MLflow tracking failed: {e}")
+            if mlflow_tracker:
+                mlflow_tracker.end_run(status="FAILED")
+
+    # Legacy MLFlow tracking (deprecated)
     try:
         import mlflow
 
