@@ -227,7 +227,7 @@ const StockRanking = React.memo(function StockRanking({
       )}
     </>
   )
-}
+})
 
 StockRanking.propTypes = {
   results: PropTypes.arrayOf(PropTypes.shape({
