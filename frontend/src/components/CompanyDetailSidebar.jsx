@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import PriceChart from './PriceChart'
+import NewsPanel from './NewsPanel'
 
 function formatNumber(num) {
   if (!num) return 'N/A'
@@ -239,6 +240,9 @@ function CompanyDetailSidebar({ company, onClose }) {
                   'ML model suggests poor performance outlook. Consider exiting position.'}
               </p>
             </div>
+
+            {/* News Panel */}
+            <NewsPanel ticker={company.ticker} limit={5} />
           </div>
         )}
       </aside>

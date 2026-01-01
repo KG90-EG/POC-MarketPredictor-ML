@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
 import PriceChart from './PriceChart'
+import NewsPanel from './NewsPanel'
 
 function formatNumber(num) {
   if (!num) return 'N/A'
@@ -307,6 +308,9 @@ function CryptoDetailSidebar({ crypto, onClose }) {
                 </p>
               )}
             </div>
+
+            {/* News Panel */}
+            <NewsPanel ticker={crypto.symbol?.toUpperCase() || crypto.crypto_id} limit={5} />
           </div>
         )}
       </aside>
