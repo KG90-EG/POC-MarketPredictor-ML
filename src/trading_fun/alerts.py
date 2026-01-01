@@ -26,7 +26,8 @@ class AlertDB:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS alerts (
                 alert_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id TEXT NOT NULL,
@@ -43,12 +44,15 @@ class AlertDB:
                 read_at REAL,
                 metadata TEXT
             )
-        """)
+        """
+        )
 
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_alerts_user_read 
+        cursor.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_alerts_user_read
             ON alerts(user_id, is_read, created_at DESC)
-        """)
+        """
+        )
 
         conn.commit()
         conn.close()
@@ -149,8 +153,8 @@ class AlertDB:
         placeholders = ",".join("?" * len(alert_ids))
         cursor.execute(
             f"""
-            UPDATE alerts 
-            SET is_read = 1, read_at = ? 
+            UPDATE alerts
+            SET is_read = 1, read_at = ?
             WHERE alert_id IN ({placeholders})
         """,
             [time.time()] + alert_ids,
@@ -172,7 +176,7 @@ class AlertDB:
 
         cursor.execute(
             """
-            DELETE FROM alerts 
+            DELETE FROM alerts
             WHERE user_id = ? AND is_read = 1 AND created_at < ?
         """,
             (user_id, cutoff_time),
@@ -190,9 +194,7 @@ class AlertDB:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        cursor.execute(
-            "SELECT COUNT(*) FROM alerts WHERE user_id = ? AND is_read = 0", (user_id,)
-        )
+        cursor.execute("SELECT COUNT(*) FROM alerts WHERE user_id = ? AND is_read = 0", (user_id,))
 
         count = cursor.fetchone()[0]
         conn.close()
@@ -241,9 +243,7 @@ class AlertGenerator:
                 current_value=current_price,
             )
 
-    def create_volatility_alert(
-        self, user_id: str, ticker: str, volatility: float, threshold: float = 0.05
-    ):
+    def create_volatility_alert(self, user_id: str, ticker: str, volatility: float, threshold: float = 0.05):
         """Create alert for high volatility."""
         if volatility > threshold:
             self.db.create_alert(
@@ -294,4 +294,3 @@ class AlertManager:
 alert_db = AlertDB()
 alert_generator = AlertGenerator(alert_db)
 alert_manager = AlertManager()  # For backwards compatibility
-

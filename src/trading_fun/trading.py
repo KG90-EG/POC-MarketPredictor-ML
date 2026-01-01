@@ -2,10 +2,11 @@ import argparse
 import logging
 import shutil
 from typing import Optional, Tuple
-import yfinance as yf
+
 import pandas as pd
-from sklearn.model_selection import train_test_split
+import yfinance as yf
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
 
 try:
     from xgboost import XGBClassifier
@@ -43,9 +44,7 @@ features = [
 ]
 
 
-def compute_macd(
-    series: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9
-) -> Tuple[pd.Series, pd.Series]:
+def compute_macd(series: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> Tuple[pd.Series, pd.Series]:
     """Compute MACD (Moving Average Convergence Divergence) indicator.
 
     Args:
@@ -64,9 +63,7 @@ def compute_macd(
     return macd, sig
 
 
-def compute_bollinger(
-    series: pd.Series, window: int = 20
-) -> Tuple[pd.Series, pd.Series]:
+def compute_bollinger(series: pd.Series, window: int = 20) -> Tuple[pd.Series, pd.Series]:
     """Compute Bollinger Bands.
 
     Args:
@@ -159,15 +156,11 @@ def check_xgboost_and_openmp():
         try:
             import ctypes.util
 
-            found = ctypes.util.find_library("omp") or ctypes.util.find_library(
-                "libomp"
-            )
+            found = ctypes.util.find_library("omp") or ctypes.util.find_library("libomp")
         except Exception:
             found = None
         if found:
-            logging.warning(
-                "xgboost import failed but libomp appears present (%s).", found
-            )
+            logging.warning("xgboost import failed but libomp appears present (%s).", found)
         else:
             if shutil.which("brew"):
                 logging.warning(
@@ -210,18 +203,14 @@ def parse_args():
         default="5y",
         help="History period for yfinance downloads (e.g., 1y, 5y)",
     )
-    parser.add_argument(
-        "--top-n", type=int, default=10, help="Number of top tickers to print"
-    )
+    parser.add_argument("--top-n", type=int, default=10, help="Number of top tickers to print")
     parser.add_argument(
         "--rank-period",
         type=str,
         default="300d",
         help="History period for ranking calculation (e.g., 300d)",
     )
-    parser.add_argument(
-        "--use-xgb", action="store_true", help="Prefer XGBoost if available"
-    )
+    parser.add_argument("--use-xgb", action="store_true", help="Prefer XGBoost if available")
     parser.add_argument("--quiet", action="store_true", help="Reduce logging verbosity")
     return parser.parse_args()
 
@@ -231,9 +220,7 @@ def train_model(data, model_type="rf", save_path=None):
     y = data["Outperform"]
     if y.nunique() < 2:
         raise ValueError("Target `y` must contain at least two classes.")
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, stratify=y, random_state=42
-    )
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
     if model_type == "xgb" and _USE_XGB:
         model = XGBClassifier(
             n_estimators=200,
@@ -256,18 +243,14 @@ def train_model(data, model_type="rf", save_path=None):
     # Evaluate
     from sklearn.metrics import (
         accuracy_score,
+        f1_score,
         precision_score,
         recall_score,
-        f1_score,
         roc_auc_score,
     )
 
     preds = model.predict(X_test.values)
-    proba = (
-        model.predict_proba(X_test.values)[:, 1]
-        if hasattr(model, "predict_proba")
-        else None
-    )
+    proba = model.predict_proba(X_test.values)[:, 1] if hasattr(model, "predict_proba") else None
     acc = accuracy_score(y_test.values, preds)
     prec = precision_score(y_test.values, preds, zero_division=0)
     rec = recall_score(y_test.values, preds, zero_division=0)
@@ -322,9 +305,7 @@ def main(args=None):
     ranking = {}
     for t in chosen_tickers:
         try:
-            latest = yf.download(t, period=args.rank_period, auto_adjust=False)[
-                "Adj Close"
-            ]
+            latest = yf.download(t, period=args.rank_period, auto_adjust=False)["Adj Close"]
         except Exception:
             logging.warning("Failed to download latest for %s", t)
             continue
@@ -348,8 +329,6 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     args = parse_args()
     main(args)

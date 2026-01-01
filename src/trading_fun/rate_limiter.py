@@ -5,7 +5,8 @@ Rate limiting middleware for FastAPI.
 import time
 from collections import defaultdict
 from typing import Dict
-from fastapi import Request, HTTPException, status
+
+from fastapi import HTTPException, Request, status
 from starlette.middleware.base import BaseHTTPMiddleware
 
 
@@ -20,9 +21,7 @@ class RateLimiter(BaseHTTPMiddleware):
         self.requests_per_minute = requests_per_minute
         self.window_seconds = 60
         # Store: {ip: {endpoint: [(timestamp, request_count)]}}
-        self.requests: Dict[str, Dict[str, list]] = defaultdict(
-            lambda: defaultdict(list)
-        )
+        self.requests: Dict[str, Dict[str, list]] = defaultdict(lambda: defaultdict(list))
 
     def _clean_old_requests(self, request_list: list, current_time: float):
         """Remove requests older than the window."""
@@ -49,9 +48,7 @@ class RateLimiter(BaseHTTPMiddleware):
         current_time = time.time()
 
         # Clean old requests for this IP and endpoint
-        self.requests[client_ip][endpoint] = self._clean_old_requests(
-            self.requests[client_ip][endpoint], current_time
-        )
+        self.requests[client_ip][endpoint] = self._clean_old_requests(self.requests[client_ip][endpoint], current_time)
 
         # Count requests in current window
         request_count = self._get_request_count(self.requests[client_ip][endpoint])
@@ -74,9 +71,7 @@ class RateLimiter(BaseHTTPMiddleware):
         remaining = self.requests_per_minute - request_count - 1
         response.headers["X-RateLimit-Limit"] = str(self.requests_per_minute)
         response.headers["X-RateLimit-Remaining"] = str(max(0, remaining))
-        response.headers["X-RateLimit-Reset"] = str(
-            int(current_time + self.window_seconds)
-        )
+        response.headers["X-RateLimit-Reset"] = str(int(current_time + self.window_seconds))
 
         return response
 

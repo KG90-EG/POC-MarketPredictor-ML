@@ -342,36 +342,23 @@ function AppContent() {
       {/* Skip Navigation Link */}
       <a href="#main-content" className="skip-link">Skip to main content</a>
 
-      <header className="header" role="banner">
-        <div className="header-actions" aria-label="Display settings">
-          <div className="language-control">
-            <label htmlFor="language-select" className="sr-only">Language</label>
-            <select
-              id="language-select"
-              value={language}
-              onChange={e => setLanguage(e.target.value)}
-              aria-label="Select application language"
-            >
-              <option value="de">🇩🇪 Deutsch</option>
-              <option value="it">🇮🇹 Italiano</option>
-              <option value="en">🇬🇧 English</option>
-              <option value="es">🇪🇸 Español</option>
-              <option value="fr">🇫🇷 Français</option>
-            </select>
-          </div>
-          <button
-            className="theme-toggle"
-            onClick={toggleDarkMode}
-            aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
-            title={`Toggle ${darkMode ? 'light' : 'dark'} mode`}
-          >
-            {darkMode ? '☀️' : '🌙'}
-          </button>
-        </div>
+      {/* Modern Fixed Toolbar */}
+      <div className="header-toolbar" aria-label="Application controls">
         <button
-          className={`health-indicator ${healthStatus}`}
+          className="toolbar-btn theme-toggle"
+          onClick={toggleDarkMode}
+          aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`}
+          title={`Toggle ${darkMode ? 'light' : 'dark'} mode`}
+        >
+          {darkMode ? '☀️' : '🌙'}
+        </button>
+
+        <div className="toolbar-divider" aria-hidden="true"></div>
+
+        <button
+          className={`toolbar-btn health-indicator ${healthStatus}`}
           onClick={() => setShowHealthPanel(!showHealthPanel)}
-          aria-label={`System health status: ${healthStatus}. Click to view details.`}
+          aria-label={`System health: ${healthStatus}`}
           aria-expanded={showHealthPanel}
           title="System Health"
         >
@@ -380,15 +367,38 @@ function AppContent() {
           {healthStatus === 'error' && '❌'}
           {healthStatus === 'loading' && '⏳'}
         </button>
+
         <AlertPanel />
+
         <button
-          className="help-button"
+          className="toolbar-btn help-button"
           onClick={() => setShowHelp(true)}
-          aria-label="Open help and usage guide"
+          aria-label="Open help guide"
           title="Help & Guide"
         >
           ❓
         </button>
+
+        <div className="toolbar-divider" aria-hidden="true"></div>
+
+        <div className="language-control">
+          <label htmlFor="language-select" className="sr-only">Language</label>
+          <select
+            id="language-select"
+            value={language}
+            onChange={e => setLanguage(e.target.value)}
+            aria-label="Select language"
+          >
+            <option value="de">🇩🇪 DE</option>
+            <option value="en">🇬🇧 EN</option>
+            <option value="it">🇮🇹 IT</option>
+            <option value="es">🇪🇸 ES</option>
+            <option value="fr">🇫🇷 FR</option>
+          </select>
+        </div>
+      </div>
+
+      <header className="header" role="banner">
         <h1><span className="emoji" aria-hidden="true">📈</span> POC Trading Overview</h1>
         <p>AI-Powered Stock Ranking & Analysis</p>
       </header>

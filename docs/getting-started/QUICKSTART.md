@@ -80,6 +80,7 @@ cd ..
 ```
 
 **Features:**
+
 - ✅ Automatic port cleanup
 - ✅ Health check verification  
 - ✅ Process management

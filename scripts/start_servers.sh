@@ -97,12 +97,12 @@ get_process_on_port() {
 kill_process_on_port() {
     local port=$1
     local pid=$(get_process_on_port "$port")
-    
+
     if [ -n "$pid" ]; then
         log_warning "Port $port is in use by PID $pid, killing..."
         kill -9 "$pid" 2>/dev/null || true
         sleep 1
-        
+
         if is_port_in_use "$port"; then
             log_error "Failed to free port $port"
             return 1
@@ -115,7 +115,7 @@ kill_process_on_port() {
 cleanup_port() {
     local port=$1
     local service=$2
-    
+
     if is_port_in_use "$port"; then
         log_warning "$service port $port is already in use"
         read -p "Kill existing process? (y/N) " -n 1 -r
@@ -158,9 +158,9 @@ wait_for_health() {
     local service=$2
     local timeout=$HEALTH_TIMEOUT
     local elapsed=0
-    
+
     log_info "Waiting for $service to be healthy..."
-    
+
     while [ $elapsed -lt $timeout ]; do
         if curl -sf "$url" >/dev/null 2>&1; then
             log_success "$service is healthy!"
@@ -170,7 +170,7 @@ wait_for_health() {
         elapsed=$((elapsed + 1))
         printf "."
     done
-    
+
     echo
     log_error "$service health check timeout after ${timeout}s"
     return 1
@@ -194,14 +194,14 @@ check_frontend_health() {
 
 start_backend() {
     log_info "Starting backend server on port $BACKEND_PORT..."
-    
+
     # Check Python
     if ! command -v "$PYTHON_CMD" >/dev/null 2>&1; then
         log_error "Python not found: $PYTHON_CMD"
         log_info "Try: export PYTHON_CMD=python or python3"
         return 1
     fi
-    
+
     # Check if already running
     local existing_pid=$(read_pid "$BACKEND_PID_FILE")
     if [ -n "$existing_pid" ] && is_process_running "$existing_pid"; then
@@ -215,36 +215,37 @@ start_backend() {
             sleep 2
         fi
     fi
-    
+
     # Cleanup port
     cleanup_port "$BACKEND_PORT" "Backend" || return 1
-    
+
     # Check virtual environment
     if [ ! -d "$PROJECT_ROOT/.venv" ] && [ ! -d "$PROJECT_ROOT/venv" ]; then
         log_warning "No virtual environment found"
         log_info "Consider creating one: python3 -m venv .venv"
     fi
-    
+
     # Start server
     cd "$PROJECT_ROOT"
-    log_info "Running: $PYTHON_CMD -m trading_fun.server"
-    
-    nohup "$PYTHON_CMD" -m trading_fun.server \
+    export PYTHONPATH="${PROJECT_ROOT}${PYTHONPATH:+:$PYTHONPATH}"
+    log_info "Running: $PYTHON_CMD -m src.trading_fun.server"
+
+    nohup "$PYTHON_CMD" -m src.trading_fun.server \
         > "$BACKEND_LOG" 2>&1 &
-    
+
     local pid=$!
     save_pid "$pid" "$BACKEND_PID_FILE"
-    
+
     # Wait for startup (backend takes longer with reload mode)
     sleep 8
-    
+
     # Check if still running
     if ! is_process_running "$pid"; then
         log_error "Backend failed to start"
         log_info "Check logs: tail -f $BACKEND_LOG"
         return 1
     fi
-    
+
     # Health check
     if wait_for_health "http://localhost:$BACKEND_PORT/health" "Backend"; then
         log_success "Backend started successfully (PID: $pid)"
@@ -262,28 +263,28 @@ start_backend() {
 
 stop_backend() {
     local pid=$(read_pid "$BACKEND_PID_FILE")
-    
+
     if [ -z "$pid" ]; then
         log_info "Backend PID file not found"
         kill_process_on_port "$BACKEND_PORT"
         return 0
     fi
-    
+
     if is_process_running "$pid"; then
         log_info "Stopping backend (PID: $pid)..."
         kill "$pid" 2>/dev/null || true
         sleep 2
-        
+
         if is_process_running "$pid"; then
             log_warning "Backend still running, force killing..."
             kill -9 "$pid" 2>/dev/null || true
         fi
-        
+
         log_success "Backend stopped"
     else
         log_info "Backend not running"
     fi
-    
+
     rm -f "$BACKEND_PID_FILE"
 }
 
@@ -293,13 +294,13 @@ stop_backend() {
 
 start_frontend() {
     log_info "Starting frontend server on port $FRONTEND_PORT..."
-    
+
     # Check npm
     if ! command -v npm >/dev/null 2>&1; then
         log_error "npm not found - please install Node.js"
         return 1
     fi
-    
+
     # Check if already running
     local existing_pid=$(read_pid "$FRONTEND_PID_FILE")
     if [ -n "$existing_pid" ] && is_process_running "$existing_pid"; then
@@ -313,10 +314,10 @@ start_frontend() {
             sleep 2
         fi
     fi
-    
+
     # Cleanup port
     cleanup_port "$FRONTEND_PORT" "Frontend" || return 1
-    
+
     # Check node_modules
     if [ ! -d "$PROJECT_ROOT/frontend/node_modules" ]; then
         log_info "Installing frontend dependencies..."
@@ -326,27 +327,27 @@ start_frontend() {
             return 1
         }
     fi
-    
+
     # Start server
     cd "$PROJECT_ROOT/frontend"
     log_info "Running: npm run dev"
-    
+
     nohup npm run dev \
         > "$FRONTEND_LOG" 2>&1 &
-    
+
     local pid=$!
     save_pid "$pid" "$FRONTEND_PID_FILE"
-    
+
     # Wait for startup
     sleep 5
-    
+
     # Check if still running
     if ! is_process_running "$pid"; then
         log_error "Frontend failed to start"
         log_info "Check logs: tail -f $FRONTEND_LOG"
         return 1
     fi
-    
+
     # Health check
     if wait_for_health "http://localhost:$FRONTEND_PORT" "Frontend"; then
         log_success "Frontend started successfully (PID: $pid)"
@@ -363,28 +364,28 @@ start_frontend() {
 
 stop_frontend() {
     local pid=$(read_pid "$FRONTEND_PID_FILE")
-    
+
     if [ -z "$pid" ]; then
         log_info "Frontend PID file not found"
         kill_process_on_port "$FRONTEND_PORT"
         return 0
     fi
-    
+
     if is_process_running "$pid"; then
         log_info "Stopping frontend (PID: $pid)..."
         kill "$pid" 2>/dev/null || true
         sleep 2
-        
+
         if is_process_running "$pid"; then
             log_warning "Frontend still running, force killing..."
             kill -9 "$pid" 2>/dev/null || true
         fi
-        
+
         log_success "Frontend stopped"
     else
         log_info "Frontend not running"
     fi
-    
+
     rm -f "$FRONTEND_PID_FILE"
 }
 
@@ -395,24 +396,24 @@ stop_frontend() {
 start_all() {
     log_info "Starting all servers..."
     echo
-    
+
     local backend_ok=false
     local frontend_ok=false
-    
+
     # Start backend
     if start_backend; then
         backend_ok=true
     fi
-    
+
     echo
-    
+
     # Start frontend
     if start_frontend; then
         frontend_ok=true
     fi
-    
+
     echo
-    
+
     # Summary
     if $backend_ok && $frontend_ok; then
         log_success "All servers started successfully!"
@@ -441,12 +442,12 @@ start_all() {
 stop_all() {
     log_info "Stopping all servers..."
     echo
-    
+
     stop_backend
     echo
     stop_frontend
     echo
-    
+
     log_success "All servers stopped"
 }
 
@@ -455,7 +456,7 @@ show_status() {
     echo "Server Status"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo
-    
+
     # Backend status
     local backend_pid=$(read_pid "$BACKEND_PID_FILE")
     if [ -n "$backend_pid" ] && is_process_running "$backend_pid"; then
@@ -467,7 +468,7 @@ show_status() {
     else
         echo -e "${RED}✗ Backend:${NC} Not running"
     fi
-    
+
     # Frontend status
     local frontend_pid=$(read_pid "$FRONTEND_PID_FILE")
     if [ -n "$frontend_pid" ] && is_process_running "$frontend_pid"; then
@@ -479,7 +480,7 @@ show_status() {
     else
         echo -e "${RED}✗ Frontend:${NC} Not running"
     fi
-    
+
     echo
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 }
@@ -535,7 +536,7 @@ EOF
 
 main() {
     local mode="all"
-    
+
     case "${1:-}" in
         --backend-only)
             mode="backend"
@@ -564,7 +565,7 @@ main() {
             exit 1
             ;;
     esac
-    
+
     case "$mode" in
         backend)
             start_backend

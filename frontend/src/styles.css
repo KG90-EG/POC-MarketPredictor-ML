@@ -56,34 +56,172 @@ body.dark-mode .container {
   text-align: center;
   margin-bottom: 32px;
   padding-bottom: 24px;
+  padding-top: 16px;
   border-bottom: 2px solid #f0f0f0;
   position: relative;
 }
 
-.header-actions {
+/* Modern Toolbar - Anchored to header */
+.header-toolbar {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: 20px;
+  right: 24px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(12px);
+  padding: 4px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+body.dark-mode .header-toolbar {
+  background: rgba(15, 20, 25, 0.98);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Toolbar Buttons */
+.toolbar-btn {
+  background: transparent;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.toolbar-btn:hover {
+  background: rgba(102, 126, 234, 0.12);
+  transform: scale(1.05);
+}
+
+.toolbar-btn:active {
+  transform: scale(0.95);
+}
+
+/* Health Status Badge */
+.toolbar-btn.health-indicator {
+  position: relative;
+}
+
+.toolbar-btn.health-indicator.healthy::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+body.dark-mode .toolbar-btn.health-indicator.healthy::after {
+  border-color: #0f1419;
+}
+
+/* Language Dropdown - Compact */
+.language-control {
+  position: relative;
+  margin-left: 2px;
 }
 
 .language-control select {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 8px 10px;
+  background: transparent;
+  border: 1px solid rgba(102, 126, 234, 0.15);
+  border-radius: 16px;
+  padding: 6px 10px;
+  font-size: 13px;
   font-weight: 600;
   color: #1a202c;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  min-width: 70px;
+  transition: all 0.2s ease;
+}
+
+.language-control select:hover {
+  border-color: rgba(102, 126, 234, 0.3);
+  background: rgba(102, 126, 234, 0.05);
 }
 
 body.dark-mode .language-control select {
-  background: rgba(26, 32, 44, 0.8);
   color: #f7fafc;
-  border-color: #2d3748;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.dark-mode .language-control select:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Divider in toolbar - Subtle */
+.toolbar-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(0, 0, 0, 0.08);
+  margin: 0 2px;
+}
+
+body.dark-mode .toolbar-divider {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .header {
+    padding-top: 54px;
+  }
+
+  .header-toolbar {
+    top: 8px;
+    right: 8px;
+    padding: 6px 8px;
+    gap: 4px;
+  }
+
+  .toolbar-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .language-control select {
+    font-size: 12px;
+    padding: 4px 8px;
+    min-width: 60px;
+  }
+
+  .portfolio-toggle-container {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding-top: 70px;
+  }
+
+  .header-toolbar {
+    flex-wrap: wrap;
+    max-width: calc(100vw - 24px);
+    top: 8px;
+    right: 12px;
+    left: 12px;
+  }
+}
+
+/* Remove old header-actions */
+.header-actions {
+  display: none;
 }
 
 .sr-only {
@@ -1273,123 +1411,126 @@ body.dark-mode .recommendation-text {
   background: #22262d;
 }
 
-/* Portfolio View Toggle Styles */
+/* Portfolio View Toggle Styles - Improved Responsive */
 .portfolio-toggle-container {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px;
-  margin-top: 12px;
+  margin: 16px 0;
+  padding: 0;
 }
 
 .portfolio-toggle-button {
-  flex: 1;
   padding: 16px 12px;
+  margin: 0;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
   font-size: 1rem;
-  transition: all 0.3s ease;
-  min-width: 0; /* Allow flex items to shrink below content size */
+  transition: all 0.2s ease;
   text-align: center;
   overflow: hidden;
+  border: 2px solid transparent;
+  position: relative;
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
 }
 
 .portfolio-toggle-button .icon {
   font-size: 1.75rem;
   margin-bottom: 6px;
   line-height: 1;
+  display: block;
 }
 
 .portfolio-toggle-button .title {
   font-size: 0.9rem;
   font-weight: 600;
   line-height: 1.2;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+  display: block;
 }
 
 .portfolio-toggle-button .description {
   font-size: 0.7rem;
   margin-top: 4px;
-  opacity: 0.9;
+  opacity: 0.85;
   line-height: 1.2;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+  display: block;
 }
 
-/* Stocks button */
-.portfolio-toggle-button.stocks {
-  background: #f0f0f0;
-  color: #333;
-  border: 2px solid #ddd;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+/* Default state - Unified styling */
+.portfolio-toggle-button {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  color: #495057;
+  border-color: #ced4da;
 }
 
-.portfolio-toggle-button.stocks:hover:not(.active) {
-  background: #e8e8e8;
-  border-color: #ccc;
+body.dark-mode .portfolio-toggle-button {
+  background: linear-gradient(135deg, #1a1d23 0%, #252930 100%);
+  color: #adb5bd;
+  border-color: #495057;
+}
+
+.portfolio-toggle-button:hover:not(.active) {
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+/* Active states - Color coded */
+.portfolio-toggle-button.buy-opportunities.active {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  border-color: #7c3aed;
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
 }
 
 .portfolio-toggle-button.stocks.active {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  border: 3px solid #764ba2;
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
-  transform: scale(1.02);
-}
-
-/* Crypto button */
-.portfolio-toggle-button.crypto {
-  background: #f0f0f0;
-  color: #333;
-  border: 2px solid #ddd;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.portfolio-toggle-button.crypto:hover:not(.active) {
-  background: #e8e8e8;
-  border-color: #ccc;
-  transform: translateY(-2px);
+  border-color: #764ba2;
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
 }
 
 .portfolio-toggle-button.crypto.active {
   background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
   color: white;
-  border: 3px solid #ea580c;
-  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.5);
-  transform: scale(1.02);
-}
-
-/* Watchlists button */
-.portfolio-toggle-button.watchlists {
-  background: #f0f0f0;
-  color: #333;
-  border: 2px solid #ddd;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.portfolio-toggle-button.watchlists:hover:not(.active) {
-  background: #e8e8e8;
-  border-color: #ccc;
-  transform: translateY(-2px);
+  border-color: #ea580c;
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
 }
 
 .portfolio-toggle-button.watchlists.active {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  border: 3px solid #059669;
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5);
-  transform: scale(1.02);
+  border-color: #059669;
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.portfolio-toggle-button.simulation.active {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  color: white;
+  border-color: #0891b2;
+  box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4);
+}
+
+/* Responsive breakpoints */
+@media (max-width: 1024px) {
+  .portfolio-toggle-container {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
 }
 
 @media (max-width: 768px) {
   .portfolio-toggle-container {
-    flex-direction: column;
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
 
   .portfolio-toggle-button {
-    padding: 12px 16px;
+    padding: 12px 8px;
+    margin: 0;
   }
 
   .portfolio-toggle-button .icon {
@@ -1398,23 +1539,43 @@ body.dark-mode .recommendation-text {
   }
 
   .portfolio-toggle-button .title {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
   }
 
   .portfolio-toggle-button .description {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .portfolio-toggle-container {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .portfolio-toggle-button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    padding: 12px 16px;
+    margin: 0;
+  }
+
+  .portfolio-toggle-button .icon {
+    font-size: 2rem;
+    margin-bottom: 0;
+  }
+
+  .portfolio-toggle-button .title {
+    font-size: 0.95rem;
   }
 }
 
 /* Extra small devices (phones in portrait, less than 480px) */
 @media (max-width: 480px) {
-  .header {
-    padding-top: 105px; /* More space for stacked buttons */
-  }
-
   .header h1 {
     font-size: 1.2rem;
-    padding: 0 110px; /* More space for buttons on sides */
   }
 
   .header .emoji {
@@ -1423,29 +1584,6 @@ body.dark-mode .recommendation-text {
 
   .header p {
     font-size: 0.85rem;
-  }
-
-  .theme-toggle,
-  .health-indicator,
-  .help-button {
-    width: 36px;
-    height: 36px;
-    font-size: 0.9rem;
-  }
-
-  .theme-toggle {
-    right: 8px;
-    top: 8px;
-  }
-
-  .health-indicator {
-    right: 8px;
-    top: 50px; /* Stack below theme toggle */
-  }
-
-  .help-button {
-    right: 52px;
-    top: 8px;
   }
 
   /* Even larger, more readable table text for phones */

@@ -6,28 +6,28 @@ services:
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn market_predictor.server:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --access-logfile - --error-logfile -
-    
+
     healthCheckPath: /api/health
-    
+
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.13
-      
+
       - key: PORT
         value: 8000
-      
+
       # Add these secrets in Render dashboard
       - key: OPENAI_API_KEY
         sync: false
-      
+
       - key: SENTRY_DSN
         sync: false
-      
+
       - key: PROMETHEUS_ENABLED
         value: true
-    
+
     # Auto-deploy on push to main
     autoDeploy: true
-    
+
     # Scale to 0 when inactive (free tier)
     suspenders: enabled

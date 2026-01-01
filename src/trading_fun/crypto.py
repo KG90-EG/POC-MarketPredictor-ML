@@ -4,8 +4,9 @@ Uses CoinGecko API (free, no API key required for basic usage).
 """
 
 import logging
+from typing import Any, Dict, List, Optional
+
 import requests
-from typing import List, Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -153,12 +154,8 @@ def compute_crypto_features(market_data: Dict[str, Any]) -> Dict[str, Any]:
     try:
         # Extract key metrics
         price_change_24h = market_data.get("price_change_percentage_24h", 0) or 0
-        price_change_7d = (
-            market_data.get("price_change_percentage_7d_in_currency", 0) or 0
-        )
-        price_change_30d = (
-            market_data.get("price_change_percentage_30d_in_currency", 0) or 0
-        )
+        price_change_7d = market_data.get("price_change_percentage_7d_in_currency", 0) or 0
+        price_change_30d = market_data.get("price_change_percentage_30d_in_currency", 0) or 0
 
         market_cap_rank = market_data.get("market_cap_rank", 999)
         total_volume = market_data.get("total_volume", 0) or 0
@@ -246,9 +243,7 @@ def get_crypto_ranking(
     Returns:
         List of ranked cryptocurrencies with features and signals
     """
-    market_data_list = get_crypto_market_data(
-        crypto_ids=crypto_ids, include_nft=include_nft, limit=limit
-    )
+    market_data_list = get_crypto_market_data(crypto_ids=crypto_ids, include_nft=include_nft, limit=limit)
 
     if not market_data_list:
         logger.warning("No crypto market data available")

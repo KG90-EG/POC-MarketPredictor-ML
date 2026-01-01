@@ -4,8 +4,9 @@ Provides a single source of truth for all configurable parameters.
 """
 
 import os
-from typing import List, Dict, Optional
 from dataclasses import dataclass, field
+from typing import Dict, List, Optional
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -16,9 +17,7 @@ load_dotenv()
 class ModelConfig:
     """ML model configuration"""
 
-    prod_model_path: str = field(
-        default_factory=lambda: os.getenv("PROD_MODEL_PATH", "models/prod_model.bin")
-    )
+    prod_model_path: str = field(default_factory=lambda: os.getenv("PROD_MODEL_PATH", "models/prod_model.bin"))
     feature_names: List[str] = field(
         default_factory=lambda: [
             "SMA50",
@@ -38,19 +37,11 @@ class ModelConfig:
 class APIConfig:
     """API and service configuration"""
 
-    openai_api_key: Optional[str] = field(
-        default_factory=lambda: os.getenv("OPENAI_API_KEY")
-    )
-    openai_model: str = field(
-        default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-    )
-    rate_limit_rpm: int = field(
-        default_factory=lambda: int(os.getenv("RATE_LIMIT_RPM", "60"))
-    )
+    openai_api_key: Optional[str] = field(default_factory=lambda: os.getenv("OPENAI_API_KEY"))
+    openai_model: str = field(default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-4o-mini"))
+    rate_limit_rpm: int = field(default_factory=lambda: int(os.getenv("RATE_LIMIT_RPM", "60")))
     redis_url: Optional[str] = field(default_factory=lambda: os.getenv("REDIS_URL"))
-    mlflow_tracking_uri: str = field(
-        default_factory=lambda: os.getenv("MLFLOW_TRACKING_URI", "file:./mlruns")
-    )
+    mlflow_tracking_uri: str = field(default_factory=lambda: os.getenv("MLFLOW_TRACKING_URI", "file:./mlruns"))
     s3_bucket: Optional[str] = field(default_factory=lambda: os.getenv("S3_BUCKET"))
 
 
@@ -340,14 +331,10 @@ class AppConfig:
         logger = setup_logging(self.logging.log_level)
 
         if not self.api.openai_api_key:
-            logger.warning(
-                "OPENAI_API_KEY not set - AI analysis features will be unavailable"
-            )
+            logger.warning("OPENAI_API_KEY not set - AI analysis features will be unavailable")
 
         if not self.api.redis_url:
-            logger.info(
-                "REDIS_URL not set - using in-memory cache (not shared across instances)"
-            )
+            logger.info("REDIS_URL not set - using in-memory cache (not shared across instances)")
 
         if not os.path.exists(self.model.prod_model_path):
             logger.warning(f"Model file not found at {self.model.prod_model_path}")

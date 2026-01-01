@@ -1,13 +1,65 @@
-venv/
-.venv/
+# Python
 __pycache__/
-*.pyc
-models/
-mlruns/
-*.log
-.DS_Store
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# Data & Databases
+/data/*.db
+/data/*.sqlite
+/data/*.sqlite3
+
+# Logs
+/logs/*.log
+/logs/*.out
+
+# ML Models (keep README)
+/models/*.bin
+/models/*.pkl
+/models/*.h5
+/models/*.pth
+!/models/README.md
+
+# MLflow
+/mlruns/
+
+# Archive
+/.archive/
+
+# Environment
 .env
-node_modules/
-frontend/dist/
-_archive/
+.env.local
 *.pid
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Symlinks (backward compatibility)
+/trading_fun
+/training
+/backtest
+
+# Wiki (archived)
+POC-MarketPredictor-ML.wiki/

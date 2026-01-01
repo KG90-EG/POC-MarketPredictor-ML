@@ -387,6 +387,7 @@ app = FastAPI(
 # Initialize Prometheus metrics on startup
 from contextlib import asynccontextmanager
 
+
 @asynccontextmanager
 async def lifespan(app_instance: FastAPI):
     """Application lifespan handler for startup/shutdown events."""
@@ -399,6 +400,7 @@ async def lifespan(app_instance: FastAPI):
     yield
     # Shutdown (if needed in future)
     logger.info("Application shutting down")
+
 
 # Assign lifespan to app
 app.router.lifespan_context = lifespan
@@ -2066,9 +2068,7 @@ async def mark_alerts_read(alert_ids: List[int]):
         return {"success": True, "marked_count": marked_count}
     except Exception as e:
         logger.error(f"Error marking alerts as read: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to mark alerts as read: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to mark alerts as read: {str(e)}")
 
 
 @app.delete("/alerts/clear", tags=["Alerts"])
@@ -2085,9 +2085,7 @@ async def clear_old_alerts(older_than_days: int = 7, user_id: str = "default_use
         return {"success": True, "deleted_count": deleted_count}
     except Exception as e:
         logger.error(f"Error clearing old alerts: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to clear old alerts: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to clear old alerts: {str(e)}")
 
 
 # Mount frontend static files LAST so API routes take precedence

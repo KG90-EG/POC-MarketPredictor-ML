@@ -1,351 +1,284 @@
-# GitHub Secrets Configuration Guide
+# GitHub Secrets Setup Guide
 
-**Last Updated**: December 2, 2025
+This guide explains how to configure GitHub Secrets for CI/CD pipelines.
 
-This guide explains how to configure GitHub repository secrets for CI/CD workflows.
-
----
-
-## 🔐 Overview
-
-GitHub Secrets are encrypted environment variables used in GitHub Actions workflows. They keep sensitive data (API keys, tokens) secure while enabling automated deployments.
-
-**Access**: Repository Settings → Secrets and variables → Actions → New repository secret
+**TL;DR:** All secrets are **optional**. CI/CD works without them using defaults.
 
 ---
 
-## 📋 Required Secrets (For Production Deployment)
+## 🔑 Optional Secrets
 
-### Deployment Secrets
+### Container Registry (Docker)
 
-#### `RAILWAY_TOKEN` ⚠️ **Required for Backend Deployment**
+**Secret:** `CR_PAT`  
+**Purpose:** Push Docker images to GitHub Container Registry  
+**Required:** No - CI works without it  
+**Impact:** Without this, Docker images won't be published (CI still passes)
 
-- **Purpose**: Authenticate with Railway API for backend deployment
-- **Used in**: `.github/workflows/deploy.yml`
-- **How to get**:
-  1. Go to <https://railway.app/account/tokens>
-  2. Click "Create Token"
-  3. Copy the token (starts with `railway_`)
-- **Example**: `railway_xxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+**How to create:**
 
-#### `VERCEL_TOKEN` ⚠️ **Required for Frontend Deployment**
-
-- **Purpose**: Authenticate with Vercel API for frontend deployment
-- **Used in**: `.github/workflows/deploy.yml`
-- **How to get**:
-  1. Go to <https://vercel.com/account/tokens>
-  2. Click "Create Token"
-  3. Copy the token
-- **Example**: `xxxxxxxxxxxxxxxxxxxxxxxxxx`
-
-#### `VERCEL_ORG_ID` ⚠️ **Required for Frontend Deployment**
-
-- **Purpose**: Identify your Vercel organization
-- **Used in**: `.github/workflows/deploy.yml`
-- **How to get**:
-  1. Run `vercel link` in your frontend directory
-  2. Check `.vercel/project.json` for `orgId`
-- **Example**: `team_xxxxxxxxxxxxxxxxxxxxxxxx`
-
-#### `VERCEL_PROJECT_ID` ⚠️ **Required for Frontend Deployment**
-
-- **Purpose**: Identify your Vercel project
-- **Used in**: `.github/workflows/deploy.yml`
-- **How to get**:
-  1. Run `vercel link` in your frontend directory
-  2. Check `.vercel/project.json` for `projectId`
-- **Example**: `prj_xxxxxxxxxxxxxxxxxxxxxxxx`
-
-#### `RAILWAY_PROJECT_ID` ⚠️ **Required for Backend Deployment**
-
-- **Purpose**: Identify your Railway project
-- **Used in**: `.github/workflows/deploy.yml`
-- **How to get**:
-  1. Go to your Railway project dashboard
-  2. Settings → Project ID
-- **Example**: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
-
----
-
-## 🔧 Application Secrets
-
-#### `OPENAI_API_KEY` ⚠️ **Required for AI Analysis**
-
-- **Purpose**: Enable OpenAI-powered trading analysis
-- **Used in**: Backend runtime, `.github/workflows/deploy.yml`
-- **How to get**:
-  1. Go to <https://platform.openai.com/api-keys>
-  2. Click "Create new secret key"
-  3. Copy the key (starts with `sk-proj-`)
-- **Example**: `sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
-- **Note**: Set this as Railway environment variable after deployment
-
----
-
-## 📦 Optional Secrets (For Advanced Features)
-
-### Model Artifact Storage (Optional)
-
-#### `AWS_ACCESS_KEY_ID` 🔵 **Optional**
-
-- **Purpose**: Upload model artifacts to S3
-- **Used in**: `.github/workflows/promotion.yml`
-- **Required for**: S3 model artifact storage (not needed for basic deployment)
-- **How to get**:
-  1. AWS Console → IAM → Users → Security credentials
-  2. Create access key
-- **Example**: `AKIAIOSFODNN7EXAMPLE`
-
-#### `AWS_SECRET_ACCESS_KEY` 🔵 **Optional**
-
-- **Purpose**: S3 authentication
-- **Used in**: `.github/workflows/promotion.yml`
-- **Required for**: S3 model artifact storage
-- **Example**: `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY`
-
-#### `S3_BUCKET` 🔵 **Optional**
-
-- **Purpose**: S3 bucket name for model storage
-- **Used in**: `.github/workflows/promotion.yml`
-- **Required for**: S3 model artifact storage
-- **Example**: `my-ml-models-bucket`
-
----
-
-### Alternative Deployment Platforms (Optional)
-
-#### `NETLIFY_AUTH_TOKEN` 🔵 **Optional**
-
-- **Purpose**: Deploy frontend to Netlify (alternative to Vercel)
-- **Used in**: `.github/workflows/deploy-frontend.yml`
-- **Required for**: Netlify deployment only
-- **How to get**:
-  1. Netlify → User settings → Applications → Personal access tokens
-  2. Generate new token
-- **Example**: `xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
-
-#### `NETLIFY_SITE_ID` 🔵 **Optional**
-
-- **Purpose**: Identify Netlify site
-- **Used in**: `.github/workflows/deploy-frontend.yml`
-- **Required for**: Netlify deployment only
-- **How to get**:
-  1. Netlify site → Site settings → Site details → API ID
-- **Example**: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
+1. Go to GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
+2. Click "Generate new token (classic)"
+3. Name: `GHCR_TOKEN` or similar
+4. Scopes: Check `write:packages`, `read:packages`, `delete:packages`
+5. Generate token
+6. Copy token value
+7. Go to your repository → Settings → Secrets and variables → Actions
+8. Click "New repository secret"
+9. Name: `CR_PAT`
+10. Value: Paste token
+11. Click "Add secret"
 
 ---
 
 ### MLflow Tracking (Optional)
 
-#### `MLFLOW_TRACKING_URI` 🔵 **Optional**
+**Secret:** `MLFLOW_TRACKING_URI`  
+**Purpose:** Remote MLflow experiment tracking  
+**Required:** No - Uses local tracking by default  
+**Impact:** Without this, experiments are tracked locally only
 
-- **Purpose**: Remote MLflow tracking server
-- **Used in**: `.github/workflows/ci.yml`
-- **Required for**: Remote MLflow server (defaults to local file storage)
-- **Example**: `https://mlflow.example.com` or `file:./mlruns`
+**How to set:**
 
----
-
-### Container Registry (Optional)
-
-#### `CR_PAT` 🔵 **Optional**
-
-- **Purpose**: GitHub Container Registry authentication
-- **Used in**: `.github/workflows/ci.yml`
-- **Required for**: Docker image publishing (not needed for Railway/Vercel deployment)
-- **How to get**:
-  1. GitHub → Settings → Developer settings → Personal access tokens
-  2. Generate token with `write:packages` scope
-- **Example**: `ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+1. Deploy MLflow server (e.g., on Railway, Render)
+2. Get the tracking URI (e.g., `https://mlflow.example.com`)
+3. Go to repository → Settings → Secrets and variables → Actions
+4. Click "New repository secret"
+5. Name: `MLFLOW_TRACKING_URI`
+6. Value: Your MLflow server URL
+7. Click "Add secret"
 
 ---
 
-## 🚀 Quick Setup Guide
+### AWS S3 (Model Storage)
 
-### Minimal Production Setup (5 minutes)
+**Secrets:**
 
-For a basic production deployment, you need:
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `S3_BUCKET`
 
-1. **Railway Backend**:
-   - `RAILWAY_TOKEN`
-   - `RAILWAY_PROJECT_ID`
+**Purpose:** Store trained models in S3  
+**Required:** No - Models are stored locally by default  
+**Impact:** Without these, models are stored in `models/` directory
 
-2. **Vercel Frontend**:
-   - `VERCEL_TOKEN`
-   - `VERCEL_ORG_ID`
-   - `VERCEL_PROJECT_ID`
+**How to set:**
 
-3. **OpenAI API**:
-   - `OPENAI_API_KEY`
+1. Create AWS account and S3 bucket
+2. Create IAM user with S3 access
+3. Get access key ID and secret access key
+4. Add three secrets to GitHub:
+   - `AWS_ACCESS_KEY_ID`: Your AWS access key
+   - `AWS_SECRET_ACCESS_KEY`: Your AWS secret key
+   - `S3_BUCKET`: Your bucket name (e.g., `my-ml-models`)
 
-**Steps**:
+---
 
-```bash
-# 1. Get Railway token
-# Visit: https://railway.app/account/tokens
+### Deployment Platforms
 
-# 2. Get Vercel credentials
-cd frontend
-vercel link
-cat .vercel/project.json  # Get orgId and projectId
+#### Netlify (Frontend)
 
-# 3. Get Vercel token
-# Visit: https://vercel.com/account/tokens
+**Secrets:**
 
-# 4. Get OpenAI key
-# Visit: https://platform.openai.com/api-keys
+- `NETLIFY_AUTH_TOKEN`
+- `NETLIFY_SITE_ID`
 
-# 5. Add all secrets to GitHub
-# Go to: https://github.com/KG90-EG/POC-MarketPredictor-ML/settings/secrets/actions
+**Purpose:** Auto-deploy frontend to Netlify  
+**Required:** Only if using automated Netlify deployment  
+**Impact:** Without these, manual deployment is required
+
+**How to get:**
+
+1. Go to Netlify → User Settings → Applications
+2. Create new personal access token
+3. Get Site ID from Site Settings → General → Site details
+4. Add both as GitHub secrets
+
+#### Railway (Backend)
+
+**Secrets:**
+
+- `RAILWAY_TOKEN`
+- `RAILWAY_PROJECT_ID`
+
+**Purpose:** Auto-deploy backend to Railway  
+**Required:** Only if using automated Railway deployment  
+**Impact:** Without these, manual deployment is required
+
+**How to get:**
+
+1. Go to Railway dashboard
+2. Account Settings → Tokens → Create token
+3. Get Project ID from project settings
+4. Add both as GitHub secrets
+
+#### Vercel (Frontend Alternative)
+
+**Secrets:**
+
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
+**Purpose:** Auto-deploy frontend to Vercel  
+**Required:** Only if using Vercel instead of Netlify  
+**Impact:** Without these, manual deployment is required
+
+**How to get:**
+
+1. Install Vercel CLI: `npm i -g vercel`
+2. Run `vercel login`
+3. Run `vercel link` in your project
+4. Get token from Vercel dashboard → Settings → Tokens
+5. Get org and project IDs from `.vercel/project.json`
+6. Add all three as GitHub secrets
+
+---
+
+## ⚙️ Current CI/CD Behavior
+
+### Without Any Secrets
+
+✅ **What works:**
+
+- Code linting (flake8, black)
+- Unit tests (pytest)
+- Docker image build
+- Frontend build
+- Local MLflow tracking
+- Local model storage
+
+❌ **What doesn't work:**
+
+- Docker image publishing
+- Remote MLflow tracking
+- S3 model storage
+- Automated deployments
+
+### With CR_PAT Only
+
+✅ **Additional features:**
+
+- Docker images published to GHCR
+
+### With All Secrets
+
+✅ **Full automation:**
+
+- Docker publishing
+- Remote experiment tracking
+- Cloud model storage
+- Automated deployments to all platforms
+
+---
+
+## 🔍 Checking Secret Status
+
+### In GitHub Actions Logs
+
+Look for these messages:
+
+```
+::notice::No CR_PAT secret configured; skipping Docker push
+::warning::MLFLOW_TRACKING_URI not set, using local tracking
+::notice::AWS credentials not found, skipping S3 upload
 ```
 
----
+### Locally
 
-## 🔍 How to Add Secrets
-
-### Via GitHub Web Interface
-
-1. **Navigate to repository settings**:
-
-   ```
-   https://github.com/KG90-EG/POC-MarketPredictor-ML/settings/secrets/actions
-   ```
-
-2. **Click "New repository secret"**
-
-3. **Enter secret details**:
-   - Name: Exact name from table above (case-sensitive)
-   - Value: Your secret value (will be encrypted)
-
-4. **Click "Add secret"**
-
-5. **Repeat for all required secrets**
-
-### Via GitHub CLI (Alternative)
+Check which secrets are set:
 
 ```bash
-# Install GitHub CLI
-brew install gh
-
-# Authenticate
-gh auth login
-
-# Add secrets
-gh secret set RAILWAY_TOKEN
-gh secret set VERCEL_TOKEN
-gh secret set VERCEL_ORG_ID
-gh secret set VERCEL_PROJECT_ID
-gh secret set RAILWAY_PROJECT_ID
-gh secret set OPENAI_API_KEY
-
-# Verify secrets
+# List all secrets (doesn't show values)
 gh secret list
+
+# Check specific secret
+gh secret list | grep CR_PAT
 ```
 
 ---
 
-## ✅ Verification
+## 🛠️ Troubleshooting
 
-After adding secrets, verify the setup:
+### Secret not working
 
-1. **Check secrets are configured**:
+**Problem:** Secret is set but workflow doesn't use it
 
-   ```bash
-   gh secret list
-   ```
+**Solutions:**
 
-2. **Test deployment workflow**:
+1. Check secret name matches workflow exactly (case-sensitive)
+2. Re-save secret (sometimes helps)
+3. Check workflow syntax: `${{ secrets.SECRET_NAME }}`
+4. Check if secret is available in workflow context
 
-   ```bash
-   git push origin main
-   ```
+### Expired tokens
 
-3. **Monitor workflow**:
-   - Go to: <https://github.com/KG90-EG/POC-MarketPredictor-ML/actions>
-   - Check "Deploy to Production" workflow
-   - Ensure all steps pass
+**Problem:** `docker login` or API calls fail with 401
 
----
+**Solutions:**
 
-## 🛡️ Security Best Practices
+1. Regenerate token in provider dashboard
+2. Update GitHub secret with new token
+3. Re-run workflow
 
-### DO ✅
+### Permission denied
 
-- ✅ **Rotate secrets regularly** (every 90 days)
-- ✅ **Use minimal permissions** (read-only when possible)
-- ✅ **Delete unused secrets** immediately
-- ✅ **Use separate tokens** for different environments
-- ✅ **Enable secret scanning** in repository settings
-- ✅ **Review audit logs** periodically
+**Problem:** Token has insufficient permissions
 
-### DON'T ❌
+**Solutions:**
 
-- ❌ **Never commit secrets** to repository
-- ❌ **Don't share secrets** via chat/email
-- ❌ **Don't use same secret** across multiple projects
-- ❌ **Don't log secrets** in workflow outputs
-- ❌ **Don't hardcode secrets** in workflows
-- ❌ **Don't skip secret rotation**
+1. Check token scopes/permissions in provider settings
+2. Regenerate with correct permissions
+3. Update GitHub secret
 
 ---
 
-## 🐛 Troubleshooting
+## 📋 Quick Setup Checklist
 
-### "Secret not found" Error
+For full CI/CD automation:
 
-**Problem**: Workflow fails with secret access error
-
-**Solution**:
-
-1. Verify secret name matches exactly (case-sensitive)
-2. Check secret is added at repository level (not organization)
-3. Re-add the secret if it was recently deleted
-
-### "Invalid credentials" Error
-
-**Problem**: Authentication fails with valid-looking token
-
-**Solution**:
-
-1. Regenerate the token from provider dashboard
-2. Verify token has correct permissions/scopes
-3. Check token hasn't expired
-4. Ensure no extra spaces when copying token
-
-### Workflow Skips Deployment Step
-
-**Problem**: Workflow runs but skips deployment
-
-**Solution**:
-
-1. Check workflow conditions (branch, event type)
-2. Verify all required secrets are set
-3. Check workflow logs for "Skipped" messages
-4. Ensure workflow is not disabled
+- [ ] Create GitHub Personal Access Token with `write:packages`
+- [ ] Add `CR_PAT` secret to repository
+- [ ] (Optional) Set up MLflow server and add `MLFLOW_TRACKING_URI`
+- [ ] (Optional) Create AWS S3 bucket and add AWS secrets
+- [ ] (Optional) Configure deployment platform and add tokens
+- [ ] Test workflow by pushing to main branch
+- [ ] Verify secrets work by checking Actions logs
 
 ---
 
-## 📚 Related Documentation
+## 🔒 Security Best Practices
 
-- [Automated Deployment Guide](docs/deployment/AUTOMATED_DEPLOYMENT.md)
-- [Production Ready Guide](PRODUCTION_READY.md)
-- [Deployment Guide](docs/deployment/DEPLOYMENT_GUIDE.md)
-- [GitHub Actions Workflows](.github/workflows/)
+1. **Never commit secrets to repository**
+   - Use `.env` for local development
+   - Add `.env` to `.gitignore`
+   - Use GitHub Secrets for CI/CD
+
+2. **Use minimal permissions**
+   - Grant only necessary scopes
+   - Use separate tokens for different services
+
+3. **Rotate secrets regularly**
+   - Regenerate tokens every 6 months
+   - Update GitHub secrets immediately
+
+4. **Monitor usage**
+   - Check GitHub Actions logs for suspicious activity
+   - Enable 2FA on all accounts
+
+5. **Use organization secrets for teams**
+   - Share secrets across multiple repos
+   - Centralized management
 
 ---
 
-## 🆘 Support
+## 📚 Further Reading
 
-**Issues**: <https://github.com/KG90-EG/POC-MarketPredictor-ML/issues>
-
-**Quick Links**:
-
-- Railway Dashboard: <https://railway.app/dashboard>
-- Vercel Dashboard: <https://vercel.com/dashboard>
-- OpenAI Platform: <https://platform.openai.com>
-- GitHub Secrets: <https://github.com/KG90-EG/POC-MarketPredictor-ML/settings/secrets/actions>
+- [GitHub Encrypted Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
+- [GitHub Container Registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
+- [MLflow Tracking](https://mlflow.org/docs/latest/tracking.html)
+- [AWS IAM Best Practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)
 
 ---
 
-**Last Updated**: December 2, 2025  
-**Version**: 1.0.0
+**Questions?** Open an issue or check the [CI/CD Fix Guide](docs/CI_CD_FIX_GUIDE.md).
