@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import PropTypes from 'prop-types'
 import './PriceChart.css'
 
@@ -6,8 +6,9 @@ import './PriceChart.css'
  * PriceChart Component
  * Displays a simple line chart for price history
  * Uses SVG for lightweight rendering without external dependencies
+ * Memoized for performance with large datasets
  */
-function PriceChart({ data, width = 400, height = 200, color = '#667eea' }) {
+const PriceChart = React.memo(function PriceChart({ data, width = 400, height = 200, color = '#667eea' }) {
   if (!data || data.length === 0) {
     return (
       <div className="price-chart-empty" style={{ width, height }}>
@@ -192,7 +193,7 @@ function PriceChart({ data, width = 400, height = 200, color = '#667eea' }) {
       </div>
     </div>
   )
-}
+})
 
 PriceChart.propTypes = {
   data: PropTypes.arrayOf(PropTypes.shape({

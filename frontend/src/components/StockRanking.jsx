@@ -1,9 +1,9 @@
 import PropTypes from 'prop-types'
 import Tooltip from './Tooltip'
 import FilterBar from './FilterBar'
-import React, { useState } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 
-function StockRanking({
+const StockRanking = React.memo(function StockRanking({
   results,
   tickerDetails,
   currentPage,
@@ -14,7 +14,7 @@ function StockRanking({
   const [filteredResults, setFilteredResults] = useState(results)
 
   // Prepare enriched stock data with details for filtering
-  const enrichedStocks = React.useMemo(() => {
+  const enrichedStocks = useMemo(() => {
     return results.map(r => ({
       ...r,
       name: tickerDetails[r.ticker]?.name || '',
@@ -28,32 +28,33 @@ function StockRanking({
     }))
   }, [results, tickerDetails])
 
-  const handleFilterChange = (filtered) => {
+  const handleFilterChange = useCallback((filtered) => {
     setFilteredResults(filtered)
     onPageChange(1) // Reset to page 1 when filters change
-  }
-  function formatNumber(num) {
+  }, [onPageChange])
+
+  const formatNumber = useCallback((num) => {
     if (!num) return 'N/A'
     if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`
-    if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`
     if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`
     return `$${num.toFixed(2)}`
-  }
+  }, [])
 
+  const getRankBadgeClass = useCallback((rank) => {
   function getRankBadgeClass(rank) {
     if (rank === 1) return 'rank-badge gold'
     if (rank === 2) return 'rank-badge silver'
     if (rank === 3) return 'rank-badge bronze'
     return 'rank-badge'
-  }
+  }, [])
 
-  const totalPages = Math.ceil(filteredResults.length / itemsPerPage)
-  const paginatedResults = filteredResults.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  const totalPages = useMemo(() => Math.ceil(filteredResults.length / itemsPerPage), [filteredResults.length, itemsPerPage])
+  const paginatedResults = useMemo(() => filteredResults.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage), [filteredResults, currentPage, itemsPerPage])
 
   return (
     <>
       {/* Filter Bar */}
-      <FilterBar 
+      <FilterBar
         stocks={enrichedStocks}
         onFilterChange={handleFilterChange}
         showCountryFilter={true}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, lazy, Suspense } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { api, handleApiError } from './api'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -14,7 +14,6 @@ import MarketSelector from './components/MarketSelector'
 import WatchlistManager from './components/WatchlistManager'
 import BuyOpportunities from './components/BuyOpportunities'
 import AlertPanel from './components/AlertPanel'
-import SimulationDashboard from './components/SimulationDashboard'
 import EmptyState from './components/EmptyState'
 import { ToastContainer } from './components/Toast'
 import { SkeletonTable, SkeletonStockRow } from './components/SkeletonLoader'
@@ -25,13 +24,18 @@ import OnboardingResetBtn from './components/OnboardingResetBtn'
 import KeyboardShortcuts from './components/KeyboardShortcuts'
 import './styles.css'
 
-// Create a React Query client
+// Lazy load heavy components for better performance
+const SimulationDashboard = lazy(() => import('./components/SimulationDashboard'))
+
+// Create a React Query client with optimized cache settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
       retry: 2,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000, // 5 minutes - data considered fresh
+      cacheTime: 10 * 60 * 1000, // 10 minutes - cache persists
+      refetchOnMount: false, // Don't refetch if data is fresh
     },
   },
 })
@@ -755,7 +759,9 @@ function AppContent() {
 
       {/* Trading Simulation View */}
       {portfolioView === 'simulation' && (
-        <SimulationDashboard language={language} onLanguageChange={setLanguage} />
+        <Suspense fallback={<div style={{ textAlign: 'center', padding: '40px' }}><SkeletonTable /></div>}>
+          <SimulationDashboard language={language} onLanguageChange={setLanguage} />
+        </Suspense>
       )}
 
       {/* Buy Opportunities View */}
