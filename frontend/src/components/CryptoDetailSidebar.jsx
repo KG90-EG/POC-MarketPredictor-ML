@@ -47,28 +47,28 @@ function getMomentumRecommendation(score) {
 // Generate mock historical data for demo
 function generateMockCryptoHistory(currentPrice, days = 30) {
   if (!currentPrice) return []
-  
+
   const data = []
   const today = new Date()
   let price = currentPrice * 0.85 // Start 15% lower than current (more volatile)
-  
+
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date(today)
     date.setDate(date.getDate() - i)
-    
+
     // Random walk with higher volatility for crypto
     const change = (Math.random() - 0.48) * 0.08 // Higher volatility
     price = price * (1 + change)
-    
+
     data.push({
       date: date.toISOString().split('T')[0],
       price: parseFloat(price.toFixed(currentPrice < 1 ? 6 : 2))
     })
   }
-  
+
   // Ensure last price matches current price
   data[data.length - 1].price = currentPrice
-  
+
   return data
 }
 
@@ -108,8 +108,8 @@ function CryptoDetailSidebar({ crypto, onClose }) {
           <div className="sidebar-content">
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
               {crypto.image && (
-                <img 
-                  src={crypto.image} 
+                <img
+                  src={crypto.image}
                   alt={crypto.name}
                   style={{ width: '48px', height: '48px', borderRadius: '50%' }}
                 />
@@ -176,9 +176,9 @@ function CryptoDetailSidebar({ crypto, onClose }) {
 
             {/* Price Chart Section */}
             <div className="detail-section">
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
                 alignItems: 'center',
                 marginBottom: '12px'
               }}>
@@ -237,36 +237,12 @@ function CryptoDetailSidebar({ crypto, onClose }) {
                   </button>
                 </div>
               </div>
-              <PriceChart 
-                data={priceHistory} 
-                width={400} 
+              <PriceChart
+                data={priceHistory}
+                width={400}
                 height={200}
                 color="#f59e0b"
               />
-            </div>
-                  </span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">7d Change</span>
-                  <span
-                    className={`detail-value ${crypto.change_7d > 0 ? 'positive' : crypto.change_7d < 0 ? 'negative' : ''}`}
-                  >
-                    {crypto.change_7d != null
-                      ? `${crypto.change_7d > 0 ? '+' : ''}${crypto.change_7d.toFixed(2)}%`
-                      : 'N/A'}
-                  </span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">30d Change</span>
-                  <span
-                    className={`detail-value ${crypto.change_30d > 0 ? 'positive' : crypto.change_30d < 0 ? 'negative' : ''}`}
-                  >
-                    {crypto.change_30d != null
-                      ? `${crypto.change_30d > 0 ? '+' : ''}${crypto.change_30d.toFixed(2)}%`
-                      : 'N/A'}
-                  </span>
-                </div>
-              </div>
             </div>
 
             <div className="detail-section">
@@ -289,8 +265,8 @@ function CryptoDetailSidebar({ crypto, onClose }) {
                 <div className="detail-item">
                   <span className="detail-label">Volume/MCap Ratio</span>
                   <span className="detail-value">
-                    {crypto.volume_to_mcap_ratio != null 
-                      ? crypto.volume_to_mcap_ratio.toFixed(4) 
+                    {crypto.volume_to_mcap_ratio != null
+                      ? crypto.volume_to_mcap_ratio.toFixed(4)
                       : 'N/A'}
                   </span>
                 </div>
