@@ -9,6 +9,7 @@ import pandas as pd
 import yfinance as yf
 from dotenv import load_dotenv
 from fastapi import (
+    BackgroundTasks,
     FastAPI,
     HTTPException,
     Request,
@@ -30,6 +31,7 @@ from .config import config as app_config
 from .crypto import get_crypto_details, get_crypto_ranking, search_crypto
 from .database import WatchlistDB
 from .logging_config import RequestLogger, setup_logging
+from .model_retraining import get_retraining_service, start_retraining_scheduler
 from .rate_limiter import RateLimiter
 from .services import HealthService, StockService, ValidationService
 from .simulation import TradingSimulation, calculate_position_size
@@ -398,8 +400,16 @@ async def lifespan(app_instance: FastAPI):
         openai_is_configured=OPENAI_CLIENT is not None,
     )
     logger.info("Prometheus metrics initialized")
+
+    # Start automated model retraining scheduler
+    try:
+        start_retraining_scheduler()
+        logger.info("Model retraining scheduler started successfully")
+    except Exception as e:
+        logger.error(f"Failed to start retraining scheduler: {e}", exc_info=True)
+
     yield
-    # Shutdown (if needed in future)
+    # Shutdown
     logger.info("Application shutting down")
 
 
@@ -762,7 +772,9 @@ def crypto_ranking(
         # Parse crypto IDs if provided
         crypto_list = None
         if crypto_ids.strip():
-            crypto_list = [cid.strip().lower() for cid in crypto_ids.split(",") if cid.strip()]
+            crypto_list = [
+                cid.strip().lower() for cid in crypto_ids.split(",") if cid.strip()
+            ]
 
         # Get ranked cryptocurrencies
         rankings = get_crypto_ranking(
@@ -776,7 +788,9 @@ def crypto_ranking(
 
     except Exception as e:
         logger.error(f"Error in crypto_ranking endpoint: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch crypto rankings: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch crypto rankings: {str(e)}"
+        )
 
 
 @app.get(
@@ -811,7 +825,9 @@ def crypto_search(query: str):
         result = search_crypto(query.strip())
 
         if result is None:
-            raise HTTPException(status_code=404, detail=f"Cryptocurrency '{query}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Cryptocurrency '{query}' not found"
+            )
 
         return result
 
@@ -819,7 +835,9 @@ def crypto_search(query: str):
         raise
     except Exception as e:
         logger.error(f"Error in crypto_search endpoint: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to search crypto: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to search crypto: {str(e)}"
+        )
 
 
 @app.get(
@@ -852,7 +870,9 @@ def crypto_details(crypto_id: str):
         details = get_crypto_details(crypto_id)
 
         if details is None:
-            raise HTTPException(status_code=404, detail=f"Cryptocurrency '{crypto_id}' not found")
+            raise HTTPException(
+                status_code=404, detail=f"Cryptocurrency '{crypto_id}' not found"
+            )
 
         return details
 
@@ -860,7 +880,9 @@ def crypto_details(crypto_id: str):
         raise
     except Exception as e:
         logger.error(f"Error in crypto_details endpoint: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch crypto details: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch crypto details: {str(e)}"
+        )
 
 
 @app.get("/models")
@@ -868,7 +890,9 @@ def list_models() -> Dict[str, Any]:
     """List available model artifacts in the models directory.
     Returns current loaded model filename and list of other model files with sizes.
     """
-    models_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "models"))
+    models_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "models")
+    )
     items: List[Dict[str, Any]] = []
     if os.path.isdir(models_dir):
         for fname in sorted(os.listdir(models_dir)):
@@ -899,7 +923,9 @@ def ticker_info(ticker: str) -> Dict[str, Any]:
             raise HTTPException(status_code=400, detail=str(e))
         except Exception as e:
             logger.error(f"Error fetching info for {ticker}: {e}")
-            raise HTTPException(status_code=404, detail=f"Unable to fetch info: {str(e)}")
+            raise HTTPException(
+                status_code=404, detail=f"Unable to fetch info: {str(e)}"
+            )
 
 
 @app.post("/ticker_info_batch")
@@ -994,7 +1020,10 @@ def search_stocks(query: str, limit: int = 10) -> Dict[str, Any]:
 
             # Filter by query
             matching = [
-                stock for stock in all_stocks if query_lower in stock["ticker"].lower() or query_lower in stock["name"].lower()
+                stock
+                for stock in all_stocks
+                if query_lower in stock["ticker"].lower()
+                or query_lower in stock["name"].lower()
             ]
 
             return {"stocks": matching[:limit]}
@@ -1291,7 +1320,9 @@ def get_watchlists(user_id: str = "default_user"):
 def create_watchlist(watchlist: WatchlistCreate, user_id: str = "default_user"):
     """Create a new watchlist."""
     try:
-        watchlist_id = WatchlistDB.create_watchlist(user_id=user_id, name=watchlist.name, description=watchlist.description)
+        watchlist_id = WatchlistDB.create_watchlist(
+            user_id=user_id, name=watchlist.name, description=watchlist.description
+        )
         return {
             "id": watchlist_id,
             "message": f"Watchlist '{watchlist.name}' created successfully",
@@ -1317,7 +1348,9 @@ def get_watchlist(watchlist_id: int, user_id: str = "default_user"):
 
 
 @app.put("/watchlists/{watchlist_id}", tags=["Watchlists"])
-def update_watchlist(watchlist_id: int, watchlist: WatchlistUpdate, user_id: str = "default_user"):
+def update_watchlist(
+    watchlist_id: int, watchlist: WatchlistUpdate, user_id: str = "default_user"
+):
     """Update watchlist details."""
     try:
         success = WatchlistDB.update_watchlist(
@@ -1352,7 +1385,9 @@ def delete_watchlist(watchlist_id: int, user_id: str = "default_user"):
 
 
 @app.post("/watchlists/{watchlist_id}/stocks", tags=["Watchlists"])
-def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: str = "default_user"):
+def add_stock_to_watchlist(
+    watchlist_id: int, stock: AddStockRequest, user_id: str = "default_user"
+):
     """Add a stock or crypto to a watchlist."""
     try:
         # For crypto assets, skip validation (CoinGecko IDs don't need ticker validation)
@@ -1361,7 +1396,9 @@ def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: s
             company_name = stock.ticker
         else:
             # Validate and verify ticker (auto-corrects common mistakes like APPLE -> AAPL)
-            validated_ticker, company_name = ValidationService.validate_and_verify_ticker(stock.ticker)
+            validated_ticker, company_name = (
+                ValidationService.validate_and_verify_ticker(stock.ticker)
+            )
 
         # Use company name in notes if no notes provided
         notes = stock.notes or company_name
@@ -1380,10 +1417,14 @@ def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: s
             )
 
         # Return corrected ticker if it was auto-corrected (stocks only)
-        response = {"message": f"{stock.asset_type.title()} {validated_ticker} added to watchlist"}
+        response = {
+            "message": f"{stock.asset_type.title()} {validated_ticker} added to watchlist"
+        }
         if stock.asset_type == "stock" and validated_ticker != stock.ticker.upper():
             response["corrected_from"] = stock.ticker
-            response["message"] = f"Stock {stock.ticker} auto-corrected to {validated_ticker} and added to watchlist"
+            response["message"] = (
+                f"Stock {stock.ticker} auto-corrected to {validated_ticker} and added to watchlist"
+            )
         return response
     except ValueError as e:
         # Validation error with suggestions
@@ -1396,10 +1437,14 @@ def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: s
 
 
 @app.delete("/watchlists/{watchlist_id}/stocks/{ticker}", tags=["Watchlists"])
-def remove_stock_from_watchlist(watchlist_id: int, ticker: str, user_id: str = "default_user"):
+def remove_stock_from_watchlist(
+    watchlist_id: int, ticker: str, user_id: str = "default_user"
+):
     """Remove a stock from a watchlist."""
     try:
-        success = WatchlistDB.remove_stock_from_watchlist(watchlist_id=watchlist_id, user_id=user_id, ticker=ticker)
+        success = WatchlistDB.remove_stock_from_watchlist(
+            watchlist_id=watchlist_id, user_id=user_id, ticker=ticker
+        )
         if not success:
             raise HTTPException(
                 status_code=404,
@@ -1417,10 +1462,14 @@ def remove_stock_from_watchlist(watchlist_id: int, ticker: str, user_id: str = "
 def analyze(request: AnalysisRequest) -> Dict[str, Any]:
     """Use LLM to analyze ranking and provide buy/sell recommendations."""
     if not OPENAI_CLIENT:
-        raise HTTPException(status_code=503, detail="LLM not configured (set OPENAI_API_KEY)")
+        raise HTTPException(
+            status_code=503, detail="LLM not configured (set OPENAI_API_KEY)"
+        )
 
     # Create cache key from ranking + context
-    cache_key = hashlib.md5(f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()).hexdigest()
+    cache_key = hashlib.md5(
+        f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()
+    ).hexdigest()
 
     # Check cache
     cached_data = cache.get(f"analysis:{cache_key}")
@@ -1472,7 +1521,11 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
                     "rank": rank,
                     "ticker": r["ticker"],
                     "prob": r["prob"],
-                    "signal": ("BUY" if r["prob"] >= 0.55 else "HOLD" if r["prob"] >= 0.45 else "SELL"),
+                    "signal": (
+                        "BUY"
+                        if r["prob"] >= 0.55
+                        else "HOLD" if r["prob"] >= 0.45 else "SELL"
+                    ),
                 }
             )
 
@@ -1539,7 +1592,8 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
                     else:
                         raise HTTPException(
                             status_code=429,
-                            detail="OpenAI rate limit exceeded. " "Please wait a moment and try again.",
+                            detail="OpenAI rate limit exceeded. "
+                            "Please wait a moment and try again.",
                         )
                 else:
                     raise
@@ -1574,12 +1628,18 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
             if action == "subscribe" and ticker:
                 ws_manager.subscribe(client_id, ticker)
-                await ws_manager.send_personal_message({"type": "subscribed", "ticker": ticker}, client_id)
+                await ws_manager.send_personal_message(
+                    {"type": "subscribed", "ticker": ticker}, client_id
+                )
             elif action == "unsubscribe" and ticker:
                 ws_manager.unsubscribe(client_id, ticker)
-                await ws_manager.send_personal_message({"type": "unsubscribed", "ticker": ticker}, client_id)
+                await ws_manager.send_personal_message(
+                    {"type": "unsubscribed", "ticker": ticker}, client_id
+                )
             elif action == "ping":
-                await ws_manager.send_personal_message({"type": "pong", "timestamp": time.time()}, client_id)
+                await ws_manager.send_personal_message(
+                    {"type": "pong", "timestamp": time.time()}, client_id
+                )
             else:
                 await ws_manager.send_personal_message(
                     {"type": "error", "message": "Invalid action or missing ticker"},
@@ -1726,7 +1786,9 @@ async def get_recommendations(simulation_id: int):
                 df = hist.copy()
                 df["RSI"] = compute_rsi(df["Close"])
                 df["MACD"], df["Signal"] = compute_macd(df["Close"])
-                df["BB_upper"], df["BB_middle"], df["BB_lower"] = compute_bollinger(df["Close"])
+                df["BB_upper"], df["BB_middle"], df["BB_lower"] = compute_bollinger(
+                    df["Close"]
+                )
                 df["Momentum"] = compute_momentum(df["Close"])
 
                 df.dropna(inplace=True)
@@ -1740,7 +1802,9 @@ async def get_recommendations(simulation_id: int):
                 confidence = float(max(prediction))
                 signal = "UP" if prediction[1] > 0.5 else "DOWN"
 
-                predictions.append({"ticker": ticker, "confidence": confidence, "signal": signal})
+                predictions.append(
+                    {"ticker": ticker, "confidence": confidence, "signal": signal}
+                )
 
                 current_prices[ticker] = float(hist["Close"].iloc[-1])
 
@@ -1845,7 +1909,9 @@ async def auto_trade(simulation_id: int, max_trades: int = 3):
                 df = hist.copy()
                 df["RSI"] = compute_rsi(df["Close"])
                 df["MACD"], df["Signal"] = compute_macd(df["Close"])
-                df["BB_upper"], df["BB_middle"], df["BB_lower"] = compute_bollinger(df["Close"])
+                df["BB_upper"], df["BB_middle"], df["BB_lower"] = compute_bollinger(
+                    df["Close"]
+                )
                 df["Momentum"] = compute_momentum(df["Close"])
                 df.dropna(inplace=True)
 
@@ -1857,7 +1923,9 @@ async def auto_trade(simulation_id: int, max_trades: int = 3):
                 confidence = float(max(prediction))
                 signal = "UP" if prediction[1] > 0.5 else "DOWN"
 
-                predictions.append({"ticker": ticker, "confidence": confidence, "signal": signal})
+                predictions.append(
+                    {"ticker": ticker, "confidence": confidence, "signal": signal}
+                )
                 current_prices[ticker] = float(hist["Close"].iloc[-1])
 
             except Exception as e:
@@ -1880,7 +1948,9 @@ async def auto_trade(simulation_id: int, max_trades: int = 3):
                 )
 
                 SimulationDB.save_trade(simulation_id, trade)
-                executed_trades.append({**trade, "timestamp": trade["timestamp"].isoformat()})
+                executed_trades.append(
+                    {**trade, "timestamp": trade["timestamp"].isoformat()}
+                )
 
             except ValueError as e:
                 logger.warning(f"Could not execute trade for {rec['ticker']}: {e}")
@@ -1956,7 +2026,9 @@ async def get_portfolio(simulation_id: int):
             "total_value": portfolio_value,
             "initial_capital": sim.initial_capital,
             "total_pnl": portfolio_value - sim.initial_capital,
-            "total_pnl_percent": ((portfolio_value - sim.initial_capital) / sim.initial_capital * 100),
+            "total_pnl_percent": (
+                (portfolio_value - sim.initial_capital) / sim.initial_capital * 100
+            ),
         }
 
     except HTTPException:
@@ -1979,7 +2051,10 @@ async def get_trade_history(simulation_id: int):
         if not sim:
             raise HTTPException(status_code=404, detail="Simulation not found")
 
-        trades = [{**trade, "timestamp": trade["timestamp"].isoformat()} for trade in sim.trades]
+        trades = [
+            {**trade, "timestamp": trade["timestamp"].isoformat()}
+            for trade in sim.trades
+        ]
 
         return {"trades": trades}
 
@@ -2069,7 +2144,9 @@ async def mark_alerts_read(alert_ids: List[int]):
         return {"success": True, "marked_count": marked_count}
     except Exception as e:
         logger.error(f"Error marking alerts as read: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to mark alerts as read: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to mark alerts as read: {str(e)}"
+        )
 
 
 @app.delete("/alerts/clear", tags=["Alerts"])
@@ -2086,15 +2163,144 @@ async def clear_old_alerts(older_than_days: int = 7, user_id: str = "default_use
         return {"success": True, "deleted_count": deleted_count}
     except Exception as e:
         logger.error(f"Error clearing old alerts: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to clear old alerts: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to clear old alerts: {str(e)}"
+        )
 
 
 # Include analytics router
 app.include_router(analytics_router)
 
+
+# ============================================================================
+# Model Retraining & MLOps Endpoints
+# ============================================================================
+
+
+@app.get("/api/ml/retraining/status", tags=["MLOps"])
+async def get_retraining_status():
+    """
+    Get current status of the automated retraining system.
+
+    Returns:
+    - running: Whether scheduler is active
+    - current_metrics: Latest model performance metrics
+    - next_retraining: Timestamp of next scheduled retraining
+    - scheduled_jobs: List of all scheduled jobs
+    """
+    try:
+        service = get_retraining_service()
+        status = service.get_status()
+        return status
+    except Exception as e:
+        logger.error(f"Error fetching retraining status: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch retraining status: {str(e)}"
+        )
+
+
+@app.post("/api/ml/retraining/trigger", tags=["MLOps"])
+async def trigger_manual_retraining(
+    force: bool = False, background_tasks: BackgroundTasks = None
+):
+    """
+    Manually trigger model retraining.
+
+    Query Parameters:
+    - force: Skip validation and deploy anyway (default: False)
+
+    Returns:
+    - job_id: ID of the retraining job
+    - status: Initial status
+    """
+    try:
+        service = get_retraining_service()
+
+        # Run in background
+        if background_tasks:
+            job_id = f"retrain_{int(datetime.now().timestamp())}"
+            background_tasks.add_task(service.retrain_model, force=force)
+            return {
+                "job_id": job_id,
+                "status": "started",
+                "message": "Retraining job started in background",
+            }
+        else:
+            # Run synchronously (blocks request)
+            success = service.retrain_model(force=force)
+            return {
+                "success": success,
+                "status": "completed" if success else "failed",
+                "message": (
+                    "Retraining completed"
+                    if success
+                    else "Retraining failed validation"
+                ),
+            }
+    except Exception as e:
+        logger.error(f"Error triggering manual retraining: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to trigger retraining: {str(e)}"
+        )
+
+
+@app.post("/api/ml/retraining/rollback", tags=["MLOps"])
+async def rollback_model():
+    """
+    Rollback to previous model version.
+
+    Returns:
+    - success: Whether rollback succeeded
+    - message: Status message
+    """
+    try:
+        service = get_retraining_service()
+        service.rollback_model()
+        return {
+            "success": True,
+            "message": "Successfully rolled back to previous model version",
+        }
+    except Exception as e:
+        logger.error(f"Error rolling back model: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to rollback model: {str(e)}"
+        )
+
+
+@app.get("/api/ml/model/info", tags=["MLOps"])
+async def get_model_info():
+    """
+    Get current model information and performance.
+
+    Returns:
+    - model_path: Path to current production model
+    - metrics: Current model performance metrics
+    - last_trained: Timestamp of last training
+    - features: List of features used by model
+    """
+    try:
+        service = get_retraining_service()
+        status = service.get_status()
+
+        return {
+            "model_path": status["model_path"],
+            "backup_path": status["backup_path"],
+            "metrics": status["current_metrics"],
+            "features": features,  # From trading.py
+            "feature_count": len(features),
+        }
+    except Exception as e:
+        logger.error(f"Error fetching model info: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch model info: {str(e)}"
+        )
+
+
 # Mount frontend static files LAST so API routes take precedence
 # This must come after all route definitions to avoid catching API routes
-FRONTEND_DIST = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
+FRONTEND_DIST = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+)
 if os.path.isdir(FRONTEND_DIST):
     app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
 
