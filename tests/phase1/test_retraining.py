@@ -15,20 +15,14 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.trading_engine.model_retraining import get_retraining_service
+from src.trading_engine.ml.model_retraining import get_retraining_service
 
 
 def main():
     parser = argparse.ArgumentParser(description="Test model retraining system")
-    parser.add_argument(
-        "--trigger", action="store_true", help="Trigger manual retraining"
-    )
-    parser.add_argument(
-        "--rollback", action="store_true", help="Rollback to backup model"
-    )
-    parser.add_argument(
-        "--force", action="store_true", help="Force deployment (skip validation)"
-    )
+    parser.add_argument("--trigger", action="store_true", help="Trigger manual retraining")
+    parser.add_argument("--rollback", action="store_true", help="Rollback to backup model")
+    parser.add_argument("--force", action="store_true", help="Force deployment (skip validation)")
     args = parser.parse_args()
 
     service = get_retraining_service()

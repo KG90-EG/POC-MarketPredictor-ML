@@ -5,19 +5,18 @@ Test Suite for Hyperparameter Tuning (Week 4).
 Tests Optuna optimization for XGBoost, RandomForest, GradientBoosting, LightGBM.
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.abspath("."))
 
 import logging
-import pandas as pd
+
 import numpy as np
-from src.trading_engine.hyperparameter_tuning import (
-    HyperparameterTuner,
-    optimize_ensemble_weights,
-)
-from src.trading_engine.trading import load_data
+import pandas as pd
+
+from src.trading_engine.ml.hyperparameter_tuning import HyperparameterTuner, optimize_ensemble_weights
+from src.trading_engine.ml.trading import load_data
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -170,8 +169,9 @@ def test_ensemble_weights_optimization():
 
     data = build_dataset(tickers=["AAPL", "MSFT"], period="2y")
 
+    from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+
     from src.trading_engine.trading import features
-    from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
     X = data[[f for f in features if f in data.columns]]
     y = data["Outperform"]
@@ -191,9 +191,7 @@ def test_ensemble_weights_optimization():
 
     # Optimize weights
     print("\n🔍 Optimizing ensemble weights (10 trials)...")
-    best_weights, best_f1 = optimize_ensemble_weights(
-        models, model_names, X, y, n_trials=10, cv_folds=3
-    )
+    best_weights, best_f1 = optimize_ensemble_weights(models, model_names, X, y, n_trials=10, cv_folds=3)
 
     print(f"\n📊 Optimal Weights:")
     for name, weight in zip(model_names, best_weights):

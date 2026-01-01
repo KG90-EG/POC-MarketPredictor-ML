@@ -318,9 +318,7 @@ def train_model(
 
         if model_type in optim_type_map:
             tuner = HyperparameterTuner(n_trials=n_trials, cv_folds=5, n_jobs=-1)
-            optimized_params = tuner.optimize_model(
-                optim_type_map[model_type], X_train, y_train, show_progress=True
-            )
+            optimized_params = tuner.optimize_model(optim_type_map[model_type], X_train, y_train, show_progress=True)
             logging.info(f"✅ Optimization complete. Best params: {optimized_params}")
         else:
             logging.warning(f"Hyperparameter optimization not supported for {model_type}")
@@ -334,21 +332,29 @@ def train_model(
         model = create_ensemble("stacking", cv=5)
     elif model_type == "xgb" and _USE_XGB:
         # Use optimized params if available
-        params = optimized_params if optimized_params else {
-            "n_estimators": 200,
-            "max_depth": 4,
-            "learning_rate": 0.05,
-            "subsample": 0.9,
-            "random_state": 42,
-        }
+        params = (
+            optimized_params
+            if optimized_params
+            else {
+                "n_estimators": 200,
+                "max_depth": 4,
+                "learning_rate": 0.05,
+                "subsample": 0.9,
+                "random_state": 42,
+            }
+        )
         params.update({"eval_metric": "logloss", "use_label_encoder": False})
         model = XGBClassifier(**params)
     else:
         # RandomForest with optimized params if available
-        params = optimized_params if optimized_params else {
-            "n_estimators": 200,
-            "random_state": 42,
-        }
+        params = (
+            optimized_params
+            if optimized_params
+            else {
+                "n_estimators": 200,
+                "random_state": 42,
+            }
+        )
         model = RandomForestClassifier(**params)
 
     # Train model
@@ -435,9 +441,7 @@ def train_model(
 
             # Log feature importance
             if hasattr(model, "feature_importances_"):
-                mlflow_tracker.log_feature_importance(
-                    selected_features, model.feature_importances_
-                )
+                mlflow_tracker.log_feature_importance(selected_features, model.feature_importances_)
 
             # Log confusion matrix
             mlflow_tracker.log_confusion_matrix(y_test, preds, labels=["Down", "Up"])

@@ -6,13 +6,14 @@ Week 4 Implementation - Track all training runs, parameters, and metrics.
 
 import logging
 import os
-from typing import Dict, Any, Optional, List
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import mlflow
 import mlflow.sklearn
-from mlflow.tracking import MlflowClient
-import pandas as pd
 import numpy as np
+import pandas as pd
+from mlflow.tracking import MlflowClient
 
 logger = logging.getLogger(__name__)
 
@@ -56,9 +57,7 @@ class MLflowTracker:
 
         # Create or get experiment
         try:
-            self.experiment_id = mlflow.create_experiment(
-                experiment_name, artifact_location=artifact_location
-            )
+            self.experiment_id = mlflow.create_experiment(experiment_name, artifact_location=artifact_location)
             logger.info(f"Created new experiment: {experiment_name}")
         except Exception:
             # Experiment already exists
@@ -74,9 +73,7 @@ class MLflowTracker:
         # Current run ID
         self.current_run_id: Optional[str] = None
 
-    def start_run(
-        self, run_name: Optional[str] = None, tags: Optional[Dict[str, str]] = None
-    ) -> str:
+    def start_run(self, run_name: Optional[str] = None, tags: Optional[Dict[str, str]] = None) -> str:
         """
         Start a new MLflow run.
 
@@ -154,9 +151,7 @@ class MLflowTracker:
         if registered_model_name:
             logger.info(f"Model registered as: {registered_model_name}")
 
-    def log_feature_importance(
-        self, feature_names: List[str], importances: np.ndarray
-    ) -> None:
+    def log_feature_importance(self, feature_names: List[str], importances: np.ndarray) -> None:
         """
         Log feature importance as artifact.
 
@@ -168,9 +163,7 @@ class MLflowTracker:
             raise RuntimeError("No active MLflow run. Call start_run() first.")
 
         # Create DataFrame
-        importance_df = pd.DataFrame(
-            {"feature": feature_names, "importance": importances}
-        )
+        importance_df = pd.DataFrame({"feature": feature_names, "importance": importances})
         importance_df = importance_df.sort_values("importance", ascending=False)
 
         # Save as artifact
@@ -195,9 +188,9 @@ class MLflowTracker:
         if not mlflow.active_run():
             raise RuntimeError("No active MLflow run. Call start_run() first.")
 
-        from sklearn.metrics import confusion_matrix
         import matplotlib.pyplot as plt
         import seaborn as sns
+        from sklearn.metrics import confusion_matrix
 
         cm = confusion_matrix(y_true, y_pred)
 
@@ -253,9 +246,7 @@ class MLflowTracker:
             logger.info(f"Ended MLflow run with status: {status}")
             self.current_run_id = None
 
-    def get_best_run(
-        self, metric: str = "f1_score", ascending: bool = False
-    ) -> Optional[mlflow.entities.Run]:
+    def get_best_run(self, metric: str = "f1_score", ascending: bool = False) -> Optional[mlflow.entities.Run]:
         """
         Get best run from experiment based on metric.
 
@@ -279,15 +270,11 @@ class MLflowTracker:
         best_run_id = runs.iloc[0]["run_id"]
         best_run = self.client.get_run(best_run_id)
 
-        logger.info(
-            f"Best run: {best_run_id}, {metric}={runs.iloc[0][f'metrics.{metric}']:.4f}"
-        )
+        logger.info(f"Best run: {best_run_id}, {metric}={runs.iloc[0][f'metrics.{metric}']:.4f}")
 
         return best_run
 
-    def compare_runs(
-        self, run_ids: List[str], metrics: Optional[List[str]] = None
-    ) -> pd.DataFrame:
+    def compare_runs(self, run_ids: List[str], metrics: Optional[List[str]] = None) -> pd.DataFrame:
         """
         Compare multiple runs.
 
@@ -342,9 +329,7 @@ class MLflowTracker:
 
         return model
 
-    def register_model(
-        self, run_id: str, model_name: str, artifact_path: str = "model"
-    ) -> str:
+    def register_model(self, run_id: str, model_name: str, artifact_path: str = "model") -> str:
         """
         Register model to Model Registry.
 
@@ -364,9 +349,7 @@ class MLflowTracker:
 
         return model_version.version
 
-    def transition_model_stage(
-        self, model_name: str, version: str, stage: str
-    ) -> None:
+    def transition_model_stage(self, model_name: str, version: str, stage: str) -> None:
         """
         Transition model to different stage in Model Registry.
 
@@ -375,9 +358,7 @@ class MLflowTracker:
             version: Model version
             stage: Target stage ('Staging', 'Production', 'Archived')
         """
-        self.client.transition_model_version_stage(
-            name=model_name, version=version, stage=stage
-        )
+        self.client.transition_model_version_stage(name=model_name, version=version, stage=stage)
 
         logger.info(f"Transitioned {model_name} v{version} to {stage}")
 
@@ -446,9 +427,7 @@ def track_training_run(
         tracker.log_dataset_stats(X_test, y_test, prefix="test")
 
         # Log model
-        tracker.log_model(
-            model, artifact_path="model", registered_model_name=register_model_name
-        )
+        tracker.log_model(model, artifact_path="model", registered_model_name=register_model_name)
 
         # Log feature importance if available
         if feature_names and hasattr(model, "feature_importances_"):

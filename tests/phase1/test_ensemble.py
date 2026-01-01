@@ -13,7 +13,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.trading_engine.ensemble_models import (
+from src.trading_engine.ml.ensemble_models import (
     HAS_LGBM,
     HAS_XGB,
     create_ensemble,
@@ -22,7 +22,7 @@ from src.trading_engine.ensemble_models import (
     evaluate_ensemble,
     get_feature_importances,
 )
-from src.trading_engine.trading import build_dataset, train_model
+from src.trading_engine.ml.trading import build_dataset, train_model
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 

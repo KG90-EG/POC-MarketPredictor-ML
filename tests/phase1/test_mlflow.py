@@ -5,17 +5,19 @@ Test Suite for MLflow Integration (Week 4).
 Tests experiment tracking, model registry, and run comparison.
 """
 
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.abspath("."))
 
 import logging
+
 import pandas as pd
-from src.trading_engine.mlflow_integration import MLflowTracker, track_training_run
-from src.trading_engine.trading import load_data, features
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
+
+from src.trading_engine.ml.mlflow_integration import MLflowTracker, track_training_run
+from src.trading_engine.ml.trading import features, load_data
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -87,9 +89,7 @@ def test_mlflow_model_logging():
     X = data[[f for f in features if f in data.columns]]
     y = data["Outperform"]
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     print(f"🤖 Training model...")
     model = RandomForestClassifier(n_estimators=50, random_state=42)
@@ -141,9 +141,7 @@ def test_mlflow_full_training_run():
     X = data[[f for f in features if f in data.columns]]
     y = data["Outperform"]
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     # Train model
     print(f"🤖 Training RandomForest...")
