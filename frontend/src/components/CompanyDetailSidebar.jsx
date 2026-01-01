@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import PropTypes from 'prop-types'
+import PriceChart from './PriceChart'
 
 function formatNumber(num) {
   if (!num) return 'N/A'
@@ -9,7 +10,51 @@ function formatNumber(num) {
   return `$${num.toLocaleString()}`
 }
 
+// Generate mock historical data for demo (replace with real API call)
+function generateMockPriceHistory(currentPrice, days = 30) {
+  if (!currentPrice) return []
+  
+  const data = []
+  const today = new Date()
+  let price = currentPrice * 0.9 // Start 10% lower than current
+  
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(today)
+    date.setDate(date.getDate() - i)
+    
+    // Random walk with slight upward trend
+    const change = (Math.random() - 0.48) * 0.05 // Slight upward bias
+    price = price * (1 + change)
+    
+    data.push({
+      date: date.toISOString().split('T')[0],
+      price: parseFloat(price.toFixed(2))
+    })
+  }
+  
+  // Ensure last price matches current price
+  data[data.length - 1].price = currentPrice
+  
+  return data
+}
+
 function CompanyDetailSidebar({ company, onClose }) {
+  const [priceHistory, setPriceHistory] = useState([])
+  const [chartPeriod, setChartPeriod] = useState(30) // 30, 90, or 180 days
+
+  useEffect(() => {
+    if (company && company.price) {
+      // TODO: Replace with real API call
+      // const fetchHistory = async () => {
+      //   const response = await api.getPriceHistory(company.ticker, chartPeriod)
+      //   setPriceHistory(response.data)
+      // }
+      // fetchHistory()
+      
+      // For now, use mock data
+      setPriceHistory(generateMockPriceHistory(company.price, chartPeriod))
+    }
+  }, [company, chartPeriod])
   if (!company) return null
 
   return (
@@ -84,6 +129,77 @@ function CompanyDetailSidebar({ company, onClose }) {
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* Price Chart Section */}
+            <div className="detail-section">
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                marginBottom: '12px'
+              }}>
+                <h3 style={{ margin: 0 }}>📈 Price History</h3>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => setChartPeriod(30)}
+                    className={`period-btn ${chartPeriod === 30 ? 'active' : ''}`}
+                    style={{
+                      padding: '4px 12px',
+                      fontSize: '0.85rem',
+                      border: chartPeriod === 30 ? '2px solid #667eea' : '2px solid #ddd',
+                      background: chartPeriod === 30 ? '#667eea' : 'transparent',
+                      color: chartPeriod === 30 ? 'white' : '#666',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: chartPeriod === 30 ? '600' : '400',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    1M
+                  </button>
+                  <button
+                    onClick={() => setChartPeriod(90)}
+                    className={`period-btn ${chartPeriod === 90 ? 'active' : ''}`}
+                    style={{
+                      padding: '4px 12px',
+                      fontSize: '0.85rem',
+                      border: chartPeriod === 90 ? '2px solid #667eea' : '2px solid #ddd',
+                      background: chartPeriod === 90 ? '#667eea' : 'transparent',
+                      color: chartPeriod === 90 ? 'white' : '#666',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: chartPeriod === 90 ? '600' : '400',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    3M
+                  </button>
+                  <button
+                    onClick={() => setChartPeriod(180)}
+                    className={`period-btn ${chartPeriod === 180 ? 'active' : ''}`}
+                    style={{
+                      padding: '4px 12px',
+                      fontSize: '0.85rem',
+                      border: chartPeriod === 180 ? '2px solid #667eea' : '2px solid #ddd',
+                      background: chartPeriod === 180 ? '#667eea' : 'transparent',
+                      color: chartPeriod === 180 ? 'white' : '#666',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: chartPeriod === 180 ? '600' : '400',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    6M
+                  </button>
+                </div>
+              </div>
+              <PriceChart 
+                data={priceHistory} 
+                width={400} 
+                height={200}
+                color="#667eea"
+              />
             </div>
 
             <div className="detail-section">
