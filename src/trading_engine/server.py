@@ -32,7 +32,6 @@ from .crypto import get_crypto_details, get_crypto_ranking, search_crypto
 from .database import WatchlistDB
 from .logging_config import RequestLogger, setup_logging
 from .model_retraining import get_retraining_service, start_retraining_scheduler
-from .monitoring_routes import router as monitoring_router
 from .rate_limiter import RateLimiter
 from .services import HealthService, StockService, ValidationService
 from .simulation import TradingSimulation, calculate_position_size
@@ -2102,9 +2101,6 @@ async def clear_old_alerts(older_than_days: int = 7, user_id: str = "default_use
 
 # Include analytics router
 app.include_router(analytics_router)
-
-# Include monitoring router
-app.include_router(monitoring_router)
 
 
 # ============================================================================
