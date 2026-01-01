@@ -140,11 +140,11 @@ def load_data(ticker: str, period: str = "5y", use_advanced_features: bool = Tru
         return None
     if df.empty:
         return None
-    
+
     # Calculate target variable (outperformance)
     df["Returns_90d"] = df["Adj Close"].pct_change(90).shift(-90)
     df["Outperform"] = (df["Returns_90d"] > 0.05).astype(int)
-    
+
     if use_advanced_features and USE_ALL_FEATURES:
         # Use advanced feature engineering (40+ features)
         logging.info(f"Adding 40+ features for {ticker}")
@@ -162,7 +162,7 @@ def load_data(ticker: str, period: str = "5y", use_advanced_features: bool = Tru
         bb_up, bb_low = compute_bollinger(df["Adj Close"], window=20)
         df["BB_upper"] = bb_up
         df["BB_lower"] = bb_low
-    
+
     df["Ticker"] = ticker
     return df.dropna()
 
@@ -237,31 +237,36 @@ def parse_args():
     return parser.parse_args()
 
 
-def train_model(data, model_type="rf", save_path=None, use_feature_selection=True, n_features=30):
-    """Train ML model with optional feature selection.
-    
+def train_model(data, model_type="rf", save_path=None, use_feature_selection=True, n_features=30, use_ensemble=False):
+    """Train ML model with optional feature selection and ensemble.
+
     Args:
         data: Training data DataFrame
-        model_type: 'rf' or 'xgb' (default: 'rf')
+        model_type: 'rf', 'xgb', 'voting', 'stacking' (default: 'rf')
         save_path: Path to save trained model
         use_feature_selection: Apply feature selection if True (default: True)
         n_features: Number of features to select (default: 30)
-    
+        use_ensemble: Use ensemble methods if True (default: False)
+
     Returns:
         Tuple of (model, metrics_dict)
     """
+    # Import ensemble if needed
+    if use_ensemble or model_type in ["voting", "stacking"]:
+        from .ensemble_models import create_ensemble
+
     # Prepare features and target
     available_features = [f for f in features if f in data.columns]
-    
+
     if len(available_features) == 0:
         raise ValueError(f"No features found in data. Expected: {features[:5]}...")
-    
+
     X = data[available_features]
     y = data["Outperform"]
-    
+
     if y.nunique() < 2:
         raise ValueError("Target `y` must contain at least two classes.")
-    
+
     # Feature selection
     selected_features = available_features
     if use_feature_selection and USE_ALL_FEATURES and len(available_features) > n_features:
@@ -269,14 +274,18 @@ def train_model(data, model_type="rf", save_path=None, use_feature_selection=Tru
         selected_features = select_best_features(X, y, k=n_features)
         X = X[selected_features]
         logging.info(f"Selected features: {selected_features[:10]}...")
-    
+
     # Train/test split
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, stratify=y, random_state=42
-    )
-    
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
+
     # Model selection
-    if model_type == "xgb" and _USE_XGB:
+    if model_type == "voting":
+        logging.info("Creating voting ensemble (XGB + RF + GB + LGBM)")
+        model = create_ensemble("voting", voting="soft")
+    elif model_type == "stacking":
+        logging.info("Creating stacking ensemble with meta-learner")
+        model = create_ensemble("stacking", cv=5)
+    elif model_type == "xgb" and _USE_XGB:
         model = XGBClassifier(
             n_estimators=200,
             max_depth=4,
@@ -288,21 +297,23 @@ def train_model(data, model_type="rf", save_path=None, use_feature_selection=Tru
         )
     else:
         model = RandomForestClassifier(n_estimators=200, random_state=42)
-    
+
     # Train model
+    logging.info(f"Training {model_type} model...")
     model.fit(X_train.values, y_train.values)
-    
+
     # Save model (and selected features)
     if save_path:
         import joblib
+
         joblib.dump(model, save_path)
-        
+
         # Save selected features list
-        features_path = save_path.replace('.bin', '_features.txt')
-        with open(features_path, 'w') as f:
-            f.write('\n'.join(selected_features))
+        features_path = save_path.replace(".bin", "_features.txt")
+        with open(features_path, "w") as f:
+            f.write("\n".join(selected_features))
         logging.info(f"Saved model to {save_path} with {len(selected_features)} features")
-    
+
     # Evaluate
     from sklearn.metrics import (
         accuracy_score,
