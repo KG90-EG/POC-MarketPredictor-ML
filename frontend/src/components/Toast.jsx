@@ -35,8 +35,13 @@ function Toast({ message, type = 'info', duration = 3000, onClose }) {
   };
 
   return (
-    <div className={`toast toast-${type} ${isExiting ? 'toast-exit' : 'toast-enter'}`}>
-      <span className="toast-icon">{getIcon()}</span>
+    <div
+      className={`toast toast-${type} ${isExiting ? 'toast-exit' : 'toast-enter'}`}
+      role="alert"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      <span className="toast-icon" aria-hidden="true">{getIcon()}</span>
       <span className="toast-message">{message}</span>
       <button
         className="toast-close"

@@ -1788,3 +1788,164 @@ body.dark-mode .onboarding-hint {
     max-width: calc(100% - 40px);
   }
 }
+
+/* ============================================
+   ACCESSIBILITY IMPROVEMENTS
+   ============================================ */
+
+/* Enhanced Focus Indicators - WCAG 2.1 AA */
+*:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+body.dark-mode *:focus-visible {
+  outline-color: #8b9eff;
+}
+
+/* High Contrast Focus for Interactive Elements */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible,
+[tabindex="0"]:focus-visible {
+  outline: 3px solid #667eea;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+}
+
+body.dark-mode button:focus-visible,
+body.dark-mode a:focus-visible,
+body.dark-mode input:focus-visible,
+body.dark-mode textarea:focus-visible,
+body.dark-mode select:focus-visible,
+body.dark-mode [role="button"]:focus-visible,
+body.dark-mode [tabindex="0"]:focus-visible {
+  outline-color: #8b9eff;
+  box-shadow: 0 0 0 4px rgba(139, 158, 255, 0.3);
+}
+
+/* Improved Text Contrast - WCAG AA (4.5:1) */
+.detail-label {
+  color: #555555; /* Was too light */
+}
+
+body.dark-mode .detail-label {
+  color: #b0b0b0; /* Improved contrast */
+}
+
+/* Secondary Text Contrast */
+.subtitle,
+.description,
+.help-text {
+  color: #666666; /* Improved from lighter grays */
+}
+
+body.dark-mode .subtitle,
+body.dark-mode .description,
+body.dark-mode .help-text {
+  color: #a8a8a8; /* Better contrast */
+}
+
+/* Minimum Touch Target Size - WCAG 2.5.5 (44x44px) */
+@media (max-width: 768px) {
+  button,
+  a,
+  input[type="button"],
+  input[type="submit"],
+  [role="button"],
+  .toolbar-btn,
+  .modal-close,
+  .sidebar-close {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 12px;
+  }
+
+  .country-tag,
+  .rank-badge,
+  .badge {
+    min-height: 32px; /* Slightly smaller for badges, but still accessible */
+    padding: 6px 12px;
+  }
+}
+
+/* Screen Reader Only Text */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Reduced Motion Support - WCAG 2.3.3 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .skeleton-loader,
+  .pulse-animation,
+  .loading-spinner {
+    animation: none !important;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    border: 2px solid currentColor;
+  }
+
+  *:focus-visible {
+    outline-width: 4px;
+    outline-offset: 3px;
+  }
+}
+
+/* Skip to Content Link - Enhanced */
+.skip-link:focus {
+  top: 0;
+  outline: 3px solid #ffffff;
+  outline-offset: -3px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Keyboard Navigation Hints */
+[data-keyboard-hint]::after {
+  content: attr(data-keyboard-hint);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+[data-keyboard-hint]:focus-visible::after {
+  opacity: 1;
+}

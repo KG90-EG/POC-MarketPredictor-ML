@@ -22,6 +22,7 @@ import AutocompleteSearch from './components/AutocompleteSearch'
 import InfoCard from './components/InfoCard'
 import Onboarding from './components/Onboarding'
 import OnboardingResetBtn from './components/OnboardingResetBtn'
+import KeyboardShortcuts from './components/KeyboardShortcuts'
 import './styles.css'
 
 // Create a React Query client
@@ -377,6 +378,9 @@ function AppContent() {
     <div className="container">
       {/* Onboarding Flow */}
       <Onboarding />
+
+      {/* Keyboard Shortcuts Helper */}
+      <KeyboardShortcuts />
 
       {/* Skip Navigation Link */}
       <a href="#main-content" className="skip-link">Skip to main content</a>

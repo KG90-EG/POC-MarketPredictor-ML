@@ -36,7 +36,7 @@ function PriceChart({ data, width = 400, height = 200, color = '#667eea' }) {
   })
 
   // Create path for line chart
-  const linePath = points.map((p, i) => 
+  const linePath = points.map((p, i) =>
     `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`
   ).join(' ')
 
@@ -90,7 +90,18 @@ function PriceChart({ data, width = 400, height = 200, color = '#667eea' }) {
       </div>
 
       {/* SVG Chart */}
-      <svg width={width} height={height} className="price-chart" role="img" aria-label="Price history chart">
+      <svg
+        width={width}
+        height={height}
+        className="price-chart"
+        role="img"
+        aria-label={`Price history chart showing ${isPositive ? 'increase' : 'decrease'} from $${firstPrice.toFixed(2)} to $${lastPrice.toFixed(2)}, a change of ${isPositive ? '+' : ''}${priceChangePercent.toFixed(2)}%`}
+      >
+        <title>Price History Chart</title>
+        <desc>
+          Line chart showing price movement from ${formatDate(data[0].date)} to ${formatDate(data[data.length - 1].date)}.
+          Price {isPositive ? 'increased' : 'decreased'} by ${Math.abs(priceChangePercent).toFixed(2)}%.
+        </desc>
         {/* Gradient for area fill */}
         <defs>
           <linearGradient id={`gradient-${color}`} x1="0%" y1="0%" x2="0%" y2="100%">
