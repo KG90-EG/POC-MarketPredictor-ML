@@ -20,6 +20,8 @@ import { ToastContainer } from './components/Toast'
 import { SkeletonTable, SkeletonStockRow } from './components/SkeletonLoader'
 import AutocompleteSearch from './components/AutocompleteSearch'
 import InfoCard from './components/InfoCard'
+import Onboarding from './components/Onboarding'
+import OnboardingResetBtn from './components/OnboardingResetBtn'
 import './styles.css'
 
 // Create a React Query client
@@ -144,7 +146,7 @@ function AppContent() {
       const rankings = resp.data.ranking
 
       setResults(rankings)
-      
+
       // Success toast
       showToast(`✅ Loaded ${rankings.length} ${market} stocks`, 'success', 2000)
 
@@ -373,6 +375,9 @@ function AppContent() {
 
   return (
     <div className="container">
+      {/* Onboarding Flow */}
+      <Onboarding />
+
       {/* Skip Navigation Link */}
       <a href="#main-content" className="skip-link">Skip to main content</a>
 
@@ -540,7 +545,7 @@ function AppContent() {
             <span style={{marginLeft: '8px', color: '#667eea', fontWeight: 'bold'}}>({results.length})</span>
           )}
         </div>
-        
+
         {/* Help InfoCard */}
         {results.length === 0 && !loading && (
           <InfoCard title="How to use" type="tip" dismissible={false}>
@@ -554,7 +559,7 @@ function AppContent() {
             <p>Each stock shows an <strong>AI probability score</strong> indicating potential for upward movement.</p>
           </InfoCard>
         )}
-        
+
         <MarketSelector
           selectedMarket={selectedMarket}
           onSelectionChange={(market) => {
@@ -641,7 +646,7 @@ function AppContent() {
             <p>Scores consider: market cap rank, price trends (24h/7d/30d), volume, and momentum indicators.</p>
           </InfoCard>
         )}
-        
+
         {/* Crypto Search Section */}
         <section className="card" role="region" aria-label="Search for digital assets and cryptocurrencies">
           <div className="card-title">🔍 Find Cryptocurrencies</div>
@@ -759,11 +764,11 @@ function AppContent() {
       <>
       <section className="card" role="region" aria-label="Search for individual stocks">
         <div className="card-title">🔍 Look Up Any Stock</div>
-        
+
         <InfoCard type="info" dismissible={false}>
           <p><strong>Pro tip:</strong> Start typing a ticker symbol or company name to see suggestions. The autocomplete will help you find stocks from the current market rankings.</p>
         </InfoCard>
-        
+
         <p style={{color: '#666', fontSize: '0.9rem', marginBottom: '16px'}}>
           Search by ticker symbol to get AI predictions and detailed analysis
         </p>
@@ -897,6 +902,9 @@ function AppContent() {
 
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
+
+      {/* Onboarding Reset Button (Dev Only) */}
+      <OnboardingResetBtn />
     </div>
   )
 }
