@@ -1,10 +1,13 @@
 name: Python CI
 
-# Optional GitHub Secrets (see GITHUB_SECRETS.md):
-#   - CR_PAT: GitHub Container Registry token (optional, for Docker publishing)
-#   - MLFLOW_TRACKING_URI: Remote MLflow server (optional, defaults to local)
-# Note: These secrets are optional. CI works without them using defaults.
+# Optional GitHub Secrets - All secrets are OPTIONAL, CI works without them:
+#   - CR_PAT: GitHub Container Registry token (for Docker publishing)
+#   - MLFLOW_TRACKING_URI: Remote MLflow server (defaults to local tracking)
+#   - AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_BUCKET: For S3 model storage
+#   - Deployment tokens: NETLIFY_*, RAILWAY_*, VERCEL_* (for auto-deployment)
+#
 # Setup guide: https://github.com/KG90-EG/POC-MarketPredictor-ML/blob/main/GITHUB_SECRETS.md
+# Without secrets: CI runs, tests pass, builds succeed, uses local defaults
 
 on:
   push:
