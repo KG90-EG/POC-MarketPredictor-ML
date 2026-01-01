@@ -19,6 +19,7 @@ import EmptyState from './components/EmptyState'
 import { ToastContainer } from './components/Toast'
 import { SkeletonTable, SkeletonStockRow } from './components/SkeletonLoader'
 import AutocompleteSearch from './components/AutocompleteSearch'
+import InfoCard from './components/InfoCard'
 import './styles.css'
 
 // Create a React Query client
@@ -539,6 +540,21 @@ function AppContent() {
             <span style={{marginLeft: '8px', color: '#667eea', fontWeight: 'bold'}}>({results.length})</span>
           )}
         </div>
+        
+        {/* Help InfoCard */}
+        {results.length === 0 && !loading && (
+          <InfoCard title="How to use" type="tip" dismissible={false}>
+            <p>Select a market to see AI-ranked stocks based on predicted performance:</p>
+            <ul>
+              <li><strong>Global:</strong> Top stocks from worldwide markets</li>
+              <li><strong>US:</strong> NYSE & NASDAQ companies</li>
+              <li><strong>Europe:</strong> European exchanges</li>
+              <li><strong>Asia:</strong> Asian markets including Japan, China, India</li>
+            </ul>
+            <p>Each stock shows an <strong>AI probability score</strong> indicating potential for upward movement.</p>
+          </InfoCard>
+        )}
+        
         <MarketSelector
           selectedMarket={selectedMarket}
           onSelectionChange={(market) => {
@@ -611,6 +627,21 @@ function AppContent() {
       {/* Digital Assets / Crypto View */}
       {portfolioView === 'crypto' && (
         <>
+        {/* Help InfoCard for Crypto */}
+        {cryptoResults.length === 0 && !cryptoLoading && (
+          <InfoCard title="Understanding Crypto Rankings" type="tip">
+            <p>Our cryptocurrency rankings use a <strong>momentum scoring system</strong>:</p>
+            <ul>
+              <li><strong>80-100:</strong> Very Bullish - Exceptional momentum</li>
+              <li><strong>65-79:</strong> Bullish - Strong positive trends</li>
+              <li><strong>50-64:</strong> Neutral - Stable performance</li>
+              <li><strong>35-49:</strong> Bearish - Weakening signals</li>
+              <li><strong>0-34:</strong> Very Bearish - High risk</li>
+            </ul>
+            <p>Scores consider: market cap rank, price trends (24h/7d/30d), volume, and momentum indicators.</p>
+          </InfoCard>
+        )}
+        
         {/* Crypto Search Section */}
         <section className="card" role="region" aria-label="Search for digital assets and cryptocurrencies">
           <div className="card-title">🔍 Find Cryptocurrencies</div>
@@ -699,7 +730,18 @@ function AppContent() {
 
       {/* Watchlists View */}
       {portfolioView === 'watchlists' && (
-        <WatchlistManager userId="default_user" />
+        <>
+          <InfoCard title="Watchlist Pro Tips" type="tip" dismissible={false}>
+            <p>Get the most out of your watchlists:</p>
+            <ul>
+              <li><strong>Price Alerts:</strong> Set alerts to get notified when a stock hits your target price</li>
+              <li><strong>AI Predictions:</strong> View real-time buy/sell/hold signals for each stock</li>
+              <li><strong>Mix Assets:</strong> Add both stocks and cryptocurrencies to the same watchlist</li>
+              <li><strong>Notes:</strong> Add personal notes to track your investment thesis</li>
+            </ul>
+          </InfoCard>
+          <WatchlistManager userId="default_user" />
+        </>
       )}
 
       {/* Trading Simulation View */}
@@ -717,6 +759,11 @@ function AppContent() {
       <>
       <section className="card" role="region" aria-label="Search for individual stocks">
         <div className="card-title">🔍 Look Up Any Stock</div>
+        
+        <InfoCard type="info" dismissible={false}>
+          <p><strong>Pro tip:</strong> Start typing a ticker symbol or company name to see suggestions. The autocomplete will help you find stocks from the current market rankings.</p>
+        </InfoCard>
+        
         <p style={{color: '#666', fontSize: '0.9rem', marginBottom: '16px'}}>
           Search by ticker symbol to get AI predictions and detailed analysis
         </p>
