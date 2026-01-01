@@ -4,7 +4,7 @@ import os
 import joblib
 from sklearn.metrics import accuracy_score
 
-from trading_fun.trading import build_dataset
+from trading_engine.trading import build_dataset
 
 try:
     import boto3  # optional

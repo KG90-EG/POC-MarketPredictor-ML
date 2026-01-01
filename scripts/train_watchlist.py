@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from datetime import datetime  # noqa: E402
 
-from trading_fun.database import WatchlistDB  # noqa: E402
-from trading_fun.trading import build_dataset, train_model  # noqa: E402
+from trading_engine.database import WatchlistDB  # noqa: E402
+from trading_engine.trading import build_dataset, train_model  # noqa: E402
 
 
 def main():

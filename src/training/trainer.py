@@ -12,7 +12,7 @@ if str(ROOT_DIR) not in sys.path:
 
 import mlflow
 
-from trading_fun.trading import build_dataset, train_model
+from trading_engine.trading import build_dataset, train_model
 
 try:
     import boto3  # optional
