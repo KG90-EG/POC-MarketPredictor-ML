@@ -258,6 +258,44 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
     }
   };
 
+  const handleManualTrade = async (e) => {
+    e.preventDefault();
+    
+    if (!currentSim) {
+      setError(t('noSimulation'));
+      return;
+    }
+
+    const { ticker, action, quantity, price } = tradeForm;
+    
+    if (!ticker || !price || price <= 0 || quantity <= 0) {
+      setError(t('invalidTradeForm'));
+      return;
+    }
+
+    await executeTrade(ticker, action, quantity, price, 'Manual trade', 0);
+    
+    // Reset form on success
+    setTradeForm({
+      ticker: '',
+      action: 'BUY',
+      quantity: 10,
+      price: 0
+    });
+  };
+
+  const executeAutoTrade = async () => {
+    await autoTrade();
+  };
+
+  const changeLanguage = (lang) => {
+    setLocalLanguage(lang);
+    if (onLanguageChange) {
+      onLanguageChange(lang);
+    }
+    localStorage.setItem('simulation_language', lang);
+  };
+
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',

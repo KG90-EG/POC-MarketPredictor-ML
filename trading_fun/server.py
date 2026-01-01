@@ -2016,8 +2016,7 @@ async def reset_simulation(simulation_id: int):
 
 
 # ===== Alert Endpoints =====
-# TODO: Implement full alert system with database storage and alert generation
-# For now, these are stub endpoints to prevent frontend errors
+from .alerts import alert_db
 
 
 @app.get("/alerts", tags=["Alerts"])
@@ -2029,32 +2028,66 @@ async def get_alerts(
     limit: int = 50,
 ):
     """
-    Get user alerts (stub implementation).
+    Get user alerts with optional filtering.
 
-    TODO: Implement with alert database table and filtering logic.
+    Query Parameters:
+    - user_id: User identifier (default: 'default_user')
+    - unread_only: Return only unread alerts (default: False)
+    - priority: Filter by priority (high, medium, low)
+    - asset_type: Filter by asset type (stock, crypto)
+    - limit: Maximum number of alerts to return (default: 50)
     """
-    # Return empty alerts for now
-    return {"alerts": [], "unread_count": 0, "total": 0}
+    try:
+        alerts = alert_db.get_alerts(
+            user_id=user_id,
+            unread_only=unread_only,
+            priority=priority,
+            asset_type=asset_type,
+            limit=limit,
+        )
+        unread_count = alert_db.get_unread_count(user_id)
+
+        return {"alerts": alerts, "unread_count": unread_count, "total": len(alerts)}
+    except Exception as e:
+        logger.error(f"Error fetching alerts: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch alerts: {str(e)}")
 
 
 @app.post("/alerts/mark-read", tags=["Alerts"])
 async def mark_alerts_read(alert_ids: List[int]):
     """
-    Mark alerts as read (stub implementation).
+    Mark one or more alerts as read.
 
-    TODO: Implement with alert database table.
+    Request Body:
+    - alert_ids: List of alert IDs to mark as read
     """
-    return {"success": True, "marked_count": len(alert_ids)}
+    try:
+        marked_count = alert_db.mark_read(alert_ids)
+        return {"success": True, "marked_count": marked_count}
+    except Exception as e:
+        logger.error(f"Error marking alerts as read: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to mark alerts as read: {str(e)}"
+        )
 
 
 @app.delete("/alerts/clear", tags=["Alerts"])
 async def clear_old_alerts(older_than_days: int = 7, user_id: str = "default_user"):
     """
-    Clear old alerts (stub implementation).
+    Delete old read alerts.
 
-    TODO: Implement with alert database table.
+    Query Parameters:
+    - older_than_days: Delete alerts older than this many days (default: 7)
+    - user_id: User identifier (default: 'default_user')
     """
-    return {"success": True, "deleted_count": 0}
+    try:
+        deleted_count = alert_db.delete_old_alerts(user_id, older_than_days)
+        return {"success": True, "deleted_count": deleted_count}
+    except Exception as e:
+        logger.error(f"Error clearing old alerts: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to clear old alerts: {str(e)}"
+        )
 
 
 # Mount frontend static files LAST so API routes take precedence
