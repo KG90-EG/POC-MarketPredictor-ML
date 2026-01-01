@@ -17,6 +17,7 @@ import AlertPanel from './components/AlertPanel'
 import SimulationDashboard from './components/SimulationDashboard'
 import EmptyState from './components/EmptyState'
 import { ToastContainer } from './components/Toast'
+import { SkeletonTable, SkeletonStockRow } from './components/SkeletonLoader'
 import './styles.css'
 
 // Create a React Query client
@@ -141,6 +142,9 @@ function AppContent() {
       const rankings = resp.data.ranking
 
       setResults(rankings)
+      
+      // Success toast
+      showToast(`✅ Loaded ${rankings.length} ${market} stocks`, 'success', 2000)
 
       // Batch fetch ticker details (much faster than sequential)
       const tickers = rankings.map(r => r.ticker)
@@ -209,6 +213,7 @@ function AppContent() {
       const resp = await api.getCryptoRanking('', includeNFT, 0.0, cryptoLimit)
       const rankings = resp.data.ranking || []
       setCryptoResults(rankings)
+      showToast(`✅ Loaded ${rankings.length} cryptocurrencies`, 'success', 2000)
     } catch (e) {
       const error = handleApiError(e, 'Error fetching crypto rankings')
       if (error.isNetworkError) {
@@ -530,32 +535,48 @@ function AppContent() {
         />
 
         {loading ? (
-          <div style={{textAlign: 'center', padding: '40px'}} role="status" aria-live="polite" aria-atomic="true">
-            <span className="spinner"></span>
-            <p>Loading {selectedMarket} market rankings...</p>
+          <div role="status" aria-live="polite" aria-atomic="true">
+            <div style={{marginBottom: '16px', textAlign: 'center'}}>
+              <p style={{color: '#667eea', fontWeight: '600', fontSize: '0.95rem', margin: '20px 0'}}>
+                📊 Loading {selectedMarket} market rankings...
+              </p>
+            </div>
             {loadingProgress.total > 0 && (
-              <div style={{marginTop: '16px'}}>
-                <div style={{
-                  width: '100%',
-                  maxWidth: '400px',
-                  margin: '0 auto',
-                  background: '#e0e0e0',
-                  borderRadius: '8px',
-                  height: '8px',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    width: `${(loadingProgress.current / loadingProgress.total) * 100}%`,
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    height: '100%',
-                    transition: 'width 0.3s ease'
-                  }}></div>
+              <div style={{marginBottom: '24px'}}>
+                <div className="progress-container">
+                  <div className="progress-bar" style={{
+                    width: '100%',
+                    maxWidth: '500px',
+                    margin: '0 auto',
+                    background: '#e9ecef',
+                    borderRadius: '12px',
+                    height: '24px',
+                    overflow: 'hidden',
+                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                  }}>
+                    <div className="progress-fill" style={{
+                      width: `${(loadingProgress.current / loadingProgress.total) * 100}%`,
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      fontWeight: '700',
+                      fontSize: '0.85rem',
+                      transition: 'width 0.3s ease'
+                    }}>
+                      {Math.round((loadingProgress.current / loadingProgress.total) * 100)}%
+                    </div>
+                  </div>
+                  <p className="progress-text" style={{textAlign: 'center', fontSize: '0.85rem', color: '#666', marginTop: '8px'}}>
+                    Loading company details: {loadingProgress.current} / {loadingProgress.total}
+                  </p>
                 </div>
-                <p style={{fontSize: '0.9rem', color: '#666', marginTop: '8px'}}>
-                  Loading details: {loadingProgress.current} / {loadingProgress.total}
-                </p>
               </div>
             )}
+            {/* Skeleton Table */}
+            <SkeletonTable rows={10} columns={8} />
           </div>
         ) : results.length > 0 ? (
           <div style={{marginBottom: '16px'}}>
@@ -700,7 +721,7 @@ function AppContent() {
             {searchLoading ? (
               <>
                 <span className="spinner"></span>
-                Searching...
+                Searching {searchTicker}...
               </>
             ) : (
               '🔎 Search'
