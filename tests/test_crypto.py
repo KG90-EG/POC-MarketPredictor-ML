@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 import requests
 
-from trading_fun.crypto import (
+from src.trading_engine.crypto import (
     COINGECKO_BASE_URL,
     DEFAULT_CRYPTOS,
     NFT_TOKENS,

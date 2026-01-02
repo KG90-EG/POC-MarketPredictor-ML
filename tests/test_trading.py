@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 
-from trading_fun.trading import (
+from src.trading_engine.trading import (
     compute_bollinger,
     compute_macd,
     compute_momentum,

@@ -7,11 +7,6 @@ and model comparison.
 """
 
 import logging
-import sys
-from pathlib import Path
-
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent))
 
 from src.trading_engine.ml.ensemble_models import (
     HAS_LGBM,
@@ -19,8 +14,6 @@ from src.trading_engine.ml.ensemble_models import (
     create_ensemble,
     create_stacking_ensemble,
     create_voting_ensemble,
-    evaluate_ensemble,
-    get_feature_importances,
 )
 from src.trading_engine.ml.trading import build_dataset, train_model
 
@@ -55,14 +48,16 @@ def test_ensemble_creation():
         ensemble = create_ensemble("voting")
         print(f"  ✅ Factory created ensemble")
 
-        return True
+        assert voting is not None
+        assert stacking is not None
+        assert ensemble is not None
 
     except Exception as e:
         print(f"❌ FAILED: {e}")
         import traceback
 
         traceback.print_exc()
-        return False
+        raise
 
 
 def test_voting_ensemble_training():
@@ -88,7 +83,9 @@ def test_voting_ensemble_training():
         if len(data) < 100:
             print(f"⚠️  Warning: Only {len(data)} samples, may not be enough")
             trading_module.USE_ALL_FEATURES = original_flag
-            return False
+            import pytest
+
+            pytest.skip(f"Not enough data: {len(data)} samples")
 
         # Train voting ensemble
         print(f"\n🤖 Training Voting Ensemble...")
@@ -110,17 +107,15 @@ def test_voting_ensemble_training():
         trading_module.USE_ALL_FEATURES = original_flag
 
         # Success if F1 > 0.65
-        success = metrics["f1"] > 0.65
-        print(f"\n{'✅ PASS' if success else '❌ FAIL'}: F1 Score {'>' if success else '<='} 0.65")
-
-        return success
+        assert metrics["f1"] > 0.65, f"F1 Score {metrics['f1']:.3f} <= 0.65"
+        print(f"\n✅ PASS: F1 Score > 0.65")
 
     except Exception as e:
         print(f"❌ FAILED: {e}")
         import traceback
 
         traceback.print_exc()
-        return False
+        raise
 
 
 def test_stacking_ensemble():
@@ -145,7 +140,9 @@ def test_stacking_ensemble():
         if len(data) < 100:
             print(f"⚠️  Warning: Only {len(data)} samples, skipping stacking test")
             trading_module.USE_ALL_FEATURES = original_flag
-            return True  # Don't fail, just skip
+            import pytest
+
+            pytest.skip(f"Not enough data: {len(data)} samples")
 
         # Train stacking ensemble
         print(f"\n🤖 Training Stacking Ensemble...")
@@ -160,12 +157,15 @@ def test_stacking_ensemble():
 
         trading_module.USE_ALL_FEATURES = original_flag
 
+        assert model is not None
+        assert metrics["f1"] > 0.0
         print(f"\n✅ Stacking ensemble trained successfully")
-        return True
 
     except Exception as e:
         print(f"⚠️  Stacking test skipped: {e}")
-        return True  # Don't fail the whole suite
+        import pytest
+
+        pytest.skip(f"Stacking test failed: {e}")
 
 
 def test_model_comparison():
@@ -191,7 +191,9 @@ def test_model_comparison():
         if len(data) < 100:
             print(f"⚠️  Not enough data for comparison")
             trading_module.USE_ALL_FEATURES = original_flag
-            return False
+            import pytest
+
+            pytest.skip(f"Not enough data: {len(data)} samples")
 
         # Test 1: Single XGBoost
         print(f"\n1️⃣  Single Model (XGBoost)")
@@ -230,14 +232,16 @@ def test_model_comparison():
 
         trading_module.USE_ALL_FEATURES = original_flag
 
-        return True
+        assert model_single is not None
+        assert model_ensemble is not None
+        print(f"\n✅ Model comparison completed")
 
     except Exception as e:
         print(f"❌ FAILED: {e}")
         import traceback
 
         traceback.print_exc()
-        return False
+        raise
 
 
 def main():

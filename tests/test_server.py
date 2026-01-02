@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 def client():
     """Create test client - uses real app with loaded model"""
     # Import app (it will use the real MODEL or None if not found)
-    from trading_fun.server import app
+    from src.trading_engine.api.server import app
 
     with TestClient(app) as test_client:
         yield test_client
