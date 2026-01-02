@@ -428,9 +428,27 @@ async def lifespan(app_instance: FastAPI):
     except Exception as e:
         logger.error(f"Failed to start retraining scheduler: {e}", exc_info=True)
 
+    # Start background jobs for pre-computation
+    try:
+        from .performance import start_background_jobs
+
+        start_background_jobs()
+        logger.info("Background jobs started successfully")
+    except Exception as e:
+        logger.error(f"Failed to start background jobs: {e}", exc_info=True)
+
     yield
     # Shutdown
     logger.info("Application shutting down")
+    
+    # Stop background jobs gracefully
+    try:
+        from .performance import stop_background_jobs
+
+        stop_background_jobs()
+        logger.info("Background jobs stopped")
+    except Exception as e:
+        logger.error(f"Failed to stop background jobs: {e}", exc_info=True)
 
 
 # Assign lifespan to app
@@ -610,10 +628,20 @@ def metrics():
         except Exception as e:
             logger.warning(f"Failed to get parallel processing stats: {e}")
 
+        # Get background job stats
+        job_stats = {}
+        try:
+            from .performance import get_job_stats
+
+            job_stats = get_job_stats()
+        except Exception as e:
+            logger.warning(f"Failed to get background job stats: {e}")
+
         return {
             "cache_stats": cache.get_stats(),
             "feature_cache_stats": feature_cache_stats,
             "parallel_processing_stats": parallel_stats,  # NEW: Parallel processing metrics
+            "background_jobs_stats": job_stats,  # NEW: Background job metrics
             "rate_limiter_stats": rate_limiter.get_stats(),
             "websocket_stats": ws_manager.get_stats(),
             "model_info": {"path": LOADED_MODEL_PATH, "loaded": MODEL is not None},
@@ -729,6 +757,22 @@ def ranking(tickers: str = "", country: str = "Global", use_parallel: bool = Tru
         chosen = get_country_stocks(country)
     else:
         chosen = [t.strip().upper() for t in tickers.split(",") if t.strip()]
+
+    # TRY CACHE FIRST (background job may have pre-computed this)
+    try:
+        cache_key = f"ranking:{country}"
+        cached_result = cache.get(cache_key)
+        if cached_result is not None and not tickers.strip():
+            # Only use cache if using default country stocks (not custom tickers)
+            duration = time.time() - start_time
+            logger.info(f"✨ Returning cached ranking for {country} ({duration:.3f}s)")
+            return {
+                "ranking": cached_result,
+                "processing_mode": "cached",
+                "duration_seconds": round(duration, 3)
+            }
+    except Exception as e:
+        logger.warning(f"Cache check failed: {e}")
 
     # PARALLEL PROCESSING (Week 1 optimization)
     if use_parallel:

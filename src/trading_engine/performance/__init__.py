@@ -9,6 +9,12 @@ from .feature_cache import (
     init_feature_cache,
 )
 from .parallel import get_parallel_processor, parallel_stock_ranking
+from .background_jobs import (
+    start_background_jobs,
+    stop_background_jobs,
+    get_job_stats,
+    trigger_job_now,
+)
 
 __all__ = [
     "init_feature_cache",
@@ -19,4 +25,8 @@ __all__ = [
     "get_cache_stats",
     "get_parallel_processor",
     "parallel_stock_ranking",
+    "start_background_jobs",
+    "stop_background_jobs",
+    "get_job_stats",
+    "trigger_job_now",
 ]
