@@ -32,8 +32,9 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
 
-  // Popular stocks including Swiss companies
+  // Popular stocks, commodities, and Swiss companies
   const popularStocks = [
+    // US Tech Stocks
     { ticker: 'AAPL', name: 'Apple Inc.' },
     { ticker: 'MSFT', name: 'Microsoft Corporation' },
     { ticker: 'GOOGL', name: 'Alphabet Inc.' },
@@ -41,6 +42,17 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
     { ticker: 'TSLA', name: 'Tesla Inc.' },
     { ticker: 'NVDA', name: 'NVIDIA Corporation' },
     { ticker: 'META', name: 'Meta Platforms Inc.' },
+    // Commodities / Rohstoffe
+    { ticker: 'GC=F', name: 'Gold Futures' },
+    { ticker: 'SI=F', name: 'Silver Futures (Silber)' },
+    { ticker: 'CL=F', name: 'Crude Oil Futures (Rohöl)' },
+    { ticker: 'NG=F', name: 'Natural Gas Futures (Erdgas)' },
+    { ticker: 'HG=F', name: 'Copper Futures (Kupfer)' },
+    { ticker: 'PL=F', name: 'Platinum Futures (Platin)' },
+    { ticker: 'PA=F', name: 'Palladium Futures' },
+    { ticker: 'ZC=F', name: 'Corn Futures (Mais)' },
+    { ticker: 'ZW=F', name: 'Wheat Futures (Weizen)' },
+    { ticker: 'CT=F', name: 'Cotton Futures (Baumwolle)' },
     // Swiss companies
     { ticker: 'NESN.SW', name: 'Nestlé (Swiss)' },
     { ticker: 'NOVN.SW', name: 'Novartis (Swiss)' },
@@ -52,7 +64,6 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
     { ticker: 'SCMN.SW', name: 'Swisscom (Swiss)' },
     { ticker: 'SLHN.SW', name: 'Swiss Life (Swiss)' },
     { ticker: 'LONN.SW', name: 'Lonza (Swiss)' },
-    // Note: HOLCIM might be under HOLN.SW
     { ticker: 'HOLN.SW', name: 'Holcim (Swiss)' },
   ];
 
