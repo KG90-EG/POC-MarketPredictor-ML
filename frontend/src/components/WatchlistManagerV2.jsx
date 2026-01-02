@@ -29,6 +29,32 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { id, name }
   const [editingWatchlist, setEditingWatchlist] = useState(null); // { id, name }
   const [editName, setEditName] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+
+  // Popular stocks including Swiss companies
+  const popularStocks = [
+    { ticker: 'AAPL', name: 'Apple Inc.' },
+    { ticker: 'MSFT', name: 'Microsoft Corporation' },
+    { ticker: 'GOOGL', name: 'Alphabet Inc.' },
+    { ticker: 'AMZN', name: 'Amazon.com Inc.' },
+    { ticker: 'TSLA', name: 'Tesla Inc.' },
+    { ticker: 'NVDA', name: 'NVIDIA Corporation' },
+    { ticker: 'META', name: 'Meta Platforms Inc.' },
+    // Swiss companies
+    { ticker: 'NESN.SW', name: 'Nestlé (Swiss)' },
+    { ticker: 'NOVN.SW', name: 'Novartis (Swiss)' },
+    { ticker: 'ROG.SW', name: 'Roche (Swiss)' },
+    { ticker: 'ABBN.SW', name: 'ABB (Swiss)' },
+    { ticker: 'UBSG.SW', name: 'UBS Group (Swiss)' },
+    { ticker: 'CSGN.SW', name: 'Credit Suisse (Swiss)' },
+    { ticker: 'ZURN.SW', name: 'Zurich Insurance (Swiss)' },
+    { ticker: 'SCMN.SW', name: 'Swisscom (Swiss)' },
+    { ticker: 'SLHN.SW', name: 'Swiss Life (Swiss)' },
+    { ticker: 'LONN.SW', name: 'Lonza (Swiss)' },
+    // Note: HOLCIM might be under HOLN.SW
+    { ticker: 'HOLN.SW', name: 'Holcim (Swiss)' },
+  ];
 
   useEffect(() => {
     loadWatchlists();
@@ -153,6 +179,26 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
   const cancelEditing = () => {
     setEditingWatchlist(null);
     setEditName('');
+  };
+
+  const handleTickerInput = (value) => {
+    setNewStockTicker(value);
+
+    if (value.length >= 1) {
+      const filtered = popularStocks.filter(stock =>
+        stock.ticker.toLowerCase().includes(value.toLowerCase()) ||
+        stock.name.toLowerCase().includes(value.toLowerCase())
+      );
+      setSuggestions(filtered.slice(0, 8)); // Show max 8 suggestions
+      setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSelectSuggestion = (ticker) => {
+    setNewStockTicker(ticker);
+    setShowSuggestions(false);
   };
 
   const handleAddStock = async (e) => {
@@ -382,14 +428,33 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
           {/* Add Stock Form - Expanded */}
           <form className="add-stock-form-expanded" onSubmit={handleAddStock}>
             <div className="form-row">
-              <input
-                type="text"
-                placeholder="Stock ticker (e.g., AAPL, TSLA, UBS)"
-                value={newStockTicker}
-                onChange={(e) => setNewStockTicker(e.target.value)}
-                required
-                className="input-ticker"
-              />
+              <div className="autocomplete-wrapper">
+                <input
+                  type="text"
+                  placeholder="🔍 Search stock (e.g., AAPL, HOLCIM, UBS)"
+                  value={newStockTicker}
+                  onChange={(e) => handleTickerInput(e.target.value)}
+                  onFocus={(e) => e.target.value && setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  required
+                  className="input-ticker"
+                  autoComplete="off"
+                />
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="suggestions-dropdown">
+                    {suggestions.map((stock) => (
+                      <div
+                        key={stock.ticker}
+                        className="suggestion-item"
+                        onClick={() => handleSelectSuggestion(stock.ticker)}
+                      >
+                        <span className="suggestion-ticker">{stock.ticker}</span>
+                        <span className="suggestion-name">{stock.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               <input
                 type="number"
                 step="0.01"
