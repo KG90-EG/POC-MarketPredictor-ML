@@ -22,6 +22,8 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newWatchlistName, setNewWatchlistName] = useState('');
   const [newStockTicker, setNewStockTicker] = useState('');
+  const [newStockNotes, setNewStockNotes] = useState('');
+  const [newStockAlert, setNewStockAlert] = useState('');
   const [stockData, setStockData] = useState({});
   const [loadingStocks, setLoadingStocks] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { id, name }
@@ -377,18 +379,38 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
             <span className="item-count">{selectedWatchlist.items?.length || 0} items</span>
           </div>
 
-          {/* Add Stock Form */}
-          <form className="add-stock-form-compact" onSubmit={handleAddStock}>
-            <input
-              type="text"
-              placeholder="Add stock (e.g., AAPL, TSLA, MSFT)"
-              value={newStockTicker}
-              onChange={(e) => setNewStockTicker(e.target.value)}
-              required
-            />
-            <button type="submit" disabled={loading}>
-              + Add
-            </button>
+          {/* Add Stock Form - Expanded */}
+          <form className="add-stock-form-expanded" onSubmit={handleAddStock}>
+            <div className="form-row">
+              <input
+                type="text"
+                placeholder="Stock ticker (e.g., AAPL, TSLA, UBS)"
+                value={newStockTicker}
+                onChange={(e) => setNewStockTicker(e.target.value)}
+                required
+                className="input-ticker"
+              />
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Price alert (optional)"
+                value={newStockAlert}
+                onChange={(e) => setNewStockAlert(e.target.value)}
+                className="input-alert"
+              />
+            </div>
+            <div className="form-row">
+              <input
+                type="text"
+                placeholder="📝 Personal notes (e.g., Buy if drops below $150, Strong fundamentals)"
+                value={newStockNotes}
+                onChange={(e) => setNewStockNotes(e.target.value)}
+                className="input-notes"
+              />
+              <button type="submit" disabled={loading} className="btn-add-stock">
+                ➕ Add Stock
+              </button>
+            </div>
           </form>
 
           {/* Stocks List */}
@@ -454,6 +476,32 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
                           />
                         </div>
                         <div className="confidence-text">{(prob * 100).toFixed(0)}% confidence</div>
+                      </div>
+                    )}
+
+                    {/* Price Alert */}
+                    {item.price_alert && (
+                      <div className="alert-section">
+                        <div className="alert-label">🔔 Alert at:</div>
+                        <div className="alert-price">${item.price_alert.toFixed(2)}</div>
+                        {price && (
+                          <div className={`alert-status ${
+                            (item.price_alert >= price) ? 'below' : 'above'
+                          }`}>
+                            {(item.price_alert >= price)
+                              ? `📉 ${((item.price_alert - price) / price * 100).toFixed(1)}% below alert`
+                              : `📈 ${((price - item.price_alert) / item.price_alert * 100).toFixed(1)}% above alert`
+                            }
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Notes Section */}
+                    {item.notes && (
+                      <div className="notes-section">
+                        <div className="notes-label">📝 Note:</div>
+                        <div className="notes-text">{item.notes}</div>
                       </div>
                     )}
                   </div>
