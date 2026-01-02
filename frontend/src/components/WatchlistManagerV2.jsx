@@ -208,13 +208,23 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
     setLoading(true);
     setError(null);
     try {
-      await addStockToWatchlist(userId, selectedWatchlist.id, {
+      const stockData = {
         ticker: newStockTicker.toUpperCase(),
-        notes: '',
+        notes: newStockNotes.trim() || '',
         asset_type: 'stock'
-      });
+      };
 
+      // Add price_alert only if provided
+      if (newStockAlert && parseFloat(newStockAlert) > 0) {
+        stockData.price_alert = parseFloat(newStockAlert);
+      }
+
+      await addStockToWatchlist(userId, selectedWatchlist.id, stockData);
+
+      // Clear form
       setNewStockTicker('');
+      setNewStockNotes('');
+      setNewStockAlert('');
 
       // Refresh watchlist
       const response = await api.getWatchlist(userId, selectedWatchlist.id);
