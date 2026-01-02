@@ -12,6 +12,7 @@
 ### Current State Analysis
 
 **Strengths** ✅:
+
 - Solid FastAPI foundation with good API structure
 - Working ML pipeline (XGBoost/RandomForest)
 - Technical indicators correctly implemented (RSI, MACD, Bollinger, Momentum)
@@ -20,6 +21,7 @@
 - Prometheus metrics integration
 
 **Critical Gaps** ⚠️:
+
 - **Static Model**: Model trained once, never updated with new data
 - **Limited Features**: Only 9 technical indicators, missing fundamental data
 - **No Ensemble Learning**: Single model, no voting/stacking
@@ -36,6 +38,7 @@
 ### 1. Machine Learning Pipeline (Score: 5/10)
 
 #### Current Implementation
+
 ```python
 # Current features (9 total)
 features = [
@@ -59,12 +62,14 @@ model.fit(X_train, y_train)
 #### Issues Identified
 
 **❌ Static Model Problem**:
+
 - Model trained once during development
 - Never retrains on new market data
 - Performance degrades over time (concept drift)
 - No mechanism to detect when model becomes stale
 
 **❌ Limited Feature Set**:
+
 - Only technical indicators (price/volume based)
 - Missing fundamental data (P/E, EPS, Revenue growth)
 - No macroeconomic indicators (interest rates, GDP)
@@ -72,12 +77,14 @@ model.fit(X_train, y_train)
 - No alternative data (satellite imagery, web traffic)
 
 **❌ Binary Classification**:
+
 - Only predicts UP/DOWN
 - No multi-class (STRONG_BUY, BUY, HOLD, SELL, STRONG_SELL)
 - No regression for price targets
 - No time horizon flexibility (only next-day prediction)
 
 **❌ No Model Ensemble**:
+
 - Single XGBoost model
 - No ensemble (Random Forest + XGBoost + LSTM)
 - No voting mechanism for more robust predictions
@@ -86,6 +93,7 @@ model.fit(X_train, y_train)
 #### Recommended Improvements
 
 **🎯 Priority 1: Online Learning (Auto-Retrain)**
+
 ```python
 # Implement scheduled retraining
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -93,13 +101,13 @@ from apscheduler.schedulers.background import BackgroundScheduler
 def retrain_model_daily():
     """Retrain model with latest data every night"""
     logger.info("Starting model retrain...")
-    
+
     # Fetch last 5 years of data
     data = build_dataset(DEFAULT_STOCKS, period="5y")
-    
+
     # Train with latest data
     model, metrics = train_model(data, model_type="xgb")
-    
+
     # Validate performance
     if metrics['f1_score'] > 0.65:
         # Save new model
@@ -114,12 +122,13 @@ scheduler.start()
 ```
 
 **🎯 Priority 2: Expanded Feature Set**
+
 ```python
 # Add 30+ new features
 def compute_advanced_features(ticker: str) -> pd.DataFrame:
     """Compute comprehensive feature set"""
     df = yf.download(ticker, period="2y")
-    
+
     # TECHNICAL (current: 9, target: 20)
     df['SMA_10'] = df['Close'].rolling(10).mean()
     df['SMA_20'] = df['Close'].rolling(20).mean()
@@ -131,7 +140,7 @@ def compute_advanced_features(ticker: str) -> pd.DataFrame:
     df['OBV'] = compute_obv(df)  # On-Balance Volume
     df['VWAP'] = compute_vwap(df)  # Volume Weighted Average Price
     df['Williams_R'] = compute_williams_r(df)
-    
+
     # FUNDAMENTAL (new: 10 features)
     stock = yf.Ticker(ticker)
     info = stock.info
@@ -145,25 +154,26 @@ def compute_advanced_features(ticker: str) -> pd.DataFrame:
     df['Earnings_Growth'] = info.get('earningsGrowth', 0)
     df['Profit_Margin'] = info.get('profitMargins', 0)
     df['Book_Value'] = info.get('bookValue', 0)
-    
+
     # SENTIMENT (new: 5 features)
     df['News_Sentiment'] = get_news_sentiment(ticker)  # FinBERT
     df['Reddit_Buzz'] = get_reddit_mentions(ticker)
     df['Twitter_Sentiment'] = get_twitter_sentiment(ticker)
     df['Analyst_Rating'] = get_analyst_consensus(ticker)
     df['Insider_Trades'] = get_insider_trading_signal(ticker)
-    
+
     # MACRO (new: 5 features)
     df['VIX'] = get_vix_index()  # Fear index
     df['10Y_Yield'] = get_treasury_yield()
     df['USD_Index'] = get_dollar_strength()
     df['Sector_Performance'] = get_sector_momentum(ticker)
     df['Market_Breadth'] = get_advance_decline_ratio()
-    
+
     return df  # Total: 40+ features
 ```
 
 **🎯 Priority 3: Ensemble Model**
+
 ```python
 from sklearn.ensemble import VotingClassifier
 from xgboost import XGBClassifier
@@ -172,7 +182,7 @@ from tensorflow.keras.models import Sequential  # LSTM
 
 def create_ensemble_model():
     """Create ensemble of multiple models"""
-    
+
     # Model 1: XGBoost (best for tabular data)
     xgb = XGBClassifier(
         max_depth=6,
@@ -181,21 +191,21 @@ def create_ensemble_model():
         subsample=0.8,
         colsample_bytree=0.8
     )
-    
+
     # Model 2: Random Forest (robust to overfitting)
     rf = RandomForestClassifier(
         n_estimators=200,
         max_depth=10,
         min_samples_split=20
     )
-    
+
     # Model 3: Gradient Boosting
     gb = GradientBoostingClassifier(
         n_estimators=150,
         learning_rate=0.1,
         max_depth=5
     )
-    
+
     # Create voting ensemble
     ensemble = VotingClassifier(
         estimators=[
@@ -206,7 +216,7 @@ def create_ensemble_model():
         voting='soft',  # Use probability averaging
         weights=[2, 1, 1]  # XGBoost gets 2x weight
     )
-    
+
     return ensemble
 
 # Also add LSTM for time series
@@ -225,6 +235,7 @@ def create_lstm_model(sequence_length=60):
 ```
 
 **🎯 Priority 4: Multi-Horizon Predictions**
+
 ```python
 def predict_multi_horizon(ticker: str):
     """Predict multiple time horizons"""
@@ -244,7 +255,7 @@ def predict_horizon(ticker: str, days: int):
         model = models['medium_term']  # Random Forest
     else:
         model = models['long_term']  # Fundamentals-heavy model
-    
+
     return model.predict(features)
 ```
 
@@ -253,6 +264,7 @@ def predict_horizon(ticker: str, days: int):
 ### 2. Feature Engineering (Score: 4/10)
 
 #### Current State
+
 - 9 basic technical indicators
 - No feature selection/importance analysis
 - No feature interaction terms
@@ -261,6 +273,7 @@ def predict_horizon(ticker: str, days: int):
 #### Issues
 
 **❌ Missing Advanced Technicals**:
+
 - No ATR (Average True Range) - volatility
 - No ADX (Average Directional Index) - trend strength
 - No Stochastic Oscillator
@@ -270,6 +283,7 @@ def predict_horizon(ticker: str, days: int):
 - No Ichimoku Cloud components
 
 **❌ No Fundamental Data**:
+
 - P/E, PEG ratios
 - Earnings growth, revenue growth
 - Debt ratios, current ratio
@@ -277,12 +291,14 @@ def predict_horizon(ticker: str, days: int):
 - Book value, cash flow
 
 **❌ No Sentiment Analysis**:
+
 - News sentiment (FinBERT, VADER)
 - Social media buzz (Reddit WSB, Twitter)
 - Analyst ratings aggregation
 - Insider trading signals
 
 **❌ No Feature Engineering**:
+
 - No feature interactions (RSI * Momentum)
 - No polynomial features
 - No feature scaling (different ranges)
@@ -291,6 +307,7 @@ def predict_horizon(ticker: str, days: int):
 #### Recommended Improvements
 
 **🎯 Add Technical Indicators**
+
 ```python
 def compute_atr(df, period=14):
     """Average True Range - volatility measure"""
@@ -311,72 +328,74 @@ def compute_obv(df):
 ```
 
 **🎯 Add Sentiment Analysis**
+
 ```python
 from transformers import pipeline
 import praw  # Reddit API
 
 # FinBERT for financial news sentiment
-sentiment_pipeline = pipeline("sentiment-analysis", 
+sentiment_pipeline = pipeline("sentiment-analysis",
                              model="ProsusAI/finbert")
 
 def get_news_sentiment(ticker: str) -> float:
     """Get aggregated news sentiment score"""
     # Fetch recent news
     news = fetch_news(ticker, days=7)
-    
+
     # Analyze sentiment
     sentiments = []
     for article in news:
         result = sentiment_pipeline(article['headline'])[0]
         score = result['score'] if result['label'] == 'positive' else -result['score']
         sentiments.append(score)
-    
+
     return np.mean(sentiments) if sentiments else 0.0
 
 def get_reddit_mentions(ticker: str) -> int:
     """Count Reddit mentions in wallstreetbets"""
     reddit = praw.Reddit(...)
     subreddit = reddit.subreddit('wallstreetbets')
-    
+
     count = 0
     for submission in subreddit.hot(limit=100):
         if ticker in submission.title or ticker in submission.selftext:
             count += submission.score  # Weighted by upvotes
-    
+
     return count
 ```
 
 **🎯 Feature Selection & Engineering**
+
 ```python
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.preprocessing import StandardScaler, PolynomialFeatures
 
 def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     """Advanced feature engineering"""
-    
+
     # 1. Feature interactions
     df['RSI_MACD'] = df['RSI'] * df['MACD']
     df['Volatility_Volume'] = df['Volatility'] * df['Volume']
     df['Price_to_SMA50'] = df['Close'] / df['SMA50']
-    
+
     # 2. Polynomial features (degree 2)
     poly = PolynomialFeatures(degree=2, include_bias=False)
     key_features = df[['RSI', 'MACD', 'Volatility']]
     poly_features = poly.fit_transform(key_features)
-    
+
     # 3. Time-based features
     df['Day_of_Week'] = df.index.dayofweek
     df['Month'] = df.index.month
     df['Quarter'] = df.index.quarter
-    
+
     # 4. Feature scaling
     scaler = StandardScaler()
     scaled_features = scaler.fit_transform(df[numeric_columns])
-    
+
     # 5. Feature selection (top K)
     selector = SelectKBest(f_classif, k=30)
     selected_features = selector.fit_transform(df[all_features], df['Target'])
-    
+
     return df
 ```
 
@@ -385,6 +404,7 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
 ### 3. Model Training & Evaluation (Score: 5/10)
 
 #### Current State
+
 - Single train/test split (80/20)
 - Basic metrics (accuracy, F1)
 - No cross-validation
@@ -394,12 +414,14 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
 #### Issues
 
 **❌ Weak Validation Strategy**:
+
 - Single 80/20 split can be lucky/unlucky
 - No time-series cross-validation
 - No walk-forward validation
 - Doesn't respect temporal order
 
 **❌ Limited Metrics**:
+
 - Only accuracy & F1 score
 - Missing: Precision, Recall, AUC-ROC
 - No profit-based metrics
@@ -407,12 +429,14 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
 - No calibration curves
 
 **❌ No Hyperparameter Tuning**:
+
 - Hardcoded hyperparameters
 - No grid search, random search
 - No Bayesian optimization
 - Likely suboptimal performance
 
 **❌ No Model Versioning**:
+
 - Only one model file saved
 - Can't rollback to previous version
 - No A/B testing of models
@@ -421,48 +445,50 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
 #### Recommended Improvements
 
 **🎯 Time-Series Cross-Validation**
+
 ```python
 from sklearn.model_selection import TimeSeriesSplit
 
 def train_with_tscv(X, y, n_splits=5):
     """Train with time-series cross-validation"""
     tscv = TimeSeriesSplit(n_splits=n_splits)
-    
+
     cv_scores = []
     for train_idx, val_idx in tscv.split(X):
         X_train, X_val = X[train_idx], X[val_idx]
         y_train, y_val = y[train_idx], y[val_idx]
-        
+
         model = XGBClassifier(...)
         model.fit(X_train, y_train)
-        
+
         score = model.score(X_val, y_val)
         cv_scores.append(score)
-    
+
     print(f"CV Scores: {cv_scores}")
     print(f"Mean: {np.mean(cv_scores):.3f} (+/- {np.std(cv_scores):.3f})")
-    
+
     return np.mean(cv_scores)
 
 def walk_forward_validation(df, train_size=1000, step=100):
     """Walk-forward validation (realistic for trading)"""
     results = []
-    
+
     for i in range(0, len(df) - train_size, step):
         train_data = df[i:i+train_size]
         test_data = df[i+train_size:i+train_size+step]
-        
+
         model = train_model(train_data)
         predictions = model.predict(test_data)
-        
+
         # Calculate trading performance
         pnl = calculate_strategy_pnl(predictions, test_data)
         results.append(pnl)
-    
+
     return results
 ```
 
 **🎯 Comprehensive Metrics**
+
 ```python
 from sklearn.metrics import (
     classification_report, confusion_matrix,
@@ -471,27 +497,27 @@ from sklearn.metrics import (
 
 def evaluate_model_comprehensive(model, X_test, y_test, y_pred_proba):
     """Complete model evaluation"""
-    
+
     y_pred = (y_pred_proba[:, 1] > 0.5).astype(int)
-    
+
     # Classification metrics
     print(classification_report(y_test, y_pred))
     print(f"AUC-ROC: {roc_auc_score(y_test, y_pred_proba[:, 1]):.3f}")
-    
+
     # Confusion matrix
     cm = confusion_matrix(y_test, y_pred)
     print(f"Confusion Matrix:\n{cm}")
-    
+
     # Trading-specific metrics
     trading_metrics = calculate_trading_metrics(y_pred, y_test, prices)
     print(f"Sharpe Ratio: {trading_metrics['sharpe']:.2f}")
     print(f"Max Drawdown: {trading_metrics['max_drawdown']:.2%}")
     print(f"Win Rate: {trading_metrics['win_rate']:.2%}")
     print(f"Profit Factor: {trading_metrics['profit_factor']:.2f}")
-    
+
     # Calibration curve
     plot_calibration_curve(y_test, y_pred_proba[:, 1])
-    
+
     return trading_metrics
 
 def calculate_trading_metrics(predictions, actuals, prices):
@@ -500,26 +526,26 @@ def calculate_trading_metrics(predictions, actuals, prices):
     positions = predictions  # 1 = long, 0 = flat
     returns = np.diff(prices) / prices[:-1]
     strategy_returns = positions[:-1] * returns
-    
+
     # Sharpe ratio (annualized)
     sharpe = np.sqrt(252) * np.mean(strategy_returns) / np.std(strategy_returns)
-    
+
     # Maximum drawdown
     cumulative = np.cumprod(1 + strategy_returns)
     running_max = np.maximum.accumulate(cumulative)
     drawdown = (cumulative - running_max) / running_max
     max_drawdown = np.min(drawdown)
-    
+
     # Win rate
     wins = np.sum(strategy_returns > 0)
     total_trades = np.sum(positions > 0)
     win_rate = wins / total_trades if total_trades > 0 else 0
-    
+
     # Profit factor
     gross_profit = np.sum(strategy_returns[strategy_returns > 0])
     gross_loss = abs(np.sum(strategy_returns[strategy_returns < 0]))
     profit_factor = gross_profit / gross_loss if gross_loss > 0 else 0
-    
+
     return {
         'sharpe': sharpe,
         'max_drawdown': max_drawdown,
@@ -530,6 +556,7 @@ def calculate_trading_metrics(predictions, actuals, prices):
 ```
 
 **🎯 Hyperparameter Tuning**
+
 ```python
 from optuna import create_study
 
@@ -544,10 +571,10 @@ def objective(trial):
         'min_child_weight': trial.suggest_int('min_child_weight', 1, 7),
         'gamma': trial.suggest_float('gamma', 0, 0.5)
     }
-    
+
     model = XGBClassifier(**params)
     score = train_with_tscv(X, y, model)
-    
+
     return score
 
 # Run optimization
@@ -559,25 +586,26 @@ print(f"Best score: {study.best_value:.3f}")
 ```
 
 **🎯 Model Versioning with MLflow**
+
 ```python
 import mlflow
 import mlflow.sklearn
 
 def train_and_log_model(X_train, y_train, X_test, y_test):
     """Train model and log to MLflow"""
-    
+
     with mlflow.start_run():
         # Train model
         model = XGBClassifier(**best_params)
         model.fit(X_train, y_train)
-        
+
         # Evaluate
         y_pred = model.predict(X_test)
         metrics = evaluate_model_comprehensive(model, X_test, y_test, y_pred)
-        
+
         # Log parameters
         mlflow.log_params(best_params)
-        
+
         # Log metrics
         mlflow.log_metrics({
             'f1_score': metrics['f1'],
@@ -585,14 +613,14 @@ def train_and_log_model(X_train, y_train, X_test, y_test):
             'max_drawdown': metrics['max_drawdown'],
             'win_rate': metrics['win_rate']
         })
-        
+
         # Log model
         mlflow.sklearn.log_model(model, "model")
-        
+
         # Log artifacts
         mlflow.log_artifact("feature_importance.png")
         mlflow.log_artifact("confusion_matrix.png")
-    
+
     return model
 
 # Load best model from MLflow
@@ -600,7 +628,7 @@ def load_best_model():
     """Load highest Sharpe ratio model from MLflow"""
     client = mlflow.tracking.MlflowClient()
     experiment = client.get_experiment_by_name("Stock Prediction")
-    runs = client.search_runs(experiment.experiment_id, 
+    runs = client.search_runs(experiment.experiment_id,
                               order_by=["metrics.sharpe_ratio DESC"],
                               max_results=1)
     best_run = runs[0]
@@ -613,6 +641,7 @@ def load_best_model():
 ### 4. Data Pipeline & Infrastructure (Score: 6/10)
 
 #### Current State
+
 - YFinance for stock data ✅
 - CoinGecko for crypto data ✅
 - Basic caching with TTL ✅
@@ -621,22 +650,26 @@ def load_best_model():
 #### Issues
 
 **❌ No Data Validation**:
+
 - Doesn't check for missing data
 - No outlier detection
 - No data quality checks
 - Could train on corrupted data
 
 **❌ No Data Versioning**:
+
 - Can't reproduce training runs
 - No data snapshots
 - Can't debug "why did model change?"
 
 **❌ Limited Data Sources**:
+
 - Only YFinance (single point of failure)
 - No fundamental data sources (Financial Modeling Prep, Alpha Vantage)
 - No alternative data (Quiver Quantitative, etc.)
 
 **❌ No Data Monitoring**:
+
 - No alerts for stale data
 - No data drift detection
 - No schema validation
@@ -644,60 +677,62 @@ def load_best_model():
 #### Recommended Improvements
 
 **🎯 Data Validation Pipeline**
+
 ```python
 from great_expectations import DataContext
 
 def validate_stock_data(df: pd.DataFrame) -> bool:
     """Validate data quality before training"""
-    
+
     # Check for missing values
     missing_pct = df.isnull().sum() / len(df)
     if (missing_pct > 0.05).any():
         logger.warning(f"High missing data: {missing_pct[missing_pct > 0.05]}")
         return False
-    
+
     # Check for outliers (price changes > 50% in one day)
     price_changes = df['Close'].pct_change().abs()
     if (price_changes > 0.5).any():
         logger.warning(f"Suspicious price changes detected")
         return False
-    
+
     # Check for sufficient history
     if len(df) < 252:  # 1 year of trading days
         logger.warning(f"Insufficient data: only {len(df)} days")
         return False
-    
+
     # Check for data freshness
     last_date = df.index[-1]
     if (datetime.now() - last_date).days > 3:
         logger.warning(f"Stale data: last date is {last_date}")
         return False
-    
+
     return True
 
 def detect_data_drift(current_data, reference_data):
     """Detect if data distribution has changed"""
     from scipy.stats import ks_2samp
-    
+
     # Kolmogorov-Smirnov test for each feature
     for feature in features:
         stat, p_value = ks_2samp(
             current_data[feature],
             reference_data[feature]
         )
-        
+
         if p_value < 0.05:  # Significant drift
             logger.warning(f"Data drift detected in {feature}: p={p_value:.4f}")
             return True
-    
+
     return False
 ```
 
 **🎯 Multi-Source Data Aggregation**
+
 ```python
 class DataAggregator:
     """Aggregate data from multiple sources"""
-    
+
     def __init__(self):
         self.sources = {
             'yfinance': YFinanceProvider(),
@@ -705,7 +740,7 @@ class DataAggregator:
             'fmp': FinancialModelingPrepProvider(),
             'iex': IEXCloudProvider()
         }
-    
+
     def get_price_data(self, ticker: str, period: str = '5y'):
         """Get price data with fallback"""
         for source_name, source in self.sources.items():
@@ -716,9 +751,9 @@ class DataAggregator:
                     return data
             except Exception as e:
                 logger.warning(f"{source_name} failed for {ticker}: {e}")
-        
+
         raise ValueError(f"All data sources failed for {ticker}")
-    
+
     def get_fundamental_data(self, ticker: str):
         """Get fundamental data"""
         # Try Financial Modeling Prep first (best for fundamentals)
@@ -729,6 +764,7 @@ class DataAggregator:
 ```
 
 **🎯 Data Versioning with DVC**
+
 ```bash
 # Install DVC
 pip install dvc dvc-s3
@@ -754,6 +790,7 @@ dvc repro training_pipeline.dvc
 ### 5. Model Monitoring & Drift Detection (Score: 3/10)
 
 #### Current State
+
 - No monitoring ❌
 - No drift detection ❌
 - No performance tracking ❌
@@ -762,16 +799,19 @@ dvc repro training_pipeline.dvc
 #### Critical Missing Pieces
 
 **❌ No Performance Monitoring**:
+
 - Can't tell if model accuracy is degrading
 - No tracking of prediction confidence over time
 - No comparison to baseline
 
 **❌ No Drift Detection**:
+
 - Data drift (input distribution changes)
 - Concept drift (relationship between X and y changes)
 - Prediction drift (model outputs changing)
 
 **❌ No Retraining Triggers**:
+
 - Model gets stale
 - No automatic retraining
 - Manual intervention required
@@ -779,6 +819,7 @@ dvc repro training_pipeline.dvc
 #### Recommended Improvements
 
 **🎯 Model Monitoring Dashboard**
+
 ```python
 from evidently import Dashboard
 from evidently.dashboard.tabs import (
@@ -789,16 +830,16 @@ from evidently.dashboard.tabs import (
 
 def generate_monitoring_report(reference_data, current_data, predictions):
     """Generate model monitoring dashboard"""
-    
+
     dashboard = Dashboard(tabs=[
         DataDriftTab(),
         ClassificationPerformanceTab(),
         CatTargetDriftTab()
     ])
-    
+
     dashboard.calculate(reference_data, current_data)
     dashboard.save("monitoring/model_report.html")
-    
+
     # Send alerts if drift detected
     if dashboard.get_drift_status():
         send_alert("Model drift detected! Retraining recommended.")
@@ -808,53 +849,54 @@ scheduler.add_job(generate_monitoring_report, 'cron', hour=3)
 ```
 
 **🎯 Prediction Drift Detection**
+
 ```python
 def monitor_prediction_drift():
     """Monitor if model predictions are drifting"""
-    
+
     # Get recent predictions
     recent_preds = get_predictions_last_7_days()
     reference_preds = get_predictions_reference_period()
-    
+
     # Check distribution shift
     from scipy.stats import ks_2samp
     stat, p_value = ks_2samp(recent_preds, reference_preds)
-    
+
     if p_value < 0.05:
         logger.warning(f"Prediction drift detected: p={p_value:.4f}")
-        
+
         # Calculate metrics
         avg_recent = np.mean(recent_preds)
         avg_ref = np.mean(reference_preds)
-        
+
         send_alert(f"""
         🚨 PREDICTION DRIFT ALERT
-        
+
         Recent avg prediction: {avg_recent:.3f}
         Reference avg prediction: {avg_ref:.3f}
         Drift: {abs(avg_recent - avg_ref):.3f}
-        
+
         Action: Consider retraining model
         """)
 
 def monitor_actual_performance():
     """Track actual trading performance vs predictions"""
-    
+
     # Get predictions from last week
     predictions = get_predictions_with_outcomes(days=7)
-    
+
     # Calculate realized accuracy
     actual_accuracy = np.mean(predictions['correct'])
     expected_accuracy = 0.75  # Training accuracy
-    
+
     if actual_accuracy < expected_accuracy - 0.10:  # 10% drop
         send_alert(f"""
         🚨 MODEL PERFORMANCE DEGRADATION
-        
+
         Current accuracy: {actual_accuracy:.2%}
         Expected accuracy: {expected_accuracy:.2%}
         Drop: {(expected_accuracy - actual_accuracy):.2%}
-        
+
         URGENT: Model retraining required
         """)
 ```
@@ -864,6 +906,7 @@ def monitor_actual_performance():
 ### 6. Backtesting Framework (Score: 2/10)
 
 #### Current State
+
 - Paper trading simulation exists ✅
 - But no historical backtesting framework ❌
 - Can't validate strategies on past data ❌
@@ -872,17 +915,20 @@ def monitor_actual_performance():
 #### Issues
 
 **❌ No Vectorized Backtesting**:
+
 - Can't quickly test strategy on 5 years of data
 - No performance analytics
 - Can't compare strategies
 
 **❌ No Transaction Costs**:
+
 - Ignores slippage
 - Ignores commissions
 - Ignores market impact
 - Unrealistic P&L
 
 **❌ No Risk Management**:
+
 - No position sizing algorithms
 - No stop-loss/take-profit
 - No portfolio-level risk limits
@@ -891,38 +937,39 @@ def monitor_actual_performance():
 #### Recommended Improvements
 
 **🎯 Vectorized Backtesting Engine**
+
 ```python
 import backtrader as bt
 
 class MLStrategy(bt.Strategy):
     """Backtesting strategy using ML predictions"""
-    
+
     def __init__(self):
         self.model = load_model()
         self.order = None
         self.position_size = 0.10  # 10% of portfolio per trade
-    
+
     def next(self):
         """Called for each bar"""
         if self.order:
             return  # Pending order
-        
+
         # Get features for current bar
         features = self.get_current_features()
-        
+
         # Get prediction
         prob = self.model.predict_proba([features])[0][1]
-        
+
         # Trading logic
         if prob > 0.65 and not self.position:
             # BUY signal
             size = self.broker.get_cash() * self.position_size / self.data.close[0]
             self.order = self.buy(size=size)
-            
+
         elif prob < 0.35 and self.position:
             # SELL signal
             self.order = self.sell(size=self.position.size)
-    
+
     def notify_order(self, order):
         """Track order execution"""
         if order.status in [order.Completed]:
@@ -957,23 +1004,24 @@ print(f"Max Drawdown: {strategy.analyzers.drawdown.get_analysis()['max']['drawdo
 ```
 
 **🎯 Walk-Forward Optimization**
+
 ```python
 def walk_forward_optimization(df, train_window=1000, test_window=100):
     """Optimize strategy parameters using walk-forward"""
-    
+
     results = []
-    
+
     for i in range(0, len(df) - train_window - test_window, test_window):
         # Training period
         train_data = df[i:i+train_window]
-        
+
         # Optimize parameters on training data
         best_params = optimize_on_period(train_data)
-        
+
         # Test on out-of-sample data
         test_data = df[i+train_window:i+train_window+test_window]
         perf = backtest_with_params(test_data, best_params)
-        
+
         results.append({
             'period': i,
             'params': best_params,
@@ -981,15 +1029,15 @@ def walk_forward_optimization(df, train_window=1000, test_window=100):
             'return': perf['return'],
             'max_dd': perf['max_drawdown']
         })
-    
+
     # Aggregate results
     avg_sharpe = np.mean([r['sharpe'] for r in results])
     avg_return = np.mean([r['return'] for r in results])
-    
+
     print(f"Walk-Forward Results:")
     print(f"Avg Sharpe: {avg_sharpe:.2f}")
     print(f"Avg Return: {avg_return:.2%}")
-    
+
     return results
 ```
 
@@ -1000,24 +1048,28 @@ def walk_forward_optimization(df, train_window=1000, test_window=100):
 ### Phase 1: ML Pipeline Modernization (Priority 1) - 4 weeks
 
 **Week 1-2: Online Learning**
+
 - [ ] Implement daily model retraining
 - [ ] Add model versioning with MLflow
 - [ ] Create retraining pipeline
 - [ ] Add performance monitoring
 
 **Week 2-3: Feature Engineering**
+
 - [ ] Add 15 new technical indicators
 - [ ] Add 10 fundamental features
 - [ ] Add 5 sentiment features
 - [ ] Implement feature selection
 
 **Week 3-4: Ensemble Models**
+
 - [ ] Create ensemble of XGBoost + RF + GradientBoosting
 - [ ] Add LSTM for time series
 - [ ] Implement voting mechanism
 - [ ] Hyperparameter tuning with Optuna
 
 **Expected Impact**:
+
 - 🎯 Model accuracy: 75% → 82%
 - 🎯 Sharpe ratio: 1.2 → 1.8
 - 🎯 F1 score: 0.68 → 0.78
@@ -1025,24 +1077,28 @@ def walk_forward_optimization(df, train_window=1000, test_window=100):
 ### Phase 2: Backtesting & Validation (Priority 2) - 3 weeks
 
 **Week 1: Backtesting Framework**
+
 - [ ] Integrate Backtrader
 - [ ] Add transaction costs modeling
 - [ ] Implement realistic slippage
 - [ ] Create strategy analytics
 
 **Week 2: Walk-Forward Testing**
+
 - [ ] Implement walk-forward validation
 - [ ] Add parameter optimization
 - [ ] Create performance reports
 - [ ] Monte Carlo simulations
 
 **Week 3: Risk Management**
+
 - [ ] Position sizing algorithms (Kelly Criterion)
 - [ ] Stop-loss/take-profit logic
 - [ ] Portfolio correlation limits
 - [ ] Max drawdown controls
 
 **Expected Impact**:
+
 - 🎯 Realistic performance estimation
 - 🎯 50% reduction in max drawdown
 - 🎯 More stable returns
@@ -1050,18 +1106,21 @@ def walk_forward_optimization(df, train_window=1000, test_window=100):
 ### Phase 3: Monitoring & Drift Detection (Priority 3) - 2 weeks
 
 **Week 1: Monitoring Infrastructure**
+
 - [ ] Evidently AI dashboard
 - [ ] Data drift detection
 - [ ] Model drift detection
 - [ ] Prediction drift tracking
 
 **Week 2: Alerting & Auto-Remediation**
+
 - [ ] Slack/Email alerts for drift
 - [ ] Automatic retraining triggers
 - [ ] Performance degradation alerts
 - [ ] Data quality monitoring
 
 **Expected Impact**:
+
 - 🎯 Proactive issue detection
 - 🎯 Reduced model staleness
 - 🎯 Higher uptime
@@ -1069,24 +1128,28 @@ def walk_forward_optimization(df, train_window=1000, test_window=100):
 ### Phase 4: Advanced Features (Priority 4) - 3 weeks
 
 **Week 1: Sentiment Analysis**
+
 - [ ] Integrate FinBERT for news
 - [ ] Reddit WSB sentiment scraping
 - [ ] Twitter API integration
 - [ ] Analyst rating aggregation
 
 **Week 2: Alternative Data**
+
 - [ ] Insider trading signals
 - [ ] Options flow analysis
 - [ ] Short interest data
 - [ ] Satellite imagery (retail traffic)
 
 **Week 3: Multi-Asset Support**
+
 - [ ] Forex pairs
 - [ ] Commodities (oil, gold)
 - [ ] Bonds/treasuries
 - [ ] Crypto derivatives
 
 **Expected Impact**:
+
 - 🎯 Edge from alternative signals
 - 🎯 Better risk diversification
 - 🎯 More trading opportunities
@@ -1098,6 +1161,7 @@ def walk_forward_optimization(df, train_window=1000, test_window=100):
 ### Performance Metrics (12 months)
 
 **Current**:
+
 - Model Accuracy: 75%
 - Sharpe Ratio: 1.2
 - Max Drawdown: -18%
@@ -1105,6 +1169,7 @@ def walk_forward_optimization(df, train_window=1000, test_window=100):
 - Annual Return: 15%
 
 **Target (After All Phases)**:
+
 - Model Accuracy: 82% (+7%)
 - Sharpe Ratio: 2.1 (+75%)
 - Max Drawdown: -9% (-50%)
@@ -1154,23 +1219,27 @@ def walk_forward_optimization(df, train_window=1000, test_window=100):
 ## 💡 Innovation Opportunities
 
 ### 1. Reinforcement Learning for Trading
+
 - Use RL agent to learn optimal entry/exit
 - State: Market conditions + portfolio state
 - Action: Buy/Sell/Hold
 - Reward: Sharpe ratio maximization
 
 ### 2. Graph Neural Networks
+
 - Model stock relationships as graph
 - Nodes: Stocks
 - Edges: Correlations, sector relationships
 - Capture market-wide patterns
 
 ### 3. Attention Mechanisms
+
 - Transformer model for time series
 - Learn which time periods matter most
 - Better than LSTM for long sequences
 
 ### 4. Meta-Learning
+
 - Learn to adapt quickly to new market regimes
 - Few-shot learning for new stocks
 - Transfer learning across sectors
