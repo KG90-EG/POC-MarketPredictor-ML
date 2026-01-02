@@ -606,12 +606,10 @@ function AppContent() {
           </div>
         )}
       </section>
-      </ErrorBoundary>
       )}
 
       {/* Digital Assets / Crypto View */}
       {portfolioView === 'crypto' && (
-        <ErrorBoundary>
         <>
         {/* Help InfoCard for Crypto */}
         {cryptoResults.length === 0 && !cryptoLoading && (
@@ -831,8 +829,9 @@ function AppContent() {
         </section>
           )}
         </>
-        </ErrorBoundary>
-      )}      {/* Results Section - Only for stocks */}
+      )}
+
+      {/* Results Section - Only for stocks */}
       {portfolioView === 'stocks' && results.length > 0 && (
         <>
           {/* Ranked Stocks Table */}
