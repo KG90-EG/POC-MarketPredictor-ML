@@ -8,16 +8,33 @@ This module provides comprehensive feature engineering functions across 4 catego
 4. Macro/Market Features (5 features)
 
 Total: 40+ features vs original 9
+
+Performance Optimization (Week 1):
+- Feature caching with 5-minute TTL
+- LRU cache for recent tickers
+- Redis support for multi-instance deployments
 """
 
 import logging
 from typing import Dict, List, Optional
 
-import numpy as np
+import numpy as pd
 import pandas as pd
 import yfinance as yf
 
 logger = logging.getLogger(__name__)
+
+# Import caching decorator
+try:
+    from ..performance.feature_cache import cached_features
+
+    CACHING_ENABLED = True
+except ImportError:
+    # Fallback if performance module not available
+    CACHING_ENABLED = False
+
+    def cached_features(func):
+        return func
 
 
 # ============================================================================
@@ -453,9 +470,13 @@ def get_macro_features() -> Dict[str, float]:
 # ============================================================================
 
 
+@cached_features
 def add_all_features(df: pd.DataFrame, ticker: str = None) -> pd.DataFrame:
     """
     Add all 40+ features to a DataFrame with OHLCV data.
+
+    **Performance Optimized:** This function is cached with 5-minute TTL.
+    Repeated calls for the same ticker return cached results instantly.
 
     Args:
         df: DataFrame with Open, High, Low, Close, Volume columns

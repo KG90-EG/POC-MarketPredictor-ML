@@ -22,28 +22,28 @@ from fastapi.staticfiles import StaticFiles
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from pydantic import BaseModel
 
-from . import metrics as prom_metrics
-from .analytics_routes import router as analytics_router
+from .api.analytics_routes import router as analytics_router
+from .api.websocket import manager as ws_manager
 
 # Import new modules
-from .cache import cache
-from .config import config as app_config
+from .core.cache import cache
+from .core.config import config as app_config
+from .core.database import WatchlistDB
 from .crypto import get_crypto_details, get_crypto_ranking, search_crypto
-from .database import WatchlistDB
-from .logging_config import RequestLogger, setup_logging
-from .model_retraining import get_retraining_service, start_retraining_scheduler
-from .rate_limiter import RateLimiter
-from .services import HealthService, StockService, ValidationService
-from .simulation import TradingSimulation, calculate_position_size
-from .simulation_db import SimulationDB
-from .trading import (
+from .ml.model_retraining import get_retraining_service, start_retraining_scheduler
+from .ml.trading import (
     compute_bollinger,
     compute_macd,
     compute_momentum,
     compute_rsi,
     features,
 )
-from .websocket import manager as ws_manager
+from .services import HealthService, StockService, ValidationService
+from .simulation import TradingSimulation, calculate_position_size
+from .simulation_db import SimulationDB
+from .utils import metrics as prom_metrics
+from .utils.logging_config import RequestLogger, setup_logging
+from .utils.rate_limiter import RateLimiter
 
 # Load environment variables from .env file
 load_dotenv()
@@ -53,6 +53,15 @@ app_config.validate()
 
 # Setup structured logging
 logger = setup_logging(app_config.logging.log_level)
+
+# Initialize feature cache
+try:
+    from .performance import cache_warmup, init_feature_cache
+
+    feature_cache = init_feature_cache(redis_client=cache.redis_client if hasattr(cache, "redis_client") else None)
+    logger.info("Feature cache initialized for performance optimization")
+except Exception as e:
+    logger.warning(f"Feature cache initialization failed: {e}")
 
 try:
     from openai import OpenAI
@@ -401,6 +410,16 @@ async def lifespan(app_instance: FastAPI):
     )
     logger.info("Prometheus metrics initialized")
 
+    # Warm up feature cache with popular tickers
+    try:
+        from .performance import cache_warmup
+
+        popular_tickers = DEFAULT_STOCKS[:10]  # Top 10 most popular
+        cache_warmup(popular_tickers)
+        logger.info(f"Feature cache warmed up with {len(popular_tickers)} tickers")
+    except Exception as e:
+        logger.warning(f"Cache warmup failed: {e}")
+
     # Start automated model retraining scheduler
     try:
         start_retraining_scheduler()
@@ -561,7 +580,8 @@ def health():
     summary="System Metrics",
     description="""
     Get detailed system metrics including:
-    - Cache statistics (hits, misses, size)
+    - Feature cache statistics (hits, misses, hit rate)
+    - Request cache statistics
     - Rate limiter statistics
     - WebSocket connection stats
     - Model information
@@ -570,8 +590,18 @@ def health():
 def metrics():
     """Get system metrics for monitoring."""
     with RequestLogger("GET /metrics"):
+        # Get feature cache stats
+        feature_cache_stats = {}
+        try:
+            from .performance import get_cache_stats
+
+            feature_cache_stats = get_cache_stats()
+        except Exception as e:
+            logger.warning(f"Failed to get feature cache stats: {e}")
+
         return {
             "cache_stats": cache.get_stats(),
+            "feature_cache_stats": feature_cache_stats,  # NEW: Feature caching metrics
             "rate_limiter_stats": rate_limiter.get_stats(),
             "websocket_stats": ws_manager.get_stats(),
             "model_info": {"path": LOADED_MODEL_PATH, "loaded": MODEL is not None},
@@ -2029,7 +2059,7 @@ async def reset_simulation(simulation_id: int):
 
 
 # ===== Alert Endpoints =====
-from .alerts import alert_db
+from .utils.alerts import alert_db
 
 
 @app.get("/alerts", tags=["Alerts"])
