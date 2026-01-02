@@ -669,7 +669,7 @@ def predict_raw(payload: FeaturePayload):
 
 
 @app.get(
-    "/predict_ticker/{ticker}",
+    "/api/predict/{ticker}",
     tags=["Predictions"],
     summary="Predict Stock Movement",
     description="""
@@ -698,18 +698,18 @@ def predict_ticker(ticker: str):
     df["RSI"] = compute_rsi(df["Adj Close"])
     df["Volatility"] = df["Adj Close"].pct_change().rolling(30).std()
     df["Momentum_10d"] = compute_momentum(df["Adj Close"], 10)
-    macd, macd_sig = compute_macd(df["Adj Close"])
-    df["MACD"] = macd
-    df["MACD_signal"] = macd_sig
-    bb_up, bb_low = compute_bollinger(df["Adj Close"])
-    df["BB_upper"] = bb_up
-    df["BB_lower"] = bb_low
+    macd_line, macd_signal = compute_macd(df["Adj Close"])
+    df["MACD"] = macd_line
+    df["MACD_signal"] = macd_signal
+    bb_upper, bb_lower = compute_bollinger(df["Adj Close"])
+    df["BB_upper"] = bb_upper
+    df["BB_lower"] = bb_lower
     df = df.dropna()
     if df.empty:
         raise HTTPException(status_code=404, detail="No recent data for ticker")
     row = df.iloc[-1:]
     prob = MODEL.predict_proba(row[features].values)[0][1]
-    return {"prob": float(prob)}
+    return {"probability": float(prob), "prediction": int(prob > 0.5)}
 
 
 @app.get(
