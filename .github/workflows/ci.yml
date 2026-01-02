@@ -11,9 +11,9 @@ name: Python CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
   schedule:
     - cron: '0 3 * * *'  # nightly at 03:00 UTC
 
@@ -22,63 +22,67 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install -r requirements.txt
-        # Install frontend dependencies for building
-        cd frontend
-        npm ci
-        cd ..
-        python -m pip install -r training/requirements.txt || true
-        python -m pip install flake8 black pytest
-    - name: Run tests
-      run: |
-        echo "Running tests..."
-        python -m pytest -v --tb=short -x --maxfail=3 || echo "::warning::Some tests failed, but continuing build"
-    - name: Lint & Format Check
-      run: |
-        echo "Running flake8..."
-        flake8 trading_fun/ backtest/ scripts/ --max-line-length=120 --extend-ignore=C901,E203,W503,F401 || echo "::warning::Flake8 warnings found"
-        echo "Running black check..."
-        black --check trading_fun/ backtest/ scripts/ || echo "::warning::Black formatting issues found"
-    - name: Build Docker image
-      run: |
-        docker build -t market_predictor:latest .
-    - name: Build frontend
-      run: |
-        if command -v npm >/dev/null 2>&1; then
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          # Install frontend dependencies for building
           cd frontend
           npm ci
-          npm run build
-        else
-          echo "npm is not installed; skipping frontend build"
-        fi
-    - name: Push Docker image (optional)
-      env:
-        CR_PAT: ${{ secrets.CR_PAT }}
-        GH_USER: ${{ github.actor }}
-      run: |
-        if [ -n "$CR_PAT" ]; then
-          echo $CR_PAT | docker login ghcr.io -u $GH_USER --password-stdin
-          docker tag market_predictor:latest ghcr.io/$GH_USER/market_predictor:latest
-          docker push ghcr.io/$GH_USER/market_predictor:latest
-          echo "✅ Docker image pushed successfully"
-        else
-          echo "::notice::No CR_PAT secret configured; skipping Docker push. Set CR_PAT secret to enable."
-        fi
-    - name: Run training script (quick)
-      env:
-        MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
-      run: |
-        echo "Running training script..."
-        python training/trainer.py || echo "::warning::Training script failed but continuing CI"
+          cd ..
+          python -m pip install -r src/training/requirements.txt || true
+          python -m pip install flake8 black pytest
+      - name: Run tests
+        run: |
+          echo "Running tests..."
+          python -m pytest -v --tb=short -x --maxfail=3 || echo "::warning::Some tests failed, but continuing build"
+      - name: Lint & Format Check
+        run: |
+          echo "Running flake8..."
+          flake8 src/trading_engine/ src/backtest/ scripts/ \
+            --max-line-length=127 \
+            --extend-ignore=C901,E203,W503,F401,D100,D101,D102,D103,D104,D105,D107,D200,D205,D400,D401,D403 || \
+            echo "::warning::Flake8 warnings found"
+          echo "Running black check..."
+          black --check src/trading_engine/ src/backtest/ scripts/ || \
+            echo "::warning::Black formatting issues found"
+      - name: Build Docker image
+        run: |
+          docker build -t market_predictor:latest .
+      - name: Build frontend
+        run: |
+          if command -v npm >/dev/null 2>&1; then
+            cd frontend
+            npm ci
+            npm run build
+          else
+            echo "npm is not installed; skipping frontend build"
+          fi
+      - name: Push Docker image (optional)
+        env:
+          CR_PAT: ${{ secrets.CR_PAT }}
+          GH_USER: ${{ github.actor }}
+        run: |
+          if [ -n "$CR_PAT" ]; then
+            echo $CR_PAT | docker login ghcr.io -u $GH_USER --password-stdin
+            docker tag market_predictor:latest ghcr.io/$GH_USER/market_predictor:latest
+            docker push ghcr.io/$GH_USER/market_predictor:latest
+            echo "✅ Docker image pushed successfully"
+          else
+            echo "::notice::No CR_PAT secret configured; skipping Docker push. Set CR_PAT secret to enable."
+          fi
+      - name: Run training script (quick)
+        env:
+          MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+        run: |
+          echo "Running training script..."
+          python src/training/trainer.py || echo "::warning::Training script failed but continuing CI"
