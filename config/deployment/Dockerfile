@@ -6,7 +6,7 @@ RUN npm ci || true
 COPY frontend/ ./
 RUN npm run build || (mkdir -p dist && echo "Frontend build skipped; created empty dist")
 
-FROM python:3.10-slim AS backend
+FROM python:3.12-slim AS backend
 WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
