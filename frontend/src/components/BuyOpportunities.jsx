@@ -28,28 +28,38 @@ function BuyOpportunities() {
 
     try {
       // Fetch stock rankings (top stocks by ML prediction)
-      const stockResponse = await apiClient.get('/ranking?country=Global');
-      const stocks = stockResponse.data.ranking || [];
+      const stockResponse = await apiClient.post('/api/rank', {
+        market: 'global',
+        limit: 30
+      });
+      const stocks = stockResponse.data.rankings || [];
 
       // Get predictions for top stocks
       const stockPredictions = await Promise.all(
         stocks.slice(0, 30).map(async (stock) => {
           try {
-            const predRes = await apiClient.get(`/predict_ticker/${stock.ticker}`);
-            // Transform predict_ticker response to prediction format
+            const predRes = await apiClient.get(`/api/predict/${stock.ticker}`);
+            // Use the probability from the response
+            const probability = predRes.data.probability || 0.5;
             const prediction = {
-              signal: predRes.data.prediction > 0.5 ? 'BUY' : 'SELL',
-              confidence: Math.round((predRes.data.probability || 0) * 100),
-              reasoning: `Prediction probability: ${(predRes.data.probability || 0).toFixed(2)}`
+              signal: probability > 0.6 ? 'BUY' : probability < 0.4 ? 'SELL' : 'HOLD',
+              confidence: Math.round(probability * 100),
+              reasoning: `AI Confidence: ${(probability * 100).toFixed(1)}%`
             };
             return {
               ...stock,
+              ticker: stock.ticker,
+              name: stock.name || stock.ticker,
+              current_price: stock.price || 0,
               prediction
             };
           } catch (err) {
             console.error(`Failed to get prediction for ${stock.ticker}:`, err);
             return {
               ...stock,
+              ticker: stock.ticker,
+              name: stock.name || stock.ticker,
+              current_price: stock.price || 0,
               prediction: { signal: 'HOLD', confidence: 50, reasoning: 'No prediction available' }
             };
           }
