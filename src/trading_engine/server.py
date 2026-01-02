@@ -1,7 +1,8 @@
 import hashlib
 import os
-import sys
 import time
+from contextlib import asynccontextmanager
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import joblib
@@ -40,9 +41,9 @@ from .ml.trading import (
     features_legacy,
 )
 from .services import HealthService, StockService, ValidationService
-from .simulation import TradingSimulation, calculate_position_size
 from .simulation_db import SimulationDB
 from .utils import metrics as prom_metrics
+from .utils.alerts import alert_db
 from .utils.logging_config import RequestLogger, setup_logging
 from .utils.rate_limiter import RateLimiter
 
@@ -57,7 +58,7 @@ logger = setup_logging(app_config.logging.log_level)
 
 # Initialize feature cache
 try:
-    from .performance import cache_warmup, init_feature_cache
+    from .performance import init_feature_cache
 
     feature_cache = init_feature_cache(redis_client=cache.redis_client if hasattr(cache, "redis_client") else None)
     logger.info("Feature cache initialized for performance optimization")
@@ -395,10 +396,6 @@ app = FastAPI(
     openapi_url="/openapi.json",
     lifespan=None,  # Will be set after lifespan is defined
 )
-
-
-# Initialize Prometheus metrics on startup
-from contextlib import asynccontextmanager
 
 
 @asynccontextmanager
@@ -2042,6 +2039,129 @@ async def auto_trade(simulation_id: int, max_trades: int = 3):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/simulations/{simulation_id}/autopilot", tags=["Simulation"])
+async def run_autopilot(simulation_id: int, rounds: int = 3, trades_per_round: int = 3):
+    """
+    Run full auto-pilot trading session.
+
+    Executes multiple rounds of AI-driven trades automatically.
+
+    Args:
+        rounds: Number of trading rounds (default: 3)
+        trades_per_round: Max trades per round (default: 3)
+
+    Returns:
+        Summary of all executed trades and final portfolio state
+    """
+    try:
+        sim = SimulationDB.get_simulation(simulation_id)
+        if not sim:
+            raise HTTPException(status_code=404, detail="Simulation not found")
+
+        if not MODEL:
+            raise HTTPException(status_code=503, detail="ML model not loaded")
+
+        all_trades = []
+
+        for round_num in range(rounds):
+            # Get recommendations
+            stocks = DEFAULT_STOCKS[:20]
+            predictions = []
+            current_prices = {}
+
+            for ticker in stocks:
+                try:
+                    stock = yf.Ticker(ticker)
+                    hist = stock.history(period="60d")
+
+                    if len(hist) < 30:
+                        continue
+
+                    df = hist.copy()
+                    df["RSI"] = compute_rsi(df["Close"])
+                    macd_line, signal_line = compute_macd(df["Close"])
+                    df["MACD"] = macd_line
+                    df["Signal"] = signal_line
+                    bb_upper, bb_middle, bb_lower = compute_bollinger(df["Close"])
+                    df["BB_upper"] = bb_upper
+                    df["BB_middle"] = bb_middle
+                    df["BB_lower"] = bb_lower
+                    df["Momentum"] = compute_momentum(df["Close"])
+                    df.dropna(inplace=True)
+
+                    if df.empty:
+                        continue
+
+                    X = df[features].iloc[-1:].values
+                    prediction = MODEL.predict_proba(X)[0]
+                    confidence = float(max(prediction))
+                    signal = "UP" if prediction[1] > 0.5 else "DOWN"
+
+                    predictions.append({"ticker": ticker, "confidence": confidence, "signal": signal})
+                    current_prices[ticker] = float(hist["Close"].iloc[-1])
+
+                except Exception as e:
+                    logger.error(f"Error predicting {ticker}: {e}")
+
+            # Get recommendations
+            recommendations = sim.get_ai_recommendations(predictions, current_prices)
+
+            # Execute top recommendations for this round
+            for rec in recommendations[:trades_per_round]:
+                try:
+                    trade = sim.execute_trade(
+                        ticker=rec["ticker"],
+                        action=rec["action"],
+                        quantity=rec["quantity"],
+                        price=rec["price"],
+                        reason=f"Auto-pilot Round {round_num + 1}: {rec['reason']}",
+                        ml_confidence=rec["confidence"],
+                    )
+
+                    SimulationDB.save_trade(simulation_id, trade)
+                    all_trades.append({**trade, "timestamp": trade["timestamp"].isoformat(), "round": round_num + 1})
+
+                except ValueError as e:
+                    logger.warning(f"Could not execute trade for {rec['ticker']}: {e}")
+
+            # Small delay between rounds (optional)
+            if round_num < rounds - 1:
+                time.sleep(0.5)
+
+        # Save simulation state
+        SimulationDB.save_simulation(sim)
+
+        # Get final portfolio value
+        current_prices = {}
+        for ticker in sim.positions.keys():
+            try:
+                stock = yf.Ticker(ticker)
+                hist = stock.history(period="1d")
+                if not hist.empty:
+                    current_prices[ticker] = float(hist["Close"].iloc[-1])
+            except Exception as e:
+                logger.error(f"Error fetching price for {ticker}: {e}")
+
+        portfolio_value = sim.get_portfolio_value(current_prices)
+
+        return {
+            "success": True,
+            "rounds_completed": rounds,
+            "total_trades_executed": len(all_trades),
+            "trades": all_trades,
+            "final_cash": sim.cash,
+            "final_portfolio_value": portfolio_value,
+            "profit_loss": portfolio_value - sim.initial_capital,
+            "profit_loss_percent": ((portfolio_value - sim.initial_capital) / sim.initial_capital) * 100,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in autopilot: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/simulations/{simulation_id}/portfolio", tags=["Simulation"])
 async def get_portfolio(simulation_id: int):
     """
@@ -2159,7 +2279,6 @@ async def reset_simulation(simulation_id: int):
 
 
 # ===== Alert Endpoints =====
-from .utils.alerts import alert_db
 
 
 @app.get("/alerts", tags=["Alerts"])

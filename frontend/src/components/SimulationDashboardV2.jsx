@@ -23,6 +23,10 @@ function SimulationDashboardV2() {
   const [error, setError] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
 
+  // Mode toggle
+  const [mode, setMode] = useState('manual'); // 'manual' or 'autopilot'
+  const [autoPilotStatus, setAutoPilotStatus] = useState(null);
+
   // Form states
   const [newSimCapital, setNewSimCapital] = useState(10000);
   const [tradeForm, setTradeForm] = useState({
@@ -220,6 +224,47 @@ function SimulationDashboardV2() {
     }
   };
 
+  const runAutoPilot = async (rounds = 3) => {
+    if (!currentSim) {
+      setError('⚠️ No simulation loaded');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setAutoPilotStatus('🚀 Starting Auto-Pilot...');
+
+    try {
+      setAutoPilotStatus(`🤖 Running ${rounds} trading rounds...`);
+
+      const response = await apiClient.post(
+        `/api/simulations/${currentSim.simulation_id}/autopilot`,
+        null,
+        { params: { rounds, trades_per_round: 3 } }
+      );
+
+      await Promise.all([loadPortfolio(), loadTradeHistory()]);
+
+      const { total_trades_executed, profit_loss, profit_loss_percent } = response.data;
+
+      const plSign = profit_loss >= 0 ? '+' : '';
+      const plColor = profit_loss >= 0 ? '✓' : '⚠️';
+
+      setAutoPilotStatus(
+        `${plColor} Auto-Pilot completed! Executed ${total_trades_executed} trades. ` +
+        `P/L: ${plSign}${formatCurrency(profit_loss)} (${plSign}${profit_loss_percent.toFixed(2)}%)`
+      );
+
+      setError(`✓ Auto-Pilot session completed successfully!`);
+    } catch (err) {
+      const errorMsg = err.response?.data?.detail || err.message;
+      setAutoPilotStatus(null);
+      setError(`❌ Auto-Pilot failed: ${errorMsg}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const resetSimulation = async () => {
     if (!currentSim) return;
 
@@ -309,6 +354,24 @@ function SimulationDashboardV2() {
           <div className="section-header">
             <h2>📊 Trading Simulation</h2>
             <div className="header-actions">
+              {/* Mode Toggle */}
+              <div className="mode-toggle">
+                <button
+                  className={`mode-btn ${mode === 'manual' ? 'active' : ''}`}
+                  onClick={() => setMode('manual')}
+                  disabled={loading}
+                >
+                  🎮 Manual
+                </button>
+                <button
+                  className={`mode-btn ${mode === 'autopilot' ? 'active' : ''}`}
+                  onClick={() => setMode('autopilot')}
+                  disabled={loading}
+                >
+                  🤖 Auto-Pilot
+                </button>
+              </div>
+
               <button onClick={loadPortfolio} className="btn-icon" title="Refresh">
                 🔄
               </button>
@@ -370,125 +433,189 @@ function SimulationDashboardV2() {
 
           {/* Main Content Grid */}
           <div className="main-content-grid">
-            {/* AI Recommendations Section */}
-            <div className="recommendations-section">
-              <div className="card">
-                <div className="card-header">
-                  <h3>🤖 AI Recommendations</h3>
-                  <button
-                    onClick={loadRecommendations}
-                    disabled={loading}
-                    className="btn-secondary-small"
-                  >
-                    {loading ? 'Loading...' : 'Get Recommendations'}
-                  </button>
-                </div>
+            {mode === 'manual' ? (
+              <>
+                {/* AI Recommendations Section */}
+                <div className="recommendations-section">
+                  <div className="card">
+                    <div className="card-header">
+                      <h3>🤖 AI Recommendations</h3>
+                      <button
+                        onClick={loadRecommendations}
+                        disabled={loading}
+                        className="btn-secondary-small"
+                      >
+                        {loading ? 'Loading...' : 'Get Recommendations'}
+                      </button>
+                    </div>
 
-                {recommendations.length > 0 ? (
-                  <div className="recommendations-list">
-                    {recommendations.map((rec, idx) => (
-                      <div key={idx} className={`rec-card ${rec.action.toLowerCase()}`}>
-                        <div className="rec-header">
-                          <span className="rec-action-badge">{rec.action}</span>
-                          <span className="rec-ticker">{rec.ticker}</span>
-                          <span className="rec-confidence">
-                            {(rec.confidence * 100).toFixed(0)}%
-                          </span>
-                        </div>
-                        <div className="rec-reason">{rec.reason}</div>
+                    {recommendations.length > 0 ? (
+                      <div className="recommendations-list">
+                        {recommendations.map((rec, idx) => (
+                          <div key={idx} className={`rec-card ${rec.action.toLowerCase()}`}>
+                            <div className="rec-header">
+                              <span className="rec-action-badge">{rec.action}</span>
+                              <span className="rec-ticker">{rec.ticker}</span>
+                              <span className="rec-confidence">
+                                {(rec.confidence * 100).toFixed(0)}%
+                              </span>
+                            </div>
+                            <div className="rec-reason">{rec.reason}</div>
+                            <button
+                              onClick={() => executeRecommendation(rec)}
+                              className="btn-execute"
+                              disabled={loading}
+                            >
+                              Execute
+                            </button>
+                          </div>
+                        ))}
                         <button
-                          onClick={() => executeRecommendation(rec)}
-                          className="btn-execute"
+                          onClick={executeAutoTrade}
                           disabled={loading}
+                          className="btn-auto-trade"
                         >
-                          Execute
+                          {loading ? 'Executing...' : '⚡ Execute All'}
                         </button>
                       </div>
-                    ))}
-                    <button
-                      onClick={executeAutoTrade}
-                      disabled={loading}
-                      className="btn-auto-trade"
-                    >
-                      {loading ? 'Executing...' : '⚡ Execute All'}
-                    </button>
+                    ) : (
+                      <div className="empty-state-small">
+                        <p>Click "Get Recommendations" to see AI suggestions</p>
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div className="empty-state-small">
-                    <p>Click "Get Recommendations" to see AI suggestions</p>
-                  </div>
-                )}
-              </div>
-            </div>
+                </div>
 
-            {/* Quick Trade Section */}
-            <div className="trade-section">
-              <div className="card">
-                <h3>⚡ Quick Trade</h3>
-                <form onSubmit={handleManualTrade}>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Ticker</label>
-                      <input
-                        type="text"
-                        list="ticker-suggestions"
-                        value={tradeForm.ticker}
-                        onChange={(e) => setTradeForm({...tradeForm, ticker: e.target.value.toUpperCase()})}
-                        placeholder="AAPL, GOLD..."
-                        required
-                      />
-                      <datalist id="ticker-suggestions">
-                        {popularStocks.map(stock => (
-                          <option key={stock.ticker} value={stock.ticker}>
-                            {stock.name}
-                          </option>
-                        ))}
-                      </datalist>
+                {/* Quick Trade Section */}
+                <div className="trade-section">
+                  <div className="card">
+                    <h3>⚡ Quick Trade</h3>
+                    <form onSubmit={handleManualTrade}>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>Ticker</label>
+                          <input
+                            type="text"
+                            list="ticker-suggestions"
+                            value={tradeForm.ticker}
+                            onChange={(e) => setTradeForm({...tradeForm, ticker: e.target.value.toUpperCase()})}
+                            placeholder="AAPL, GOLD..."
+                            required
+                          />
+                          <datalist id="ticker-suggestions">
+                            {popularStocks.map(stock => (
+                              <option key={stock.ticker} value={stock.ticker}>
+                                {stock.name}
+                              </option>
+                            ))}
+                          </datalist>
+                        </div>
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>Action</label>
+                          <select
+                            value={tradeForm.action}
+                            onChange={(e) => setTradeForm({...tradeForm, action: e.target.value})}
+                          >
+                            <option value="BUY">Buy</option>
+                            <option value="SELL">Sell</option>
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label>Quantity</label>
+                          <input
+                            type="number"
+                            value={tradeForm.quantity}
+                            onChange={(e) => setTradeForm({...tradeForm, quantity: Number(e.target.value)})}
+                            min="1"
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Price</label>
+                        <input
+                          type="number"
+                          value={tradeForm.price}
+                          onChange={(e) => setTradeForm({...tradeForm, price: Number(e.target.value)})}
+                          step="0.01"
+                          min="0.01"
+                          required
+                        />
+                      </div>
+
+                      <button type="submit" disabled={loading} className="btn-primary">
+                        {loading ? 'Executing...' : 'Execute Trade'}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </>
+            ) : (
+              /* Auto-Pilot Mode */
+              <div className="autopilot-section">
+                <div className="card autopilot-card">
+                  <div className="autopilot-header">
+                    <h3>🤖 Auto-Pilot Trading</h3>
+                    <p>Let AI trade for you automatically. The bot will execute multiple rounds of trades based on market analysis.</p>
+                  </div>
+
+                  {autoPilotStatus && (
+                    <div className="autopilot-status">
+                      {autoPilotStatus}
                     </div>
+                  )}
 
-                    <div className="form-group">
-                      <label>Action</label>
-                      <select
-                        value={tradeForm.action}
-                        onChange={(e) => setTradeForm({...tradeForm, action: e.target.value})}
+                  <div className="autopilot-controls">
+                    <div className="autopilot-option">
+                      <button
+                        onClick={() => runAutoPilot(3)}
+                        disabled={loading}
+                        className="btn-autopilot"
                       >
-                        <option value="BUY">BUY</option>
-                        <option value="SELL">SELL</option>
-                      </select>
+                        {loading ? '🔄 Trading...' : '🚀 Start Auto-Pilot (3 Rounds)'}
+                      </button>
+                      <small>Execute ~9 AI-recommended trades across 3 rounds</small>
+                    </div>
+
+                    <div className="autopilot-option">
+                      <button
+                        onClick={() => runAutoPilot(5)}
+                        disabled={loading}
+                        className="btn-autopilot-long"
+                      >
+                        {loading ? '🔄 Trading...' : '⚡ Extended Session (5 Rounds)'}
+                      </button>
+                      <small>Execute ~15 AI-recommended trades across 5 rounds</small>
+                    </div>
+
+                    <div className="autopilot-option">
+                      <button
+                        onClick={() => runAutoPilot(10)}
+                        disabled={loading}
+                        className="btn-autopilot-max"
+                      >
+                        {loading ? '🔄 Trading...' : '🔥 Maximum Session (10 Rounds)'}
+                      </button>
+                      <small>Execute ~30 AI-recommended trades across 10 rounds</small>
                     </div>
                   </div>
 
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Quantity</label>
-                      <input
-                        type="number"
-                        value={tradeForm.quantity}
-                        onChange={(e) => setTradeForm({...tradeForm, quantity: Number(e.target.value)})}
-                        min="1"
-                        required
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Price</label>
-                      <input
-                        type="number"
-                        value={tradeForm.price}
-                        onChange={(e) => setTradeForm({...tradeForm, price: Number(e.target.value)})}
-                        min="0.01"
-                        step="0.01"
-                        required
-                      />
-                    </div>
+                  <div className="autopilot-info">
+                    <h4>How it works:</h4>
+                    <ul>
+                      <li>✓ AI analyzes 20+ stocks with technical indicators</li>
+                      <li>✓ Only executes trades with &gt;65% confidence</li>
+                      <li>✓ Automatically manages portfolio balance</li>
+                      <li>✓ Tracks all trades and performance metrics</li>
+                    </ul>
                   </div>
-
-                  <button type="submit" disabled={loading} className="btn-primary">
-                    {loading ? 'Executing...' : 'Execute Trade'}
-                  </button>
-                </form>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Portfolio Holdings */}

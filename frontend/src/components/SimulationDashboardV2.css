@@ -662,6 +662,174 @@
   }
 }
 
+/* Mode Toggle */
+.mode-toggle {
+  display: flex;
+  gap: 8px;
+  background: #f3f4f6;
+  padding: 4px;
+  border-radius: 8px;
+  margin-right: 12px;
+}
+
+.mode-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #6b7280;
+}
+
+.mode-btn:hover:not(:disabled) {
+  color: #374151;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.mode-btn.active {
+  background: white;
+  color: #667eea;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.mode-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Auto-Pilot Section */
+.autopilot-section {
+  grid-column: 1 / -1;
+}
+
+.autopilot-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 32px;
+}
+
+.autopilot-header h3 {
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  color: white;
+}
+
+.autopilot-header p {
+  margin: 0 0 24px 0;
+  opacity: 0.9;
+  font-size: 16px;
+}
+
+.autopilot-status {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.autopilot-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.autopilot-option {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.autopilot-option button {
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.autopilot-option small {
+  font-size: 13px;
+  opacity: 0.8;
+  text-align: center;
+}
+
+.btn-autopilot {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.btn-autopilot:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-autopilot-long {
+  background: rgba(16, 185, 129, 0.3);
+  color: white;
+}
+
+.btn-autopilot-long:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-autopilot-max {
+  background: rgba(239, 68, 68, 0.3);
+  color: white;
+}
+
+.btn-autopilot-max:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.autopilot-option button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+.autopilot-info {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.autopilot-info h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: white;
+}
+
+.autopilot-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.autopilot-info li {
+  padding: 6px 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
 /* Responsive Design */
 @media (max-width: 968px) {
   .create-simulation-section {
