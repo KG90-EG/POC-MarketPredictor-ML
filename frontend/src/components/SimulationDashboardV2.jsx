@@ -136,7 +136,7 @@ function SimulationDashboardV2() {
     setError(null);
 
     try {
-      await apiClient.post(`/api/simulations/${currentSim.simulation_id}/trade`, {
+      await apiClient.post(`/api/simulations/${currentSim.simulation_id}/trades`, {
         ticker,
         action,
         quantity,
