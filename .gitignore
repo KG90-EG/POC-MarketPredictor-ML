@@ -14,6 +14,9 @@ env/
 /data/*.sqlite
 /data/*.sqlite3
 /data/analytics/
+*.db
+*.sqlite
+*.sqlite3
 
 # Logs
 /logs/*.log
@@ -25,6 +28,10 @@ env/
 /models/*.h5
 /models/*.pth
 !/models/README.md
+
+# Training artifacts
+best_hyperparameters.json
+*.hyperparameters.json
 
 # MLflow
 /mlruns/
