@@ -76,26 +76,36 @@ function SimulationDashboardV2() {
 
   const loadRecommendations = async () => {
     if (!currentSim) {
-      setError('No simulation loaded');
+      setError('⚠️ No simulation loaded. Please start a simulation first.');
       return;
     }
     setLoading(true);
     setError(null);
+    setRecommendations([]); // Clear old recommendations
     try {
       console.log('Loading recommendations for sim:', currentSim.simulation_id);
       const response = await apiClient.post(`/api/simulations/${currentSim.simulation_id}/recommendations`);
       console.log('Recommendations response:', response.data);
 
-      if (response.data.recommendations && response.data.recommendations.length > 0) {
-        setRecommendations(response.data.recommendations);
-        setError(`✓ Loaded ${response.data.recommendations.length} recommendations`);
+      const recs = response.data.recommendations || [];
+
+      if (recs.length > 0) {
+        setRecommendations(recs);
+        setError(`✓ Loaded ${recs.length} AI recommendation${recs.length > 1 ? 's' : ''}`);
       } else {
         setRecommendations([]);
-        setError('No recommendations available at this time');
+        // Better message explaining why no recommendations
+        if (portfolio && portfolio.positions.length === 0) {
+          setError('ℹ️ No recommendations yet. Add some positions first or wait for high-confidence opportunities (>65% confidence).');
+        } else {
+          setError('ℹ️ No recommendations available. Current market conditions show no strong buy/sell signals above confidence threshold.');
+        }
       }
     } catch (err) {
       console.error('Recommendations error:', err);
-      setError('Failed to load recommendations: ' + (err.response?.data?.detail || err.message));
+      setRecommendations([]);
+      const errorMsg = err.response?.data?.detail || err.message;
+      setError(`❌ Failed to load recommendations: ${errorMsg}`);
     } finally {
       setLoading(false);
     }
@@ -184,7 +194,10 @@ function SimulationDashboardV2() {
   };
 
   const executeAutoTrade = async () => {
-    if (!currentSim) return;
+    if (!currentSim) {
+      setError('⚠️ No simulation loaded');
+      return;
+    }
     setLoading(true);
     setError(null);
 
@@ -195,12 +208,13 @@ function SimulationDashboardV2() {
       const { trades_executed, trades } = response.data;
       if (trades_executed > 0) {
         const summary = trades.map(t => `${t.action} ${t.quantity} ${t.ticker}`).join(', ');
-        setError(`✓ ${trades_executed} trades executed: ${summary}`);
+        setError(`✓ Successfully executed ${trades_executed} trade${trades_executed > 1 ? 's' : ''}: ${summary}`);
       } else {
-        setError('No trades recommended at this time');
+        setError('ℹ️ No trades executed. AI found no strong signals above confidence threshold (>65%).');
       }
     } catch (err) {
-      setError('Auto trade failed: ' + (err.response?.data?.detail || err.message));
+      const errorMsg = err.response?.data?.detail || err.message;
+      setError(`❌ Auto trade failed: ${errorMsg}`);
     } finally {
       setLoading(false);
     }
