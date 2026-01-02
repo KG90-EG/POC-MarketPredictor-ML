@@ -37,6 +37,7 @@ from .ml.trading import (
     compute_momentum,
     compute_rsi,
     features,
+    features_legacy,
 )
 from .services import HealthService, StockService, ValidationService
 from .simulation import TradingSimulation, calculate_position_size
@@ -581,6 +582,7 @@ def health():
     description="""
     Get detailed system metrics including:
     - Feature cache statistics (hits, misses, hit rate)
+    - Parallel processing statistics (workers, success rate)
     - Request cache statistics
     - Rate limiter statistics
     - WebSocket connection stats
@@ -599,9 +601,19 @@ def metrics():
         except Exception as e:
             logger.warning(f"Failed to get feature cache stats: {e}")
 
+        # Get parallel processing stats
+        parallel_stats = {}
+        try:
+            from .performance import get_parallel_processor
+
+            parallel_stats = get_parallel_processor().get_stats()
+        except Exception as e:
+            logger.warning(f"Failed to get parallel processing stats: {e}")
+
         return {
             "cache_stats": cache.get_stats(),
-            "feature_cache_stats": feature_cache_stats,  # NEW: Feature caching metrics
+            "feature_cache_stats": feature_cache_stats,
+            "parallel_processing_stats": parallel_stats,  # NEW: Parallel processing metrics
             "rate_limiter_stats": rate_limiter.get_stats(),
             "websocket_stats": ws_manager.get_stats(),
             "model_info": {"path": LOADED_MODEL_PATH, "loaded": MODEL is not None},
@@ -682,6 +694,11 @@ def predict_ticker(ticker: str):
     description="""
     Get ranked list of stocks based on ML predictions.
 
+    **Performance Optimized (Week 1):**
+    - Parallel processing: 10 stocks simultaneously
+    - Feature caching: 5-minute TTL
+    - Target: < 3 seconds for 30 stocks
+
     Supports filtering by:
     - Country/region (e.g., 'Switzerland', 'Germany', 'United States')
     - Custom ticker list (comma-separated)
@@ -690,10 +707,17 @@ def predict_ticker(ticker: str):
     Returns stocks sorted by prediction probability (highest first).
     """,
 )
-def ranking(tickers: str = "", country: str = "Global"):
-    """Rank stocks by ML prediction probability.
+def ranking(tickers: str = "", country: str = "Global", use_parallel: bool = True):
+    """
+    Rank stocks by ML prediction probability.
+    
     If no tickers provided, dynamically fetches top stocks for the specified country.
     Country options: Global, United States, Switzerland, Germany, United Kingdom, France, Japan, Canada
+    
+    Args:
+        tickers: Comma-separated list of tickers (optional)
+        country: Country/region for stock selection (default: Global)
+        use_parallel: Enable parallel processing for faster results (default: True)
     """
     if MODEL is None:
         raise HTTPException(status_code=503, detail="No model available")
@@ -706,6 +730,31 @@ def ranking(tickers: str = "", country: str = "Global"):
     else:
         chosen = [t.strip().upper() for t in tickers.split(",") if t.strip()]
 
+    # PARALLEL PROCESSING (Week 1 optimization)
+    if use_parallel:
+        try:
+            from .performance import parallel_stock_ranking
+            
+            logger.info(f"🚀 Processing {len(chosen)} stocks in parallel...")
+            result = parallel_stock_ranking(chosen, MODEL, features)
+            
+            duration = time.time() - start_time
+            logger.info(
+                f"✅ Parallel ranking complete: {len(result)} stocks in {duration:.2f}s "
+                f"({len(chosen)/duration:.1f} stocks/sec)"
+            )
+            
+            # Track ranking generation metrics
+            prom_metrics.track_ranking_generation(country, len(result), duration)
+            
+            return {"ranking": result, "processing_mode": "parallel", "duration_seconds": round(duration, 2)}
+            
+        except Exception as e:
+            logger.warning(f"Parallel processing failed, falling back to sequential: {e}")
+            # Fall through to sequential processing
+
+    # SEQUENTIAL PROCESSING (fallback)
+    logger.info(f"Processing {len(chosen)} stocks sequentially...")
     result = []
     for t in chosen:
         try:
@@ -742,7 +791,8 @@ def ranking(tickers: str = "", country: str = "Global"):
         if df.empty:
             continue
         row = df.iloc[-1:]
-        prob = MODEL.predict_proba(row[features].values)[0][1]
+        # Use legacy 9 features for fallback (sequential mode)
+        prob = MODEL.predict_proba(row[features_legacy].values)[0][1]
 
         # Track model prediction metrics
         pred_duration = time.time() - pred_start
@@ -757,7 +807,7 @@ def ranking(tickers: str = "", country: str = "Global"):
     duration = time.time() - start_time
     prom_metrics.track_ranking_generation(country, len(result), duration)
 
-    return {"ranking": result}
+    return {"ranking": result, "processing_mode": "sequential", "duration_seconds": round(duration, 2)}
 
 
 @app.get(

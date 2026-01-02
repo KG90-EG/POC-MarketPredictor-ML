@@ -8,6 +8,7 @@ from .feature_cache import (
     get_feature_cache,
     init_feature_cache,
 )
+from .parallel import get_parallel_processor, parallel_stock_ranking
 
 __all__ = [
     "init_feature_cache",
@@ -16,4 +17,6 @@ __all__ = [
     "cache_warmup",
     "clear_feature_cache",
     "get_cache_stats",
+    "get_parallel_processor",
+    "parallel_stock_ranking",
 ]
