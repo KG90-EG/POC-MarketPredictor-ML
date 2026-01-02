@@ -27,12 +27,9 @@ function BuyOpportunities() {
     setError(null);
 
     try {
-      // Fetch stock rankings (top stocks by ML prediction)
-      const stockResponse = await apiClient.post('/api/rank', {
-        market: 'global',
-        limit: 30
-      });
-      const stocks = stockResponse.data.rankings || [];
+      // Fetch popular stocks
+      const stockResponse = await apiClient.get('/popular_stocks?limit=30');
+      const stocks = stockResponse.data.stocks || [];
 
       // Get predictions for top stocks
       const stockPredictions = await Promise.all(
