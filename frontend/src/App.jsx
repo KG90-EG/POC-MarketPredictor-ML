@@ -30,7 +30,7 @@ import analytics, { trackWebVitals } from './components/Analytics'
 import './styles.css'
 
 // Lazy load heavy components for better performance
-const SimulationDashboard = lazy(() => import('./components/SimulationDashboard'))
+const SimulationDashboardV2 = lazy(() => import('./components/SimulationDashboardV2'))
 
 // Create a React Query client with optimized cache settings
 const queryClient = new QueryClient({
@@ -731,7 +731,7 @@ function AppContent() {
       {/* Trading Simulation View */}
       {portfolioView === 'simulation' && (
         <Suspense fallback={<div style={{ textAlign: 'center', padding: '40px' }}><SkeletonTable /></div>}>
-          <SimulationDashboard language={language} onLanguageChange={setLanguage} />
+          <SimulationDashboardV2 />
         </Suspense>
       )}
 
