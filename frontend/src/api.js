@@ -160,7 +160,7 @@ export const api = {
 // Convenience functions for watchlist operations
 export const fetchWatchlists = async (userId = CURRENT_USER_ID) => {
   const response = await api.getWatchlists(userId);
-  return response.data;
+  return response.data.watchlists || [];
 };
 
 export const createWatchlist = async (userId = CURRENT_USER_ID, data) => {

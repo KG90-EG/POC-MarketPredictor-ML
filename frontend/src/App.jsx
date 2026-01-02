@@ -12,7 +12,7 @@ import AIAnalysisSection from './components/AIAnalysisSection'
 import StockRanking from './components/StockRanking'
 import CryptoPortfolio from './components/CryptoPortfolio'
 import MarketSelector from './components/MarketSelector'
-import WatchlistManager from './components/WatchlistManager'
+import WatchlistManagerV2 from './components/WatchlistManagerV2'
 import BuyOpportunities from './components/BuyOpportunities'
 import AlertPanel from './components/AlertPanel'
 import EmptyState from './components/EmptyState'
@@ -585,7 +585,7 @@ function AppContent() {
         />
 
         {loading ? (
-          <LoadingState 
+          <LoadingState
             message={`Loading ${selectedMarket} market rankings...`}
             progress={loadingProgress.total > 0 ? (loadingProgress.current / loadingProgress.total) * 100 : null}
             itemCount={loadingProgress.total > 0 ? loadingProgress.total : null}
@@ -610,7 +610,7 @@ function AppContent() {
 
       {/* Digital Assets / Crypto View */}
       {portfolioView === 'crypto' && (
-        <>
+        <div>
         {/* Help InfoCard for Crypto */}
         {cryptoResults.length === 0 && !cryptoLoading && (
           <InfoCard title="Understanding Crypto Rankings" type="tip">
@@ -709,7 +709,7 @@ function AppContent() {
             />
           )}
         </section>
-        </>
+        </div>
       )}
 
       {/* Watchlists View */}
@@ -724,7 +724,7 @@ function AppContent() {
               <li><strong>Notes:</strong> Add personal notes to track your investment thesis</li>
             </ul>
           </InfoCard>
-          <WatchlistManager userId="default_user" />
+          <WatchlistManagerV2 userId="default_user" />
         </>
       )}
 
@@ -742,7 +742,7 @@ function AppContent() {
 
       {/* Search Section - Only for stocks */}
       {portfolioView === 'stocks' && (
-      <>
+      <div>
       <section className="card" role="region" aria-label="Search for individual stocks">
         <div className="card-title">🔍 Look Up Any Stock</div>
 
@@ -828,7 +828,7 @@ function AppContent() {
           </div>
         </section>
           )}
-        </>
+        </div>
       )}
 
       {/* Results Section - Only for stocks */}
