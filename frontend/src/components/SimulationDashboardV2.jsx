@@ -75,14 +75,27 @@ function SimulationDashboardV2() {
   };
 
   const loadRecommendations = async () => {
-    if (!currentSim) return;
+    if (!currentSim) {
+      setError('No simulation loaded');
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
+      console.log('Loading recommendations for sim:', currentSim.simulation_id);
       const response = await apiClient.post(`/api/simulations/${currentSim.simulation_id}/recommendations`);
-      setRecommendations(response.data.recommendations || []);
+      console.log('Recommendations response:', response.data);
+
+      if (response.data.recommendations && response.data.recommendations.length > 0) {
+        setRecommendations(response.data.recommendations);
+        setError(`✓ Loaded ${response.data.recommendations.length} recommendations`);
+      } else {
+        setRecommendations([]);
+        setError('No recommendations available at this time');
+      }
     } catch (err) {
-      setError('Failed to load recommendations: ' + err.message);
+      console.error('Recommendations error:', err);
+      setError('Failed to load recommendations: ' + (err.response?.data?.detail || err.message));
     } finally {
       setLoading(false);
     }
