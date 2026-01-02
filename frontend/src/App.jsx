@@ -2,6 +2,7 @@ import React, { useState, useEffect, lazy, Suspense } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { api, handleApiError } from './api'
 import ErrorBoundary from './components/ErrorBoundary'
+import LoadingState from './components/LoadingState'
 import HealthCheck from './components/HealthCheck'
 import Tooltip from './components/Tooltip'
 import HelpModal from './components/HelpModal'
@@ -584,49 +585,13 @@ function AppContent() {
         />
 
         {loading ? (
-          <div role="status" aria-live="polite" aria-atomic="true">
-            <div style={{marginBottom: '16px', textAlign: 'center'}}>
-              <p style={{color: '#667eea', fontWeight: '600', fontSize: '0.95rem', margin: '20px 0'}}>
-                📊 Loading {selectedMarket} market rankings...
-              </p>
-            </div>
-            {loadingProgress.total > 0 && (
-              <div style={{marginBottom: '24px'}}>
-                <div className="progress-container">
-                  <div className="progress-bar" style={{
-                    width: '100%',
-                    maxWidth: '500px',
-                    margin: '0 auto',
-                    background: '#e9ecef',
-                    borderRadius: '12px',
-                    height: '24px',
-                    overflow: 'hidden',
-                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
-                  }}>
-                    <div className="progress-fill" style={{
-                      width: `${(loadingProgress.current / loadingProgress.total) * 100}%`,
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      fontWeight: '700',
-                      fontSize: '0.85rem',
-                      transition: 'width 0.3s ease'
-                    }}>
-                      {Math.round((loadingProgress.current / loadingProgress.total) * 100)}%
-                    </div>
-                  </div>
-                  <p className="progress-text" style={{textAlign: 'center', fontSize: '0.85rem', color: '#666', marginTop: '8px'}}>
-                    Loading company details: {loadingProgress.current} / {loadingProgress.total}
-                  </p>
-                </div>
-              </div>
-            )}
-            {/* Skeleton Table */}
-            <SkeletonTable rows={10} columns={8} />
-          </div>
+          <LoadingState 
+            message={`Loading ${selectedMarket} market rankings...`}
+            progress={loadingProgress.total > 0 ? (loadingProgress.current / loadingProgress.total) * 100 : null}
+            itemCount={loadingProgress.total > 0 ? loadingProgress.total : null}
+            itemLabel="company details"
+            size="medium"
+          />
         ) : results.length > 0 ? (
           <div style={{marginBottom: '16px'}}>
           </div>
@@ -641,10 +606,12 @@ function AppContent() {
           </div>
         )}
       </section>
+      </ErrorBoundary>
       )}
 
       {/* Digital Assets / Crypto View */}
       {portfolioView === 'crypto' && (
+        <ErrorBoundary>
         <>
         {/* Help InfoCard for Crypto */}
         {cryptoResults.length === 0 && !cryptoLoading && (
@@ -862,11 +829,10 @@ function AppContent() {
           </table>
           </div>
         </section>
-      )}
-      </>
-      )}
-
-      {/* Results Section - Only for stocks */}
+          )}
+        </>
+        </ErrorBoundary>
+      )}      {/* Results Section - Only for stocks */}
       {portfolioView === 'stocks' && results.length > 0 && (
         <>
           {/* Ranked Stocks Table */}
