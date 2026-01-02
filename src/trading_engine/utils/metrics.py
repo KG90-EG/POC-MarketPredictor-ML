@@ -64,3 +64,9 @@ def track_request_metrics(method: str, endpoint: str, status_code: int, duration
     """Track HTTP request metrics."""
     http_requests_total.labels(method=method, endpoint=endpoint, status=str(status_code)).inc()
     http_request_duration_seconds.labels(method=method, endpoint=endpoint).observe(duration)
+
+
+def track_ranking_generation(country: str, stock_count: int, duration: float):
+    """Track ranking generation metrics (stub for backward compatibility)."""
+    # Currently just logs, can be extended with specific metrics later
+    pass

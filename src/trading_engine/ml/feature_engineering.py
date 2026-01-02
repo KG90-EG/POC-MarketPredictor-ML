@@ -18,7 +18,7 @@ Performance Optimization (Week 1):
 import logging
 from typing import Dict, List, Optional
 
-import numpy as pd
+import numpy as np
 import pandas as pd
 import yfinance as yf
 
