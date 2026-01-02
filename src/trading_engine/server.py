@@ -440,7 +440,7 @@ async def lifespan(app_instance: FastAPI):
     yield
     # Shutdown
     logger.info("Application shutting down")
-    
+
     # Stop background jobs gracefully
     try:
         from .performance import stop_background_jobs
@@ -738,10 +738,10 @@ def predict_ticker(ticker: str):
 def ranking(tickers: str = "", country: str = "Global", use_parallel: bool = True):
     """
     Rank stocks by ML prediction probability.
-    
+
     If no tickers provided, dynamically fetches top stocks for the specified country.
     Country options: Global, United States, Switzerland, Germany, United Kingdom, France, Japan, Canada
-    
+
     Args:
         tickers: Comma-separated list of tickers (optional)
         country: Country/region for stock selection (default: Global)
@@ -766,11 +766,7 @@ def ranking(tickers: str = "", country: str = "Global", use_parallel: bool = Tru
             # Only use cache if using default country stocks (not custom tickers)
             duration = time.time() - start_time
             logger.info(f"✨ Returning cached ranking for {country} ({duration:.3f}s)")
-            return {
-                "ranking": cached_result,
-                "processing_mode": "cached",
-                "duration_seconds": round(duration, 3)
-            }
+            return {"ranking": cached_result, "processing_mode": "cached", "duration_seconds": round(duration, 3)}
     except Exception as e:
         logger.warning(f"Cache check failed: {e}")
 
@@ -778,21 +774,21 @@ def ranking(tickers: str = "", country: str = "Global", use_parallel: bool = Tru
     if use_parallel:
         try:
             from .performance import parallel_stock_ranking
-            
+
             logger.info(f"🚀 Processing {len(chosen)} stocks in parallel...")
             result = parallel_stock_ranking(chosen, MODEL, features)
-            
+
             duration = time.time() - start_time
             logger.info(
                 f"✅ Parallel ranking complete: {len(result)} stocks in {duration:.2f}s "
                 f"({len(chosen)/duration:.1f} stocks/sec)"
             )
-            
+
             # Track ranking generation metrics
             prom_metrics.track_ranking_generation(country, len(result), duration)
-            
+
             return {"ranking": result, "processing_mode": "parallel", "duration_seconds": round(duration, 2)}
-            
+
         except Exception as e:
             logger.warning(f"Parallel processing failed, falling back to sequential: {e}")
             # Fall through to sequential processing
@@ -1859,8 +1855,13 @@ async def get_recommendations(simulation_id: int):
                 # Compute features
                 df = hist.copy()
                 df["RSI"] = compute_rsi(df["Close"])
-                df["MACD"], df["Signal"] = compute_macd(df["Close"])
-                df["BB_upper"], df["BB_middle"], df["BB_lower"] = compute_bollinger(df["Close"])
+                macd_line, signal_line = compute_macd(df["Close"])
+                df["MACD"] = macd_line
+                df["Signal"] = signal_line
+                bb_upper, bb_middle, bb_lower = compute_bollinger(df["Close"])
+                df["BB_upper"] = bb_upper
+                df["BB_middle"] = bb_middle
+                df["BB_lower"] = bb_lower
                 df["Momentum"] = compute_momentum(df["Close"])
 
                 df.dropna(inplace=True)
@@ -1978,8 +1979,13 @@ async def auto_trade(simulation_id: int, max_trades: int = 3):
 
                 df = hist.copy()
                 df["RSI"] = compute_rsi(df["Close"])
-                df["MACD"], df["Signal"] = compute_macd(df["Close"])
-                df["BB_upper"], df["BB_middle"], df["BB_lower"] = compute_bollinger(df["Close"])
+                macd_line, signal_line = compute_macd(df["Close"])
+                df["MACD"] = macd_line
+                df["Signal"] = signal_line
+                bb_upper, bb_middle, bb_lower = compute_bollinger(df["Close"])
+                df["BB_upper"] = bb_upper
+                df["BB_middle"] = bb_middle
+                df["BB_lower"] = bb_lower
                 df["Momentum"] = compute_momentum(df["Close"])
                 df.dropna(inplace=True)
 
