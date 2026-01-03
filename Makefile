@@ -91,7 +91,7 @@ install: venv ## Install Python dependencies
 # Server Management (Local)
 # ============================================
 start: check-env ## Start both backend and frontend servers
-	@./start.sh
+	@./scripts/start.sh
 
 start-backend: check-env ## Start backend only
 	@echo "🚀 Starting backend..."
@@ -103,7 +103,7 @@ start-frontend: check-env ## Start frontend only
 
 stop: ## Stop all servers
 stop: ## Stop all servers
-	@./stop.sh
+	@./scripts/stop.sh
 restart: stop start ## Restart all servers
 
 status: ## Check server status

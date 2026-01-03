@@ -3,8 +3,10 @@
 
 set -euo pipefail
 
-cd "$(dirname "$0")"
-PROJECT_ROOT="$(pwd)"
+# Get project root (one level up from scripts/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
 
 echo "🧹 Cleaning up old processes..."
 lsof -ti:8000,5173 | xargs kill -9 2>/dev/null || true

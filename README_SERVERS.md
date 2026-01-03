@@ -3,8 +3,8 @@
 ## Quick Start
 
 ```bash
-./start.sh    # Start servers (1 second)
-./stop.sh     # Stop servers
+./scripts/start.sh    # Start servers (1 second)
+./scripts/stop.sh     # Stop servers
 ```
 
 ## What We Built
@@ -17,16 +17,18 @@
 
 ## File Structure
 
-```
-├── start.sh                    # ⭐ Main start script (USE THIS)
-├── stop.sh                     # ⭐ Stop script
-├── test_servers.sh             # Test/verify servers
+```text
+├── scripts/
+│   ├── start.sh                # ⭐ Main start script (USE THIS)
+│   ├── stop.sh                 # ⭐ Stop script
+│   ├── test_servers.sh         # Test/verify servers
+│   └── ...                     # Other utility scripts
 ├── Makefile                    # Command hub
 ├── docker-compose.yml          # Docker setup (optional)
-├── scripts/
-│   └── start_servers.sh        # Advanced script (legacy)
 └── docs/
     ├── SERVER_MANAGEMENT.md    # Full documentation
+    └── IMPROVEMENTS_SUMMARY.md # What we built
+```
     └── IMPROVEMENTS_SUMMARY.md # What we built
 ```
 
@@ -133,12 +135,12 @@ nano .env  # Set PROD_MODEL_PATH
 
 ## Success Criteria
 
-✅ `./start.sh` completes in ~1 second  
+✅ `./scripts/start.sh` completes in ~1 second  
 ✅ Frontend accessible at <http://localhost:5173>  
 ✅ Backend healthy at <http://localhost:8000/health>  
-✅ `./stop.sh` cleans up all processes  
+✅ `./scripts/stop.sh` cleans up all processes  
 ✅ No manual intervention needed  
 
 ## That's It
 
-Simple, fast, reliable. Just `./start.sh` and go! 🚀
+Simple, fast, reliable. Just `./scripts/start.sh` and go! 🚀

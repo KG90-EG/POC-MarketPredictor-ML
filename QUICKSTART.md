@@ -18,7 +18,7 @@ nano .env  # Add your API keys, model path, etc.
 **Simple - just run:**
 
 ```bash
-./start.sh
+./scripts/start.sh
 ```
 
 **Done!** Servers start in 1 second. Your app is ready in ~15 seconds.
@@ -42,7 +42,7 @@ curl -I http://localhost:5173
 ### Stop the Application
 
 ```bash
-./stop.sh
+./scripts/stop.sh
 ```
 
 ## Alternative: Using Make

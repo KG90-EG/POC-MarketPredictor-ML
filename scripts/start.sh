@@ -3,7 +3,10 @@
 
 set -euo pipefail
 
-cd "$(dirname "$0")"
+# Get project root (one level up from scripts/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
 
 # Load environment
 if [ ! -f .env ]; then

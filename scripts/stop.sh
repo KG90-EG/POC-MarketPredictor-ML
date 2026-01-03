@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # Simple stop script
 
+# Get project root (one level up from scripts/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
+
 echo "🛑 Stopping servers..."
 
 # Read PIDs
