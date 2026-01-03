@@ -600,9 +600,131 @@ def add_all_features(df: pd.DataFrame, ticker: str = None) -> pd.DataFrame:
     return df
 
 
+def add_technical_features_only(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Add ONLY technical features (no external API calls).
+
+    This is optimized for training on many stocks without rate limiting.
+    Total: 20 technical features (9 original + 11 advanced)
+
+    Args:
+        df: DataFrame with Open, High, Low, Close, Volume columns
+
+    Returns:
+        DataFrame with technical features added
+    """
+    df = df.copy()
+
+    # Flatten multi-index columns if present (from yfinance)
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)
+
+    # Ensure required columns exist
+    required_cols = ["Open", "High", "Low", "Close", "Volume"]
+    missing_cols = [col for col in required_cols if col not in df.columns]
+    if missing_cols:
+        logger.error(f"Missing required columns: {missing_cols}")
+        return df
+
+    # Extract OHLCV as Series (squeeze to avoid DataFrame)
+    high = df["High"].squeeze() if isinstance(df["High"], pd.DataFrame) else df["High"]
+    low = df["Low"].squeeze() if isinstance(df["Low"], pd.DataFrame) else df["Low"]
+    close = df["Close"].squeeze() if isinstance(df["Close"], pd.DataFrame) else df["Close"]
+    volume = df["Volume"].squeeze() if isinstance(df["Volume"], pd.DataFrame) else df["Volume"]
+
+    # ========================================================================
+    # Original 9 features (keep for compatibility)
+    # ========================================================================
+    df["SMA50"] = close.rolling(window=50).mean()
+    df["SMA200"] = close.rolling(window=200).mean()
+
+    # RSI
+    delta = close.diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+    rs = gain / loss
+    df["RSI"] = 100 - (100 / (1 + rs))
+
+    df["Volatility"] = close.pct_change().rolling(window=30).std()
+    df["Momentum_10d"] = close.pct_change(periods=10)
+
+    # MACD
+    fast_ema = close.ewm(span=12, adjust=False).mean()
+    slow_ema = close.ewm(span=26, adjust=False).mean()
+    df["MACD"] = fast_ema - slow_ema
+    df["MACD_signal"] = df["MACD"].ewm(span=9, adjust=False).mean()
+
+    # Bollinger Bands
+    sma20 = close.rolling(window=20).mean()
+    std20 = close.rolling(window=20).std()
+    df["BB_upper"] = sma20 + (2 * std20)
+    df["BB_lower"] = sma20 - (2 * std20)
+
+    # ========================================================================
+    # New Advanced Technical Indicators (+11 features)
+    # ========================================================================
+    df["ATR"] = compute_atr(high, low, close)
+    df["ADX"] = compute_adx(high, low, close)
+
+    stoch_k, stoch_d = compute_stochastic(high, low, close)
+    df["Stochastic_K"] = stoch_k
+    df["Stochastic_D"] = stoch_d
+
+    df["OBV"] = compute_obv(close, volume)
+    df["VWAP"] = compute_vwap(high, low, close, volume)
+    df["Williams_R"] = compute_williams_r(high, low, close)
+    df["CCI"] = compute_cci(high, low, close)
+    df["Parabolic_SAR"] = compute_parabolic_sar(high, low, close)
+
+    # Ichimoku (use conversion line as single feature)
+    ichimoku = compute_ichimoku(high, low, close)
+    df["Ichimoku_Conversion"] = ichimoku["conversion_line"]
+
+    # Keltner Channels (use middle as feature)
+    keltner = compute_keltner_channels(close, high, low)
+    df["Keltner_Middle"] = keltner["middle"]
+
+    return df
+
+
+def get_technical_feature_names() -> List[str]:
+    """
+    Get list of technical-only feature names (20 features).
+    Used by production model to avoid external API calls.
+
+    Returns:
+        List of 20 technical feature names
+    """
+    return [
+        # Original 9
+        "SMA50",
+        "SMA200",
+        "RSI",
+        "Volatility",
+        "Momentum_10d",
+        "MACD",
+        "MACD_signal",
+        "BB_upper",
+        "BB_lower",
+        # Advanced Technical (11)
+        "ATR",
+        "ADX",
+        "Stochastic_K",
+        "Stochastic_D",
+        "OBV",
+        "VWAP",
+        "Williams_R",
+        "CCI",
+        "Parabolic_SAR",
+        "Ichimoku_Conversion",
+        "Keltner_Middle",
+    ]
+
+
 def get_feature_names() -> List[str]:
     """
-    Get list of all feature names.
+    Get list of all feature names (40+ features).
+    Includes technical, fundamental, sentiment, and macro features.
 
     Returns:
         List of 40+ feature names

@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { apiClient } from '../api';
-import { convertAndFormat } from '../utils/currency';
 import './BuyOpportunities.css';
 
-function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
+function BuyOpportunities() {
   const [stockBuyOpportunities, setStockBuyOpportunities] = useState([]);
   const [stockHoldOpportunities, setStockHoldOpportunities] = useState([]);
   const [stockSellOpportunities, setStockSellOpportunities] = useState([]);
@@ -33,41 +32,41 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
     setError(null);
 
     try {
-      // Use /ranking endpoint instead of /popular_stocks for accurate data
-      const rankingResponse = await apiClient.get('/ranking');
-      const ranking = rankingResponse.data.ranking || [];
+      // Fetch popular stocks
+      const stockResponse = await apiClient.get('/popular_stocks?limit=30');
+      const stocks = stockResponse.data.stocks || [];
 
-      console.log(`📊 Received ${ranking.length} stocks from /ranking endpoint`);
-
-      // Get stock names from /popular_stocks (for display only)
-      const popularResponse = await apiClient.get('/popular_stocks?limit=100');
-      const popularStocks = popularResponse.data.stocks || [];
-      const stockNames = {};
-      popularStocks.forEach(s => {
-        stockNames[s.ticker] = s.name;
-      });
-
-      console.log(`📝 Loaded ${Object.keys(stockNames).length} stock names`);
-
-      // Convert ranking data to predictions (no need for additional API calls)
-      const stockPredictions = ranking.map(item => {
-        const prediction = {
-          signal: item.action || (item.prob > 0.6 ? 'BUY' : item.prob < 0.4 ? 'SELL' : 'HOLD'),
-          confidence: item.confidence || Math.round(item.prob * 100),
-          reasoning: `AI Confidence: ${(item.prob * 100).toFixed(1)}%`,
-          metrics: {
-            probability: item.prob,
-            price: item.price
+      // Get predictions for top stocks
+      const stockPredictions = await Promise.all(
+        stocks.slice(0, 30).map(async (stock) => {
+          try {
+            const predRes = await apiClient.get(`/api/predict/${stock.ticker}`);
+            // Use the probability from the response
+            const probability = predRes.data.probability || 0.5;
+            const prediction = {
+              signal: probability > 0.6 ? 'BUY' : probability < 0.4 ? 'SELL' : 'HOLD',
+              confidence: Math.round(probability * 100),
+              reasoning: `AI Confidence: ${(probability * 100).toFixed(1)}%`
+            };
+            return {
+              ...stock,
+              ticker: stock.ticker,
+              name: stock.name || stock.ticker,
+              current_price: stock.price || 0,
+              prediction
+            };
+          } catch (err) {
+            console.error(`Failed to get prediction for ${stock.ticker}:`, err);
+            return {
+              ...stock,
+              ticker: stock.ticker,
+              name: stock.name || stock.ticker,
+              current_price: stock.price || 0,
+              prediction: { signal: 'HOLD', confidence: 50, reasoning: 'No prediction available' }
+            };
           }
-        };
-
-        return {
-          ticker: item.ticker,
-          name: stockNames[item.ticker] || item.ticker,
-          current_price: item.price, // Use price from ranking
-          prediction
-        };
-      });
+        })
+      );
 
       // Filter for BUY, HOLD, and SELL signals
       const buyStocks = stockPredictions
@@ -88,8 +87,6 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
       setStockBuyOpportunities(buyStocks);
       setStockHoldOpportunities(holdStocks);
       setStockSellOpportunities(sellStocks);
-
-      console.log(`✅ Loaded ${buyStocks.length} BUY, ${holdStocks.length} HOLD, ${sellStocks.length} SELL stocks`);
 
       // Fetch crypto rankings
       const cryptoResponse = await apiClient.get('/crypto/ranking?limit=50');
@@ -140,20 +137,12 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
       setCryptoHoldOpportunities(holdCryptos);
       setCryptoSellOpportunities(sellCryptos);
 
-      console.log(`✅ Loaded ${buyCryptos.length} crypto BUY, ${holdCryptos.length} HOLD, ${sellCryptos.length} SELL`);
-
       // Load Commodities (Gold, Oil, Silver, etc.)
-      try {
-        await loadCommodities();
-      } catch (commErr) {
-        console.warn('Commodities loading failed (non-critical):', commErr);
-        // Don't fail the whole page if commodities fail
-      }
+      await loadCommodities();
 
     } catch (err) {
       console.error('Failed to load opportunities:', err);
-      console.error('Error details:', err.message, err.response?.data);
-      setError(`Failed to load opportunities: ${err.message}`);
+      setError('Failed to load opportunities');
     } finally {
       setLoading(false);
     }
@@ -214,6 +203,13 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
       setCommoditySellOpportunities(sellCommodities);
     } catch (err) {
       console.error('Failed to load commodities:', err);
+    }
+
+    } catch (err) {
+      console.error('Failed to load opportunities:', err);
+      setError('Failed to load opportunities');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -384,77 +380,7 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                           )}
                           <div className="detail-item">
                             <span className="label">Price:</span>
-                            <span className="value">{stock.current_price > 0 ? convertAndFormat(stock.current_price, currency, exchangeRate) : 'N/A'}</span>
-                          </div>
-                        </div>
-
-                        <div className="opportunity-reasoning">
-                          {stock.prediction.reasoning}
-                        </div>
-
-                        <div className="opportunity-actions">
-                          <a
-                            href={`https://finance.yahoo.com/quote/${stock.ticker}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="chart-link"
-                          >
-                            📊 View Chart
-                          </a>
-                          <a
-                            href={`https://www.google.com/finance/quote/${stock.ticker}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="market-link"
-                          >
-                            🔗 Market Info
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Hold Opportunities */}
-            <div className="opportunity-section">
-              <h3 className="section-title">🟡 Hold Recommendations (Max 10)</h3>
-              {stockHoldOpportunities.length === 0 ? (
-                <div className="empty-opportunities">
-                  <p>😔 No HOLD signals for stocks right now.</p>
-                  <p className="hint">Most stocks show strong BUY or SELL signals.</p>
-                </div>
-              ) : (
-                <div className="opportunity-grid">
-                  {stockHoldOpportunities.map((stock, index) => (
-                    <div key={stock.ticker} className="opportunity-card hold-card">
-                      <div className="opportunity-rank">#{index + 1}</div>
-                      <div className="opportunity-main">
-                        <div className="opportunity-header">
-                          <span className="opportunity-ticker">{stock.ticker}</span>
-                          <span className="opportunity-name">{stock.name || stock.ticker}</span>
-                        </div>
-
-                        <div className="opportunity-signal">
-                          <div className="signal-badge hold">
-                            🟡 HOLD
-                          </div>
-                          <div className="confidence-score">
-                            {stock.prediction.confidence.toFixed(0)}% confidence
-                          </div>
-                        </div>
-
-                        <div className="opportunity-details">
-                          {stock.prediction?.metrics?.probability != null && (
-                            <div className="detail-item">
-                              <span className="label">ML Probability:</span>
-                              <span className="value">{(stock.prediction.metrics.probability * 100).toFixed(1)}%</span>
-                            </div>
-                          )}
-                          <div className="detail-item">
-                            <span className="label">Price:</span>
-                            <span className="value">{stock.current_price > 0 ? convertAndFormat(stock.current_price, currency, exchangeRate) : 'N/A'}</span>
+                            <span className="value">{stock.current_price != null ? `$${stock.current_price.toFixed(2)}` : 'N/A'}</span>
                           </div>
                         </div>
 
@@ -524,7 +450,7 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                           )}
                           <div className="detail-item">
                             <span className="label">Price:</span>
-                            <span className="value">{stock.current_price > 0 ? convertAndFormat(stock.current_price, currency, exchangeRate) : 'N/A'}</span>
+                            <span className="value">{stock.current_price != null ? `$${stock.current_price.toFixed(2)}` : 'N/A'}</span>
                           </div>
                         </div>
 
@@ -588,85 +514,6 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                         <div className="opportunity-signal">
                           <div className="signal-badge buy">
                             🟢 BUY
-                          </div>
-                          <div className="confidence-score">
-                            {crypto.prediction.confidence.toFixed(0)}% confidence
-                          </div>
-                        </div>
-
-                        <div className="opportunity-details">
-                          <div className="detail-item">
-                            <span className="label">Price:</span>
-                            <span className="value">${crypto.price.toLocaleString()}</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="label">24h Change:</span>
-                            <span className={`value ${crypto.change_24h >= 0 ? 'positive' : 'negative'}`}>
-                              {crypto.change_24h >= 0 ? '▲' : '▼'} {Math.abs(crypto.change_24h).toFixed(2)}%
-                            </span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="label">Momentum:</span>
-                            <span className="value">{crypto.momentum_score.toFixed(2)}</span>
-                          </div>
-                        </div>
-
-                        <div className="opportunity-reasoning">
-                          {crypto.prediction.reasoning}
-                        </div>
-
-                        <div className="opportunity-actions">
-                          <a
-                            href={`https://www.coingecko.com/en/coins/${crypto.crypto_id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="chart-link"
-                          >
-                            📊 View Chart
-                          </a>
-                          <a
-                            href={`https://coinmarketcap.com/currencies/${crypto.crypto_id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="market-link"
-                          >
-                            🔗 Market Info
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Hold Opportunities */}
-            <div className="opportunity-section">
-              <h3 className="section-title">🟡 Hold Recommendations (Max 10)</h3>
-              {cryptoHoldOpportunities.length === 0 ? (
-                <div className="empty-opportunities">
-                  <p>😔 No HOLD signals for crypto right now.</p>
-                  <p className="hint">Most cryptos show strong BUY or SELL signals.</p>
-                </div>
-              ) : (
-                <div className="opportunity-grid">
-                  {cryptoHoldOpportunities.map((crypto, index) => (
-                    <div key={crypto.crypto_id} className="opportunity-card hold-card">
-                      <div className="opportunity-rank">#{index + 1}</div>
-                      <div className="opportunity-main">
-                        <div className="opportunity-header">
-                          <img
-                            src={crypto.image}
-                            alt={crypto.name}
-                            className="crypto-icon"
-                          />
-                          <span className="opportunity-ticker">{crypto.symbol.toUpperCase()}</span>
-                          <span className="opportunity-name">{crypto.name}</span>
-                        </div>
-
-                        <div className="opportunity-signal">
-                          <div className="signal-badge hold">
-                            🟡 HOLD
                           </div>
                           <div className="confidence-score">
                             {crypto.prediction.confidence.toFixed(0)}% confidence
@@ -799,231 +646,13 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
             </div>
           </>
         )}
-
-        {activeTab === 'commodities' && (
-          <>
-            {/* Buy Opportunities - Commodities */}
-            <div className="opportunity-section">
-              <h3 className="section-title">🟢 Top Buy Opportunities - Rohstoffe</h3>
-              {commodityBuyOpportunities.length === 0 ? (
-                <div className="empty-opportunities">
-                  <p>😔 No strong BUY signals for commodities right now.</p>
-                  <p className="hint">Commodities market may be consolidating. Check back later.</p>
-                </div>
-              ) : (
-                <div className="opportunity-grid">
-                  {commodityBuyOpportunities.map((commodity, index) => (
-                    <div key={commodity.ticker} className="opportunity-card buy-card">
-                      <div className="opportunity-rank">#{index + 1}</div>
-                      <div className="opportunity-main">
-                        <div className="opportunity-header">
-                          <span className="opportunity-ticker">{commodity.ticker}</span>
-                          <span className="opportunity-name">{commodity.name}</span>
-                          <span className="commodity-type" style={{fontSize: '0.8rem', color: '#666'}}>
-                            {commodity.type}
-                          </span>
-                        </div>
-
-                        <div className="opportunity-signal">
-                          <div className="signal-badge buy">
-                            🟢 BUY
-                          </div>
-                          <div className="confidence-score">
-                            {commodity.prediction.confidence.toFixed(0)}% confidence
-                          </div>
-                        </div>
-
-                        <div className="opportunity-details">
-                          <div className="detail-item">
-                            <span className="label">Price:</span>
-                            <span className="value">${commodity.current_price.toFixed(2)}</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="label">Type:</span>
-                            <span className="value">{commodity.type}</span>
-                          </div>
-                        </div>
-
-                        <div className="opportunity-reasoning">
-                          {commodity.prediction.reasoning}
-                        </div>
-
-                        <div className="opportunity-actions">
-                          <a
-                            href={`https://finance.yahoo.com/quote/${commodity.ticker}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="chart-link"
-                          >
-                            📊 View Chart
-                          </a>
-                          <a
-                            href={`https://www.investing.com/commodities/`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="market-link"
-                          >
-                            🔗 Market Info
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Hold Opportunities - Commodities */}
-            <div className="opportunity-section">
-              <h3 className="section-title">🟡 Hold Recommendations - Rohstoffe</h3>
-              {commodityHoldOpportunities.length === 0 ? (
-                <div className="empty-opportunities">
-                  <p>😔 No HOLD signals for commodities right now.</p>
-                  <p className="hint">Most commodities show strong BUY or SELL signals.</p>
-                </div>
-              ) : (
-                <div className="opportunity-grid">
-                  {commodityHoldOpportunities.map((commodity, index) => (
-                    <div key={commodity.ticker} className="opportunity-card hold-card">
-                      <div className="opportunity-rank">#{index + 1}</div>
-                      <div className="opportunity-main">
-                        <div className="opportunity-header">
-                          <span className="opportunity-ticker">{commodity.ticker}</span>
-                          <span className="opportunity-name">{commodity.name}</span>
-                          <span className="commodity-type" style={{fontSize: '0.8rem', color: '#666'}}>
-                            {commodity.type}
-                          </span>
-                        </div>
-
-                        <div className="opportunity-signal">
-                          <div className="signal-badge hold">
-                            🟡 HOLD
-                          </div>
-                          <div className="confidence-score">
-                            {commodity.prediction.confidence.toFixed(0)}% confidence
-                          </div>
-                        </div>
-
-                        <div className="opportunity-details">
-                          <div className="detail-item">
-                            <span className="label">Price:</span>
-                            <span className="value">${commodity.current_price.toFixed(2)}</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="label">Type:</span>
-                            <span className="value">{commodity.type}</span>
-                          </div>
-                        </div>
-
-                        <div className="opportunity-reasoning">
-                          {commodity.prediction.reasoning}
-                        </div>
-
-                        <div className="opportunity-actions">
-                          <a
-                            href={`https://finance.yahoo.com/quote/${commodity.ticker}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="chart-link"
-                          >
-                            📊 View Chart
-                          </a>
-                          <a
-                            href={`https://www.investing.com/commodities/`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="market-link"
-                          >
-                            🔗 Market Info
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Sell Opportunities - Commodities */}
-            <div className="opportunity-section">
-              <h3 className="section-title">🔴 Top Sell Opportunities - Rohstoffe</h3>
-              {commoditySellOpportunities.length === 0 ? (
-                <div className="empty-opportunities">
-                  <p>😔 No strong SELL signals for commodities right now.</p>
-                  <p className="hint">Commodities market may be in uptrend. Check back later.</p>
-                </div>
-              ) : (
-                <div className="opportunity-grid">
-                  {commoditySellOpportunities.map((commodity, index) => (
-                    <div key={commodity.ticker} className="opportunity-card sell-card">
-                      <div className="opportunity-rank">#{index + 1}</div>
-                      <div className="opportunity-main">
-                        <div className="opportunity-header">
-                          <span className="opportunity-ticker">{commodity.ticker}</span>
-                          <span className="opportunity-name">{commodity.name}</span>
-                          <span className="commodity-type" style={{fontSize: '0.8rem', color: '#666'}}>
-                            {commodity.type}
-                          </span>
-                        </div>
-
-                        <div className="opportunity-signal">
-                          <div className="signal-badge sell">
-                            🔴 SELL
-                          </div>
-                          <div className="confidence-score">
-                            {commodity.prediction.confidence.toFixed(0)}% confidence
-                          </div>
-                        </div>
-
-                        <div className="opportunity-details">
-                          <div className="detail-item">
-                            <span className="label">Price:</span>
-                            <span className="value">${commodity.current_price.toFixed(2)}</span>
-                          </div>
-                          <div className="detail-item">
-                            <span className="label">Type:</span>
-                            <span className="value">{commodity.type}</span>
-                          </div>
-                        </div>
-
-                        <div className="opportunity-reasoning">
-                          {commodity.prediction.reasoning}
-                        </div>
-
-                        <div className="opportunity-actions">
-                          <a
-                            href={`https://finance.yahoo.com/quote/${commodity.ticker}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="chart-link"
-                          >
-                            📊 View Chart
-                          </a>
-                          <a
-                            href={`https://www.investing.com/commodities/`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="market-link"
-                          >
-                            🔗 Market Info
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        )}
       </div>
     </div>
   );
 }
 
 BuyOpportunities.propTypes = {
-  currency: PropTypes.string,
-  exchangeRate: PropTypes.number,
+  // No props needed currently
 };
 
 export default BuyOpportunities;

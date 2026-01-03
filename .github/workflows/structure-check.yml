@@ -1,0 +1,80 @@
+name: Repository Structure Check
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+jobs:
+  check-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check for loose files in root
+        run: |
+          echo "🔍 Checking repository structure..."
+
+          # Allowed files in root directory
+          ALLOWED_ROOT_FILES=(
+            "Dockerfile"
+            "LICENSE"
+            "Makefile"
+            "README.md"
+            "requirements.txt"
+            "docker-compose.yml"
+            "docker-compose.monitoring.yml"
+            ".gitignore"
+            ".dockerignore"
+            ".env.example"
+            ".pre-commit-config.yaml"
+            ".readthedocs.yaml"
+            ".secrets.baseline"
+          )
+
+          # Get all files in root (exclude directories and hidden files)
+          ROOT_FILES=$(ls -1 | grep -v "/$" | grep -v "^\.")
+
+          # Check each file
+          VIOLATIONS=0
+          for file in $ROOT_FILES; do
+            if [[ ! " ${ALLOWED_ROOT_FILES[@]} " =~ " ${file} " ]]; then
+              echo "❌ Loose file in root: $file"
+              echo "   → Should be moved to appropriate subfolder"
+              VIOLATIONS=$((VIOLATIONS + 1))
+            fi
+          done
+
+          # Check for common misplaced files
+          if [ -f "best_hyperparameters.json" ]; then
+            echo "❌ best_hyperparameters.json should be in config/ml/"
+            VIOLATIONS=$((VIOLATIONS + 1))
+          fi
+
+          if [ -f "training_output.log" ]; then
+            echo "❌ training_output.log should be in logs/"
+            VIOLATIONS=$((VIOLATIONS + 1))
+          fi
+
+          if [ -f "*.md" ] && [ "$file" != "README.md" ] && [ "$file" != "LICENSE" ]; then
+            echo "❌ Documentation files should be in docs/"
+            VIOLATIONS=$((VIOLATIONS + 1))
+          fi
+
+          # Report results
+          if [ $VIOLATIONS -gt 0 ]; then
+            echo ""
+            echo "❌ Found $VIOLATIONS structure violations!"
+            echo ""
+            echo "📁 Correct structure:"
+            echo "   • Documentation → docs/"
+            echo "   • Config files → config/"
+            echo "   • Scripts → scripts/"
+            echo "   • Logs → logs/"
+            echo "   • Source code → src/"
+            echo ""
+            echo "Run: ./scripts/cleanup_repo.sh to fix automatically"
+            exit 1
+          else
+            echo "✅ Repository structure is clean!"
+          fi

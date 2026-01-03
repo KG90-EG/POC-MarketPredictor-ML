@@ -85,6 +85,8 @@ class MarketConfig:
 
     default_stocks: List[str] = field(
         default_factory=lambda: [
+            # === US Stocks (30) ===
+            # Tech Giants
             "AAPL",
             "MSFT",
             "GOOGL",
@@ -92,49 +94,54 @@ class MarketConfig:
             "NVDA",
             "META",
             "TSLA",
-            "BRK.B",
-            "UNH",
-            "JNJ",
-            "V",
-            "WMT",
-            "JPM",
-            "MA",
-            "PG",
-            "XOM",
-            "HD",
-            "CVX",
-            "LLY",
-            "ABBV",
-            "MRK",
-            "KO",
-            "PEP",
-            "COST",
-            "AVGO",
-            "TMO",
-            "BAC",
-            "CSCO",
-            "MCD",
-            "ACN",
-            "AMD",
             "NFLX",
             "ADBE",
-            "DIS",
-            "NKE",
-            "INTC",
             "CRM",
-            "TXN",
-            "ORCL",
-            "ABT",
-            "CMCSA",
-            "VZ",
+            # Finance
+            "JPM",
+            "BAC",
             "WFC",
-            "PM",
-            "IBM",
-            "QCOM",
-            "UPS",
-            "HON",
+            "GS",
+            "MS",
+            "V",
+            "MA",
+            "PYPL",
+            # Healthcare & Pharma
+            "UNH",
+            "JNJ",
+            "PFE",
+            "ABBV",
+            # Consumer & Retail
+            "WMT",
+            "COST",
+            "HD",
+            "NKE",
+            "MCD",
+            # Energy & Industrial
+            "XOM",
+            "CVX",
             "BA",
-            "GE",
+            # === Swiss SMI Index (20) ===
+            "NESN.SW",  # Nestlé
+            "NOVN.SW",  # Novartis
+            "ROG.SW",  # Roche
+            "UBSG.SW",  # UBS
+            "ZURN.SW",  # Zurich Insurance
+            "ABBN.SW",  # ABB
+            "CFR.SW",  # Richemont
+            "LONN.SW",  # Lonza
+            "SIKA.SW",  # Sika
+            "GIVN.SW",  # Givaudan
+            "SREN.SW",  # Swiss Re
+            "GEBN.SW",  # Geberit
+            "PGHN.SW",  # Partners Group
+            "SGSN.SW",  # SGS
+            "SCMN.SW",  # Swisscom
+            "HOLN.SW",  # Holcim
+            "ALC.SW",  # Alcon
+            "KNIN.SW",  # Kühne + Nagel
+            "UHR.SW",  # Swatch
+            "ADEN.SW",  # Adecco
         ]
     )
 

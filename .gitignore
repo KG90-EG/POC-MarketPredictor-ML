@@ -30,9 +30,13 @@ env/
 /models/*.pth
 !/models/README.md
 
-# Training artifacts
-best_hyperparameters.json
+# Training artifacts (now in config/ml/)
+/config/ml/best_hyperparameters.json
 *.hyperparameters.json
+
+# Training logs
+training_output.log
+*.training.log
 
 # MLflow
 /mlruns/

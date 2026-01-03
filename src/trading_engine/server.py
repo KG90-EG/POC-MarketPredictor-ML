@@ -31,6 +31,7 @@ from .core.cache import cache
 from .core.config import config as app_config
 from .core.database import WatchlistDB
 from .crypto import get_crypto_details, get_crypto_ranking, search_crypto
+from .ml.feature_engineering import add_technical_features_only, get_technical_feature_names
 from .ml.model_retraining import get_retraining_service, start_retraining_scheduler
 from .ml.trading import (
     compute_bollinger,
@@ -74,8 +75,11 @@ except Exception as e:
     OPENAI_CLIENT = None
     logger.warning(f"OpenAI client not available: {e}")
 
-# Default popular stocks for automatic ranking
+# Global stocks - US (30) + Swiss SMI (20) = 50 total
+# Model trained with 20 technical-only features (no external API calls)
 DEFAULT_STOCKS = [
+    # === US Stocks (30) ===
+    # Tech Giants
     "AAPL",
     "MSFT",
     "GOOGL",
@@ -83,49 +87,54 @@ DEFAULT_STOCKS = [
     "NVDA",
     "META",
     "TSLA",
-    "BRK.B",
-    "UNH",
-    "JNJ",
-    "V",
-    "WMT",
-    "JPM",
-    "MA",
-    "PG",
-    "XOM",
-    "HD",
-    "CVX",
-    "LLY",
-    "ABBV",
-    "MRK",
-    "KO",
-    "PEP",
-    "COST",
-    "AVGO",
-    "TMO",
-    "BAC",
-    "CSCO",
-    "MCD",
-    "ACN",
-    "AMD",
     "NFLX",
     "ADBE",
-    "DIS",
-    "NKE",
-    "INTC",
     "CRM",
-    "TXN",
-    "ORCL",
-    "ABT",
-    "CMCSA",
-    "VZ",
+    # Finance
+    "JPM",
+    "BAC",
     "WFC",
-    "PM",
-    "IBM",
-    "QCOM",
-    "UPS",
-    "HON",
+    "GS",
+    "MS",
+    "V",
+    "MA",
+    "PYPL",
+    # Healthcare & Pharma
+    "UNH",
+    "JNJ",
+    "PFE",
+    "ABBV",
+    # Consumer & Retail
+    "WMT",
+    "COST",
+    "HD",
+    "NKE",
+    "MCD",
+    # Energy & Industrial
+    "XOM",
+    "CVX",
     "BA",
-    "GE",
+    # === Swiss SMI Index (20) ===
+    "NESN.SW",  # Nestlé - Food & Beverage
+    "NOVN.SW",  # Novartis - Pharmaceuticals
+    "ROG.SW",  # Roche - Pharmaceuticals
+    "UBSG.SW",  # UBS - Banking
+    "ZURN.SW",  # Zurich Insurance
+    "ABBN.SW",  # ABB - Engineering
+    "CFR.SW",  # Richemont - Luxury Goods
+    "LONN.SW",  # Lonza - Life Sciences
+    "SIKA.SW",  # Sika - Chemicals
+    "GIVN.SW",  # Givaudan - Flavors & Fragrances
+    "SREN.SW",  # Swiss Re - Reinsurance
+    "GEBN.SW",  # Geberit - Sanitary Technology
+    "PGHN.SW",  # Partners Group - Private Equity
+    "SGSN.SW",  # SGS - Testing & Certification
+    "SCMN.SW",  # Swisscom - Telecommunications
+    "HOLN.SW",  # Holcim - Building Materials
+    "ALC.SW",  # Alcon - Eye Care
+    "KNIN.SW",  # Kühne + Nagel - Logistics
+    "UHR.SW",  # Swatch - Watches
+    "ADEN.SW",  # Adecco - Staffing
 ]
 
 # Market indices for dynamic stock discovery
@@ -591,6 +600,37 @@ def health():
 
 
 @app.get(
+    "/currency",
+    summary="Get currency exchange rate information",
+    description="""
+    Returns current USD/CHF exchange rate information for multi-currency support.
+
+    Provides:
+    - Current exchange rate (USD to CHF)
+    - Last update timestamp
+    - Rate source (API or fallback)
+
+    Used by frontend for currency conversion toggle.
+    """,
+)
+def get_currency_info():
+    """Get current currency exchange rate information."""
+    with RequestLogger("GET /currency"):
+        try:
+            from .utils.currency import get_rate_info
+
+            rate_info = get_rate_info()
+            return {"status": "ok", "data": rate_info}
+        except Exception as e:
+            logger.error(f"❌ Currency info error: {e}")
+            return {
+                "status": "error",
+                "error": str(e),
+                "data": {"rate": 0.85, "updated": time.time(), "source": "fallback"},  # Fallback rate
+            }
+
+
+@app.get(
     "/metrics",
     tags=["Monitoring"],
     summary="System Metrics",
@@ -692,24 +732,46 @@ def predict_ticker(ticker: str):
     # Handle MultiIndex columns from yfinance
     if isinstance(raw.columns, pd.MultiIndex):
         raw.columns = raw.columns.get_level_values(0)
-    df = pd.DataFrame({"Adj Close": raw["Adj Close"]})
-    df["SMA50"] = df["Adj Close"].rolling(50).mean()
-    df["SMA200"] = df["Adj Close"].rolling(200).mean()
-    df["RSI"] = compute_rsi(df["Adj Close"])
-    df["Volatility"] = df["Adj Close"].pct_change().rolling(30).std()
-    df["Momentum_10d"] = compute_momentum(df["Adj Close"], 10)
-    macd_line, macd_signal = compute_macd(df["Adj Close"])
-    df["MACD"] = macd_line
-    df["MACD_signal"] = macd_signal
-    bb_upper, bb_lower = compute_bollinger(df["Adj Close"])
-    df["BB_upper"] = bb_upper
-    df["BB_lower"] = bb_lower
+
+    # Create DataFrame with OHLCV data needed for technical features
+    df = pd.DataFrame(
+        {"Open": raw["Open"], "High": raw["High"], "Low": raw["Low"], "Close": raw["Adj Close"], "Volume": raw["Volume"]}
+    )
+
+    # Add all 20 technical features
+    df = add_technical_features_only(df)
     df = df.dropna()
+
     if df.empty:
         raise HTTPException(status_code=404, detail="No recent data for ticker")
     row = df.iloc[-1:]
-    prob = MODEL.predict_proba(row[features].values)[0][1]
-    return {"probability": float(prob), "prediction": int(prob > 0.5)}
+
+    # Use 20 technical features for current production model
+    model_features = get_technical_feature_names()
+    prob = MODEL.predict_proba(row[model_features].values)[0][1]
+
+    # Get current price for response
+    current_price = float(df["Close"].iloc[-1])
+
+    return {
+        "ticker": ticker,
+        "probability": float(prob),
+        "prediction": int(prob > 0.5),
+        "current_price": current_price,
+        "price": current_price,
+    }
+
+
+# Alias endpoint for frontend compatibility
+@app.get(
+    "/predict_ticker/{ticker}",
+    tags=["Predictions"],
+    summary="Predict Stock Movement (Alias)",
+    description="Alias endpoint for /api/predict/{ticker} - Frontend compatibility",
+)
+async def predict_ticker_alias(ticker: str):
+    """Alias for /api/predict/{ticker} - calls the same function."""
+    return predict_ticker(ticker.upper())
 
 
 @app.get(
@@ -732,7 +794,7 @@ def predict_ticker(ticker: str):
     Returns stocks sorted by prediction probability (highest first).
     """,
 )
-def ranking(tickers: str = "", country: str = "Global", use_parallel: bool = True):
+def ranking(tickers: str = "", country: str = "Global", use_parallel: bool = False):  # TEMP: Disabled parallel
     """
     Rank stocks by ML prediction probability.
 
@@ -742,7 +804,7 @@ def ranking(tickers: str = "", country: str = "Global", use_parallel: bool = Tru
     Args:
         tickers: Comma-separated list of tickers (optional)
         country: Country/region for stock selection (default: Global)
-        use_parallel: Enable parallel processing for faster results (default: True)
+        use_parallel: Enable parallel processing for faster results (default: False - TEMP DISABLED)
     """
     if MODEL is None:
         raise HTTPException(status_code=503, detail="No model available")
@@ -773,7 +835,9 @@ def ranking(tickers: str = "", country: str = "Global", use_parallel: bool = Tru
             from .performance import parallel_stock_ranking
 
             logger.info(f"🚀 Processing {len(chosen)} stocks in parallel...")
-            result = parallel_stock_ranking(chosen, MODEL, features)
+            # Use 20 technical features for parallel processing
+            technical_features = get_technical_feature_names()
+            result = parallel_stock_ranking(chosen, MODEL, technical_features)
 
             duration = time.time() - start_time
             logger.info(
@@ -793,6 +857,8 @@ def ranking(tickers: str = "", country: str = "Global", use_parallel: bool = Tru
     # SEQUENTIAL PROCESSING (fallback)
     logger.info(f"Processing {len(chosen)} stocks sequentially...")
     result = []
+    technical_features = get_technical_feature_names()
+
     for t in chosen:
         try:
             pred_start = time.time()
@@ -805,37 +871,56 @@ def ranking(tickers: str = "", country: str = "Global", use_parallel: bool = Tru
         if raw.empty or "Adj Close" not in raw.columns:
             continue
 
-        # Ensure we have a DataFrame with proper column access
-        df = pd.DataFrame()
-        # Extract as Series to avoid MultiIndex issues
-        adj_close = raw["Adj Close"]
-        if isinstance(adj_close, pd.DataFrame):
-            adj_close = adj_close.iloc[:, 0]  # Take first column if DataFrame
-        df["Adj Close"] = adj_close
+        # Ensure raw is a DataFrame (yfinance sometimes returns Series for single-column results)
+        if not isinstance(raw, pd.DataFrame):
+            continue
 
-        df["SMA50"] = df["Adj Close"].rolling(50).mean()
-        df["SMA200"] = df["Adj Close"].rolling(200).mean()
-        df["RSI"] = compute_rsi(df["Adj Close"])
-        df["Volatility"] = df["Adj Close"].pct_change().rolling(30).std()
-        df["Momentum_10d"] = compute_momentum(df["Adj Close"], 10)
-        macd, macd_sig = compute_macd(df["Adj Close"])
-        df["MACD"] = macd
-        df["MACD_signal"] = macd_sig
-        bb_up, bb_low = compute_bollinger(df["Adj Close"])
-        df["BB_upper"] = bb_up
-        df["BB_lower"] = bb_low
+        # Create OHLCV DataFrame - flatten any multi-dimensional columns
+        try:
+            df = pd.DataFrame(
+                {
+                    "Open": raw["Open"].values.flatten() if raw["Open"].values.ndim > 1 else raw["Open"].values,
+                    "High": raw["High"].values.flatten() if raw["High"].values.ndim > 1 else raw["High"].values,
+                    "Low": raw["Low"].values.flatten() if raw["Low"].values.ndim > 1 else raw["Low"].values,
+                    "Close": (
+                        raw["Adj Close"].values.flatten() if raw["Adj Close"].values.ndim > 1 else raw["Adj Close"].values
+                    ),
+                    "Volume": raw["Volume"].values.flatten() if raw["Volume"].values.ndim > 1 else raw["Volume"].values,
+                },
+                index=raw.index,
+            )
+        except Exception as e:
+            logger.error(f"Failed to create DataFrame for {t}: {e}")
+            continue
+
+        # Get price BEFORE feature engineering
+        current_price = float(df["Close"].iloc[-1])
+
+        # Add all 20 technical features
+        df = add_technical_features_only(df)
         df = df.dropna()
         if df.empty:
             continue
+
+        # Predict with 20 technical features
         row = df.iloc[-1:]
-        # Use legacy 9 features for fallback (sequential mode)
-        prob = MODEL.predict_proba(row[features_legacy].values)[0][1]
+        prob = MODEL.predict_proba(row[technical_features].values)[0][1]
+
+        # Determine action
+        if prob >= 0.6:
+            action = "BUY"
+        elif prob <= 0.4:
+            action = "SELL"
+        else:
+            action = "HOLD"
 
         # Track model prediction metrics
         pred_duration = time.time() - pred_start
         prom_metrics.track_model_prediction("random_forest", float(prob), pred_duration)
 
-        result.append({"ticker": t, "prob": float(prob)})
+        result.append(
+            {"ticker": t, "prob": float(prob), "action": action, "confidence": float(prob * 100), "price": current_price}
+        )
 
     # sort result
     result.sort(key=lambda r: r["prob"], reverse=True)

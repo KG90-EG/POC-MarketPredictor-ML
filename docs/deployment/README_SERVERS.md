@@ -29,7 +29,9 @@
     ├── SERVER_MANAGEMENT.md    # Full documentation
     └── IMPROVEMENTS_SUMMARY.md # What we built
 ```
+
     └── IMPROVEMENTS_SUMMARY.md # What we built
+
 ```
 
 ## Daily Usage

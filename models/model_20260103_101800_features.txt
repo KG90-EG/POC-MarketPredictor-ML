@@ -1,0 +1,9 @@
+SMA50
+SMA200
+RSI
+Volatility
+Momentum_10d
+MACD
+MACD_signal
+BB_upper
+BB_lower

@@ -128,7 +128,7 @@ def load_data(ticker: str, period: str = "5y", use_advanced_features: bool = Tru
     Args:
         ticker: Stock ticker symbol
         period: Time period (e.g., "5y", "1y", "6mo")
-        use_advanced_features: Use 40+ features if True, else 9 legacy features
+        use_advanced_features: Use 20 technical features if True, else 9 legacy features
 
     Returns:
         DataFrame with features and target, or None if failed
@@ -146,9 +146,11 @@ def load_data(ticker: str, period: str = "5y", use_advanced_features: bool = Tru
     df["Outperform"] = (df["Returns_90d"] > 0.05).astype(int)
 
     if use_advanced_features and USE_ALL_FEATURES:
-        # Use advanced feature engineering (40+ features)
-        logging.info(f"Adding 40+ features for {ticker}")
-        df = add_all_features(df, ticker=ticker)
+        # Use ONLY technical features (no external API calls to avoid rate limiting)
+        logging.info(f"Adding 20 technical features for {ticker}")
+        from .ml.feature_engineering import add_technical_features_only
+
+        df = add_technical_features_only(df)
     else:
         # Legacy: compute 9 original features only
         df["SMA50"] = df["Adj Close"].rolling(50).mean()
@@ -200,14 +202,55 @@ def check_xgboost_and_openmp():
     return False
 
 
-def build_dataset(tickers_list, period="5y"):
+def build_dataset(tickers_list, period="5y", use_advanced_features=None):
+    """Build dataset from multiple tickers.
+
+    Args:
+        tickers_list: List of ticker symbols
+        period: Historical data period (default: "5y")
+        use_advanced_features: Use 20 technical features if True, else 9 legacy features.
+                              If None, uses global USE_ALL_FEATURES setting.
+
+    Returns:
+        Concatenated DataFrame with all tickers
+    """
+    # Use global setting if not explicitly specified
+    if use_advanced_features is None:
+        use_advanced_features = USE_ALL_FEATURES
+
+    import time
+
     dfs = []
-    for t in tickers_list:
-        df = load_data(t, period=period)
-        if df is not None:
-            dfs.append(df)
+    failed_tickers = []
+
+    for i, t in enumerate(tickers_list):
+        # Add delay to avoid rate limiting (0.5s between requests)
+        if i > 0:
+            time.sleep(0.5)
+
+        try:
+            df = load_data(t, period=period, use_advanced_features=use_advanced_features)
+            if df is not None:
+                dfs.append(df)
+                logging.info(f"✓ Loaded {t}: {len(df)} samples")
+            else:
+                failed_tickers.append(t)
+                logging.warning(f"✗ Failed to load {t}: empty data")
+        except Exception as e:
+            failed_tickers.append(t)
+            logging.warning(f"✗ Failed to load {t}: {str(e)[:100]}")
+            # If rate limited, wait longer
+            if "Rate limit" in str(e) or "Too Many Requests" in str(e):
+                logging.warning(f"Rate limited! Waiting 10 seconds...")
+                time.sleep(10)
+
+    if failed_tickers:
+        logging.warning(f"Failed to load {len(failed_tickers)} tickers: {', '.join(failed_tickers[:5])}...")
+
     if not dfs:
         raise RuntimeError("No data could be loaded for the given tickers.")
+
+    logging.info(f"Successfully loaded {len(dfs)}/{len(tickers_list)} tickers")
     return pd.concat(dfs)
 
 

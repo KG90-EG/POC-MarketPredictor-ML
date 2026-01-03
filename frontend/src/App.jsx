@@ -70,6 +70,9 @@ function AppContent() {
     return saved ? JSON.parse(saved) : false
   })
   const [language, setLanguage] = useState(() => localStorage.getItem('app_language') || 'en')
+  const [currency, setCurrency] = useState(() => localStorage.getItem('currency') || 'USD')
+  const [exchangeRate, setExchangeRate] = useState(null)
+  const [rateSource, setRateSource] = useState('loading')
 
   // Toast notifications
   const [toasts, setToasts] = useState([])
@@ -118,6 +121,29 @@ function AppContent() {
     localStorage.setItem('app_language', language)
   }, [language])
 
+  useEffect(() => {
+    localStorage.setItem('currency', currency)
+  }, [currency])
+
+  // Fetch exchange rate when currency changes
+  useEffect(() => {
+    async function fetchExchangeRate() {
+      try {
+        const response = await api.get('/currency')
+        if (response.data.status === 'ok') {
+          setExchangeRate(response.data.data.rate)
+          setRateSource(response.data.data.source)
+        }
+      } catch (error) {
+        console.error('Failed to fetch exchange rate:', error)
+        setExchangeRate(0.85) // Fallback rate
+        setRateSource('fallback')
+      }
+    }
+    if (currency === 'CHF') {
+      fetchExchangeRate()
+    }
+  }, [currency])
   // Initialize analytics and track web vitals
   useEffect(() => {
     trackWebVitals()
@@ -437,6 +463,15 @@ function AppContent() {
             {darkMode ? '☀️' : '🌙'}
           </button>
 
+          <button
+            className="toolbar-btn currency-toggle"
+            onClick={() => setCurrency(currency === 'USD' ? 'CHF' : 'USD')}
+            aria-label={`Switch to ${currency === 'USD' ? 'CHF' : 'USD'}`}
+            title={`Currency: ${currency}${currency === 'CHF' && exchangeRate ? ` (1 USD = ${exchangeRate.toFixed(4)} CHF)` : ''}`}
+          >
+            {currency}
+          </button>
+
           <AlertPanel />
 
           <button
@@ -737,7 +772,7 @@ function AppContent() {
 
       {/* Buy Opportunities View */}
       {portfolioView === 'buy-opportunities' && (
-        <BuyOpportunities />
+        <BuyOpportunities currency={currency} exchangeRate={exchangeRate} />
       )}
 
       {/* Search Section - Only for stocks */}

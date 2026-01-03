@@ -91,6 +91,17 @@ repos:
       - id: yamllint
         args: ['-d', '{extends: default, rules: {line-length: {max: 127}}}']
 
+  # Repository structure validation (custom)
+  - repo: local
+    hooks:
+      - id: validate-repo-structure
+        name: Validate Repository Structure
+        entry: scripts/validate_structure.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+        stages: [commit]
+
 # Exclude patterns
 exclude: |
   (?x)^(

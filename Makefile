@@ -221,7 +221,7 @@ clean: ## Clean temporary files and caches
 	@find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
 	@find . -type f -name "*.pyc" -delete
 	@find . -type f -name ".DS_Store" -delete
-	@rm -f .backend.pid .frontend.pid
+	@rm -f logs/.backend.pid logs/.frontend.pid
 	@echo "✅ Cleaned"
 
 clean-all: clean logs-clean ## Deep clean (includes logs and venv)
@@ -230,6 +230,21 @@ clean-all: clean logs-clean ## Deep clean (includes logs and venv)
 	@echo "Removing node_modules..."
 	@rm -rf $(FRONTEND_DIR)/node_modules
 	@echo "✅ Deep clean complete"
+
+# ============================================
+# Repository Structure
+# ============================================
+check-structure: ## Validate repository structure
+	@echo "🔍 Checking repository structure..."
+	@./scripts/validate_structure.sh
+
+cleanup-structure: ## Auto-fix repository structure (move misplaced files)
+	@echo "🧹 Reorganizing files..."
+	@./scripts/cleanup_repo.sh
+
+deep-clean: ## Deep cleanup (remove outdated files, duplicates, old models, cache)
+	@echo "🧹 Running deep cleanup..."
+	@./scripts/deep_cleanup.sh
 
 # ============================================
 # Port Management
@@ -257,3 +272,38 @@ serve: start ## Alias for 'make start'
 run: start ## Alias for 'make start'
 
 down: stop ## Alias for 'make stop'
+
+# ============================================
+# Model Training
+# ============================================
+train-model: ## Train production model on all DEFAULT_STOCKS (50 stocks)
+	@echo "🤖 Starting model training..."
+	@$(PYTHON) scripts/train_production.py
+
+train-watchlist: ## Train model on your watchlist stocks
+	@echo "🤖 Training model on watchlist stocks..."
+	@$(PYTHON) scripts/train_watchlist.py
+
+auto-retrain-setup: ## Setup automatic weekly retraining (Sunday 2am)
+	@echo "📅 Setting up automatic retraining..."
+	@$(PYTHON) scripts/auto_retrain.py --schedule weekly --day sun --time "02:00" &
+	@echo "✅ Auto-retraining scheduler started in background"
+	@echo "   Schedule: Weekly on Sunday at 02:00"
+	@echo "   Logs: logs/auto_retrain.log"
+
+auto-retrain-daily: ## Setup automatic daily retraining (2am)
+	@echo "📅 Setting up daily automatic retraining..."
+	@$(PYTHON) scripts/auto_retrain.py --schedule daily --time "02:00" &
+	@echo "✅ Auto-retraining scheduler started in background"
+	@echo "   Schedule: Daily at 02:00"
+	@echo "   Logs: logs/auto_retrain.log"
+
+auto-retrain-now: ## Run training immediately and setup weekly schedule
+	@echo "🚀 Running immediate training + setting up weekly schedule..."
+	@$(PYTHON) scripts/auto_retrain.py --schedule weekly --day sun --time "02:00" --run-now &
+	@echo "✅ Training started and scheduler running in background"
+
+mlflow-ui: ## Start MLflow UI to view training metrics
+	@echo "🔬 Starting MLflow UI..."
+	@$(PYTHON) -m mlflow ui --port 5000
+	@echo "   Open http://localhost:5000 in your browser"
