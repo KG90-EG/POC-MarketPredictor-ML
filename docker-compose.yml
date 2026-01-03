@@ -1,0 +1,145 @@
+version: '3.8'
+
+# ============================================
+# POC-MarketPredictor-ML - Main Application
+# Docker Compose Configuration
+# ============================================
+# Usage:
+#   docker-compose up -d              # Start all services
+#   docker-compose logs -f            # Follow logs
+#   docker-compose down               # Stop services
+#   docker-compose ps                 # Show status
+# ============================================
+
+services:
+  # ==========================================
+  # Backend API Server
+  # ==========================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ml-backend
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      # App config
+      - BACKEND_PORT=8000
+      - FRONTEND_PORT=5173
+
+      # Model path (inside container)
+      - PROD_MODEL_PATH=/app/models/prod_model.bin
+
+      # Cache config
+      - USE_REDIS=${USE_REDIS:-false}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+
+      # Rate limiting
+      - RATE_LIMIT_RPM=${RATE_LIMIT_RPM:-60}
+
+      # External services
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI:-}
+
+      # AWS (for model storage)
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
+
+    volumes:
+      # Mount models directory
+      - ./models:/app/models:ro
+
+      # Mount MLflow tracking (if local)
+      - ./mlruns:/app/mlruns
+
+      # Mount logs
+      - ./logs:/app/logs
+
+    networks:
+      - app-network
+
+    depends_on:
+      - redis
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    restart: unless-stopped
+
+    command: uvicorn src.trading_engine.server:app --host 0.0.0.0 --port 8000
+
+  # ==========================================
+  # Frontend Development Server
+  # ==========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ml-frontend
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    environment:
+      - VITE_API_URL=http://localhost:${BACKEND_PORT:-8000}
+      - VITE_WS_URL=ws://localhost:${BACKEND_PORT:-8000}
+
+    volumes:
+      # Mount source for hot reload in development
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.js:/app/vite.config.js
+
+    networks:
+      - app-network
+
+    depends_on:
+      - backend
+
+    restart: unless-stopped
+
+    command: npm run dev -- --host 0.0.0.0
+
+  # ==========================================
+  # Redis Cache (Optional)
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: ml-redis
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - redis_data:/data
+
+    networks:
+      - app-network
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+    restart: unless-stopped
+
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  app-network:
+    driver: bridge
+    name: ml-app-network
+
+# ==========================================
+# Volumes
+# ==========================================
+volumes:
+  redis_data:
+    name: ml-redis-data

@@ -1,0 +1,65 @@
+# Ignore Git
+.git
+.gitignore
+.github
+
+# Ignore Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache
+.venv
+venv
+env
+
+# Ignore logs
+logs
+*.log
+
+# Ignore MLflow runs (large)
+mlruns
+
+# Ignore data files (could be large)
+data/analytics
+
+# Ignore IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore node modules (will be installed in container)
+node_modules
+frontend/node_modules
+frontend/dist
+
+# Ignore build artifacts
+*.egg-info
+dist
+build
+
+# Ignore temp files
+*.tmp
+.backend.pid
+.frontend.pid
+
+# Ignore docs (not needed in container)
+docs
+
+# Ignore tests (optional - remove if you want tests in container)
+tests
+frontend/src/**/*.test.*
+frontend/src/**/*.spec.*
+
+# Ignore deployment configs
+config/deployment
+.env.example
+README.md
+LICENSE

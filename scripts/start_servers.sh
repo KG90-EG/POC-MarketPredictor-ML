@@ -19,21 +19,113 @@
 
 set -euo pipefail
 
-# Colors for output
+# ============================================
+# Script Directory & Project Root
+# ============================================
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# ============================================
+# Load Environment Variables from .env
+# ============================================
+ENV_FILE="$PROJECT_ROOT/.env"
+
+if [ ! -f "$ENV_FILE" ]; then
+    echo "❌ ERROR: .env file not found at: $ENV_FILE"
+    echo ""
+    echo "Please create .env from .env.example:"
+    echo "  cp .env.example .env"
+    echo ""
+    echo "Then configure required variables and try again."
+    exit 1
+fi
+
+# Load .env file (export all variables)
+set -a
+source "$ENV_FILE"
+set +a
+
+echo "✅ Loaded environment from: $ENV_FILE"
+
+# ============================================
+# Cleanup Handler (trap for graceful shutdown)
+# ============================================
+BACKEND_PID=""
+FRONTEND_PID=""
+CLEANUP_DONE=false
+
+cleanup() {
+    if [ "$CLEANUP_DONE" = true ]; then
+        return
+    fi
+    CLEANUP_DONE=true
+
+    echo ""
+    log_warning "Cleaning up servers..."
+
+    # Read PIDs from files if not set
+    if [ -z "$BACKEND_PID" ] && [ -f "$BACKEND_PID_FILE" ]; then
+        BACKEND_PID=$(cat "$BACKEND_PID_FILE")
+    fi
+    if [ -z "$FRONTEND_PID" ] && [ -f "$FRONTEND_PID_FILE" ]; then
+        FRONTEND_PID=$(cat "$FRONTEND_PID_FILE")
+    fi
+
+    # Stop backend
+    if [ -n "$BACKEND_PID" ] && kill -0 "$BACKEND_PID" 2>/dev/null; then
+        log_info "Stopping backend (PID: $BACKEND_PID)..."
+        kill -TERM "$BACKEND_PID" 2>/dev/null || true
+        sleep 2
+        if kill -0 "$BACKEND_PID" 2>/dev/null; then
+            kill -KILL "$BACKEND_PID" 2>/dev/null || true
+        fi
+    fi
+
+    # Stop frontend
+    if [ -n "$FRONTEND_PID" ] && kill -0 "$FRONTEND_PID" 2>/dev/null; then
+        log_info "Stopping frontend (PID: $FRONTEND_PID)..."
+        kill -TERM "$FRONTEND_PID" 2>/dev/null || true
+        sleep 2
+        if kill -0 "$FRONTEND_PID" 2>/dev/null; then
+            kill -KILL "$FRONTEND_PID" 2>/dev/null || true
+        fi
+    fi
+
+    # Clean PID files
+    rm -f "$BACKEND_PID_FILE" "$FRONTEND_PID_FILE"
+
+    log_success "Cleanup complete"
+}
+
+# Register cleanup on EXIT, INT, TERM (only for main start process, not for --status/--stop)
+# Will be enabled in main() for start operations only
+TRAP_ENABLED=false
+
+enable_trap() {
+    if [ "$TRAP_ENABLED" = false ]; then
+        trap cleanup EXIT INT TERM
+        TRAP_ENABLED=true
+    fi
+}
+
+# ============================================
+# Colors & Configuration
+# ============================================
+# ============================================
+# Colors & Configuration
+# ============================================
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Configuration
+# Configuration (with .env fallback to defaults)
 BACKEND_PORT="${BACKEND_PORT:-8000}"
 FRONTEND_PORT="${FRONTEND_PORT:-5173}"
 PYTHON_CMD="${PYTHON_CMD:-python3}"
 MAX_RETRIES="${MAX_RETRIES:-3}"
 HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-30}"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # PID files
 BACKEND_PID_FILE="$PROJECT_ROOT/.backend.pid"
@@ -48,9 +140,64 @@ STARTUP_LOG="$LOG_DIR/startup.log"
 # Ensure log directory exists
 mkdir -p "$LOG_DIR"
 
-#
+# ============================================
+# Pre-flight Checks
+# ============================================
+
+# Check if ports are available
+check_ports() {
+    log_info "Checking port availability..."
+
+    if is_port_in_use "$BACKEND_PORT"; then
+        log_warning "Backend port $BACKEND_PORT is already in use"
+        local pid=$(get_process_on_port "$BACKEND_PORT")
+        log_info "Process using port: $pid"
+        read -p "Kill existing process and continue? (y/N) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            log_error "Cannot start - port $BACKEND_PORT is in use"
+            exit 1
+        fi
+        kill_process_on_port "$BACKEND_PORT"
+    fi
+
+    if is_port_in_use "$FRONTEND_PORT"; then
+        log_warning "Frontend port $FRONTEND_PORT is already in use"
+        local pid=$(get_process_on_port "$FRONTEND_PORT")
+        log_info "Process using port: $pid"
+        read -p "Kill existing process and continue? (y/N) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            log_error "Cannot start - port $FRONTEND_PORT is in use"
+            exit 1
+        fi
+        kill_process_on_port "$FRONTEND_PORT"
+    fi
+
+    log_success "Ports are available"
+}
+
+# Check required model file exists
+check_model() {
+    if [ -n "${PROD_MODEL_PATH:-}" ]; then
+        local model_path="$PROJECT_ROOT/$PROD_MODEL_PATH"
+        if [ ! -f "$model_path" ]; then
+            log_warning "Model file not found: $model_path"
+            log_info "Backend may fail to start if model is required"
+            read -p "Continue anyway? (y/N) " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                exit 1
+            fi
+        else
+            log_success "Model file found: $PROD_MODEL_PATH"
+        fi
+    fi
+}
+
+# ============================================
 # Utility functions
-#
+# ============================================
 
 log() {
     local level="$1"
@@ -195,6 +342,9 @@ check_frontend_health() {
 start_backend() {
     log_info "Starting backend server on port $BACKEND_PORT..."
 
+    # Enable cleanup trap
+    enable_trap
+
     # Check Python
     if ! command -v "$PYTHON_CMD" >/dev/null 2>&1; then
         log_error "Python not found: $PYTHON_CMD"
@@ -236,6 +386,7 @@ start_backend() {
 
     local pid=$!
     save_pid "$pid" "$BACKEND_PID_FILE"
+    BACKEND_PID=$pid  # Store for cleanup trap
 
     # Wait for startup (backend takes longer with reload mode)
     sleep 8
@@ -296,6 +447,9 @@ stop_backend() {
 start_frontend() {
     log_info "Starting frontend server on port $FRONTEND_PORT..."
 
+    # Enable cleanup trap
+    enable_trap
+
     # Check npm
     if ! command -v npm >/dev/null 2>&1; then
         log_error "npm not found - please install Node.js"
@@ -338,6 +492,7 @@ start_frontend() {
 
     local pid=$!
     save_pid "$pid" "$FRONTEND_PID_FILE"
+    FRONTEND_PID=$pid  # Store for cleanup trap
 
     # Wait for startup
     sleep 5
@@ -398,6 +553,14 @@ start_all() {
     log_info "Starting all servers..."
     echo
 
+    # Enable cleanup trap for graceful shutdown
+    enable_trap
+
+    # Pre-flight checks
+    check_ports
+    check_model
+    echo
+
     local backend_ok=false
     local frontend_ok=false
 
@@ -425,8 +588,8 @@ start_all() {
         echo -e "${BLUE}ℹ API Docs:${NC} http://localhost:$BACKEND_PORT/docs"
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         echo
-        echo "To stop servers: $0 --stop"
-        echo "To check status: $0 --status"
+        echo "Logs: tail -f logs/backend.log logs/frontend.log"
+        echo "Stop: ./scripts/start_servers.sh --stop"
         echo
         return 0
     else
