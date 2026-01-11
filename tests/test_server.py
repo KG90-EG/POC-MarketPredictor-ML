@@ -55,9 +55,10 @@ class TestMetricsEndpoint:
 class TestPredictEndpoint:
     """Test prediction endpoints"""
 
-    @pytest.mark.skip(reason="Test uses legacy 9-feature format - needs update to match current 75-feature system")
     def test_predict_raw_endpoint(self, client):
-        """Test raw prediction endpoint"""
+        """Test raw prediction endpoint with minimal valid features"""
+        # Note: This endpoint now requires 75-feature system
+        # For now, we test that it properly rejects incomplete feature sets
         payload = {
             "features": {
                 "SMA50": 150.0,
@@ -73,12 +74,16 @@ class TestPredictEndpoint:
         }
 
         response = client.post("/predict_raw", json=payload)
-        assert response.status_code in [200, 503]
-
-        data = response.json()
-        if response.status_code == 200:
-            assert "prob" in data
-            assert 0 <= data["prob"] <= 1
+        
+        # Should return 400 (feature mismatch) or 503 (no model)
+        # because 9 features != 75 features required
+        assert response.status_code in [400, 503]
+        
+        if response.status_code == 400:
+            data = response.json()
+            assert "detail" in data
+            # Should mention feature count mismatch
+            assert "feature" in data["detail"].lower() or "mismatch" in data["detail"].lower()
 
 
 class TestRateLimiting:
@@ -135,22 +140,27 @@ class TestCORS:
 class TestErrorHandling:
     """Test error handling"""
 
-    @pytest.mark.skip(reason="Test endpoint crashes on invalid data - needs error handling fix in server.py")
     def test_predict_with_invalid_data(self, client):
         """Test prediction with invalid feature data"""
         payload = {"features": {"invalid_feature": 123}}
 
         response = client.post("/predict_raw", json=payload)
-        # API may handle gracefully or return error
-        # Just check it returns a valid response
-        assert response.status_code in [200, 400, 404, 422, 500, 503]
+        # Should return 400 (bad request) for invalid features
+        assert response.status_code in [400, 503]
+        
+        if response.status_code == 400:
+            data = response.json()
+            assert "detail" in data
+            assert "feature" in data["detail"].lower() or "mismatch" in data["detail"].lower()
 
-    @pytest.mark.skip(reason="Test endpoint crashes on missing features - needs error handling fix in server.py")
     def test_predict_with_missing_features(self, client):
         """Test prediction with missing required features"""
         payload = {"features": {"SMA50": 150.0}}
 
         response = client.post("/predict_raw", json=payload)
-        # API may handle gracefully with defaults or return error
-        # Just check it returns a response
-        assert response.status_code in [200, 400, 422, 500, 503]
+        # Should return 400 (bad request) for insufficient features
+        assert response.status_code in [400, 503]
+        
+        if response.status_code == 400:
+            data = response.json()
+            assert "detail" in data

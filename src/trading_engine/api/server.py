@@ -592,14 +592,59 @@ def prometheus_metrics():
 
 @app.post("/predict_raw")
 def predict_raw(payload: FeaturePayload):
+    """
+    Make prediction using raw feature values.
+    
+    NOTE: This endpoint expects the current 75-feature system.
+    Legacy 9-feature or 20-feature formats are no longer supported.
+    """
     if MODEL is None:
         raise HTTPException(status_code=503, detail="No model available")
-    row = row_from_features(payload.features)
-    if hasattr(MODEL, "predict_proba"):
-        prob = MODEL.predict_proba(row.values)[0][1]
-    else:
-        prob = float(MODEL.predict(row.values)[0])
-    return {"prob": float(prob)}
+    
+    try:
+        # Validate features
+        if not payload.features:
+            raise HTTPException(
+                status_code=400, 
+                detail="No features provided. Please provide feature values."
+            )
+        
+        # Build feature row
+        row = row_from_features(payload.features)
+        
+        # Check feature count matches model expectations
+        expected_features = MODEL.n_features_in_ if hasattr(MODEL, 'n_features_in_') else None
+        if expected_features and row.shape[1] != expected_features:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Feature count mismatch: expected {expected_features} features, got {row.shape[1]}. "
+                       f"This endpoint requires the current 75-feature system."
+            )
+        
+        # Make prediction
+        if hasattr(MODEL, "predict_proba"):
+            prob = MODEL.predict_proba(row.values)[0][1]
+        else:
+            prob = float(MODEL.predict(row.values)[0])
+        
+        return {"prob": float(prob)}
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except ValueError as e:
+        # Handle feature shape mismatches and value errors
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid feature data: {str(e)}"
+        )
+    except Exception as e:
+        # Catch-all for unexpected errors
+        logger.error(f"Error in predict_raw: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Prediction failed: {str(e)}"
+        )
 
 
 @app.get(
