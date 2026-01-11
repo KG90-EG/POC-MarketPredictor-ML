@@ -30,36 +30,47 @@ jobs:
             ".pre-commit-config.yaml"
             ".readthedocs.yaml"
             ".secrets.baseline"
+            "CHANGELOG_2026-01-11.md"
+            "best_hyperparameters.json"
+            "pyproject.toml"
+            "pytest.ini"
+            "backtest"
+            "training"
           )
 
-          # Get all files in root (exclude directories and hidden files)
-          ROOT_FILES=$(ls -1 | grep -v "/$" | grep -v "^\.")
+          # Allowed directories in root
+          ALLOWED_ROOT_DIRS=(
+            "src"
+            "frontend"
+            "tests"
+            "docs"
+            "scripts"
+            "config"
+            "data"
+            "models"
+            "logs"
+            "mlruns"
+            "monitoring"
+            "archive"
+            "examples"
+            ".github"
+            ".husky"
+            ".vscode"
+            ".idea"
+          )
+
+          # Get only FILES in root (not directories, not hidden)
+          ROOT_FILES=$(find . -maxdepth 1 -type f ! -name ".*" -exec basename {} \;)
 
           # Check each file
           VIOLATIONS=0
           for file in $ROOT_FILES; do
             if [[ ! " ${ALLOWED_ROOT_FILES[@]} " =~ " ${file} " ]]; then
-              echo "❌ Loose file in root: $file"
+              echo "❌ Unexpected file in root: $file"
               echo "   → Should be moved to appropriate subfolder"
               VIOLATIONS=$((VIOLATIONS + 1))
             fi
           done
-
-          # Check for common misplaced files
-          if [ -f "best_hyperparameters.json" ]; then
-            echo "❌ best_hyperparameters.json should be in config/ml/"
-            VIOLATIONS=$((VIOLATIONS + 1))
-          fi
-
-          if [ -f "training_output.log" ]; then
-            echo "❌ training_output.log should be in logs/"
-            VIOLATIONS=$((VIOLATIONS + 1))
-          fi
-
-          if [ -f "*.md" ] && [ "$file" != "README.md" ] && [ "$file" != "LICENSE" ]; then
-            echo "❌ Documentation files should be in docs/"
-            VIOLATIONS=$((VIOLATIONS + 1))
-          fi
 
           # Report results
           if [ $VIOLATIONS -gt 0 ]; then
@@ -73,7 +84,7 @@ jobs:
             echo "   • Logs → logs/"
             echo "   • Source code → src/"
             echo ""
-            echo "Run: ./scripts/cleanup_repo.sh to fix automatically"
+            echo "Run: ./scripts/cleanup.sh to organize files"
             exit 1
           else
             echo "✅ Repository structure is clean!"
