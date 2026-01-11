@@ -25,10 +25,10 @@ This system helps identify **where capital should be allocated and where it shou
 
 - 📚 [Master Requirements](docs/DECISION_SUPPORT_SYSTEM_REQUIREMENTS.md)
 - 📋 [Project Backlog](docs/BACKLOG.md)
-- ⚡ [Quick Start](docs/getting-started/QUICKSTART.md)
 - 🐳 [Deployment](docs/deployment/DEPLOYMENT.md)
 - 📊 [API Docs](http://localhost:8000/docs)
 - 🔗 [Endpoint Status](docs/ENDPOINT_IMPLEMENTATION_STATUS.md)
+- 🛡️ [CI/CD Setup](docs/BRANCH_PROTECTION_SETUP.md)
 
 ## ✨ Core Features
 
@@ -92,10 +92,11 @@ This system helps identify **where capital should be allocated and where it shou
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                  Backend API (FastAPI)                       │
-│  • 41 Active Endpoints (100% Requirements Compliance)       │
+│  • 43 Active Endpoints (100% Requirements Compliance)       │
 │  • Market Regime Detector (VIX + S&P 500 Trend)            │
 │  • Composite Scorer (Tech 40% + ML 30% + Mom 20% + Reg 10%)│
 │  • Portfolio Risk Manager (Limits + Validation)             │
+│  • LLM Context Provider (Market & Asset Context)            │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -147,7 +148,7 @@ POC-MarketPredictor-ML/
 └── models/                   # Trained ML models
 ```
 
-## 📊 Endpoints by Category (41 Total)
+## 📊 Endpoints by Category (43 Total)
 
 ### System (4)
 - `GET /` - API root
@@ -210,10 +211,17 @@ POC-MarketPredictor-ML/
 - `POST /api/ml/retraining/trigger` - Trigger retraining
 - `POST /api/ml/retraining/rollback` - Rollback model
 
+### LLM Context (2) ✨ **NEW**
+- `GET /api/context/market` - Market overview context
+- `GET /api/context/asset/{ticker}` - Asset-specific context
+
 **Removed (2026-01-11):** 3 endpoints that violated Non-Goals
 - ❌ `POST /api/simulations/{id}/auto-trade` (automated trading)
 - ❌ `POST /api/simulations/{id}/autopilot` (automated trading)
 - ❌ `POST /predict_raw` (redundant)
+
+**Deprecated (2026-01-11):** 1 endpoint violating Decision Support principle
+- ⚠️ `POST /analyze` → Use `/api/context/market` instead (no buy/sell recommendations)
 
 **See:** [Endpoint Implementation Status](docs/ENDPOINT_IMPLEMENTATION_STATUS.md)
 
@@ -273,7 +281,7 @@ make auto-retrain-setup
 make mlflow-ui
 ```
 
-**See:** [Training Guide](docs/TRAINING_GUIDE.md) for complete instructions.
+**Training metrics tracked in MLflow UI (`make mlflow-ui`).**
 
 ## 🚀 Commands
 
@@ -319,27 +327,24 @@ docker-compose -f config/deployment/docker-compose.yml up
 ## 📖 Documentation
 
 ### Getting Started
-- [Quick Start](docs/getting-started/QUICKSTART.md) - 5-minute setup
-- [Installation](docs/getting-started/INSTALLATION.md) - Detailed setup
-- [Server Management](docs/SERVER_MANAGEMENT.md) - Start/stop/restart
+- **Quick Start:** Run `make setup && make start`
+- **API Documentation:** http://localhost:8000/docs
 
 ### Requirements & Planning
 - [Decision Support System Requirements](docs/DECISION_SUPPORT_SYSTEM_REQUIREMENTS.md) ⭐ **Master Document**
 - [Project Backlog](docs/BACKLOG.md) - Weekly tasks & progress
 - [Endpoint Implementation Status](docs/ENDPOINT_IMPLEMENTATION_STATUS.md) - API inventory
-- [Product Roadmap 2026](docs/PRODUCT_ROADMAP_2026.md) - Strategic features
 
 ### Technical Documentation
 - [Architecture](docs/architecture/) - System design & ADRs
 - [API Reference](docs/api/openapi.json) - OpenAPI spec
-- [Model Training](docs/TRAINING_GUIDE.md) - ML model retraining
 - [Git Hooks](docs/GIT_HOOKS.md) - Pre-commit automation
+- [CI/CD Quality Gates](docs/BRANCH_PROTECTION_SETUP.md) - Automated testing
 
 ### Features & Guides
 - [Market Regime Detection](docs/BACKLOG.md#week-2-phase-1---market-regime-detection) - Week 2 implementation
 - [Composite Scoring](docs/BACKLOG.md#week-2-phase-1---composite-scoring) - Multi-factor ranking
 - [Portfolio Risk Management](docs/ENDPOINT_IMPLEMENTATION_STATUS.md#4-portfolio-risk-management) - Exposure limits
-- [Trading Guide](docs/TRADER_GUIDE.md) - How to use the system
 
 ### Deployment
 - [Deployment Guide](docs/deployment/DEPLOYMENT.md) - Production setup
@@ -358,7 +363,7 @@ docker-compose -f config/deployment/docker-compose.yml up
 | Market Data Ingestion | 5.1 | ✅ Implemented | yfinance (300d lookback) |
 | Quantitative Signals | 5.2 | ✅ Implemented | 20 technical features |
 | **Market Regime Detection** | 5.3 | ✅ **CRITICAL** | VIX + S&P 500 (Week 2) |
-| LLM Context | 5.4 | ⚠️ Partial | Needs redesign (Phase 2) |
+| **LLM Context** | 5.4 | ✅ Implemented | Market & asset context (no recommendations) |
 | **Composite Scoring** | 5.5 | ✅ Implemented | Tech 40% + ML 30% + Mom 20% + Reg 10% |
 | **Risk Management** | 5.6 | ✅ Implemented | Portfolio limits + validation |
 | Decision Interface | 6 | ✅ Implemented | React UI with regime badge |
@@ -382,8 +387,9 @@ docker-compose -f config/deployment/docker-compose.yml up
 
 **Phase 2: Enhanced Explainability ✅**
 - ✅ Signal Breakdown UI (ScoreExplanationModal)
-- ✅ LLM Redesign (context provider, not decision maker)
+- ✅ LLM Redesign (/api/context/market, /api/context/asset/{ticker})
 - ✅ Feature Importance Analysis
+- ✅ Deprecated /analyze endpoint (violated Decision Support principle)
 
 **Additional Features ✅**
 - ✅ Portfolio Risk Management (3 endpoints)
@@ -428,7 +434,7 @@ docker-compose -f config/deployment/docker-compose.yml up
 - **Markets:** 5 (US, CH, DE, UK, FR)
 - **Stocks:** 50 (30 US + 20 Swiss)
 - **Cryptocurrencies:** Top 50 by market cap
-- **Endpoints:** 41 active, 100% requirements compliance
+- **Endpoints:** 43 active (42 implemented + 1 deprecated), 100% requirements compliance
 
 ## 📄 License
 

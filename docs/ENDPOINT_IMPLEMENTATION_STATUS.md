@@ -233,15 +233,21 @@ User manually executes trades based on AI recommendations.
 | 5.1 Market Data | `/ranking`, `/api/predict/{ticker}` | ✅ Implemented | yfinance integration |
 | 5.2 Quantitative Signals | `/ranking` (20 features) | ✅ Implemented | RSI, MACD, BB, Momentum, etc. |
 | 5.3 Market Regime | `/regime`, `/api/regime/summary` | ✅ Implemented | VIX + S&P 500 trend |
-| 5.4 LLM Context | `/api/analyze` | ⚠️ Partial | Needs redesign (Phase 2) |
+| 5.4 LLM Context | `/api/context/market`, `/api/context/asset/{ticker}` | ✅ Implemented | Context-only, no recommendations |
 | 5.5 Scoring & Ranking | `/ranking` (composite) | ✅ Implemented | Week 2 composite scoring |
 | 5.6 Risk Management | `/api/portfolio/*` (3 endpoints) | ✅ Implemented | Exposure limits + validation |
 | 6. Decision Interface | Frontend + `/ranking` | ✅ Implemented | React UI with regime status |
 | 4.1 Asset Universe | `/countries`, `/search_stocks`, `/popular_cryptos` | ✅ Implemented | 50 stocks, top cryptos |
-| 8. Non-Goals | Auto-trade removed | ✅ Compliant | No automated trading |
+| 8. Non-Goals | Auto-trade removed, `/analyze` deprecated | ✅ Compliant | No automated trading |
 
 **Overall Compliance:** ✅ **100%** of documented requirements  
 **Critical Gaps (from requirements doc):** 0 remaining
+
+**LLM Context (5.4) Update:**
+- ✅ NEW: `/api/context/market` - Market overview without buy/sell signals
+- ✅ NEW: `/api/context/asset/{ticker}` - Asset-specific context
+- ⚠️ DEPRECATED: `/analyze` - Returns migration notice (removed BUY/SELL recommendations)
+- ✅ Compliant with Non-Goal: "System must not make automated trading decisions"
 
 ---
 

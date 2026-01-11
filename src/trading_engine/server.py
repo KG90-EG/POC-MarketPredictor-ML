@@ -564,7 +564,7 @@ def root():
     return {
         "name": "POC-MarketPredictor-ML API",
         "version": "1.0.0",
-        "description": "Machine Learning powered stock ranking and analysis",
+        "description": "Decision Support System for Capital Allocation",
         "endpoints": {
             "docs": "/docs",
             "redoc": "/redoc",
@@ -573,7 +573,11 @@ def root():
             "ranking": "/ranking",
             "ticker_info": "/ticker_info/{ticker}",
             "predict": "/predict_ticker/{ticker}",
-            "analyze": "/analyze",
+            "market_context": "/api/context/market",
+            "asset_context": "/api/context/asset/{ticker}",
+        },
+        "deprecated": {
+            "analyze": "/analyze (use /api/context/market instead)"
         },
         "status": "operational",
     }
@@ -2430,9 +2434,22 @@ def remove_stock_from_watchlist(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/analyze", tags=["AI Analysis"])
-def analyze(request: AnalysisRequest) -> Dict[str, Any]:
-    """Use LLM to analyze ranking and provide buy/sell recommendations."""
+@app.post("/api/context/market", tags=["LLM Context"])
+def get_market_context(request: AnalysisRequest) -> Dict[str, Any]:
+    """
+    Get LLM-generated market context and insights (NO buy/sell recommendations).
+    
+    This endpoint provides:
+    - Market condition summary
+    - Risk factors to consider
+    - Sector trends
+    - Economic context
+    
+    It does NOT provide:
+    - Buy/sell recommendations
+    - Trade signals
+    - Investment advice
+    """
     if not OPENAI_CLIENT:
         raise HTTPException(
             status_code=503, detail="LLM not configured (set OPENAI_API_KEY)"
@@ -2444,9 +2461,9 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
     ).hexdigest()
 
     # Check cache
-    cached_data = cache.get(f"analysis:{cache_key}")
+    cached_data = cache.get(f"market_context:{cache_key}")
     if cached_data:
-        logger.debug(f"Cache hit for analysis: {cache_key[:8]}")
+        logger.debug(f"Cache hit for market context: {cache_key[:8]}")
         cached_data["cached"] = True
         return cached_data
 
@@ -2457,31 +2474,18 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
             stock = yf.Ticker(r["ticker"])
             info = stock.info
 
-            # Get recommendation signal
-            prob = r["prob"]
-            if prob >= 0.65:
-                signal = "STRONG BUY"
-            elif prob >= 0.55:
-                signal = "BUY"
-            elif prob >= 0.45:
-                signal = "HOLD"
-            elif prob >= 0.35:
-                signal = "CONSIDER SELLING"
-            else:
-                signal = "SELL"
-
             enriched_data.append(
                 {
                     "rank": rank,
                     "ticker": r["ticker"],
                     "name": info.get("longName", r["ticker"]),
-                    "prob": prob,
-                    "signal": signal,
+                    "score": r["prob"],
                     "price": info.get("currentPrice", info.get("regularMarketPrice")),
                     "change": info.get("regularMarketChangePercent"),
                     "volume": info.get("volume"),
                     "market_cap": info.get("marketCap"),
                     "pe_ratio": info.get("trailingPE"),
+                    "sector": info.get("sector", "N/A"),
                     "fifty_two_week_high": info.get("fiftyTwoWeekHigh"),
                     "fifty_two_week_low": info.get("fiftyTwoWeekLow"),
                 }
@@ -2492,39 +2496,38 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
                 {
                     "rank": rank,
                     "ticker": r["ticker"],
-                    "prob": r["prob"],
-                    "signal": (
-                        "BUY"
-                        if r["prob"] >= 0.55
-                        else "HOLD" if r["prob"] >= 0.45 else "SELL"
-                    ),
+                    "score": r["prob"],
                 }
             )
 
-    # Build enhanced prompt with market data
+    # Build context-focused prompt (NO recommendations)
     ranking_text = "\n".join(
         [
-            f"{d['rank']}. {d['ticker']} - {d.get('name', 'N/A')}: "
-            f"Probability: {d['prob']*100:.1f}% | Signal: {d['signal']} | "
+            f"{d['rank']}. {d['ticker']} ({d.get('sector', 'N/A')}) - "
+            f"Score: {d['score']*100:.1f} | "
             f"Price: ${d.get('price', 'N/A')} | Change: {d.get('change', 'N/A')}% | "
             f"P/E: {d.get('pe_ratio', 'N/A')}"
             for d in enriched_data
         ]
     )
 
-    user_ctx = request.user_context or "General investment strategy"
+    user_ctx = request.user_context or "General market overview"
     prompt = (
-        "You are an expert trading analyst. Based on ML model predictions and market data, "
-        "provide actionable BUY/SELL recommendations.\n\n"
-        f"RANKED STOCKS (Top 10):\n{ranking_text}\n\n"
-        f"USER CONTEXT: {user_ctx}\n\n"
-        "Provide:\n"
-        "1. TOP 3 BUY RECOMMENDATIONS - Which stocks to buy NOW and why\n"
-        "2. SELL/AVOID - Any stocks to sell or avoid and why\n"
-        "3. KEY RISKS - Important market risks to watch\n"
-        "4. ACTION PLAN - Clear next steps for the investor\n\n"
-        "Be specific, direct, and actionable. Focus on concrete buy/sell decisions. "
-        "Use the Signal column (STRONG BUY, BUY, HOLD, SELL) as guidance. 250-350 words."
+        "You are a financial market analyst providing CONTEXT only (NOT investment advice).\n\n"
+        f"TOP-RANKED STOCKS:\n{ranking_text}\n\n"
+        f"USER FOCUS: {user_ctx}\n\n"
+        "Provide market CONTEXT in these areas:\n\n"
+        "1. MARKET CONDITIONS - Overall market environment and trends\n"
+        "2. SECTOR ANALYSIS - Which sectors are represented and their current state\n"
+        "3. RISK FACTORS - Key risks investors should be aware of (economic, geopolitical, sector-specific)\n"
+        "4. NOTABLE PATTERNS - Any interesting patterns in the top-ranked stocks\n\n"
+        "IMPORTANT RULES:\n"
+        "- DO NOT make buy/sell recommendations\n"
+        "- DO NOT say which stocks to purchase\n"
+        "- DO provide factual market context\n"
+        "- DO identify risks and opportunities in general terms\n"
+        "- Focus on education and awareness, not specific actions\n\n"
+        "250-350 words, objective and informative."
     )
 
     try:
@@ -2539,16 +2542,17 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
                     max_tokens=500,
                     temperature=0.7,
                 )
-                analysis = response.choices[0].message.content
+                context = response.choices[0].message.content
                 result = {
-                    "analysis": analysis,
+                    "context": context,
+                    "disclaimer": "This is informational context only, not investment advice. Make your own decisions based on quantitative signals.",
                     "model": response.model,
                     "cached": False,
                 }
 
                 # Cache the result
                 cache.set(
-                    f"analysis:{cache_key}",
+                    f"market_context:{cache_key}",
                     result,
                     ttl_seconds=app_config.cache.ai_analysis_ttl,
                 )
@@ -2572,7 +2576,115 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"LLM analysis failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Context generation failed: {str(e)}")
+
+
+@app.post("/analyze", tags=["AI Analysis"], deprecated=True)
+def analyze_deprecated(request: AnalysisRequest) -> Dict[str, Any]:
+    """
+    DEPRECATED: Use /api/context/market instead.
+    
+    This endpoint will be removed in a future version.
+    It violates the "No automated trading" principle by making BUY/SELL recommendations.
+    """
+    logger.warning("/analyze endpoint is deprecated, use /api/context/market instead")
+    
+    return {
+        "error": "DEPRECATED",
+        "message": "This endpoint is deprecated and will be removed.",
+        "migration": {
+            "use_instead": "/api/context/market",
+            "reason": "Complies with 'Decision Support' principle (no automated recommendations)",
+            "documentation": "See API docs at /docs"
+        },
+        "temporary_redirect": "/api/context/market"
+    }
+
+
+@app.get("/api/context/asset/{ticker}", tags=["LLM Context"])
+async def get_asset_context(ticker: str) -> Dict[str, Any]:
+    """
+    Get LLM-generated context for a specific asset (NO recommendations).
+    
+    Provides:
+    - News summary (if available)
+    - Risk factors
+    - Market positioning
+    - Sector context
+    
+    Does NOT provide:
+    - Buy/sell signals
+    - Price targets
+    - Investment advice
+    """
+    if not OPENAI_CLIENT:
+        # Return graceful degradation without LLM
+        return {
+            "ticker": ticker.upper(),
+            "context": "LLM context not available (OPENAI_API_KEY not configured)",
+            "risk_factors": [],
+            "sector_context": "N/A",
+            "llm_enabled": False
+        }
+    
+    ticker = ticker.upper()
+    cache_key = f"asset_context:{ticker}"
+    
+    # Check cache
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        logger.debug(f"Cache hit for asset context: {ticker}")
+        cached_data["cached"] = True
+        return cached_data
+    
+    try:
+        # Get current LLM context provider
+        from .llm_context import get_context_provider
+        
+        context_provider = get_context_provider()
+        if not context_provider:
+            return {
+                "ticker": ticker,
+                "context": "LLM context provider not initialized",
+                "risk_factors": [],
+                "sector_context": "N/A",
+                "llm_enabled": False
+            }
+        
+        # Get asset context (limited to ±5% adjustment)
+        asset_context = await context_provider.get_asset_context(
+            ticker=ticker,
+            current_score=50.0,  # Placeholder, not used for context-only mode
+            lookback_days=7
+        )
+        
+        result = {
+            "ticker": ticker,
+            "context": asset_context.news_summary,
+            "risk_factors": asset_context.risk_events,
+            "positive_catalysts": asset_context.positive_catalysts,
+            "sentiment": asset_context.sentiment_score,
+            "last_updated": asset_context.last_updated.isoformat(),
+            "disclaimer": "Informational context only. Not investment advice.",
+            "llm_enabled": True,
+            "cached": False
+        }
+        
+        # Cache for 1 hour
+        cache.set(cache_key, result, ttl_seconds=3600)
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Failed to get asset context for {ticker}: {e}")
+        return {
+            "ticker": ticker,
+            "context": f"Failed to retrieve context: {str(e)}",
+            "risk_factors": [],
+            "sector_context": "N/A",
+            "llm_enabled": False,
+            "error": str(e)
+        }
 
 
 @app.websocket("/ws/{client_id}")
