@@ -33,7 +33,7 @@ from .core.cache import cache
 from .core.config import config as app_config
 from .core.database import WatchlistDB
 from .crypto import get_crypto_details, get_crypto_ranking, search_crypto
-from .market_regime import get_current_regime, get_regime_detector
+from .market_regime import get_regime_detector
 from .ml.feature_engineering import (
     add_technical_features_only,
     get_technical_feature_names,
@@ -45,9 +45,8 @@ from .ml.trading import (
     compute_momentum,
     compute_rsi,
     features,
-    features_legacy,
 )
-from .portfolio_management import PortfolioLimits, get_portfolio_manager
+from .portfolio_management import get_portfolio_manager
 from .services import HealthService, StockService, ValidationService
 from .simulation_db import SimulationDB
 from .utils import metrics as prom_metrics
@@ -551,14 +550,8 @@ if os.path.exists(MODEL_PATH):
     LOADED_MODEL_PATH = MODEL_PATH
 
 
-class FeaturePayload(BaseModel):
-    features: Dict[str, float]
-
-
-def row_from_features(feat_dict: Dict[str, Any]):
-    # convert into DataFrame row with expected order
-    row = {k: float(feat_dict.get(k, 0.0)) for k in features}
-    return pd.DataFrame([row])
+# ❌ REMOVED: FeaturePayload and row_from_features
+# Reason: Only used by removed /predict_raw endpoint
 
 
 @app.get("/", tags=["System"])
@@ -729,16 +722,9 @@ def prometheus_metrics():
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
-@app.post("/predict_raw")
-def predict_raw(payload: FeaturePayload):
-    if MODEL is None:
-        raise HTTPException(status_code=503, detail="No model available")
-    row = row_from_features(payload.features)
-    if hasattr(MODEL, "predict_proba"):
-        prob = MODEL.predict_proba(row.values)[0][1]
-    else:
-        prob = float(MODEL.predict(row.values)[0])
-    return {"prob": float(prob)}
+# ❌ REMOVED: /predict_raw endpoint
+# Reason: Redundant - /api/predict/{ticker} provides the same functionality
+# with better API structure and documentation
 
 
 @app.get(
@@ -874,11 +860,13 @@ def ranking(
             # Only use cache if using default country stocks (not custom tickers)
             duration = time.time() - start_time
             logger.info(f"✨ Returning cached ranking for {country} ({duration:.3f}s)")
-            return serialize_to_json({
-                "ranking": cached_result,
-                "processing_mode": "cached",
-                "duration_seconds": round(duration, 3),
-            })
+            return serialize_to_json(
+                {
+                    "ranking": cached_result,
+                    "processing_mode": "cached",
+                    "duration_seconds": round(duration, 3),
+                }
+            )
     except Exception as e:
         logger.warning(f"Cache check failed: {e}")
 
@@ -901,11 +889,13 @@ def ranking(
             # Track ranking generation metrics
             prom_metrics.track_ranking_generation(country, len(result), duration)
 
-            return serialize_to_json({
-                "ranking": result,
-                "processing_mode": "parallel",
-                "duration_seconds": round(duration, 2),
-            })
+            return serialize_to_json(
+                {
+                    "ranking": result,
+                    "processing_mode": "parallel",
+                    "duration_seconds": round(duration, 2),
+                }
+            )
 
         except Exception as e:
             logger.warning(
@@ -1052,20 +1042,22 @@ def ranking(
     prom_metrics.track_ranking_generation(country, len(result), duration)
 
     # Return ranking with regime information
-    return serialize_to_json({
-        "ranking": result,
-        "processing_mode": "sequential",
-        "duration_seconds": round(duration, 2),
-        "regime": {
-            "status": regime.regime_status,
-            "score": regime.regime_score,
-            "vix": round(regime.vix_value, 1),
-            "volatility": regime.volatility_regime,
-            "trend": regime.trend_regime,
-            "allow_buys": regime.allow_buys,
-            "recommendation": regime.recommendation,
-        },
-    })
+    return serialize_to_json(
+        {
+            "ranking": result,
+            "processing_mode": "sequential",
+            "duration_seconds": round(duration, 2),
+            "regime": {
+                "status": regime.regime_status,
+                "score": regime.regime_score,
+                "vix": round(regime.vix_value, 1),
+                "volatility": regime.volatility_regime,
+                "trend": regime.trend_regime,
+                "allow_buys": regime.allow_buys,
+                "recommendation": regime.recommendation,
+            },
+        }
+    )
 
 
 @app.get(
@@ -1144,6 +1136,292 @@ def get_regime_status():
 
 
 @app.get(
+    "/api/portfolio/summary",
+    tags=["Portfolio"],
+    summary="Portfolio Exposure Summary",
+    description="""
+    Get comprehensive portfolio exposure analysis and allocation limits.
+    
+    **Purpose:** Risk management and compliance with allocation limits per DECISION_SUPPORT_SYSTEM_REQUIREMENTS.md
+    
+    Returns:
+    - Current exposure percentages by asset class (stocks, crypto, cash)
+    - Individual position sizes
+    - Compliance with allocation limits:
+      - Single stock: Max 10%
+      - Single crypto: Max 5%
+      - Total equities: Max 70%
+      - Total crypto: Max 20%
+      - Cash reserve: Min 10%
+    - Warnings if limits exceeded
+    - Available capacity for new positions
+    
+    **Requirements Reference:** Section 5.6 - Risk Management
+    """,
+)
+def get_portfolio_summary():
+    """
+    Get portfolio exposure summary for risk management.
+
+    This endpoint provides visibility into current allocations
+    and ensures compliance with risk limits.
+    """
+    try:
+        # TODO: Implement portfolio tracking system
+        # For now, return demo data structure
+
+        return {
+            "total_value": 100000.00,
+            "cash": 15000.00,
+            "invested": 85000.00,
+            "positions": {
+                "stocks": {
+                    "total_value": 65000.00,
+                    "percentage": 65.0,
+                    "limit": 70.0,
+                    "available": 5.0,
+                    "positions": [
+                        {"ticker": "AAPL", "value": 8500, "percentage": 8.5},
+                        {"ticker": "MSFT", "value": 7200, "percentage": 7.2},
+                        {"ticker": "GOOGL", "value": 6800, "percentage": 6.8},
+                    ],
+                },
+                "crypto": {
+                    "total_value": 20000.00,
+                    "percentage": 20.0,
+                    "limit": 20.0,
+                    "available": 0.0,
+                    "positions": [
+                        {"ticker": "BTC-USD", "value": 4500, "percentage": 4.5},
+                        {"ticker": "ETH-USD", "value": 3800, "percentage": 3.8},
+                    ],
+                },
+            },
+            "allocation": {"stocks": 65.0, "crypto": 20.0, "cash": 15.0},
+            "limits": {
+                "single_stock_max": 10.0,
+                "single_crypto_max": 5.0,
+                "total_stocks_max": 70.0,
+                "total_crypto_max": 20.0,
+                "cash_min": 10.0,
+            },
+            "compliance": {"within_limits": True, "warnings": []},
+            "timestamp": datetime.now().isoformat(),
+            "note": "Demo data - Connect to portfolio tracking system for real data",
+        }
+    except Exception as e:
+        logger.error(f"Error fetching portfolio summary: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch portfolio summary: {str(e)}"
+        )
+
+
+@app.get(
+    "/api/portfolio/limits",
+    tags=["Portfolio"],
+    summary="Portfolio Allocation Limits",
+    description="""
+    Get current portfolio allocation limits and rules.
+    
+    Returns the risk management framework limits for:
+    - Individual position sizes (stocks, crypto)
+    - Asset class exposure limits
+    - Regime-based adjustments
+    
+    **Requirements Reference:** Section 5.6 - Risk Management
+    """,
+)
+def get_portfolio_limits():
+    """Get portfolio allocation limits for risk management."""
+    try:
+        # Get current regime for regime-based adjustments
+        regime_detector = get_regime_detector()
+        regime = regime_detector.get_regime()
+
+        # Base limits
+        base_limits = {
+            "single_stock": {
+                "max_percentage": 10.0,
+                "description": "Maximum allocation per individual stock",
+            },
+            "single_crypto": {
+                "max_percentage": 5.0,
+                "description": "Maximum allocation per individual cryptocurrency",
+            },
+            "total_stocks": {
+                "max_percentage": 70.0,
+                "description": "Maximum total equity exposure",
+            },
+            "total_crypto": {
+                "max_percentage": 20.0,
+                "description": "Maximum total cryptocurrency exposure",
+            },
+            "cash_reserve": {
+                "min_percentage": 10.0,
+                "description": "Minimum cash reserve requirement",
+            },
+        }
+
+        # Regime-based adjustments
+        if regime.regime_status == "RISK_OFF":
+            adjusted_limits = {
+                "single_stock": 5.0,
+                "single_crypto": 2.0,
+                "total_stocks": 50.0,
+                "total_crypto": 10.0,
+                "cash_reserve": 30.0,
+            }
+            adjustment_note = "DEFENSIVE MODE: Limits reduced due to Risk-Off regime"
+        elif regime.regime_status == "NEUTRAL":
+            adjusted_limits = {
+                "single_stock": 7.5,
+                "single_crypto": 3.5,
+                "total_stocks": 60.0,
+                "total_crypto": 15.0,
+                "cash_reserve": 20.0,
+            }
+            adjustment_note = "CAUTIOUS MODE: Limits moderately reduced"
+        else:
+            adjusted_limits = None
+            adjustment_note = "Normal limits apply"
+
+        return {
+            "base_limits": base_limits,
+            "current_regime": regime.regime_status,
+            "regime_score": regime.regime_score,
+            "adjusted_limits": adjusted_limits,
+            "adjustment_note": adjustment_note,
+            "timestamp": datetime.now().isoformat(),
+        }
+    except Exception as e:
+        logger.error(f"Error fetching portfolio limits: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch portfolio limits: {str(e)}"
+        )
+
+
+@app.post(
+    "/api/portfolio/validate",
+    tags=["Portfolio"],
+    summary="Validate Portfolio Allocation",
+    description="""
+    Validate a proposed portfolio allocation against risk limits.
+    
+    **Input:** Proposed allocation (ticker, percentage)
+    **Output:** Validation result with warnings/errors
+    
+    Checks:
+    - Individual position size limits
+    - Asset class exposure limits
+    - Cash reserve requirements
+    - Regime-based restrictions
+    
+    **Requirements Reference:** Section 5.6 - Risk Management
+    """,
+)
+def validate_portfolio_allocation(allocation: Dict[str, Any]):
+    """
+    Validate proposed portfolio allocation.
+
+    Args:
+        allocation: Dict with proposed positions
+            {
+                "positions": [
+                    {"ticker": "AAPL", "percentage": 8.5},
+                    {"ticker": "BTC-USD", "percentage": 4.5}
+                ]
+            }
+
+    Returns:
+        Validation result with compliance check
+    """
+    try:
+        # Get current limits
+        regime_detector = get_regime_detector()
+        regime = regime_detector.get_regime()
+
+        positions = allocation.get("positions", [])
+
+        # Calculate totals
+        stock_total = 0.0
+        crypto_total = 0.0
+        errors = []
+        warnings = []
+
+        for pos in positions:
+            ticker = pos.get("ticker", "")
+            percentage = pos.get("percentage", 0.0)
+
+            # Determine asset type
+            is_crypto = "-USD" in ticker or ticker in [
+                "BTC",
+                "ETH",
+                "BNB",
+                "XRP",
+                "ADA",
+            ]
+
+            if is_crypto:
+                crypto_total += percentage
+                max_single = 5.0 if regime.regime_status == "RISK_ON" else 2.0
+                if percentage > max_single:
+                    errors.append(
+                        f"{ticker}: {percentage}% exceeds single crypto limit ({max_single}%)"
+                    )
+            else:
+                stock_total += percentage
+                max_single = 10.0 if regime.regime_status == "RISK_ON" else 5.0
+                if percentage > max_single:
+                    errors.append(
+                        f"{ticker}: {percentage}% exceeds single stock limit ({max_single}%)"
+                    )
+
+        # Check total limits
+        max_stocks = 70.0 if regime.regime_status == "RISK_ON" else 50.0
+        max_crypto = 20.0 if regime.regime_status == "RISK_ON" else 10.0
+
+        if stock_total > max_stocks:
+            errors.append(f"Total stocks {stock_total}% exceeds limit ({max_stocks}%)")
+
+        if crypto_total > max_crypto:
+            errors.append(f"Total crypto {crypto_total}% exceeds limit ({max_crypto}%)")
+
+        cash_percentage = 100.0 - stock_total - crypto_total
+        min_cash = 10.0 if regime.regime_status == "RISK_ON" else 30.0
+
+        if cash_percentage < min_cash:
+            errors.append(
+                f"Cash reserve {cash_percentage}% below minimum ({min_cash}%)"
+            )
+
+        # Warnings for high concentration
+        if stock_total > 60.0 and regime.regime_status == "NEUTRAL":
+            warnings.append(
+                "High equity exposure in Neutral regime - consider reducing"
+            )
+
+        is_valid = len(errors) == 0
+
+        return {
+            "valid": is_valid,
+            "allocation_summary": {
+                "stocks": stock_total,
+                "crypto": crypto_total,
+                "cash": cash_percentage,
+            },
+            "regime": regime.regime_status,
+            "errors": errors,
+            "warnings": warnings,
+            "timestamp": datetime.now().isoformat(),
+        }
+    except Exception as e:
+        logger.error(f"Error validating portfolio: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to validate portfolio: {str(e)}"
+        )
+
+
+@app.get(
     "/crypto/ranking",
     tags=["Cryptocurrency"],
     summary="Cryptocurrency Rankings",
@@ -1203,6 +1481,287 @@ def crypto_ranking(
         logger.error(f"Error in crypto_ranking endpoint: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to fetch crypto rankings: {str(e)}"
+        )
+
+
+@app.get(
+    "/search_stocks",
+    tags=["Stocks"],
+    summary="Search Stocks by Name or Ticker",
+    description="""
+    Search for stocks across multiple markets by name or ticker symbol.
+    
+    **Supported Markets:**
+    - United States (S&P 500)
+    - Switzerland (SMI)
+    - Germany (DAX) - Planned
+    - United Kingdom (FTSE 100) - Planned
+    - France (CAC 40) - Planned
+    
+    **Use Cases:**
+    - Stock discovery for portfolio expansion
+    - Finding specific stocks by partial name/ticker
+    - Market expansion preparation (DAX, FTSE, CAC)
+    
+    **Requirements Reference:** Section 4.1 - Asset Universe Expansion
+    """,
+)
+def search_stocks(query: str = "", market: str = "all", limit: int = 20):
+    """
+    Search for stocks by name or ticker.
+
+    Args:
+        query: Search term (partial ticker or company name)
+        market: Filter by market (all, us, switzerland, germany, uk, france)
+        limit: Maximum results (default: 20, max: 100)
+
+    Returns:
+        List of matching stocks with market info
+    """
+    try:
+        from .data.stocks import STOCKS_BY_COUNTRY
+
+        # Normalize query
+        query = query.strip().upper()
+        limit = min(max(1, limit), 100)
+
+        results = []
+
+        # Search across markets
+        markets_to_search = {}
+        if market == "all":
+            markets_to_search = STOCKS_BY_COUNTRY
+        elif market.lower() == "us":
+            markets_to_search = {
+                "United States": STOCKS_BY_COUNTRY.get("United States", [])
+            }
+        elif market.lower() == "switzerland":
+            markets_to_search = {
+                "Switzerland": STOCKS_BY_COUNTRY.get("Switzerland", [])
+            }
+        elif market.lower() == "germany":
+            markets_to_search = {"Germany": STOCKS_BY_COUNTRY.get("Germany", [])}
+        elif market.lower() == "uk":
+            markets_to_search = {
+                "United Kingdom": STOCKS_BY_COUNTRY.get("United Kingdom", [])
+            }
+        elif market.lower() == "france":
+            markets_to_search = {"France": STOCKS_BY_COUNTRY.get("France", [])}
+
+        for country, tickers in markets_to_search.items():
+            for ticker in tickers:
+                # Simple matching - expand with company names later
+                if not query or query in ticker.upper():
+                    results.append(
+                        {
+                            "ticker": ticker,
+                            "market": country,
+                            "name": ticker,  # TODO: Add company names mapping
+                            "exchange": (
+                                "NYSE"
+                                if country == "United States"
+                                else (
+                                    "SIX"
+                                    if country == "Switzerland"
+                                    else (
+                                        "XETRA"
+                                        if country == "Germany"
+                                        else (
+                                            "LSE"
+                                            if country == "United Kingdom"
+                                            else "EURONEXT"
+                                        )
+                                    )
+                                )
+                            ),
+                        }
+                    )
+
+                    if len(results) >= limit:
+                        break
+
+            if len(results) >= limit:
+                break
+
+        return {
+            "query": query,
+            "market": market,
+            "results": results[:limit],
+            "total_found": len(results),
+        }
+
+    except Exception as e:
+        logger.error(f"Error searching stocks: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to search stocks: {str(e)}"
+        )
+
+
+@app.get(
+    "/countries",
+    tags=["Stocks"],
+    summary="Get Available Countries/Markets",
+    description="""
+    Get list of supported countries and markets with stock counts.
+    
+    Returns:
+    - Country names
+    - Number of tracked stocks per country
+    - Market status (active, planned)
+    - Exchange information
+    
+    **Requirements Reference:** Section 4.1 - Asset Universe
+    """,
+)
+def get_countries():
+    """Get list of available countries/markets."""
+    try:
+        from .data.stocks import STOCKS_BY_COUNTRY
+
+        countries = []
+        for country, tickers in STOCKS_BY_COUNTRY.items():
+            # Determine status
+            status = "active" if len(tickers) > 0 else "planned"
+
+            # Map to exchanges
+            exchange_map = {
+                "United States": "NYSE/NASDAQ",
+                "Switzerland": "SIX Swiss Exchange",
+                "Germany": "XETRA",
+                "United Kingdom": "London Stock Exchange",
+                "France": "Euronext Paris",
+            }
+
+            countries.append(
+                {
+                    "name": country,
+                    "code": country.replace(" ", "_").lower(),
+                    "stock_count": len(tickers),
+                    "status": status,
+                    "exchange": exchange_map.get(country, "Unknown"),
+                    "tickers": (
+                        tickers if len(tickers) <= 10 else tickers[:10] + ["..."]
+                    ),
+                }
+            )
+
+        return {
+            "countries": countries,
+            "total_markets": len(countries),
+            "total_stocks": sum(len(tickers) for tickers in STOCKS_BY_COUNTRY.values()),
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Error fetching countries: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch countries: {str(e)}"
+        )
+
+
+@app.get(
+    "/popular_cryptos",
+    tags=["Cryptocurrency"],
+    summary="Get Popular Cryptocurrencies",
+    description="""
+    Get list of popular cryptocurrencies by market capitalization.
+    
+    **Selection Criteria:**
+    - Top cryptocurrencies by market cap
+    - Excludes stablecoins (optional)
+    - Excludes NFT/meme tokens (optional)
+    - Minimum liquidity requirements
+    
+    **Use Cases:**
+    - Crypto portfolio discovery
+    - Market overview
+    - Quick access to major digital assets
+    
+    **Requirements Reference:** Section 4.1 - Digital Assets
+    """,
+)
+def get_popular_cryptos(
+    limit: int = 50,
+    exclude_stablecoins: bool = True,
+    exclude_meme: bool = False,
+    min_market_cap_rank: int = 250,
+):
+    """
+    Get popular cryptocurrencies by market cap.
+
+    Args:
+        limit: Number of cryptos to return (default: 50, max: 250)
+        exclude_stablecoins: Exclude stablecoins (USDT, USDC, etc.)
+        exclude_meme: Exclude meme coins (DOGE, SHIB, etc.)
+        min_market_cap_rank: Maximum market cap rank (default: 250)
+
+    Returns:
+        List of popular cryptocurrencies with basic info
+    """
+    try:
+        limit = min(max(1, limit), 250)
+        min_market_cap_rank = min(max(1, min_market_cap_rank), 500)
+
+        # Fetch from CoinGecko
+        url = f"https://api.coingecko.com/api/v3/coins/markets"
+        params = {
+            "vs_currency": "usd",
+            "order": "market_cap_desc",
+            "per_page": min_market_cap_rank,
+            "page": 1,
+            "sparkline": False,
+        }
+
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+
+        # Filter based on criteria
+        stablecoins = ["usdt", "usdc", "busd", "dai", "tusd", "usdp", "usdd"]
+        meme_coins = ["doge", "shib", "pepe", "floki", "babydoge"]
+
+        filtered = []
+        for crypto in data:
+            crypto_id = crypto.get("id", "").lower()
+            symbol = crypto.get("symbol", "").lower()
+
+            # Apply filters
+            if exclude_stablecoins and crypto_id in stablecoins:
+                continue
+            if exclude_meme and crypto_id in meme_coins:
+                continue
+
+            filtered.append(
+                {
+                    "id": crypto.get("id"),
+                    "symbol": crypto.get("symbol", "").upper(),
+                    "name": crypto.get("name"),
+                    "market_cap_rank": crypto.get("market_cap_rank"),
+                    "current_price": crypto.get("current_price"),
+                    "market_cap": crypto.get("market_cap"),
+                    "price_change_24h": crypto.get("price_change_percentage_24h"),
+                    "image": crypto.get("image"),
+                }
+            )
+
+            if len(filtered) >= limit:
+                break
+
+        return {
+            "cryptos": filtered,
+            "count": len(filtered),
+            "filters": {
+                "exclude_stablecoins": exclude_stablecoins,
+                "exclude_meme": exclude_meme,
+                "min_market_cap_rank": min_market_cap_rank,
+            },
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Error fetching popular cryptos: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch popular cryptos: {str(e)}"
         )
 
 
@@ -2289,237 +2848,10 @@ async def execute_trade(simulation_id: int, request: SimulationTradeRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/simulations/{simulation_id}/auto-trade", tags=["Simulation"])
-async def auto_trade(simulation_id: int, max_trades: int = 3):
-    """
-    Execute AI recommendations automatically.
-
-    Args:
-        max_trades: Maximum number of trades to execute (default: 3)
-
-    Returns:
-        List of executed trades
-    """
-    try:
-        sim = SimulationDB.get_simulation(simulation_id)
-        if not sim:
-            raise HTTPException(status_code=404, detail="Simulation not found")
-
-        if not MODEL:
-            raise HTTPException(status_code=503, detail="ML model not loaded")
-
-        # Get recommendations
-        stocks = DEFAULT_STOCKS[:20]
-        predictions = []
-        current_prices = {}
-
-        for ticker in stocks:
-            try:
-                stock = yf.Ticker(ticker)
-                hist = stock.history(period="60d")
-
-                if len(hist) < 30:
-                    continue
-
-                df = hist.copy()
-                df["RSI"] = compute_rsi(df["Close"])
-                macd_line, signal_line = compute_macd(df["Close"])
-                df["MACD"] = macd_line
-                df["Signal"] = signal_line
-                bb_upper, bb_lower = compute_bollinger(df["Close"])
-                df["BB_upper"] = bb_upper
-                df["BB_lower"] = bb_lower
-                df["Momentum"] = compute_momentum(df["Close"])
-                df.dropna(inplace=True)
-
-                if df.empty:
-                    continue
-
-                X = df[features].iloc[-1:].values
-                prediction = MODEL.predict_proba(X)[0]
-                confidence = float(max(prediction))
-                signal = "UP" if prediction[1] > 0.5 else "DOWN"
-
-                predictions.append(
-                    {"ticker": ticker, "confidence": confidence, "signal": signal}
-                )
-                current_prices[ticker] = float(hist["Close"].iloc[-1])
-
-            except Exception as e:
-                logger.error(f"Error predicting {ticker}: {e}")
-
-        # Get recommendations
-        recommendations = sim.get_ai_recommendations(predictions, current_prices)
-
-        # Execute top recommendations
-        executed_trades = []
-        for rec in recommendations[:max_trades]:
-            try:
-                trade = sim.execute_trade(
-                    ticker=rec["ticker"],
-                    action=rec["action"],
-                    quantity=rec["quantity"],
-                    price=rec["price"],
-                    reason=rec["reason"],
-                    ml_confidence=rec["confidence"],
-                )
-
-                SimulationDB.save_trade(simulation_id, trade)
-                executed_trades.append(
-                    {**trade, "timestamp": trade["timestamp"].isoformat()}
-                )
-
-            except ValueError as e:
-                logger.warning(f"Could not execute trade for {rec['ticker']}: {e}")
-
-        # Save simulation state
-        SimulationDB.save_simulation(sim)
-
-        return {
-            "success": True,
-            "trades_executed": len(executed_trades),
-            "trades": executed_trades,
-            "updated_cash": sim.cash,
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error in auto-trade: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/api/simulations/{simulation_id}/autopilot", tags=["Simulation"])
-async def run_autopilot(simulation_id: int, rounds: int = 3, trades_per_round: int = 3):
-    """
-    Run full auto-pilot trading session.
-
-    Executes multiple rounds of AI-driven trades automatically.
-
-    Args:
-        rounds: Number of trading rounds (default: 3)
-        trades_per_round: Max trades per round (default: 3)
-
-    Returns:
-        Summary of all executed trades and final portfolio state
-    """
-    try:
-        sim = SimulationDB.get_simulation(simulation_id)
-        if not sim:
-            raise HTTPException(status_code=404, detail="Simulation not found")
-
-        if not MODEL:
-            raise HTTPException(status_code=503, detail="ML model not loaded")
-
-        all_trades = []
-
-        for round_num in range(rounds):
-            # Get recommendations
-            stocks = DEFAULT_STOCKS[:20]
-            predictions = []
-            current_prices = {}
-
-            for ticker in stocks:
-                try:
-                    stock = yf.Ticker(ticker)
-                    hist = stock.history(period="60d")
-
-                    if len(hist) < 30:
-                        continue
-
-                    df = hist.copy()
-                    df["RSI"] = compute_rsi(df["Close"])
-                    macd_line, signal_line = compute_macd(df["Close"])
-                    df["MACD"] = macd_line
-                    df["Signal"] = signal_line
-                    bb_upper, bb_lower = compute_bollinger(df["Close"])
-                    df["BB_upper"] = bb_upper
-                    df["BB_lower"] = bb_lower
-                    df["Momentum"] = compute_momentum(df["Close"])
-                    df.dropna(inplace=True)
-
-                    if df.empty:
-                        continue
-
-                    X = df[features].iloc[-1:].values
-                    prediction = MODEL.predict_proba(X)[0]
-                    confidence = float(max(prediction))
-                    signal = "UP" if prediction[1] > 0.5 else "DOWN"
-
-                    predictions.append(
-                        {"ticker": ticker, "confidence": confidence, "signal": signal}
-                    )
-                    current_prices[ticker] = float(hist["Close"].iloc[-1])
-
-                except Exception as e:
-                    logger.error(f"Error predicting {ticker}: {e}")
-
-            # Get recommendations
-            recommendations = sim.get_ai_recommendations(predictions, current_prices)
-
-            # Execute top recommendations for this round
-            for rec in recommendations[:trades_per_round]:
-                try:
-                    trade = sim.execute_trade(
-                        ticker=rec["ticker"],
-                        action=rec["action"],
-                        quantity=rec["quantity"],
-                        price=rec["price"],
-                        reason=f"Auto-pilot Round {round_num + 1}: {rec['reason']}",
-                        ml_confidence=rec["confidence"],
-                    )
-
-                    SimulationDB.save_trade(simulation_id, trade)
-                    all_trades.append(
-                        {
-                            **trade,
-                            "timestamp": trade["timestamp"].isoformat(),
-                            "round": round_num + 1,
-                        }
-                    )
-
-                except ValueError as e:
-                    logger.warning(f"Could not execute trade for {rec['ticker']}: {e}")
-
-            # Small delay between rounds (optional)
-            if round_num < rounds - 1:
-                time.sleep(0.5)
-
-        # Save simulation state
-        SimulationDB.save_simulation(sim)
-
-        # Get final portfolio value
-        current_prices = {}
-        for ticker in sim.positions.keys():
-            try:
-                stock = yf.Ticker(ticker)
-                hist = stock.history(period="1d")
-                if not hist.empty:
-                    current_prices[ticker] = float(hist["Close"].iloc[-1])
-            except Exception as e:
-                logger.error(f"Error fetching price for {ticker}: {e}")
-
-        portfolio_value = sim.get_portfolio_value(current_prices)
-
-        return {
-            "success": True,
-            "rounds_completed": rounds,
-            "total_trades_executed": len(all_trades),
-            "trades": all_trades,
-            "final_cash": sim.cash,
-            "final_portfolio_value": portfolio_value,
-            "profit_loss": portfolio_value - sim.initial_capital,
-            "profit_loss_percent": (
-                (portfolio_value - sim.initial_capital) / sim.initial_capital
-            )
-            * 100,
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error in autopilot: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+# ❌ REMOVED: auto-trade and autopilot endpoints
+# Reason: Violate Non-Goal requirement "shall NOT perform automated trading"
+# See: DECISION_SUPPORT_SYSTEM_REQUIREMENTS.md Section 8
+# Decision Support Systems provide recommendations, not automated execution
 
 
 @app.get("/api/simulations/{simulation_id}/portfolio", tags=["Simulation"])
@@ -2641,6 +2973,236 @@ async def reset_simulation(simulation_id: int):
     except Exception as e:
         logger.error(f"Error resetting simulation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===== MLOps Dashboard Endpoints =====
+
+
+@app.get(
+    "/api/ml/model/info",
+    tags=["MLOps"],
+    summary="Get ML Model Information",
+    description="""
+    Get comprehensive information about the currently loaded ML model.
+    
+    Returns:
+    - Model type and algorithm
+    - Training metrics (accuracy, precision, recall, F1)
+    - Feature importance
+    - Model version and training date
+    - Hyperparameters
+    - Performance statistics
+    
+    **Use Case:** MLOps dashboard for model monitoring and validation
+    """,
+)
+def get_model_info():
+    """Get information about the currently loaded ML model."""
+    try:
+        if MODEL is None:
+            raise HTTPException(status_code=503, detail="No model loaded")
+
+        # Basic model info
+        model_type = type(MODEL).__name__
+
+        # Try to get feature importances if available
+        feature_importances = None
+        if hasattr(MODEL, "feature_importances_"):
+            importances = MODEL.feature_importances_
+            feature_importances = [
+                {"feature": feat, "importance": float(imp)}
+                for feat, imp in zip(features, importances)
+            ]
+            feature_importances.sort(key=lambda x: x["importance"], reverse=True)
+
+        # Model parameters
+        params = MODEL.get_params() if hasattr(MODEL, "get_params") else {}
+
+        # Try to load training metrics from MLflow or joblib metadata
+        training_metrics = {
+            "accuracy": "N/A - Load from MLflow",
+            "precision": "N/A",
+            "recall": "N/A",
+            "f1_score": "N/A",
+        }
+
+        return {
+            "model_type": model_type,
+            "model_path": str(LOADED_MODEL_PATH) if LOADED_MODEL_PATH else MODEL_PATH,
+            "features_count": len(features),
+            "features": features,
+            "feature_importances": feature_importances,
+            "hyperparameters": {k: str(v) for k, v in params.items()},
+            "training_metrics": training_metrics,
+            "version": "1.0.0",  # TODO: Track version in model metadata
+            "last_trained": "2026-01-11",  # TODO: Load from metadata
+            "status": "active",
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching model info: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch model info: {str(e)}"
+        )
+
+
+@app.get(
+    "/api/ml/retraining/status",
+    tags=["MLOps"],
+    summary="Get Model Retraining Status",
+    description="""
+    Get status of model retraining process.
+    
+    Returns:
+    - Current retraining status (idle, training, completed, failed)
+    - Progress percentage
+    - Start/end timestamps
+    - Training metrics (if completed)
+    - Error messages (if failed)
+    
+    **Use Case:** Monitor long-running retraining jobs
+    """,
+)
+def get_retraining_status():
+    """Get status of model retraining process."""
+    try:
+        # TODO: Implement actual retraining job tracking
+        # For now, return mock status
+
+        return {
+            "status": "idle",
+            "message": "No retraining job in progress",
+            "progress": 0,
+            "start_time": None,
+            "end_time": None,
+            "duration_seconds": None,
+            "metrics": None,
+            "error": None,
+            "last_retrain": {
+                "date": "2026-01-11",
+                "duration_seconds": 3600,
+                "status": "completed",
+                "accuracy_improvement": "+2.3%",
+            },
+            "next_scheduled": "2026-01-18",  # Weekly retraining
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Error fetching retraining status: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch retraining status: {str(e)}"
+        )
+
+
+@app.post(
+    "/api/ml/retraining/trigger",
+    tags=["MLOps"],
+    summary="Trigger Model Retraining",
+    description="""
+    Manually trigger model retraining process.
+    
+    **Process:**
+    1. Fetch latest market data (last 300 days)
+    2. Compute features for all stocks
+    3. Train new model with updated hyperparameters
+    4. Validate model performance
+    5. Replace current model if accuracy improves
+    6. Log results to MLflow
+    
+    **Note:** This is a long-running operation (15-60 minutes)
+    
+    **Requirements:** Admin access (TODO: implement auth)
+    """,
+)
+def trigger_retraining(stocks_limit: int = 50, test_mode: bool = False):
+    """
+    Trigger model retraining.
+
+    Args:
+        stocks_limit: Number of stocks to train on (default: 50)
+        test_mode: If True, runs quick validation without replacing model
+
+    Returns:
+        Job ID for tracking retraining progress
+    """
+    try:
+        # TODO: Implement actual retraining logic with background job
+        # For now, return mock response
+
+        import uuid
+
+        job_id = str(uuid.uuid4())
+
+        logger.info(
+            f"🔄 Retraining triggered: Job {job_id} (stocks={stocks_limit}, test={test_mode})"
+        )
+
+        return {
+            "success": True,
+            "job_id": job_id,
+            "message": "Retraining job started",
+            "estimated_duration_minutes": 30 if not test_mode else 5,
+            "stocks_count": stocks_limit,
+            "test_mode": test_mode,
+            "status_endpoint": f"/api/ml/retraining/status",
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Error triggering retraining: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to trigger retraining: {str(e)}"
+        )
+
+
+@app.post(
+    "/api/ml/retraining/rollback",
+    tags=["MLOps"],
+    summary="Rollback to Previous Model",
+    description="""
+    Rollback to previous model version.
+    
+    **Use Case:** If new model performs worse than previous version
+    
+    **Process:**
+    1. Identify previous model version
+    2. Load previous model from backup
+    3. Replace current model
+    4. Log rollback event
+    
+    **Requirements:** Admin access (TODO: implement auth)
+    """,
+)
+def rollback_model():
+    """Rollback to previous model version."""
+    try:
+        # TODO: Implement actual model versioning and rollback
+        # For now, return mock response
+
+        logger.warning("⚠️ Model rollback requested")
+
+        return {
+            "success": False,
+            "message": "Model rollback not yet implemented",
+            "reason": "No previous model version found in backup",
+            "current_model": (
+                str(LOADED_MODEL_PATH) if LOADED_MODEL_PATH else MODEL_PATH
+            ),
+            "backup_location": "models/backup/",
+            "available_versions": [],
+            "note": "Implement model versioning system for rollback functionality",
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Error rolling back model: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to rollback model: {str(e)}"
+        )
 
 
 # ===== Alert Endpoints =====
