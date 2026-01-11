@@ -108,10 +108,25 @@ function BacktestDashboard() {
       setBacktestData(response.data);
     } catch (err) {
       console.error("Backtest failed:", err);
-      setError(
-        err.response?.data?.detail ||
-          "Failed to run backtest. Please check your inputs and try again."
-      );
+      
+      // Handle error detail properly (could be string, object, or array)
+      let errorMessage = "Failed to run backtest. Please check your inputs and try again.";
+      
+      if (err.response?.data?.detail) {
+        const detail = err.response.data.detail;
+        if (typeof detail === "string") {
+          errorMessage = detail;
+        } else if (Array.isArray(detail)) {
+          // Validation errors from FastAPI
+          errorMessage = detail.map(e => e.msg || JSON.stringify(e)).join(", ");
+        } else if (typeof detail === "object") {
+          errorMessage = detail.msg || JSON.stringify(detail);
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

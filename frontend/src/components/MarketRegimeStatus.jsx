@@ -9,7 +9,12 @@ const MarketRegimeStatus = ({ regime, loading }) => {
     );
   }
 
-  const { regime: regimeType, regime_score, vix_level, sp500_trend, summary } = regime;
+  // Map backend response fields to component variables
+  const regimeType = regime.status || regime.regime; // 'status' from /api/regime, 'regime' from legacy
+  const regime_score = regime.score ?? regime.regime_score ?? 50; // Default to 50 if missing
+  const vix_level = regime.volatility?.regime || regime.vix_level;
+  const sp500_trend = regime.trend?.regime || regime.sp500_trend;
+  const summary = regime.summary;
 
   // Determine regime color and icon
   const getRegimeStyle = (type) => {
