@@ -32,6 +32,7 @@ import { AnalyticsProvider } from "./components/Analytics";
 import analytics, { trackWebVitals } from "./components/Analytics";
 import MarketContextModal from "./components/MarketContextModal";
 import BacktestDashboard from "./components/BacktestDashboard";
+import "./components/ViewSelectorMenu.css";
 import "./styles.css";
 
 // Lazy load heavy components for better performance
@@ -49,6 +50,75 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// View Selector Menu Component
+function ViewSelectorMenu({ currentView, onViewChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = React.useRef(null);
+
+  const views = [
+    { id: "buy-opportunities", icon: "🎯", label: "Trading Signals", description: "Today's best opportunities" },
+    { id: "stocks", icon: "📈", label: "Top Stocks", description: "AI-ranked stocks" },
+    { id: "crypto", icon: "₿", label: "Crypto", description: "Digital assets" },
+    { id: "watchlists", icon: "⭐", label: "Watchlist", description: "Your saved stocks" },
+    { id: "simulation", icon: "🎮", label: "Practice", description: "Trading simulator" },
+    { id: "backtest", icon: "📊", label: "Backtest", description: "Historical analysis" },
+  ];
+
+  const currentViewData = views.find(v => v.id === currentView) || views[0];
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="view-selector-menu" ref={menuRef}>
+      <button
+        className="view-selector-trigger"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label="Select portfolio view"
+        aria-expanded={isOpen}
+      >
+        <span className="view-icon">{currentViewData.icon}</span>
+        <span className="view-label">
+          <span className="view-title">{currentViewData.label}</span>
+          <span className="view-description">{currentViewData.description}</span>
+        </span>
+        <span className={`dropdown-arrow ${isOpen ? "open" : ""}`}>▼</span>
+      </button>
+
+      {isOpen && (
+        <div className="view-selector-dropdown">
+          {views.map((view) => (
+            <button
+              key={view.id}
+              className={`view-option ${currentView === view.id ? "active" : ""}`}
+              onClick={() => {
+                onViewChange(view.id);
+                setIsOpen(false);
+              }}
+              aria-pressed={currentView === view.id}
+            >
+              <span className="option-icon">{view.icon}</span>
+              <span className="option-content">
+                <span className="option-title">{view.label}</span>
+                <span className="option-description">{view.description}</span>
+              </span>
+              {currentView === view.id && <span className="checkmark">✓</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function AppContent() {
   const [results, setResults] = useState([]);
@@ -707,73 +777,14 @@ function AppContent() {
               opportunities, or explore <strong>"Top Stocks"</strong> ranked by AI.
             </div>
           )}
-          <div className="portfolio-toggle-container">
-            <button
-              className={`portfolio-toggle-button buy-opportunities primary-cta ${portfolioView === "buy-opportunities" ? "active" : ""}`}
-              onClick={() => setPortfolioView("buy-opportunities")}
-              aria-label="Switch to trading signals view"
-              aria-pressed={portfolioView === "buy-opportunities"}
-            >
-              <div className="icon">🎯</div>
-              <div className="title">Trading Signals</div>
-            </button>
-
-            <button
-              className={`portfolio-toggle-button stocks ${portfolioView === "stocks" ? "active" : ""}`}
-              onClick={() => {
-                setPortfolioView("stocks");
-                if (results.length === 0) fetchRanking();
-              }}
-              aria-label="Switch to top stocks portfolio view"
-              aria-pressed={portfolioView === "stocks"}
-            >
-              <div className="icon">📈</div>
-              <div className="title">Top Stocks</div>
-            </button>
-
-            <button
-              className={`portfolio-toggle-button crypto ${portfolioView === "crypto" ? "active" : ""}`}
-              onClick={() => {
-                setPortfolioView("crypto");
-                if (cryptoResults.length === 0) fetchCryptoRanking();
-              }}
-              aria-label="Switch to cryptocurrency portfolio view"
-              aria-pressed={portfolioView === "crypto"}
-            >
-              <div className="icon">₿</div>
-              <div className="title">Crypto</div>
-            </button>
-
-            <button
-              className={`portfolio-toggle-button watchlists ${portfolioView === "watchlists" ? "active" : ""}`}
-              onClick={() => setPortfolioView("watchlists")}
-              aria-label="Switch to watchlists view"
-              aria-pressed={portfolioView === "watchlists"}
-            >
-              <div className="icon">⭐</div>
-              <div className="title">Watchlist</div>
-            </button>
-
-            <button
-              className={`portfolio-toggle-button simulation ${portfolioView === "simulation" ? "active" : ""}`}
-              onClick={() => setPortfolioView("simulation")}
-              aria-label="Switch to trading simulation view"
-              aria-pressed={portfolioView === "simulation"}
-            >
-              <div className="icon">🎮</div>
-              <div className="title">Practice</div>
-            </button>
-
-            <button
-              className={`portfolio-toggle-button backtest ${portfolioView === "backtest" ? "active" : ""}`}
-              onClick={() => setPortfolioView("backtest")}
-              aria-label="Switch to backtest analysis view"
-              aria-pressed={portfolioView === "backtest"}
-            >
-              <div className="icon">📊</div>
-              <div className="title">Backtest</div>
-            </button>
-          </div>
+          <ViewSelectorMenu
+            currentView={portfolioView}
+            onViewChange={(view) => {
+              setPortfolioView(view);
+              if (view === "stocks" && results.length === 0) fetchRanking();
+              if (view === "crypto" && cryptoResults.length === 0) fetchCryptoRanking();
+            }}
+          />
         </section>
 
         {/* Market Regime Status - Display for all views */}
