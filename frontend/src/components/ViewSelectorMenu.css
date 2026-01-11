@@ -217,6 +217,33 @@ body.dark-mode .checkmark {
   color: #8b5cf6;
 }
 
+/* Special styling for Crypto icon for better visibility */
+.view-selector-menu .view-icon,
+.view-selector-menu .option-icon {
+  position: relative;
+}
+
+/* Add orange background to Bitcoin/Crypto icon */
+.view-option:nth-child(3) .option-icon,
+.view-selector-trigger:has(.view-label .view-title:nth-child(1)) .view-icon {
+  background: linear-gradient(135deg, #f7931a 0%, #f2a900 100%);
+  color: #ffffff;
+  border-radius: 50%;
+  padding: 6px;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(247, 147, 26, 0.3);
+  font-weight: bold;
+}
+
+body.dark-mode .view-option:nth-child(3) .option-icon,
+body.dark-mode .view-selector-trigger:has(.view-label .view-title:nth-child(1)) .view-icon {
+  box-shadow: 0 2px 8px rgba(247, 147, 26, 0.5);
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
   .view-selector-trigger {

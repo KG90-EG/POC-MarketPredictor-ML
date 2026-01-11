@@ -33,6 +33,7 @@ import analytics, { trackWebVitals } from "./components/Analytics";
 import MarketContextModal from "./components/MarketContextModal";
 import BacktestDashboard from "./components/BacktestDashboard";
 import "./components/ViewSelectorMenu.css";
+import "./components/SettingsMenu.css";
 import "./styles.css";
 
 // Lazy load heavy components for better performance
@@ -58,8 +59,8 @@ function ViewSelectorMenu({ currentView, onViewChange }) {
 
   const views = [
     { id: "buy-opportunities", icon: "🎯", label: "Trading Signals", description: "Today's best opportunities" },
-    { id: "stocks", icon: "📈", label: "Top Stocks", description: "AI-ranked stocks" },
-    { id: "crypto", icon: "₿", label: "Crypto", description: "Digital assets" },
+    { id: "stocks", icon: "💹", label: "Top Stocks", description: "AI-ranked stocks" },
+    { id: "crypto", icon: "🪙", label: "Crypto", description: "Digital assets" },
     { id: "watchlists", icon: "⭐", label: "Watchlist", description: "Your saved stocks" },
     { id: "simulation", icon: "🎮", label: "Practice", description: "Trading simulator" },
     { id: "backtest", icon: "📊", label: "Backtest", description: "Historical analysis" },
@@ -114,6 +115,171 @@ function ViewSelectorMenu({ currentView, onViewChange }) {
               {currentView === view.id && <span className="checkmark">✓</span>}
             </button>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Professional Settings Menu Component
+function SettingsMenu({
+  darkMode,
+  toggleDarkMode,
+  currency,
+  setCurrency,
+  exchangeRate,
+  language,
+  setLanguage,
+  healthStatus,
+  showHealthPanel,
+  setShowHealthPanel,
+  setShowHelp,
+  setShowMarketContext
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = React.useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const getHealthIcon = () => {
+    switch(healthStatus) {
+      case "healthy": return "✅";
+      case "warning": return "⚠️";
+      case "error": return "❌";
+      default: return "⏳";
+    }
+  };
+
+  return (
+    <div className="settings-menu" ref={menuRef}>
+      <button
+        className="settings-trigger"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label="Open settings menu"
+        aria-expanded={isOpen}
+      >
+        <span className="settings-icon">⚙️</span>
+        <span className="settings-label">Settings</span>
+        <span className={`dropdown-arrow ${isOpen ? "open" : ""}`}>▼</span>
+      </button>
+
+      {isOpen && (
+        <div className="settings-dropdown">
+          {/* Theme Toggle */}
+          <button
+            className="settings-item"
+            onClick={() => {
+              toggleDarkMode();
+              setIsOpen(false);
+            }}
+          >
+            <span className="item-icon">{darkMode ? "☀️" : "🌙"}</span>
+            <span className="item-label">
+              <span className="item-title">Theme</span>
+              <span className="item-value">{darkMode ? "Dark Mode" : "Light Mode"}</span>
+            </span>
+          </button>
+
+          {/* Currency */}
+          <button
+            className="settings-item"
+            onClick={() => {
+              setCurrency(currency === "USD" ? "CHF" : "USD");
+            }}
+          >
+            <span className="item-icon">💱</span>
+            <span className="item-label">
+              <span className="item-title">Currency</span>
+              <span className="item-value">
+                {currency}
+                {currency === "CHF" && exchangeRate ? ` (1 USD = ${exchangeRate.toFixed(4)} CHF)` : ""}
+              </span>
+            </span>
+          </button>
+
+          {/* Language */}
+          <div className="settings-item language-setting">
+            <span className="item-icon">🌍</span>
+            <span className="item-label">
+              <span className="item-title">Language</span>
+            </span>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              className="language-select"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <option value="de">🇩🇪 Deutsch</option>
+              <option value="en">🇬🇧 English</option>
+              <option value="it">🇮🇹 Italiano</option>
+              <option value="es">🇪🇸 Español</option>
+              <option value="fr">🇫🇷 Français</option>
+            </select>
+          </div>
+
+          <div className="settings-divider"></div>
+
+          {/* System Health */}
+          <button
+            className="settings-item"
+            onClick={() => {
+              setShowHealthPanel(!showHealthPanel);
+              setIsOpen(false);
+            }}
+          >
+            <span className="item-icon">{getHealthIcon()}</span>
+            <span className="item-label">
+              <span className="item-title">System Health</span>
+              <span className="item-value">{healthStatus}</span>
+            </span>
+          </button>
+
+          {/* Market Insights */}
+          <button
+            className="settings-item"
+            onClick={() => {
+              setShowMarketContext(true);
+              setIsOpen(false);
+            }}
+          >
+            <span className="item-icon">💬</span>
+            <span className="item-label">
+              <span className="item-title">Market Insights</span>
+              <span className="item-value">AI Analysis</span>
+            </span>
+          </button>
+
+          {/* Alerts */}
+          <div className="settings-item">
+            <span className="item-icon">🔔</span>
+            <span className="item-label">
+              <span className="item-title">Alerts</span>
+            </span>
+            <AlertPanel inline={true} />
+          </div>
+
+          {/* Help */}
+          <button
+            className="settings-item"
+            onClick={() => {
+              setShowHelp(true);
+              setIsOpen(false);
+            }}
+          >
+            <span className="item-icon">❓</span>
+            <span className="item-label">
+              <span className="item-title">Help & Guide</span>
+              <span className="item-value">Documentation</span>
+            </span>
+          </button>
         </div>
       )}
     </div>
@@ -629,96 +795,30 @@ function AppContent() {
         Skip to main content
       </a>
 
-      {/* Modern Fixed Toolbar - All controls in one bar */}
-      <div className="header-toolbar" aria-label="Application controls">
-        <div className="toolbar-icons">
-          <button
-            className="toolbar-btn theme-toggle"
-            onClick={toggleDarkMode}
-            aria-label={`Switch to ${darkMode ? "light" : "dark"} mode`}
-            title={`Toggle ${darkMode ? "light" : "dark"} mode`}
-          >
-            {darkMode ? "☀️" : "🌙"}
-          </button>
-
-          <button
-            className="toolbar-btn"
-            style={{
-              fontSize: "12px",
-              fontWeight: "700",
-              minWidth: "42px",
-              color: "#667eea",
-              border: "1.5px solid rgba(102, 126, 234, 0.4)",
-              background: "rgba(102, 126, 234, 0.1)",
-            }}
-            onClick={() => setCurrency(currency === "USD" ? "CHF" : "USD")}
-            aria-label={`Switch to ${currency === "USD" ? "CHF" : "USD"}`}
-            title={`Currency: ${currency}${currency === "CHF" && exchangeRate ? ` (1 USD = ${exchangeRate.toFixed(4)} CHF)` : ""}`}
-          >
-            {currency}
-          </button>
-
-          <AlertPanel />
-
-          <button
-            className={`toolbar-btn health-indicator ${healthStatus}`}
-            onClick={() => setShowHealthPanel(!showHealthPanel)}
-            aria-label={`System health: ${healthStatus}`}
-            aria-expanded={showHealthPanel}
-            title="System Health"
-          >
-            {healthStatus === "healthy" && "✅"}
-            {healthStatus === "warning" && "⚠️"}
-            {healthStatus === "error" && "❌"}
-            {healthStatus === "loading" && "⏳"}
-          </button>
-
-          <button
-            className="toolbar-btn help-button"
-            onClick={() => setShowHelp(true)}
-            aria-label="Open help guide"
-            title="Help & Guide"
-          >
-            ❓
-          </button>
-
-          <button
-            className="toolbar-btn market-context-button"
-            onClick={() => setShowMarketContext(true)}
-            aria-label="View market context and insights"
-            title="Market Insights"
-          >
-            💬
-          </button>
-
-          <div className="language-control">
-            <label htmlFor="language-select" className="sr-only">
-              Language
-            </label>
-            <select
-              id="language-select"
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              aria-label="Select language"
-            >
-              <option value="de">🇩🇪 DE</option>
-              <option value="en">🇬🇧 EN</option>
-              <option value="it">🇮🇹 IT</option>
-              <option value="es">🇪🇸 ES</option>
-              <option value="fr">🇫🇷 FR</option>
-            </select>
-          </div>
-        </div>
-      </div>
+      {/* Professional Settings Menu */}
+      <SettingsMenu
+        darkMode={darkMode}
+        toggleDarkMode={toggleDarkMode}
+        currency={currency}
+        setCurrency={setCurrency}
+        exchangeRate={exchangeRate}
+        language={language}
+        setLanguage={setLanguage}
+        healthStatus={healthStatus}
+        showHealthPanel={showHealthPanel}
+        setShowHealthPanel={setShowHealthPanel}
+        setShowHelp={setShowHelp}
+        setShowMarketContext={setShowMarketContext}
+      />
 
       <header className="header" role="banner">
         <h1>
           <span className="emoji" aria-hidden="true">
-            📈
+            💹
           </span>{" "}
-          Smart Trading Dashboard
+          Market Intelligence Platform
         </h1>
-        <p>Find the best stocks and crypto to buy today</p>
+        <p>AI-Powered Investment Decision Support</p>
 
         {/* Market Regime Indicator */}
         {marketRegime && (
