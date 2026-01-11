@@ -125,23 +125,32 @@ body.dark-mode .toolbar-icons {
   transform: scale(0.95);
 }
 
-/* Currency Toggle - Add visible background */
-.toolbar-btn.currency-toggle {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  font-weight: 600;
-  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+/* Currency Button - Clean professional style */
+.toolbar-btn.currency-btn {
+  background: rgba(102, 126, 234, 0.15);
+  color: #667eea;
+  font-weight: 700;
+  border: 1.5px solid rgba(102, 126, 234, 0.3);
+  min-width: 45px;
+  font-size: 11px;
 }
 
-.toolbar-btn.currency-toggle:hover {
-  background: linear-gradient(135deg, #5568d3 0%, #65408b 100%);
-  transform: scale(1.08);
-  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
+.toolbar-btn.currency-btn:hover {
+  background: rgba(102, 126, 234, 0.25);
+  border-color: rgba(102, 126, 234, 0.5);
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
-body.dark-mode .toolbar-btn.currency-toggle {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.5);
+body.dark-mode .toolbar-btn.currency-btn {
+  background: rgba(102, 126, 234, 0.2);
+  color: #8b9cef;
+  border-color: rgba(102, 126, 234, 0.4);
+}
+
+body.dark-mode .toolbar-btn.currency-btn:hover {
+  background: rgba(102, 126, 234, 0.3);
+  border-color: rgba(102, 126, 234, 0.6);
 }
 
 /* Health Status Badge */
