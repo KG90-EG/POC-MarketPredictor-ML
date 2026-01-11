@@ -572,7 +572,7 @@ function AppContent() {
             aria-label={`Switch to ${currency === "USD" ? "CHF" : "USD"}`}
             title={`Currency: ${currency}${currency === "CHF" && exchangeRate ? ` (1 USD = ${exchangeRate.toFixed(4)} CHF)` : ""}`}
           >
-            💱
+            {currency}
           </button>
 
           <AlertPanel />
