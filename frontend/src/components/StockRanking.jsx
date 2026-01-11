@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import Tooltip from "./Tooltip";
 import FilterBar from "./FilterBar";
 import ScoreExplanationModal from "./ScoreExplanationModal";
+import AssetContextButton from "./AssetContextButton";
 import React, { useState, useMemo, useCallback } from "react";
 
 const StockRanking = React.memo(function StockRanking({
@@ -121,6 +122,7 @@ const StockRanking = React.memo(function StockRanking({
               </th>
               <th scope="col">Volume</th>
               <th scope="col">Market Cap</th>
+              <th scope="col">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -219,6 +221,9 @@ const StockRanking = React.memo(function StockRanking({
                   </td>
                   <td>{detail.volume ? detail.volume.toLocaleString() : "N/A"}</td>
                   <td>{formatNumber(detail.market_cap)}</td>
+                  <td>
+                    <AssetContextButton ticker={r.ticker} companyName={detail.name} />
+                  </td>
                 </tr>
               );
             })}

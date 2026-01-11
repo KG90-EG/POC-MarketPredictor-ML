@@ -173,7 +173,9 @@ class HistoricalBacktester:
 
                     # Hold for 30 days
                     exit_date = current_date + timedelta(days=30)
-                    exit_hist = stock.history(start=exit_date, end=exit_date + timedelta(days=2))
+                    exit_hist = stock.history(
+                        start=exit_date, end=exit_date + timedelta(days=2)
+                    )
 
                     if exit_hist.empty:
                         continue
@@ -255,7 +257,9 @@ class HistoricalBacktester:
                     shares = position_value / entry_price
 
                     exit_date = current_date + timedelta(days=30)
-                    exit_hist = stock.history(start=exit_date, end=exit_date + timedelta(days=2))
+                    exit_hist = stock.history(
+                        start=exit_date, end=exit_date + timedelta(days=2)
+                    )
 
                     if exit_hist.empty:
                         continue
@@ -311,7 +315,7 @@ class HistoricalBacktester:
         # Calculate drawdown
         cumulative_returns = (hist["Close"] / entry_price - 1) * 100
         running_max = cumulative_returns.cummax()
-        drawdown = (cumulative_returns - running_max)
+        drawdown = cumulative_returns - running_max
         max_drawdown = drawdown.min()
 
         # Sharpe ratio
@@ -359,14 +363,10 @@ class HistoricalBacktester:
 
         # Win rate
         profitable_trades = [t for t in trades if t["pnl"] > 0]
-        win_rate = (
-            (len(profitable_trades) / len(trades)) * 100 if trades else 0.0
-        )
+        win_rate = (len(profitable_trades) / len(trades)) * 100 if trades else 0.0
 
         # Average trade return
-        avg_trade_return = (
-            np.mean([t["pnl_pct"] for t in trades]) if trades else 0.0
-        )
+        avg_trade_return = np.mean([t["pnl_pct"] for t in trades]) if trades else 0.0
 
         # Max drawdown
         values = [pv["value"] for pv in portfolio_values]
@@ -489,7 +489,9 @@ def generate_backtest_report(results: Dict[str, BacktestResult]) -> str:
         report += f"- **Number of Trades:** {result.num_trades}\n"
         report += f"- **Win Rate:** {result.win_rate:.1f}%\n"
         report += f"- **Average Trade Return:** {result.avg_trade_return:.2f}%\n"
-        report += f"- **Final Portfolio Value:** ${result.final_portfolio_value:,.2f}\n\n"
+        report += (
+            f"- **Final Portfolio Value:** ${result.final_portfolio_value:,.2f}\n\n"
+        )
 
     return report
 

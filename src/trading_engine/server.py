@@ -576,9 +576,7 @@ def root():
             "market_context": "/api/context/market",
             "asset_context": "/api/context/asset/{ticker}",
         },
-        "deprecated": {
-            "analyze": "/analyze (use /api/context/market instead)"
-        },
+        "deprecated": {"analyze": "/analyze (use /api/context/market instead)"},
         "status": "operational",
     }
 
@@ -2438,13 +2436,13 @@ def remove_stock_from_watchlist(
 def get_market_context(request: AnalysisRequest) -> Dict[str, Any]:
     """
     Get LLM-generated market context and insights (NO buy/sell recommendations).
-    
+
     This endpoint provides:
     - Market condition summary
     - Risk factors to consider
     - Sector trends
     - Economic context
-    
+
     It does NOT provide:
     - Buy/sell recommendations
     - Trade signals
@@ -2576,28 +2574,30 @@ def get_market_context(request: AnalysisRequest) -> Dict[str, Any]:
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Context generation failed: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Context generation failed: {str(e)}"
+        )
 
 
 @app.post("/analyze", tags=["AI Analysis"], deprecated=True)
 def analyze_deprecated(request: AnalysisRequest) -> Dict[str, Any]:
     """
     DEPRECATED: Use /api/context/market instead.
-    
+
     This endpoint will be removed in a future version.
     It violates the "No automated trading" principle by making BUY/SELL recommendations.
     """
     logger.warning("/analyze endpoint is deprecated, use /api/context/market instead")
-    
+
     return {
         "error": "DEPRECATED",
         "message": "This endpoint is deprecated and will be removed.",
         "migration": {
             "use_instead": "/api/context/market",
             "reason": "Complies with 'Decision Support' principle (no automated recommendations)",
-            "documentation": "See API docs at /docs"
+            "documentation": "See API docs at /docs",
         },
-        "temporary_redirect": "/api/context/market"
+        "temporary_redirect": "/api/context/market",
     }
 
 
@@ -2605,13 +2605,13 @@ def analyze_deprecated(request: AnalysisRequest) -> Dict[str, Any]:
 async def get_asset_context(ticker: str) -> Dict[str, Any]:
     """
     Get LLM-generated context for a specific asset (NO recommendations).
-    
+
     Provides:
     - News summary (if available)
     - Risk factors
     - Market positioning
     - Sector context
-    
+
     Does NOT provide:
     - Buy/sell signals
     - Price targets
@@ -2624,23 +2624,23 @@ async def get_asset_context(ticker: str) -> Dict[str, Any]:
             "context": "LLM context not available (OPENAI_API_KEY not configured)",
             "risk_factors": [],
             "sector_context": "N/A",
-            "llm_enabled": False
+            "llm_enabled": False,
         }
-    
+
     ticker = ticker.upper()
     cache_key = f"asset_context:{ticker}"
-    
+
     # Check cache
     cached_data = cache.get(cache_key)
     if cached_data:
         logger.debug(f"Cache hit for asset context: {ticker}")
         cached_data["cached"] = True
         return cached_data
-    
+
     try:
         # Get current LLM context provider
         from .llm_context import get_context_provider
-        
+
         context_provider = get_context_provider()
         if not context_provider:
             return {
@@ -2648,16 +2648,16 @@ async def get_asset_context(ticker: str) -> Dict[str, Any]:
                 "context": "LLM context provider not initialized",
                 "risk_factors": [],
                 "sector_context": "N/A",
-                "llm_enabled": False
+                "llm_enabled": False,
             }
-        
+
         # Get asset context (limited to ±5% adjustment)
         asset_context = await context_provider.get_asset_context(
             ticker=ticker,
             current_score=50.0,  # Placeholder, not used for context-only mode
-            lookback_days=7
+            lookback_days=7,
         )
-        
+
         result = {
             "ticker": ticker,
             "context": asset_context.news_summary,
@@ -2667,14 +2667,14 @@ async def get_asset_context(ticker: str) -> Dict[str, Any]:
             "last_updated": asset_context.last_updated.isoformat(),
             "disclaimer": "Informational context only. Not investment advice.",
             "llm_enabled": True,
-            "cached": False
+            "cached": False,
         }
-        
+
         # Cache for 1 hour
         cache.set(cache_key, result, ttl_seconds=3600)
-        
+
         return result
-        
+
     except Exception as e:
         logger.error(f"Failed to get asset context for {ticker}: {e}")
         return {
@@ -2683,7 +2683,7 @@ async def get_asset_context(ticker: str) -> Dict[str, Any]:
             "risk_factors": [],
             "sector_context": "N/A",
             "llm_enabled": False,
-            "error": str(e)
+            "error": str(e),
         }
 
 
@@ -3610,57 +3610,90 @@ async def run_backtest(
 ) -> Dict[str, Any]:
     """
     Run historical backtest comparing 3 strategies.
-    
+
     Strategies tested:
     1. Composite Score System (Tech 40% + ML 30% + Momentum 20% + Regime 10%)
     2. ML-Only Strategy
     3. S&P 500 Buy-and-Hold Benchmark
-    
+
     Args:
         tickers: List of stock tickers (default: top 30 US stocks)
         start_date: Backtest start date (YYYY-MM-DD)
         end_date: Backtest end date (YYYY-MM-DD)
         initial_capital: Starting portfolio value (default: $100k)
-    
+
     Returns:
         Comparison results with metrics for each strategy
     """
-    from ..backtest.historical_validator import HistoricalBacktester, generate_backtest_report
-    
+    from ..backtest.historical_validator import (
+        HistoricalBacktester,
+        generate_backtest_report,
+    )
+
     # Default to top US stocks if not specified
     if not tickers:
         tickers = [
-            "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA",
-            "BRK-B", "V", "JNJ", "WMT", "JPM", "MA", "PG", "UNH",
-            "HD", "CVX", "MRK", "PFE", "ABBV", "KO", "PEP", "COST",
-            "AVGO", "TMO", "MCD", "CSCO", "ABT", "ACN", "ADBE"
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "NVDA",
+            "META",
+            "TSLA",
+            "BRK-B",
+            "V",
+            "JNJ",
+            "WMT",
+            "JPM",
+            "MA",
+            "PG",
+            "UNH",
+            "HD",
+            "CVX",
+            "MRK",
+            "PFE",
+            "ABBV",
+            "KO",
+            "PEP",
+            "COST",
+            "AVGO",
+            "TMO",
+            "MCD",
+            "CSCO",
+            "ABT",
+            "ACN",
+            "ADBE",
         ]
-    
+
     try:
         logger.info(f"Running backtest: {start_date} to {end_date}")
-        logger.info(f"Tickers: {len(tickers)} stocks, Initial capital: ${initial_capital:,.2f}")
-        
+        logger.info(
+            f"Tickers: {len(tickers)} stocks, Initial capital: ${initial_capital:,.2f}"
+        )
+
         backtester = HistoricalBacktester(initial_capital=initial_capital)
         results = backtester.run_comparison(tickers, start_date, end_date)
-        
+
         # Convert results to JSON-serializable format
         response = {
             "backtest_period": {
                 "start_date": start_date,
                 "end_date": end_date,
-                "duration_days": (pd.to_datetime(end_date) - pd.to_datetime(start_date)).days
+                "duration_days": (
+                    pd.to_datetime(end_date) - pd.to_datetime(start_date)
+                ).days,
             },
             "strategies": {},
             "comparison": {
                 "winner_by_return": None,
                 "winner_by_sharpe": None,
-                "alpha_vs_benchmark": None
-            }
+                "alpha_vs_benchmark": None,
+            },
         }
-        
+
         best_return = None
         best_sharpe = None
-        
+
         for name, result in results.items():
             strategy_data = {
                 "name": result.strategy_name,
@@ -3672,59 +3705,63 @@ async def run_backtest(
                     "win_rate": round(result.win_rate, 1),
                     "num_trades": result.num_trades,
                     "avg_trade_return": round(result.avg_trade_return, 2),
-                    "final_portfolio_value": round(result.final_portfolio_value, 2)
+                    "final_portfolio_value": round(result.final_portfolio_value, 2),
                 },
-                "trades": result.trades[:10]  # First 10 trades only
+                "trades": result.trades[:10],  # First 10 trades only
             }
-            
+
             response["strategies"][name] = strategy_data
-            
+
             if not best_return or result.total_return > best_return.total_return:
                 best_return = result
-            
+
             if not best_sharpe or result.sharpe_ratio > best_sharpe.sharpe_ratio:
                 best_sharpe = result
-        
+
         # Set comparison winners
         if best_return:
             response["comparison"]["winner_by_return"] = {
                 "strategy": best_return.strategy_name,
-                "return": round(best_return.total_return, 2)
+                "return": round(best_return.total_return, 2),
             }
-        
+
         if best_sharpe:
             response["comparison"]["winner_by_sharpe"] = {
                 "strategy": best_sharpe.strategy_name,
-                "sharpe": round(best_sharpe.sharpe_ratio, 2)
+                "sharpe": round(best_sharpe.sharpe_ratio, 2),
             }
-        
+
         # Calculate alpha vs benchmark
         if "composite" in results and "sp500" in results:
             alpha = results["composite"].total_return - results["sp500"].total_return
             response["comparison"]["alpha_vs_benchmark"] = {
                 "alpha": round(alpha, 2),
                 "interpretation": "Outperformed" if alpha > 0 else "Underperformed",
-                "percentage_points": abs(round(alpha, 2))
+                "percentage_points": abs(round(alpha, 2)),
             }
-        
+
         # Generate markdown report
         report = generate_backtest_report(results)
         response["report"] = report
-        
-        logger.info(f"Backtest complete. Best return: {best_return.strategy_name} ({best_return.total_return:.2f}%)")
-        
+
+        logger.info(
+            f"Backtest complete. Best return: {best_return.strategy_name} ({best_return.total_return:.2f}%)"
+        )
+
         return response
-        
+
     except Exception as e:
         logger.error(f"Backtest failed: {e}")
-        raise HTTPException(status_code=500, detail=f"Backtest execution failed: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Backtest execution failed: {str(e)}"
+        )
 
 
 @app.get("/api/backtest/status", tags=["Historical Validation"])
 def get_backtest_status() -> Dict[str, Any]:
     """
     Get status of historical validation system.
-    
+
     Returns information about available backtesting capabilities.
     """
     return {
@@ -3732,7 +3769,7 @@ def get_backtest_status() -> Dict[str, Any]:
         "strategies": {
             "composite": "Composite Score System (Tech 40% + ML 30% + Momentum 20% + Regime 10%)",
             "ml_only": "ML-Only Strategy (probability-based)",
-            "sp500": "S&P 500 Buy-and-Hold Benchmark"
+            "sp500": "S&P 500 Buy-and-Hold Benchmark",
         },
         "metrics": [
             "Total Return",
@@ -3740,16 +3777,16 @@ def get_backtest_status() -> Dict[str, Any]:
             "Sharpe Ratio",
             "Calmar Ratio",
             "Win Rate",
-            "Average Trade Return"
+            "Average Trade Return",
         ],
         "default_params": {
             "initial_capital": 100000.0,
             "position_size": 0.10,
             "risk_free_rate": 0.04,
-            "lookback_period": "1 year"
+            "lookback_period": "1 year",
         },
         "phase": "Phase 3: Historical Validation",
-        "status": "Implemented (2026-01-11)"
+        "status": "Implemented (2026-01-11)",
     }
 
 

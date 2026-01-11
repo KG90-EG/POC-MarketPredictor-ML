@@ -30,6 +30,8 @@ import UsabilityTracker from "./components/UsabilityTracker";
 import { ABTestProvider, useABTest } from "./components/ABTest";
 import { AnalyticsProvider } from "./components/Analytics";
 import analytics, { trackWebVitals } from "./components/Analytics";
+import MarketContextModal from "./components/MarketContextModal";
+import BacktestDashboard from "./components/BacktestDashboard";
 import "./styles.css";
 
 // Lazy load heavy components for better performance
@@ -91,7 +93,7 @@ function AppContent() {
   };
 
   // Digital Assets / Crypto state
-  const [portfolioView, setPortfolioView] = useState("buy-opportunities"); // 'stocks', 'crypto', 'watchlists', 'simulation', or 'buy-opportunities'
+  const [portfolioView, setPortfolioView] = useState("buy-opportunities"); // 'stocks', 'crypto', 'watchlists', 'simulation', 'backtest', or 'buy-opportunities'
   const [cryptoResults, setCryptoResults] = useState([]);
   const [cryptoLoading, setCryptoLoading] = useState(false);
   const [includeNFT] = useState(true); // Always include NFTs
@@ -108,6 +110,9 @@ function AppContent() {
   const [portfolioData, setPortfolioData] = useState(null);
   const [portfolioLimits, setPortfolioLimits] = useState(null);
   const [portfolioLoading, setPortfolioLoading] = useState(false);
+
+  // Market Context Modal state
+  const [showMarketContext, setShowMarketContext] = useState(false);
 
   // Filter crypto results based on search term
   const filteredCryptoResults = React.useMemo(() => {
@@ -607,6 +612,15 @@ function AppContent() {
             ❓
           </button>
 
+          <button
+            className="toolbar-btn market-context-button"
+            onClick={() => setShowMarketContext(true)}
+            aria-label="View market context and insights"
+            title="Market Insights"
+          >
+            💬
+          </button>
+
           <div className="language-control">
             <label htmlFor="language-select" className="sr-only">
               Language
@@ -748,6 +762,16 @@ function AppContent() {
             >
               <div className="icon">🎮</div>
               <div className="title">Practice</div>
+            </button>
+
+            <button
+              className={`portfolio-toggle-button backtest ${portfolioView === "backtest" ? "active" : ""}`}
+              onClick={() => setPortfolioView("backtest")}
+              aria-label="Switch to backtest analysis view"
+              aria-pressed={portfolioView === "backtest"}
+            >
+              <div className="icon">📊</div>
+              <div className="title">Backtest</div>
             </button>
           </div>
         </section>
@@ -1005,6 +1029,9 @@ function AppContent() {
           </Suspense>
         )}
 
+        {/* Backtest Dashboard View */}
+        {portfolioView === "backtest" && <BacktestDashboard />}
+
         {/* Buy Opportunities View */}
         {portfolioView === "buy-opportunities" && (
           <BuyOpportunities currency={currency} exchangeRate={exchangeRate} />
@@ -1162,6 +1189,12 @@ function AppContent() {
 
         {/* Help Modal */}
         <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
+
+        {/* Market Context Modal */}
+        <MarketContextModal
+          isOpen={showMarketContext}
+          onClose={() => setShowMarketContext(false)}
+        />
 
         {/* Company Detail Sidebar */}
         <CompanyDetailSidebar company={selectedCompany} onClose={() => setSelectedCompany(null)} />
