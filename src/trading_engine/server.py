@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import joblib
+import numpy as np
 import pandas as pd
 import yfinance as yf
 from dotenv import load_dotenv
@@ -57,7 +58,27 @@ from .utils.rate_limiter import RateLimiter
 # Load environment variables from .env file
 load_dotenv()
 
-# Validate configuration
+
+# ============================================
+# JSON Serialization Helper
+# ============================================
+def serialize_to_json(obj):
+    """Convert numpy types and other non-JSON-serializable objects to JSON-safe types."""
+    if isinstance(obj, dict):
+        return {k: serialize_to_json(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [serialize_to_json(item) for item in obj]
+    elif isinstance(obj, (np.integer, np.floating)):
+        return float(obj) if isinstance(obj, np.floating) else int(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, (bool, int, float, str, type(None))):
+        return obj
+    else:
+        return str(obj)
+
+
+# ============================================# Validate configuration
 app_config.validate()
 
 # Setup structured logging
@@ -853,11 +874,11 @@ def ranking(
             # Only use cache if using default country stocks (not custom tickers)
             duration = time.time() - start_time
             logger.info(f"✨ Returning cached ranking for {country} ({duration:.3f}s)")
-            return {
+            return serialize_to_json({
                 "ranking": cached_result,
                 "processing_mode": "cached",
                 "duration_seconds": round(duration, 3),
-            }
+            })
     except Exception as e:
         logger.warning(f"Cache check failed: {e}")
 
@@ -880,11 +901,11 @@ def ranking(
             # Track ranking generation metrics
             prom_metrics.track_ranking_generation(country, len(result), duration)
 
-            return {
+            return serialize_to_json({
                 "ranking": result,
                 "processing_mode": "parallel",
                 "duration_seconds": round(duration, 2),
-            }
+            })
 
         except Exception as e:
             logger.warning(
@@ -1031,7 +1052,7 @@ def ranking(
     prom_metrics.track_ranking_generation(country, len(result), duration)
 
     # Return ranking with regime information
-    return {
+    return serialize_to_json({
         "ranking": result,
         "processing_mode": "sequential",
         "duration_seconds": round(duration, 2),
@@ -1044,7 +1065,7 @@ def ranking(
             "allow_buys": regime.allow_buys,
             "recommendation": regime.recommendation,
         },
-    }
+    })
 
 
 @app.get(
