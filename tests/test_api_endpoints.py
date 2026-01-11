@@ -53,21 +53,29 @@ class TestRankingEndpoint:
     """Tests for /ranking endpoint (crypto ranking)"""
 
     def test_ranking_returns_list(self, client):
-        """Test ranking endpoint returns list of cryptos"""
+        """Test ranking endpoint returns list of stocks"""
         response = client.get("/ranking")
 
-        # May fail if CoinGecko API unavailable
         assert response.status_code in [200, 404, 500, 503]
 
         if response.status_code == 200:
             data = response.json()
-            assert isinstance(data, list)
-
-            if data:
-                item = data[0]
-                # Check for crypto ranking fields
-                assert "id" in item or "name" in item
-                assert "momentum_score" in item or "score" in item
+            # New API format returns dict with 'ranking' key
+            if isinstance(data, dict):
+                assert "ranking" in data
+                ranking_list = data["ranking"]
+                assert isinstance(ranking_list, list)
+                
+                if ranking_list:
+                    item = ranking_list[0]
+                    assert "ticker" in item
+                    assert "composite_score" in item or "score" in item
+            else:
+                # Legacy format compatibility
+                assert isinstance(data, list)
+                if data:
+                    item = data[0]
+                    assert "ticker" in item or "id" in item
 
     def test_ranking_with_limit(self, client):
         """Test ranking with custom limit parameter"""
@@ -84,9 +92,12 @@ class TestRankingEndpoint:
 
         if response.status_code == 200:
             data = response.json()
-
-            if len(data) > 1:
-                scores = [item.get("momentum_score", item.get("score", 0)) for item in data]
+            
+            # Handle new API format with 'ranking' key
+            ranking_list = data.get("ranking", data) if isinstance(data, dict) else data
+            
+            if isinstance(ranking_list, list) and len(ranking_list) > 1:
+                scores = [item.get("composite_score", item.get("momentum_score", item.get("score", 0))) for item in ranking_list]
                 # Scores should be in descending order
                 assert scores == sorted(scores, reverse=True)
 
