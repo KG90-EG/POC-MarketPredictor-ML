@@ -3596,6 +3596,163 @@ async def get_portfolio_limits():
     }
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# HISTORICAL VALIDATION & BACKTESTING (Phase 3)
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@app.post("/api/backtest/run", tags=["Historical Validation"])
+async def run_backtest(
+    tickers: Optional[List[str]] = None,
+    start_date: str = "2025-01-01",
+    end_date: str = "2026-01-11",
+    initial_capital: float = 100000.0,
+) -> Dict[str, Any]:
+    """
+    Run historical backtest comparing 3 strategies.
+    
+    Strategies tested:
+    1. Composite Score System (Tech 40% + ML 30% + Momentum 20% + Regime 10%)
+    2. ML-Only Strategy
+    3. S&P 500 Buy-and-Hold Benchmark
+    
+    Args:
+        tickers: List of stock tickers (default: top 30 US stocks)
+        start_date: Backtest start date (YYYY-MM-DD)
+        end_date: Backtest end date (YYYY-MM-DD)
+        initial_capital: Starting portfolio value (default: $100k)
+    
+    Returns:
+        Comparison results with metrics for each strategy
+    """
+    from ..backtest.historical_validator import HistoricalBacktester, generate_backtest_report
+    
+    # Default to top US stocks if not specified
+    if not tickers:
+        tickers = [
+            "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA",
+            "BRK-B", "V", "JNJ", "WMT", "JPM", "MA", "PG", "UNH",
+            "HD", "CVX", "MRK", "PFE", "ABBV", "KO", "PEP", "COST",
+            "AVGO", "TMO", "MCD", "CSCO", "ABT", "ACN", "ADBE"
+        ]
+    
+    try:
+        logger.info(f"Running backtest: {start_date} to {end_date}")
+        logger.info(f"Tickers: {len(tickers)} stocks, Initial capital: ${initial_capital:,.2f}")
+        
+        backtester = HistoricalBacktester(initial_capital=initial_capital)
+        results = backtester.run_comparison(tickers, start_date, end_date)
+        
+        # Convert results to JSON-serializable format
+        response = {
+            "backtest_period": {
+                "start_date": start_date,
+                "end_date": end_date,
+                "duration_days": (pd.to_datetime(end_date) - pd.to_datetime(start_date)).days
+            },
+            "strategies": {},
+            "comparison": {
+                "winner_by_return": None,
+                "winner_by_sharpe": None,
+                "alpha_vs_benchmark": None
+            }
+        }
+        
+        best_return = None
+        best_sharpe = None
+        
+        for name, result in results.items():
+            strategy_data = {
+                "name": result.strategy_name,
+                "metrics": {
+                    "total_return": round(result.total_return, 2),
+                    "max_drawdown": round(result.max_drawdown, 2),
+                    "sharpe_ratio": round(result.sharpe_ratio, 2),
+                    "calmar_ratio": round(result.calmar_ratio, 2),
+                    "win_rate": round(result.win_rate, 1),
+                    "num_trades": result.num_trades,
+                    "avg_trade_return": round(result.avg_trade_return, 2),
+                    "final_portfolio_value": round(result.final_portfolio_value, 2)
+                },
+                "trades": result.trades[:10]  # First 10 trades only
+            }
+            
+            response["strategies"][name] = strategy_data
+            
+            if not best_return or result.total_return > best_return.total_return:
+                best_return = result
+            
+            if not best_sharpe or result.sharpe_ratio > best_sharpe.sharpe_ratio:
+                best_sharpe = result
+        
+        # Set comparison winners
+        if best_return:
+            response["comparison"]["winner_by_return"] = {
+                "strategy": best_return.strategy_name,
+                "return": round(best_return.total_return, 2)
+            }
+        
+        if best_sharpe:
+            response["comparison"]["winner_by_sharpe"] = {
+                "strategy": best_sharpe.strategy_name,
+                "sharpe": round(best_sharpe.sharpe_ratio, 2)
+            }
+        
+        # Calculate alpha vs benchmark
+        if "composite" in results and "sp500" in results:
+            alpha = results["composite"].total_return - results["sp500"].total_return
+            response["comparison"]["alpha_vs_benchmark"] = {
+                "alpha": round(alpha, 2),
+                "interpretation": "Outperformed" if alpha > 0 else "Underperformed",
+                "percentage_points": abs(round(alpha, 2))
+            }
+        
+        # Generate markdown report
+        report = generate_backtest_report(results)
+        response["report"] = report
+        
+        logger.info(f"Backtest complete. Best return: {best_return.strategy_name} ({best_return.total_return:.2f}%)")
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Backtest failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Backtest execution failed: {str(e)}")
+
+
+@app.get("/api/backtest/status", tags=["Historical Validation"])
+def get_backtest_status() -> Dict[str, Any]:
+    """
+    Get status of historical validation system.
+    
+    Returns information about available backtesting capabilities.
+    """
+    return {
+        "available": True,
+        "strategies": {
+            "composite": "Composite Score System (Tech 40% + ML 30% + Momentum 20% + Regime 10%)",
+            "ml_only": "ML-Only Strategy (probability-based)",
+            "sp500": "S&P 500 Buy-and-Hold Benchmark"
+        },
+        "metrics": [
+            "Total Return",
+            "Max Drawdown",
+            "Sharpe Ratio",
+            "Calmar Ratio",
+            "Win Rate",
+            "Average Trade Return"
+        ],
+        "default_params": {
+            "initial_capital": 100000.0,
+            "position_size": 0.10,
+            "risk_free_rate": 0.04,
+            "lookback_period": "1 year"
+        },
+        "phase": "Phase 3: Historical Validation",
+        "status": "Implemented (2026-01-11)"
+    }
+
+
 # Mount frontend static files LAST so API routes take precedence
 # This must come after all route definitions to avoid catching API routes
 FRONTEND_DIST = os.path.abspath(
