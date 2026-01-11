@@ -43,7 +43,7 @@ def mock_model():
 @pytest.fixture(scope="session")
 def client():
     """Session-scoped FastAPI test client for API endpoint tests."""
-    from src.trading_engine.api.server import app
+    from src.trading_engine.server import app
 
     with TestClient(app) as test_client:
         yield test_client
