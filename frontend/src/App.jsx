@@ -567,12 +567,20 @@ function AppContent() {
           </button>
 
           <button
-            className="toolbar-btn currency-btn"
+            className="toolbar-btn"
+            style={{
+              fontSize: "12px",
+              fontWeight: "700",
+              minWidth: "42px",
+              color: "#667eea",
+              border: "1.5px solid rgba(102, 126, 234, 0.4)",
+              background: "rgba(102, 126, 234, 0.1)",
+            }}
             onClick={() => setCurrency(currency === "USD" ? "CHF" : "USD")}
             aria-label={`Switch to ${currency === "USD" ? "CHF" : "USD"}`}
             title={`Currency: ${currency}${currency === "CHF" && exchangeRate ? ` (1 USD = ${exchangeRate.toFixed(4)} CHF)` : ""}`}
           >
-            <span style={{ fontSize: '11px', fontWeight: '700' }}>{currency}</span>
+            {currency}
           </button>
 
           <AlertPanel />
