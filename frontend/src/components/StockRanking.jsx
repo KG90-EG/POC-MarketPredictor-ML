@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import Tooltip from './Tooltip'
 import FilterBar from './FilterBar'
+import ScoreExplanationModal from './ScoreExplanationModal'
 import React, { useState, useMemo, useCallback } from 'react'
 
 const StockRanking = React.memo(function StockRanking({
@@ -12,6 +13,8 @@ const StockRanking = React.memo(function StockRanking({
   onRowClick
 }) {
   const [filteredResults, setFilteredResults] = useState(results)
+  const [selectedScore, setSelectedScore] = useState(null)
+  const [selectedTicker, setSelectedTicker] = useState(null)
 
   // Prepare enriched stock data with details for filtering
   const enrichedStocks = useMemo(() => {
@@ -89,12 +92,13 @@ const StockRanking = React.memo(function StockRanking({
               <th scope="col">Country</th>
               <th scope="col">
                 <Tooltip
-                  content="AI confidence score (0-100%). Higher scores indicate stronger buy signals based on technical indicators, price trends, and market data. 65%+ is strong buy, 55-65% is buy, 45-55% is hold, 35-45% consider selling, below 35% is sell."
+                  content="Composite Score (0-100) combining Technical Signals (40%), ML Model (30%), Momentum (20%), and Market Regime (10%). 80+ is Strong BUY, 65-79 is BUY, 45-64 is HOLD, 35-44 Consider Selling, below 35 is SELL."
                   position="top"
                 >
-                  Probability ⓘ
+                  Score ⓘ
                 </Tooltip>
               </th>
+              <th scope="col">Signal</th>
               <th scope="col">Price</th>
             <th scope="col">
               <Tooltip
@@ -130,23 +134,38 @@ const StockRanking = React.memo(function StockRanking({
                 </td>
                 <td>
                   <Tooltip
-                    content={`${(r.prob * 100).toFixed(2)}% confidence. ${
-                      r.prob >= 0.65
-                        ? 'Strong buy signal - High confidence for upward movement'
-                        : r.prob >= 0.55
-                        ? 'Buy signal - Good potential for growth'
-                        : r.prob >= 0.45
-                        ? 'Hold - Neutral outlook'
-                        : r.prob >= 0.35
-                        ? 'Consider selling - Weak performance expected'
-                        : 'Sell signal - Strong downward indicator'
-                    }`}
+                    content={`
+                      Composite Score: ${r.composite_score || (r.prob * 100).toFixed(1)}/100
+
+                      Click "Explain" button to see full breakdown.
+                    `}
                     position="top"
                   >
-                    <span className={r.prob > 0.6 ? 'high-prob' : ''}>
-                      {(r.prob * 100).toFixed(2)}%
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className={
+                        (r.composite_score || r.prob * 100) >= 80 ? 'score-strong-buy' :
+                        (r.composite_score || r.prob * 100) >= 65 ? 'score-buy' : ''
+                      }>
+                        {r.composite_score ? r.composite_score.toFixed(1) : (r.prob * 100).toFixed(1)}
+                      </span>
+                      <button
+                        className="btn-explain-score"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedTicker(r.ticker);
+                          setSelectedScore(r);
+                        }}
+                        title="Explain score breakdown"
+                      >
+                        📊
+                      </button>
+                    </div>
                   </Tooltip>
+                </td>
+                <td>
+                  <span className={`signal-badge signal-${(r.signal || r.action).toLowerCase()}`}>
+                    {r.signal || r.action}
+                  </span>
                 </td>
                 <td>{detail.price ? `$${detail.price.toFixed(2)}` : 'N/A'}</td>
                 <td>
@@ -224,6 +243,18 @@ const StockRanking = React.memo(function StockRanking({
           <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No stocks match your filters</h3>
           <p style={{ margin: 0, fontSize: '0.9rem' }}>Try adjusting your search or filter criteria</p>
         </div>
+      )}
+
+      {/* Score Explanation Modal */}
+      {selectedScore && (
+        <ScoreExplanationModal
+          ticker={selectedTicker}
+          scoreData={selectedScore}
+          onClose={() => {
+            setSelectedScore(null);
+            setSelectedTicker(null);
+          }}
+        />
       )}
     </>
   )

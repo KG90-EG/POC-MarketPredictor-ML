@@ -1,7 +1,7 @@
 """
 Currency conversion utilities for multi-currency support.
 
-Supports USD and CHF with real-time exchange rates.
+Supports USD, CHF, EUR, and GBP with real-time exchange rates.
 Uses European Central Bank (ECB) API for reliable, free exchange rates.
 """
 
@@ -83,12 +83,22 @@ def _get_fallback_rate(from_currency: str, to_currency: str) -> float:
     """
     # Approximate rates as of January 2026
     fallback_rates = {
+        # USD conversions
         "USD_CHF": 0.85,  # 1 USD ≈ 0.85 CHF
-        "CHF_USD": 1.18,  # 1 CHF ≈ 1.18 USD
         "USD_EUR": 0.93,  # 1 USD ≈ 0.93 EUR
+        "USD_GBP": 0.78,  # 1 USD ≈ 0.78 GBP
+        # CHF conversions
+        "CHF_USD": 1.18,  # 1 CHF ≈ 1.18 USD
+        "CHF_EUR": 1.10,  # 1 CHF ≈ 1.10 EUR
+        "CHF_GBP": 0.92,  # 1 CHF ≈ 0.92 GBP
+        # EUR conversions
         "EUR_USD": 1.08,  # 1 EUR ≈ 1.08 USD
         "EUR_CHF": 0.91,  # 1 EUR ≈ 0.91 CHF
-        "CHF_EUR": 1.10,  # 1 CHF ≈ 1.10 EUR
+        "EUR_GBP": 0.84,  # 1 EUR ≈ 0.84 GBP
+        # GBP conversions
+        "GBP_USD": 1.28,  # 1 GBP ≈ 1.28 USD
+        "GBP_CHF": 1.09,  # 1 GBP ≈ 1.09 CHF
+        "GBP_EUR": 1.19,  # 1 GBP ≈ 1.19 EUR
     }
 
     key = f"{from_currency}_{to_currency}"

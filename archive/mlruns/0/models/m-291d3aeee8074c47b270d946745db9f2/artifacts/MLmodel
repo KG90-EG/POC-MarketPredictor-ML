@@ -1,0 +1,22 @@
+artifact_path: file:///Users/kevingarcia/Documents/POC-MarketPredictor-ML/mlruns/0/models/m-291d3aeee8074c47b270d946745db9f2/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.14.0
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.7.2
+mlflow_version: 3.6.0
+model_id: m-291d3aeee8074c47b270d946745db9f2
+model_size_bytes: 334776
+model_uuid: m-291d3aeee8074c47b270d946745db9f2
+prompts: null
+run_id: 8285fcc981ec448e9098b9c250ba842f
+utc_time_created: '2026-01-03 11:40:25.086174'

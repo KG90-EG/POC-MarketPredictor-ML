@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "market_predictor"
+version = "0.1.0"
+description = "Simple trading helper package"
+authors = [ {name = "Kevin"} ]
+dependencies = [
+    "yfinance",
+    "pandas",
+    "numpy",
+    "scikit-learn",
+    "xgboost",
+    "mlflow",
+    "joblib",
+    "fastapi",
+    "uvicorn",
+    "boto3",
+    "openai",
+]

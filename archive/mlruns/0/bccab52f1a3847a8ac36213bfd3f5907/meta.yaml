@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/kevingarcia/Documents/POC-MarketPredictor-ML/mlruns/0/bccab52f1a3847a8ac36213bfd3f5907/artifacts
+end_time: 1767435483767
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: bccab52f1a3847a8ac36213bfd3f5907
+run_name: production_training_20260103_101800
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1767435480903
+status: 3
+tags: []
+user_id: kevingarcia

@@ -91,38 +91,15 @@ install: venv ## Install Python dependencies
 # Server Management (Local)
 # ============================================
 start: check-env ## Start both backend and frontend servers
-	@./scripts/start.sh
+	@./scripts/start_simple.sh
 
-start-backend: check-env ## Start backend only
-	@echo "🚀 Starting backend..."
-	@./scripts/start_servers.sh --backend-only
-
-start-frontend: check-env ## Start frontend only
-	@echo "🚀 Starting frontend..."
-	@./scripts/start_servers.sh --frontend-only
-
-stop: ## Stop all servers
 stop: ## Stop all servers
 	@./scripts/stop.sh
+
 restart: stop start ## Restart all servers
 
 status: ## Check server status
-status: ## Check server status
-	@echo "📊 Server Status"
-	@echo "================"
-	@echo ""
-	@if lsof -ti:8000 > /dev/null 2>&1; then \
-		echo "✅ Backend:  Running on port 8000"; \
-		curl -sf http://localhost:8000/health > /dev/null && echo "   Health: OK" || echo "   Health: Starting..."; \
-	else \
-		echo "❌ Backend:  Not running"; \
-	fi
-	@echo ""
-	@if lsof -ti:5173 > /dev/null 2>&1; then \
-		echo "✅ Frontend: Running on port 5173"; \
-	else \
-		echo "❌ Frontend: Not running"; \
-	fi
+	@./scripts/status.sh
 health: ## Check server health endpoints
 	@echo "Checking backend health..."
 	@curl -sf http://localhost:$(BACKEND_PORT)/health && echo " ✅ Backend OK" || echo " ❌ Backend down"

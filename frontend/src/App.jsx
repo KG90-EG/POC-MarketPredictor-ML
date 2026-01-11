@@ -15,6 +15,9 @@ import MarketSelector from './components/MarketSelector'
 import WatchlistManagerV2 from './components/WatchlistManagerV2'
 import BuyOpportunities from './components/BuyOpportunities'
 import AlertPanel from './components/AlertPanel'
+import PortfolioSummary from './components/PortfolioSummary'
+import AllocationBreakdown from './components/AllocationBreakdown'
+import MarketRegimeStatus from './components/MarketRegimeStatus'
 import EmptyState from './components/EmptyState'
 import { ToastContainer } from './components/Toast'
 import { SkeletonTable, SkeletonStockRow } from './components/SkeletonLoader'
@@ -88,7 +91,7 @@ function AppContent() {
   }
 
   // Digital Assets / Crypto state
-  const [portfolioView, setPortfolioView] = useState('stocks') // 'stocks', 'crypto', 'watchlists', 'simulation', or 'buy-opportunities'
+  const [portfolioView, setPortfolioView] = useState('buy-opportunities') // 'stocks', 'crypto', 'watchlists', 'simulation', or 'buy-opportunities'
   const [cryptoResults, setCryptoResults] = useState([])
   const [cryptoLoading, setCryptoLoading] = useState(false)
   const [includeNFT] = useState(true) // Always include NFTs
@@ -96,6 +99,15 @@ function AppContent() {
   const [cryptoPage, setCryptoPage] = useState(1)
   const [cryptoPerPage] = useState(10) // Items per page
   const [cryptoSearchTerm, setCryptoSearchTerm] = useState('')
+
+  // Market Regime state
+  const [marketRegime, setMarketRegime] = useState(null)
+  const [regimeLoading, setRegimeLoading] = useState(false)
+
+  // Portfolio Management state
+  const [portfolioData, setPortfolioData] = useState(null)
+  const [portfolioLimits, setPortfolioLimits] = useState(null)
+  const [portfolioLoading, setPortfolioLoading] = useState(false)
 
   // Filter crypto results based on search term
   const filteredCryptoResults = React.useMemo(() => {
@@ -153,7 +165,29 @@ function AppContent() {
   // Auto-load ranking on mount
   useEffect(() => {
     fetchRanking()
+    fetchMarketRegime()
   }, [])
+
+  // Fetch market regime periodically (every 5 minutes)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchMarketRegime()
+    }, 5 * 60 * 1000) // 5 minutes
+
+    return () => clearInterval(interval)
+  }, [])
+
+  // Fetch portfolio limits on mount
+  useEffect(() => {
+    fetchPortfolioLimits()
+  }, [])
+
+  // Update portfolio validation when results change
+  useEffect(() => {
+    if (results.length > 0) {
+      validatePortfolio(results)
+    }
+  }, [results])
 
   // Check health status periodically
   useEffect(() => {
@@ -190,6 +224,11 @@ function AppContent() {
       // Fetch ranking for selected market (single selection)
       const resp = await api.getRanking(market)
       const rankings = resp.data.ranking
+
+      // Extract and set market regime if included
+      if (resp.data.regime) {
+        setMarketRegime(resp.data.regime)
+      }
 
       setResults(rankings)
 
@@ -257,6 +296,71 @@ function AppContent() {
       }
     }
     setTickerDetails(details)
+  }
+
+  async function fetchMarketRegime() {
+    setRegimeLoading(true)
+    try {
+      const resp = await api.get('/regime')
+      setMarketRegime(resp.data)
+      console.log('Market Regime:', resp.data.summary)
+    } catch (e) {
+      console.error('Failed to fetch market regime:', e)
+      // Don't show error toast - regime is supplementary info
+    } finally {
+      setRegimeLoading(false)
+    }
+  }
+
+  async function fetchPortfolioLimits() {
+    try {
+      const resp = await fetch('http://localhost:8000/api/portfolio/limits')
+      if (resp.ok) {
+        const data = await resp.json()
+        setPortfolioLimits(data)
+      }
+    } catch (e) {
+      console.error('Failed to fetch portfolio limits:', e)
+    }
+  }
+
+  async function validatePortfolio(rankings) {
+    if (!rankings || rankings.length === 0) {
+      setPortfolioData(null)
+      return
+    }
+
+    setPortfolioLoading(true)
+    try {
+      // Convert rankings to portfolio positions
+      // For demo: assume equal allocation across top stocks
+      const positions = rankings.slice(0, 10).map(r => ({
+        ticker: r.ticker,
+        allocation: 100 / Math.min(rankings.length, 10), // Equal weight
+        asset_type: r.ticker.includes('-') ? 'crypto' : 'stock',
+        score: r.composite_score || r.probability * 100,
+        signal: r.signal || 'HOLD'
+      }))
+
+      const resp = await fetch('http://localhost:8000/api/portfolio/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(positions)
+      })
+
+      if (resp.ok) {
+        const analysis = await resp.json()
+        setPortfolioData({
+          positions,
+          analysis
+        })
+      }
+    } catch (e) {
+      console.error('Portfolio validation failed:', e)
+      setPortfolioData(null)
+    } finally {
+      setPortfolioLoading(false)
+    }
   }
 
   async function fetchCryptoRanking() {
@@ -437,23 +541,9 @@ function AppContent() {
       {/* Skip Navigation Link */}
       <a href="#main-content" className="skip-link">Skip to main content</a>
 
-      {/* Modern Fixed Toolbar - Option 2: Compact icons + separate language */}
+      {/* Modern Fixed Toolbar - All controls in one bar */}
       <div className="header-toolbar" aria-label="Application controls">
-        {/* Icon group */}
         <div className="toolbar-icons">
-          <button
-            className={`toolbar-btn health-indicator ${healthStatus}`}
-            onClick={() => setShowHealthPanel(!showHealthPanel)}
-            aria-label={`System health: ${healthStatus}`}
-            aria-expanded={showHealthPanel}
-            title="System Health"
-          >
-            {healthStatus === 'healthy' && '✅'}
-            {healthStatus === 'warning' && '⚠️'}
-            {healthStatus === 'error' && '❌'}
-            {healthStatus === 'loading' && '⏳'}
-          </button>
-
           <button
             className="toolbar-btn theme-toggle"
             onClick={toggleDarkMode}
@@ -469,7 +559,20 @@ function AppContent() {
             aria-label={`Switch to ${currency === 'USD' ? 'CHF' : 'USD'}`}
             title={`Currency: ${currency}${currency === 'CHF' && exchangeRate ? ` (1 USD = ${exchangeRate.toFixed(4)} CHF)` : ''}`}
           >
-            {currency}
+            💱
+          </button>
+
+          <button
+            className={`toolbar-btn health-indicator ${healthStatus}`}
+            onClick={() => setShowHealthPanel(!showHealthPanel)}
+            aria-label={`System health: ${healthStatus}`}
+            aria-expanded={showHealthPanel}
+            title="System Health"
+          >
+            {healthStatus === 'healthy' && '✅'}
+            {healthStatus === 'warning' && '⚠️'}
+            {healthStatus === 'error' && '❌'}
+            {healthStatus === 'loading' && '⏳'}
           </button>
 
           <AlertPanel />
@@ -482,29 +585,56 @@ function AppContent() {
           >
             ❓
           </button>
-        </div>
 
-        {/* Language selector - separate */}
-        <div className="language-control">
-          <label htmlFor="language-select" className="sr-only">Language</label>
-          <select
-            id="language-select"
-            value={language}
-            onChange={e => setLanguage(e.target.value)}
-            aria-label="Select language"
-          >
-            <option value="de">🇩🇪 DE</option>
-            <option value="en">🇬🇧 EN</option>
-            <option value="it">🇮🇹 IT</option>
-            <option value="es">🇪🇸 ES</option>
-            <option value="fr">🇫🇷 FR</option>
-          </select>
+          <div className="language-control">
+            <label htmlFor="language-select" className="sr-only">Language</label>
+            <select
+              id="language-select"
+              value={language}
+              onChange={e => setLanguage(e.target.value)}
+              aria-label="Select language"
+            >
+              <option value="de">🇩🇪 DE</option>
+              <option value="en">🇬🇧 EN</option>
+              <option value="it">🇮🇹 IT</option>
+              <option value="es">🇪🇸 ES</option>
+              <option value="fr">🇫🇷 FR</option>
+            </select>
+          </div>
         </div>
       </div>
 
       <header className="header" role="banner">
         <h1><span className="emoji" aria-hidden="true">📈</span> Smart Trading Dashboard</h1>
         <p>Find the best stocks and crypto to buy today</p>
+
+        {/* Market Regime Indicator */}
+        {marketRegime && (
+          <div
+            className={`market-regime-badge ${marketRegime.status.toLowerCase()}`}
+            title={marketRegime.recommendation}
+            style={{
+              marginTop: '12px',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              display: 'inline-block',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'help'
+            }}
+          >
+            {marketRegime.status === 'RISK_ON' && '🟢'}
+            {marketRegime.status === 'NEUTRAL' && '🟡'}
+            {marketRegime.status === 'RISK_OFF' && '🔴'}
+            {' '}
+            Market: {marketRegime.status} ({marketRegime.score}/100)
+            {' | '}
+            VIX: {marketRegime.volatility.vix} ({marketRegime.volatility.regime})
+            {' | '}
+            Trend: {marketRegime.trend.regime}
+            {!marketRegime.allow_buys && ' | ⚠️ BUY SIGNALS BLOCKED'}
+          </div>
+        )}
       </header>
 
       {/* Health Check Section - Toggle visibility */}
@@ -585,6 +715,9 @@ function AppContent() {
           </button>
         </div>
       </section>
+
+      {/* Market Regime Status - Display for all views */}
+      <MarketRegimeStatus regime={marketRegime} loading={regimeLoading} />
 
       {/* Market View Selector - Only for stocks */}
       {portfolioView === 'stocks' && (
@@ -773,6 +906,17 @@ function AppContent() {
       {/* Buy Opportunities View */}
       {portfolioView === 'buy-opportunities' && (
         <BuyOpportunities currency={currency} exchangeRate={exchangeRate} />
+      )}
+
+      {/* Portfolio Management View - Only for stocks */}
+      {portfolioView === 'stocks' && portfolioData && (
+        <>
+          <PortfolioSummary portfolioData={portfolioData} />
+          <AllocationBreakdown
+            positions={portfolioData.positions}
+            limits={portfolioLimits}
+          />
+        </>
       )}
 
       {/* Search Section - Only for stocks */}

@@ -34,10 +34,13 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
 
     try {
       // Use /ranking endpoint instead of /popular_stocks for accurate data
-      const rankingResponse = await apiClient.get('/ranking');
+      // Add cache buster to prevent stale data
+      const cacheBuster = `?_t=${Date.now()}`;
+      const rankingResponse = await apiClient.get(`/ranking${cacheBuster}`);
       const ranking = rankingResponse.data.ranking || [];
 
       console.log(`📊 Received ${ranking.length} stocks from /ranking endpoint`);
+      console.log('🔍 First 5 stocks:', ranking.slice(0, 5).map(s => `${s.ticker}=$${s.price.toFixed(2)}`).join(', '));
 
       // Get stock names from /popular_stocks (for display only)
       const popularResponse = await apiClient.get('/popular_stocks?limit=100');
@@ -836,7 +839,7 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                         <div className="opportunity-details">
                           <div className="detail-item">
                             <span className="label">Price:</span>
-                            <span className="value">${commodity.current_price.toFixed(2)}</span>
+                            <span className="value">{commodity.current_price > 0 ? convertAndFormat(commodity.current_price, currency, exchangeRate) : 'N/A'}</span>
                           </div>
                           <div className="detail-item">
                             <span className="label">Type:</span>
@@ -907,7 +910,7 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                         <div className="opportunity-details">
                           <div className="detail-item">
                             <span className="label">Price:</span>
-                            <span className="value">${commodity.current_price.toFixed(2)}</span>
+                            <span className="value">{commodity.current_price > 0 ? convertAndFormat(commodity.current_price, currency, exchangeRate) : 'N/A'}</span>
                           </div>
                           <div className="detail-item">
                             <span className="label">Type:</span>
@@ -978,7 +981,7 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                         <div className="opportunity-details">
                           <div className="detail-item">
                             <span className="label">Price:</span>
-                            <span className="value">${commodity.current_price.toFixed(2)}</span>
+                            <span className="value">{commodity.current_price > 0 ? convertAndFormat(commodity.current_price, currency, exchangeRate) : 'N/A'}</span>
                           </div>
                           <div className="detail-item">
                             <span className="label">Type:</span>

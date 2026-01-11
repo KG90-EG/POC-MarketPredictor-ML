@@ -1,0 +1,10 @@
+artifact_location: file:///Users/kevingarcia/Documents/POC-MarketPredictor-ML/mlruns/194387609133238263/models/m-f79c71cbe121408f9fcd5282691a2e35/artifacts
+creation_timestamp: 1767339605618
+experiment_id: '194387609133238263'
+last_updated_timestamp: 1767339607773
+model_id: m-f79c71cbe121408f9fcd5282691a2e35
+model_type: null
+name: rf_model
+source_run_id: 123237417ef14e1f8ac81c767b11c429
+status: 2
+status_message: null

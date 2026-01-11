@@ -82,7 +82,7 @@ if [ $VIOLATIONS -gt 0 ]; then
     echo -e "   • Logs → ${GREEN}logs/${NC}"
     echo -e "   • Source code → ${GREEN}src/${NC}"
     echo ""
-    echo -e "Fix: Move files or run ${GREEN}./scripts/cleanup_repo.sh${NC}"
+    echo -e "Fix: Move files or run ${GREEN}./scripts/cleanup.sh${NC}"
     exit 1
 fi
 

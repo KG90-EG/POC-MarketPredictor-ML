@@ -4,50 +4,40 @@ This directory contains scripts for maintaining a clean and organized repository
 
 ## 🧹 Cleanup Scripts
 
-### `deep_cleanup.sh`
+### `cleanup.sh`
 
-**Purpose**: Deep cleanup of outdated files, duplicates, and cache
+**Purpose**: Comprehensive repository cleanup - removes artifacts, logs, cache files
 
 **What it cleans**:
 
-- ✗ History/archive folders (`docs/history/`, `.archive/`)
-- ✗ Duplicate documentation files
+- ✗ Python cache files (`__pycache__/`, `*.pyc`, `*.pyo`)
+- ✗ Pytest cache (`.pytest_cache/`)
+- ✗ OS-specific files (`.DS_Store`, `Thumbs.db`)
 - ✗ Old model files (keeps only `prod_model.bin`)
-- ✗ Unused deployment configs (netlify, render, heroku)
-- ✗ Old MLflow runs (keeps last 10)
-- ✗ Python cache (`__pycache__/`, `*.pyc`)
-- ✗ Temp files (`.DS_Store`, root-level logs/pids)
+- ✗ Old MLflow runs (keeps last 5)
+- ✗ Temporary/log files (organizes to `logs/`)
 - ✗ Empty directories
-- ✓ Auto-organizes misplaced documentation
+- ✓ Verifies critical directory structure
 
 **Usage**:
 
 ```bash
 # Direct
-./scripts/deep_cleanup.sh
+./scripts/cleanup.sh
 
 # Via Makefile (recommended)
-make deep-clean
+make clean
 ```
+
+**Features**:
+- Progress tracking with counters
+- Safe deletion with error handling
+- Detailed summary report
+- Color-coded output
 
 **Safety**: Safe to run repeatedly - only removes actual clutter
 
 **Frequency**: Run monthly or before major releases
-
----
-
-### `cleanup_repo.sh`
-
-**Purpose**: Quick reorganization of misplaced files
-
-**What it does**:
-
-- Moves files from root to correct subfolders
-- Organizes config files
-- Moves documentation to `docs/`
-- Moves temp files to `logs/`
-
-**Usage**:
 
 ```bash
 ./scripts/cleanup_repo.sh

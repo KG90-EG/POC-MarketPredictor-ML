@@ -25,12 +25,14 @@ from pydantic import BaseModel
 
 from .api.analytics_routes import router as analytics_router
 from .api.websocket import manager as ws_manager
+from .composite_scoring import get_composite_scorer
 
 # Import new modules
 from .core.cache import cache
 from .core.config import config as app_config
 from .core.database import WatchlistDB
 from .crypto import get_crypto_details, get_crypto_ranking, search_crypto
+from .market_regime import get_current_regime, get_regime_detector
 from .ml.feature_engineering import add_technical_features_only, get_technical_feature_names
 from .ml.model_retraining import get_retraining_service, start_retraining_scheduler
 from .ml.trading import (
@@ -41,6 +43,7 @@ from .ml.trading import (
     features,
     features_legacy,
 )
+from .portfolio_management import PortfolioLimits, get_portfolio_manager
 from .services import HealthService, StockService, ValidationService
 from .simulation_db import SimulationDB
 from .utils import metrics as prom_metrics
@@ -729,13 +732,25 @@ def predict_ticker(ticker: str):
         raise HTTPException(status_code=503, detail="No model available")
     # Get latest data and compute features
     raw = yf.download(ticker, period="300d", auto_adjust=False, progress=False)
+
+    # Check if download was successful
+    if raw.empty:
+        raise HTTPException(status_code=404, detail=f"No data available for ticker {ticker}")
+
     # Handle MultiIndex columns from yfinance
     if isinstance(raw.columns, pd.MultiIndex):
         raw.columns = raw.columns.get_level_values(0)
 
     # Create DataFrame with OHLCV data needed for technical features
     df = pd.DataFrame(
-        {"Open": raw["Open"], "High": raw["High"], "Low": raw["Low"], "Close": raw["Adj Close"], "Volume": raw["Volume"]}
+        {
+            "Open": raw["Open"].values,
+            "High": raw["High"].values,
+            "Low": raw["Low"].values,
+            "Close": raw["Adj Close"].values,
+            "Volume": raw["Volume"].values,
+        },
+        index=raw.index,
     )
 
     # Add all 20 technical features
@@ -859,6 +874,20 @@ def ranking(tickers: str = "", country: str = "Global", use_parallel: bool = Fal
     result = []
     technical_features = get_technical_feature_names()
 
+    # Get market regime BEFORE processing stocks
+    regime_detector = get_regime_detector()
+    regime = regime_detector.get_regime()
+
+    # Get composite scorer
+    composite_scorer = get_composite_scorer()
+
+    logger.info(
+        f"📊 Market Regime: {regime.regime_status} (Score: {regime.regime_score}/100) | "
+        f"VIX: {regime.vix_value:.1f} ({regime.volatility_regime}) | "
+        f"Trend: {regime.trend_regime} | "
+        f"BUY Signals: {'ALLOWED ✅' if regime.allow_buys else 'BLOCKED 🔴'}"
+    )
+
     for t in chosen:
         try:
             pred_start = time.time()
@@ -902,34 +931,146 @@ def ranking(tickers: str = "", country: str = "Global", use_parallel: bool = Fal
         if df.empty:
             continue
 
-        # Predict with 20 technical features
+        # Predict with ML model (20 technical features)
         row = df.iloc[-1:]
-        prob = MODEL.predict_proba(row[technical_features].values)[0][1]
+        ml_prob = MODEL.predict_proba(row[technical_features].values)[0][1]
 
-        # Determine action
-        if prob >= 0.6:
-            action = "BUY"
-        elif prob <= 0.4:
-            action = "SELL"
-        else:
-            action = "HOLD"
+        # Calculate composite score (replaces simple ML probability)
+        score_breakdown = composite_scorer.calculate_composite_score(
+            df=df,
+            ml_probability=ml_prob,
+            regime_score=regime.regime_score,
+            allow_buys=regime.allow_buys,
+            ticker=t,  # Pass ticker for LLM context
+        )
+
+        # Get allocation limit based on composite score
+        max_allocation = composite_scorer.get_allocation_limit(
+            score=score_breakdown.composite_score,
+            signal=score_breakdown.signal,
+            asset_type="stock",
+        )
 
         # Track model prediction metrics
         pred_duration = time.time() - pred_start
-        prom_metrics.track_model_prediction("random_forest", float(prob), pred_duration)
+        prom_metrics.track_model_prediction("composite_scorer", score_breakdown.composite_score / 100, pred_duration)
 
         result.append(
-            {"ticker": t, "prob": float(prob), "action": action, "confidence": float(prob * 100), "price": current_price}
+            {
+                "ticker": t,
+                "composite_score": score_breakdown.composite_score,
+                "signal": score_breakdown.signal,
+                "confidence": score_breakdown.confidence,
+                "price": current_price,
+                "max_allocation": max_allocation,
+                # Score breakdown for explainability
+                "score_breakdown": {
+                    "technical": score_breakdown.technical_score,
+                    "ml": score_breakdown.ml_score,
+                    "momentum": score_breakdown.momentum_score,
+                    "regime": score_breakdown.regime_score,
+                    "llm_adjustment": score_breakdown.llm_adjustment,
+                },
+                "top_factors": score_breakdown.top_factors,
+                "risk_factors": score_breakdown.risk_factors,
+                "llm_context": score_breakdown.llm_context,
+                # Legacy fields (for backward compatibility during transition)
+                "prob": float(ml_prob),
+                "action": score_breakdown.signal,
+            }
         )
 
-    # sort result
-    result.sort(key=lambda r: r["prob"], reverse=True)
+    # sort by composite score (highest first)
+    result.sort(key=lambda r: r["composite_score"], reverse=True)
 
     # Track ranking generation metrics
     duration = time.time() - start_time
     prom_metrics.track_ranking_generation(country, len(result), duration)
 
-    return {"ranking": result, "processing_mode": "sequential", "duration_seconds": round(duration, 2)}
+    # Return ranking with regime information
+    return {
+        "ranking": result,
+        "processing_mode": "sequential",
+        "duration_seconds": round(duration, 2),
+        "regime": {
+            "status": regime.regime_status,
+            "score": regime.regime_score,
+            "vix": round(regime.vix_value, 1),
+            "volatility": regime.volatility_regime,
+            "trend": regime.trend_regime,
+            "allow_buys": regime.allow_buys,
+            "recommendation": regime.recommendation,
+        },
+    }
+
+
+@app.get(
+    "/regime",
+    tags=["Market Analysis"],
+    summary="Market Regime Status",
+    description="""
+    Get current market regime and risk environment.
+
+    Provides:
+    - Overall regime status (RISK_ON, NEUTRAL, RISK_OFF)
+    - VIX volatility level and classification
+    - S&P 500 trend analysis (BULL, NEUTRAL, BEAR)
+    - Composite regime score (0-100)
+    - Capital allocation recommendations
+
+    **Decision Rules:**
+    - RISK_ON (≥70): Normal operations, allow BUY signals
+    - NEUTRAL (40-69): Cautious mode, reduce position sizes 50%
+    - RISK_OFF (<40): Defensive mode, BLOCK all BUY signals
+
+    This endpoint enables regime-aware investment decisions.
+    """,
+)
+def get_regime_status():
+    """
+    Get current market regime for decision support.
+
+    Returns comprehensive market regime analysis used to
+    adjust capital allocation and risk management.
+    """
+    try:
+        regime_detector = get_regime_detector()
+        regime = regime_detector.get_regime()
+
+        # Format response
+        return {
+            "status": regime.regime_status,
+            "score": regime.regime_score,
+            "allow_buys": regime.allow_buys,
+            "recommendation": regime.recommendation,
+            "volatility": {
+                "vix": round(regime.vix_value, 2),
+                "regime": regime.volatility_regime,
+                "score": regime.volatility_score,
+            },
+            "trend": {
+                "regime": regime.trend_regime,
+                "score": regime.trend_score,
+                "sp500_price": round(regime.sp500_price, 2),
+                "ma_50": round(regime.ma_50, 2),
+                "ma_200": round(regime.ma_200, 2),
+            },
+            "allocation_adjustment": {
+                "risk_on": "100% of normal allocation",
+                "neutral": "50% of normal allocation",
+                "risk_off": "0% - No new positions",
+                "current": (
+                    "100% (normal)"
+                    if regime.regime_status == "RISK_ON"
+                    else "50% (reduced)" if regime.regime_status == "NEUTRAL" else "0% (blocked)"
+                ),
+            },
+            "timestamp": regime.timestamp.isoformat(),
+            "summary": regime_detector.get_regime_summary(),
+        }
+    except Exception as e:
+        logger.error(f"Error fetching regime status: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch regime status: {str(e)}")
 
 
 @app.get(
@@ -2542,6 +2683,83 @@ async def get_model_info():
     except Exception as e:
         logger.error(f"Error fetching model info: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch model info: {str(e)}")
+
+
+@app.post("/api/portfolio/validate", tags=["Portfolio"])
+async def validate_portfolio(positions: List[Dict]):
+    """
+    Validate portfolio allocation against limits.
+
+    Request body:
+    ```json
+    [
+        {"ticker": "AAPL", "allocation": 10.0, "asset_type": "stock", "score": 85},
+        {"ticker": "BTC-USD", "allocation": 5.0, "asset_type": "crypto", "score": 78}
+    ]
+    ```
+
+    Returns:
+    - violations: List of limit violations
+    - warnings: List of warnings
+    - diversification_score: 0-100 score
+    - rebalancing_suggestions: Recommended actions
+    """
+    try:
+        portfolio_mgr = get_portfolio_manager()
+
+        # Validate allocations
+        analysis = portfolio_mgr.validate_allocation(positions)
+
+        # Get rebalancing suggestions if needed
+        suggestions = []
+        if analysis.violations or analysis.warnings:
+            suggestions = portfolio_mgr.suggest_rebalancing(positions)
+
+        return {
+            "valid": len(analysis.violations) == 0,
+            "total_allocation": analysis.total_allocation,
+            "equity_exposure": analysis.equity_exposure,
+            "crypto_exposure": analysis.crypto_exposure,
+            "cash_reserve": analysis.cash_reserve,
+            "diversification_score": analysis.diversification_score,
+            "concentrated_positions": analysis.concentrated_positions or [],
+            "violations": analysis.violations,
+            "warnings": analysis.warnings,
+            "rebalancing_suggestions": suggestions,
+        }
+    except Exception as e:
+        logger.error(f"Error validating portfolio: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/portfolio/limits", tags=["Portfolio"])
+async def get_portfolio_limits():
+    """
+    Get current portfolio allocation limits.
+
+    Returns configuration for:
+    - Position limits (max % per stock/crypto)
+    - Asset class limits (max equity/crypto exposure)
+    - Risk limits (correlation thresholds)
+    """
+    portfolio_mgr = get_portfolio_manager()
+    limits = portfolio_mgr.limits
+
+    return {
+        "position_limits": {
+            "max_stock_position": limits.max_stock_position,
+            "max_crypto_position": limits.max_crypto_position,
+        },
+        "asset_class_limits": {
+            "max_equity_exposure": limits.max_equity_exposure,
+            "max_crypto_exposure": limits.max_crypto_exposure,
+            "min_cash_reserve": limits.min_cash_reserve,
+        },
+        "risk_limits": {
+            "max_correlation": limits.max_correlation,
+            "max_concentrated_positions": limits.max_concentrated_positions,
+        },
+    }
 
 
 # Mount frontend static files LAST so API routes take precedence

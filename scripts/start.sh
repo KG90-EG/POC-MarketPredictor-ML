@@ -1,54 +1,71 @@
 #!/usr/bin/env bash
-# Simple, reliable server startup script
+# Simple & Reliable Server Start Script
+# Starts backend and frontend servers that stay running
 
 set -euo pipefail
 
-# Get project root (one level up from scripts/)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-cd "$PROJECT_ROOT"
+cd "$(dirname "$0")/.."
 
-# Load environment
+# Colors
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m'
+
+echo -e "${BLUE}🚀 Starting POC Market Predictor Servers${NC}"
+echo ""
+
+# Create logs directory
+mkdir -p logs
+
+# Check .env
 if [ ! -f .env ]; then
-    echo "❌ .env file missing. Copy .env.example to .env first."
+    echo -e "${RED}❌ Error: .env file missing${NC}"
     exit 1
 fi
 
-set -a
-source .env
-set +a
-
-# Kill old processes
+# Clean old processes
 echo "🧹 Cleaning old processes..."
-lsof -ti:8000,5173 | xargs kill -9 2>/dev/null || true
+lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+lsof -ti:5173 | xargs kill -9 2>/dev/null || true
 sleep 1
 
-# Start backend
-echo "🚀 Starting backend on port 8000..."
-python3 -m uvicorn src.trading_engine.server:app --host 0.0.0.0 --port 8000 > logs/backend.log 2>&1 &
+# Start backend in background
+echo -e "🐍 Starting Backend (port 8000)..."
+python3 -m uvicorn src.trading_engine.server:app \
+    --host 0.0.0.0 \
+    --port 8000 \
+    --log-level info \
+    >> logs/backend.log 2>&1 &
+
 BACKEND_PID=$!
-echo $BACKEND_PID > .backend.pid
-echo "   PID: $BACKEND_PID"
+echo $BACKEND_PID > logs/.backend.pid
+echo -e "${GREEN}✓${NC} Backend started (PID: $BACKEND_PID)"
 
-# Start frontend
-echo "🚀 Starting frontend on port 5173..."
+# Wait a moment for backend to initialize
+sleep 3
+
+# Start frontend in background
+echo -e "⚛️  Starting Frontend (port 5173)..."
 cd frontend
-npm run dev > ../logs/frontend.log 2>&1 &
+npm run dev >> ../logs/frontend.log 2>&1 &
 FRONTEND_PID=$!
+echo $FRONTEND_PID > ../logs/.frontend.pid
 cd ..
-echo $FRONTEND_PID > .frontend.pid
-echo "   PID: $FRONTEND_PID"
+echo -e "${GREEN}✓${NC} Frontend started (PID: $FRONTEND_PID)"
 
 echo ""
-echo "✅ Servers starting..."
-echo ""
-echo "📍 URLs (ready in ~15 seconds):"
-echo "   Frontend:  http://localhost:5173"
-echo "   Backend:   http://localhost:8000"
-echo "   API Docs:  http://localhost:8000/docs"
+echo -e "${GREEN}✅ Servers Started!${NC}"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo -e "${BLUE}Frontend:${NC}  http://localhost:5173"
+echo -e "${BLUE}Backend:${NC}   http://localhost:8000"
+echo -e "${BLUE}API Docs:${NC}  http://localhost:8000/docs"
 echo ""
 echo "📋 Commands:"
-echo "   Check status:  make status"
-echo "   View logs:     make logs"
-echo "   Stop servers:  make stop"
+echo "  View logs:  make logs"
+echo "  Stop:       ./scripts/stop.sh"
+echo "  Status:     make status"
+echo ""
+echo -e "${YELLOW}💡 Note: Servers are running in background${NC}"
 echo ""

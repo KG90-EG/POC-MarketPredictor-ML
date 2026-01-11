@@ -1,0 +1,410 @@
+"""
+Centralized configuration management for the trading application.
+Provides a single source of truth for all configurable parameters.
+"""
+
+import os
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
+
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+
+@dataclass
+class ModelConfig:
+    """ML model configuration"""
+
+    prod_model_path: str = field(default_factory=lambda: os.getenv("PROD_MODEL_PATH", "models/prod_model.bin"))
+    feature_names: List[str] = field(
+        default_factory=lambda: [
+            "SMA50",
+            "SMA200",
+            "RSI",
+            "Volatility",
+            "Momentum_10d",
+            "MACD",
+            "MACD_signal",
+            "BB_upper",
+            "BB_lower",
+        ]
+    )
+
+
+@dataclass
+class APIConfig:
+    """API and service configuration"""
+
+    openai_api_key: Optional[str] = field(default_factory=lambda: os.getenv("OPENAI_API_KEY"))
+    openai_model: str = field(default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-4o-mini"))
+    rate_limit_rpm: int = field(default_factory=lambda: int(os.getenv("RATE_LIMIT_RPM", "60")))
+    redis_url: Optional[str] = field(default_factory=lambda: os.getenv("REDIS_URL"))
+    mlflow_tracking_uri: str = field(default_factory=lambda: os.getenv("MLFLOW_TRACKING_URI", "file:./mlruns"))
+    s3_bucket: Optional[str] = field(default_factory=lambda: os.getenv("S3_BUCKET"))
+
+
+@dataclass
+class CacheConfig:
+    """Cache TTL configuration"""
+
+    ai_analysis_ttl: int = 300  # 5 minutes
+    country_stocks_ttl: int = 3600  # 1 hour
+    ticker_info_ttl: int = 1800  # 30 minutes
+    ranking_ttl: int = 3600  # 1 hour
+
+
+@dataclass
+class SignalConfig:
+    """Trading signal thresholds"""
+
+    strong_buy_threshold: float = 0.65
+    buy_threshold: float = 0.55
+    hold_min_threshold: float = 0.45
+    hold_max_threshold: float = 0.55
+    consider_selling_threshold: float = 0.35
+
+    def get_signal(self, probability: float) -> str:
+        """Get trading signal based on probability"""
+        if probability >= self.strong_buy_threshold:
+            return "STRONG BUY"
+        elif probability >= self.buy_threshold:
+            return "BUY"
+        elif probability >= self.hold_min_threshold:
+            return "HOLD"
+        elif probability >= self.consider_selling_threshold:
+            return "CONSIDER SELLING"
+        else:
+            return "SELL"
+
+
+@dataclass
+class MarketConfig:
+    """Market and stock configuration"""
+
+    default_stocks: List[str] = field(
+        default_factory=lambda: [
+            # === US Stocks (30) ===
+            # Tech Giants
+            "AAPL",
+            "MSFT",
+            "GOOGL",
+            "AMZN",
+            "NVDA",
+            "META",
+            "TSLA",
+            "NFLX",
+            "ADBE",
+            "CRM",
+            # Finance
+            "JPM",
+            "BAC",
+            "WFC",
+            "GS",
+            "MS",
+            "V",
+            "MA",
+            "PYPL",
+            # Healthcare & Pharma
+            "UNH",
+            "JNJ",
+            "PFE",
+            "ABBV",
+            # Consumer & Retail
+            "WMT",
+            "COST",
+            "HD",
+            "NKE",
+            "MCD",
+            # Energy & Industrial
+            "XOM",
+            "CVX",
+            "BA",
+            # === Swiss SMI Index (20) ===
+            "NESN.SW",  # Nestlé
+            "NOVN.SW",  # Novartis
+            "ROG.SW",  # Roche
+            "UBSG.SW",  # UBS
+            "ZURN.SW",  # Zurich Insurance
+            "ABBN.SW",  # ABB
+            "CFR.SW",  # Richemont
+            "LONN.SW",  # Lonza
+            "SIKA.SW",  # Sika
+            "GIVN.SW",  # Givaudan
+            "SREN.SW",  # Swiss Re
+            "GEBN.SW",  # Geberit
+            "PGHN.SW",  # Partners Group
+            "SGSN.SW",  # SGS
+            "SCMN.SW",  # Swisscom
+            "HOLN.SW",  # Holcim
+            "ALC.SW",  # Alcon
+            "KNIN.SW",  # Kühne + Nagel
+            "UHR.SW",  # Swatch
+            "ADEN.SW",  # Adecco
+        ]
+    )
+
+    country_seeds: Dict[str, List[str]] = field(
+        default_factory=lambda: {
+            "Switzerland": [
+                "NESN.SW",
+                "NOVN.SW",
+                "ROG.SW",
+                "UBSG.SW",
+                "ZURN.SW",
+                "ABBN.SW",
+                "SREN.SW",
+                "GIVN.SW",
+                "LONN.SW",
+                "SLHN.SW",
+                "SCMN.SW",
+                "ADEN.SW",
+                "GEBN.SW",
+                "PGHN.SW",
+                "SGSN.SW",
+                "CSGN.SW",
+                "HOLN.SW",
+                "CFR.SW",
+                "SYNN.SW",
+                "STMN.SW",
+                "KNIN.SW",
+                "BALN.SW",
+                "BUCN.SW",
+                "LISN.SW",
+                "VACN.SW",
+                "BEAN.SW",
+                "AREN.SW",
+                "DUFN.SW",
+                "TEMN.SW",
+            ],
+            "Germany": [
+                # DAX 40 Index - Top 30 for Phase 2
+                "SAP.DE",       # SAP SE
+                "SIE.DE",       # Siemens
+                "ALV.DE",       # Allianz
+                "DTE.DE",       # Deutsche Telekom
+                "VOW3.DE",      # Volkswagen
+                "MBG.DE",       # Mercedes-Benz
+                "BMW.DE",       # BMW
+                "BAS.DE",       # BASF
+                "ADS.DE",       # Adidas
+                "MUV2.DE",      # Munich Re
+                "BAYN.DE",      # Bayer
+                "EOAN.DE",      # E.ON
+                "DB1.DE",       # Deutsche Börse
+                "HEN3.DE",      # Henkel
+                "IFX.DE",       # Infineon
+                "RHM.DE",       # Rheinmetall
+                "DAI.DE",       # Daimler Truck
+                "FRE.DE",       # Fresenius
+                "SHL.DE",       # Siemens Healthineers
+                "BEI.DE",       # Beiersdorf
+                "RWE.DE",       # RWE
+                "LIN.DE",       # Linde
+                "ZAL.DE",       # Zalando
+                "PUM.DE",       # Puma
+                "MRK.DE",       # Merck
+                "QIA.DE",       # Qiagen
+                "CON.DE",       # Continental
+                "1COV.DE",      # Covestro
+                "PAH3.DE",      # Porsche Automobil
+                "SRT3.DE",      # Sartorius
+            ],
+            "UK": [
+                # FTSE 100 - Top 20 for Phase 2
+                "SHEL.L",       # Shell
+                "AZN.L",        # AstraZeneca
+                "HSBA.L",       # HSBC
+                "BP.L",         # BP
+                "ULVR.L",       # Unilever
+                "DGE.L",        # Diageo
+                "GSK.L",        # GSK
+                "RIO.L",        # Rio Tinto
+                "BATS.L",       # British American Tobacco
+                "RELX.L",       # RELX
+                "NG.L",         # National Grid
+                "LSEG.L",       # London Stock Exchange
+                "VOD.L",        # Vodafone
+                "PRU.L",        # Prudential
+                "BARC.L",       # Barclays
+                "LLOY.L",       # Lloyds Banking
+                "AAL.L",        # Anglo American
+                "GLEN.L",       # Glencore
+                "IMB.L",        # Imperial Brands
+                "CRH.L",        # CRH
+            ],
+            "France": [
+                # CAC 40 - Top 20 for Phase 2
+                "MC.PA",        # LVMH
+                "OR.PA",        # L'Oréal
+                "SAN.PA",       # Sanofi
+                "TTE.PA",       # TotalEnergies
+                "AIR.PA",       # Airbus
+                "SAF.PA",       # Safran
+                "BNP.PA",       # BNP Paribas
+                "AI.PA",        # Air Liquide
+                "EL.PA",        # EssilorLuxottica
+                "SU.PA",        # Schneider Electric
+                "CS.PA",        # AXA
+                "DG.PA",        # Vinci
+                "KER.PA",       # Kering
+                "VIE.PA",       # Veolia
+                "CAP.PA",       # Capgemini
+                "RMS.PA",       # Hermès
+                "EN.PA",        # Bouygues
+                "SGO.PA",       # Saint-Gobain
+                "PUB.PA",       # Publicis
+                "DSY.PA",       # Dassault Systèmes
+            ],
+                "CON.DE",
+                "BEI.DE",
+                "VNA.DE",
+                "P911.DE",
+                "HNR1.DE",
+            ],
+            "United Kingdom": [
+                "SHEL.L",
+                "AZN.L",
+                "HSBA.L",
+                "ULVR.L",
+                "DGE.L",
+                "BP.L",
+                "GSK.L",
+                "RIO.L",
+                "LSEG.L",
+                "NG.L",
+                "REL.L",
+                "BARC.L",
+                "LLOY.L",
+                "VOD.L",
+                "PRU.L",
+                "BT-A.L",
+                "BATS.L",
+                "AAL.L",
+                "CRH.L",
+                "IMB.L",
+            ],
+            "France": [
+                "MC.PA",
+                "OR.PA",
+                "SAN.PA",
+                "TTE.PA",
+                "AIR.PA",
+                "BNP.PA",
+                "SU.PA",
+                "AI.PA",
+                "CA.PA",
+                "EN.PA",
+                "SGO.PA",
+                "DG.PA",
+                "CS.PA",
+                "BN.PA",
+                "KER.PA",
+                "RMS.PA",
+                "EL.PA",
+                "CAP.PA",
+                "VIV.PA",
+                "ORA.PA",
+            ],
+            "Japan": [
+                "TM",
+                "7203.T",
+                "6758.T",
+                "8306.T",
+                "6861.T",
+                "9984.T",
+                "6902.T",
+                "9432.T",
+                "8035.T",
+                "7974.T",
+                "4063.T",
+                "4502.T",
+                "6501.T",
+                "4503.T",
+                "6954.T",
+                "6098.T",
+                "9433.T",
+                "4568.T",
+                "6273.T",
+                "7267.T",
+            ],
+            "Canada": [
+                "SHOP.TO",
+                "TD.TO",
+                "RY.TO",
+                "BNS.TO",
+                "ENB.TO",
+                "CNR.TO",
+                "CP.TO",
+                "BMO.TO",
+                "CNQ.TO",
+                "TRP.TO",
+                "CM.TO",
+                "SU.TO",
+                "WCN.TO",
+                "MFC.TO",
+                "BAM.TO",
+                "ABX.TO",
+                "BCE.TO",
+                "FNV.TO",
+                "QSR.TO",
+                "NTR.TO",
+            ],
+        }
+    )
+
+    country_indices: Dict[str, str] = field(
+        default_factory=lambda: {
+            "Switzerland": "^SSMI",
+            "Germany": "^GDAXI",
+            "United Kingdom": "^FTSE",
+            "France": "^FCHI",
+            "Japan": "^N225",
+            "Canada": "^GSPTSE",
+        }
+    )
+
+
+@dataclass
+class LoggingConfig:
+    """Logging configuration"""
+
+    log_level: str = field(default_factory=lambda: os.getenv("LOG_LEVEL", "INFO"))
+    log_format: str = "[%(asctime)s] [%(levelname)-8s] [%(request_id)s] %(message)s"
+
+
+@dataclass
+class AppConfig:
+    """Main application configuration container"""
+
+    model: ModelConfig = field(default_factory=ModelConfig)
+    api: APIConfig = field(default_factory=APIConfig)
+    cache: CacheConfig = field(default_factory=CacheConfig)
+    signal: SignalConfig = field(default_factory=SignalConfig)
+    market: MarketConfig = field(default_factory=MarketConfig)
+    logging: LoggingConfig = field(default_factory=LoggingConfig)
+
+    @classmethod
+    def load(cls) -> "AppConfig":
+        """Load configuration from environment and defaults"""
+        return cls()
+
+    def validate(self) -> None:
+        """Validate configuration and log warnings for missing optional settings"""
+        from ..utils.logging_config import setup_logging
+
+        logger = setup_logging(self.logging.log_level)
+
+        if not self.api.openai_api_key:
+            logger.warning("OPENAI_API_KEY not set - AI analysis features will be unavailable")
+
+        if not self.api.redis_url:
+            logger.info("REDIS_URL not set - using in-memory cache (not shared across instances)")
+
+        if not os.path.exists(self.model.prod_model_path):
+            logger.warning(f"Model file not found at {self.model.prod_model_path}")
+
+
+# Global configuration instance
+config = AppConfig.load()

@@ -122,26 +122,26 @@ class MarketConfig:
             "CVX",
             "BA",
             # === Swiss SMI Index (20) ===
-            "NESN.SW",  # Nestlé
-            "NOVN.SW",  # Novartis
-            "ROG.SW",  # Roche
-            "UBSG.SW",  # UBS
-            "ZURN.SW",  # Zurich Insurance
-            "ABBN.SW",  # ABB
-            "CFR.SW",  # Richemont
-            "LONN.SW",  # Lonza
-            "SIKA.SW",  # Sika
-            "GIVN.SW",  # Givaudan
-            "SREN.SW",  # Swiss Re
-            "GEBN.SW",  # Geberit
-            "PGHN.SW",  # Partners Group
-            "SGSN.SW",  # SGS
-            "SCMN.SW",  # Swisscom
-            "HOLN.SW",  # Holcim
-            "ALC.SW",  # Alcon
-            "KNIN.SW",  # Kühne + Nagel
-            "UHR.SW",  # Swatch
-            "ADEN.SW",  # Adecco
+            "NESN.SW",
+            "NOVN.SW",
+            "ROG.SW",
+            "UBSG.SW",
+            "ZURN.SW",
+            "ABBN.SW",
+            "CFR.SW",
+            "LONN.SW",
+            "SIKA.SW",
+            "GIVN.SW",
+            "SREN.SW",
+            "GEBN.SW",
+            "PGHN.SW",
+            "SGSN.SW",
+            "SCMN.SW",
+            "HOLN.SW",
+            "ALC.SW",
+            "KNIN.SW",
+            "UHR.SW",
+            "ADEN.SW",
         ]
     )
 
@@ -168,18 +168,10 @@ class MarketConfig:
                 "CFR.SW",
                 "SYNN.SW",
                 "STMN.SW",
-                "KNIN.SW",
-                "BALN.SW",
-                "BUCN.SW",
-                "LISN.SW",
-                "VACN.SW",
-                "BEAN.SW",
-                "AREN.SW",
-                "DUFN.SW",
-                "TEMN.SW",
             ],
             "Germany": [
-                "SAP",
+                # DAX 40 Index - Top 30
+                "SAP.DE",
                 "SIE.DE",
                 "ALV.DE",
                 "DTE.DE",
@@ -198,55 +190,63 @@ class MarketConfig:
                 "DAI.DE",
                 "FRE.DE",
                 "SHL.DE",
-                "CON.DE",
                 "BEI.DE",
-                "VNA.DE",
-                "P911.DE",
-                "HNR1.DE",
+                "RWE.DE",
+                "LIN.DE",
+                "ZAL.DE",
+                "PUM.DE",
+                "MRK.DE",
+                "QIA.DE",
+                "CON.DE",
+                "1COV.DE",
+                "PAH3.DE",
+                "SRT3.DE",
             ],
-            "United Kingdom": [
+            "UK": [
+                # FTSE 100 - Top 20
                 "SHEL.L",
                 "AZN.L",
                 "HSBA.L",
+                "BP.L",
                 "ULVR.L",
                 "DGE.L",
-                "BP.L",
                 "GSK.L",
                 "RIO.L",
-                "LSEG.L",
+                "BATS.L",
+                "RELX.L",
                 "NG.L",
-                "REL.L",
-                "BARC.L",
-                "LLOY.L",
+                "LSEG.L",
                 "VOD.L",
                 "PRU.L",
-                "BT-A.L",
-                "BATS.L",
+                "BARC.L",
+                "LLOY.L",
                 "AAL.L",
-                "CRH.L",
+                "GLEN.L",
                 "IMB.L",
+                "CRH.L",
             ],
             "France": [
+                # CAC 40 - Top 20
                 "MC.PA",
                 "OR.PA",
                 "SAN.PA",
                 "TTE.PA",
                 "AIR.PA",
+                "SAF.PA",
                 "BNP.PA",
-                "SU.PA",
                 "AI.PA",
-                "CA.PA",
+                "EL.PA",
+                "SU.PA",
+                "CS.PA",
+                "DG.PA",
+                "KER.PA",
+                "VIE.PA",
+                "CAP.PA",
+                "RMS.PA",
                 "EN.PA",
                 "SGO.PA",
-                "DG.PA",
-                "CS.PA",
-                "BN.PA",
-                "KER.PA",
-                "RMS.PA",
-                "EL.PA",
-                "CAP.PA",
-                "VIV.PA",
-                "ORA.PA",
+                "PUB.PA",
+                "DSY.PA",
             ],
             "Japan": [
                 "TM",
@@ -299,7 +299,7 @@ class MarketConfig:
         default_factory=lambda: {
             "Switzerland": "^SSMI",
             "Germany": "^GDAXI",
-            "United Kingdom": "^FTSE",
+            "UK": "^FTSE",
             "France": "^FCHI",
             "Japan": "^N225",
             "Canada": "^GSPTSE",
