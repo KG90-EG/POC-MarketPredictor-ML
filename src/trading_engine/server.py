@@ -761,14 +761,23 @@ def predict_ticker(ticker: str):
     if isinstance(raw.columns, pd.MultiIndex):
         raw.columns = raw.columns.get_level_values(0)
 
+    # Flatten any multi-dimensional arrays (yfinance can return 2D arrays for single ticker)
+    def flatten_column(col):
+        """Extract values from column, handling both 1D and 2D arrays."""
+        vals = col.values
+        if vals.ndim > 1:
+            # Take first column if 2D
+            return vals[:, 0]
+        return vals
+
     # Create DataFrame with OHLCV data needed for technical features
     df = pd.DataFrame(
         {
-            "Open": raw["Open"].values,
-            "High": raw["High"].values,
-            "Low": raw["Low"].values,
-            "Close": raw["Adj Close"].values,
-            "Volume": raw["Volume"].values,
+            "Open": flatten_column(raw["Open"]),
+            "High": flatten_column(raw["High"]),
+            "Low": flatten_column(raw["Low"]),
+            "Close": flatten_column(raw["Adj Close"]),
+            "Volume": flatten_column(raw["Volume"]),
         },
         index=raw.index,
     )
@@ -931,6 +940,15 @@ def ranking(
             # Handle MultiIndex columns from yfinance
             if isinstance(raw.columns, pd.MultiIndex):
                 raw.columns = raw.columns.get_level_values(0)
+
+            # Flatten any multi-dimensional arrays
+            def flatten_column(col):
+                """Extract values from column, handling both 1D and 2D arrays."""
+                vals = col.values
+                if vals.ndim > 1:
+                    return vals[:, 0]
+                return vals
+
         except Exception:
             continue
         if raw.empty or "Adj Close" not in raw.columns:
@@ -940,35 +958,15 @@ def ranking(
         if not isinstance(raw, pd.DataFrame):
             continue
 
-        # Create OHLCV DataFrame - flatten any multi-dimensional columns
+        # Create OHLCV DataFrame - use flatten_column helper
         try:
             df = pd.DataFrame(
                 {
-                    "Open": (
-                        raw["Open"].values.flatten()
-                        if raw["Open"].values.ndim > 1
-                        else raw["Open"].values
-                    ),
-                    "High": (
-                        raw["High"].values.flatten()
-                        if raw["High"].values.ndim > 1
-                        else raw["High"].values
-                    ),
-                    "Low": (
-                        raw["Low"].values.flatten()
-                        if raw["Low"].values.ndim > 1
-                        else raw["Low"].values
-                    ),
-                    "Close": (
-                        raw["Adj Close"].values.flatten()
-                        if raw["Adj Close"].values.ndim > 1
-                        else raw["Adj Close"].values
-                    ),
-                    "Volume": (
-                        raw["Volume"].values.flatten()
-                        if raw["Volume"].values.ndim > 1
-                        else raw["Volume"].values
-                    ),
+                    "Open": flatten_column(raw["Open"]),
+                    "High": flatten_column(raw["High"]),
+                    "Low": flatten_column(raw["Low"]),
+                    "Close": flatten_column(raw["Adj Close"]),
+                    "Volume": flatten_column(raw["Volume"]),
                 },
                 index=raw.index,
             )
