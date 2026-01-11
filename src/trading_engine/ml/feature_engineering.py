@@ -42,7 +42,9 @@ except ImportError:
 # ============================================================================
 
 
-def compute_atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+def compute_atr(
+    high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14
+) -> pd.Series:
     """
     Compute Average True Range (ATR) - measures volatility.
 
@@ -63,7 +65,9 @@ def compute_atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int =
     return atr
 
 
-def compute_adx(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+def compute_adx(
+    high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14
+) -> pd.Series:
     """
     Compute Average Directional Index (ADX) - measures trend strength.
 
@@ -89,17 +93,29 @@ def compute_adx(high: pd.Series, low: pd.Series, close: pd.Series, period: int =
     tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
 
     # Calculate directional indicators
-    plus_di = 100 * (plus_dm.rolling(window=period).mean() / tr.rolling(window=period).mean())
-    minus_di = 100 * (minus_dm.rolling(window=period).mean() / tr.rolling(window=period).mean())
+    plus_di = 100 * (
+        plus_dm.rolling(window=period).mean() / tr.rolling(window=period).mean()
+    )
+    minus_di = 100 * (
+        minus_dm.rolling(window=period).mean() / tr.rolling(window=period).mean()
+    )
 
     # Calculate DX and ADX
-    dx = 100 * abs(plus_di - minus_di) / (plus_di + minus_di + 1e-10)  # Add small epsilon to avoid division by zero
+    dx = (
+        100 * abs(plus_di - minus_di) / (plus_di + minus_di + 1e-10)
+    )  # Add small epsilon to avoid division by zero
     adx = dx.rolling(window=period).mean()
 
     return adx
 
 
-def compute_stochastic(high: pd.Series, low: pd.Series, close: pd.Series, k_period: int = 14, d_period: int = 3) -> tuple:
+def compute_stochastic(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    k_period: int = 14,
+    d_period: int = 3,
+) -> tuple:
     """
     Compute Stochastic Oscillator (%K and %D).
 
@@ -137,7 +153,9 @@ def compute_obv(close: pd.Series, volume: pd.Series) -> pd.Series:
     return obv
 
 
-def compute_vwap(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series) -> pd.Series:
+def compute_vwap(
+    high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series
+) -> pd.Series:
     """
     Compute Volume Weighted Average Price (VWAP).
 
@@ -155,7 +173,9 @@ def compute_vwap(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.S
     return vwap
 
 
-def compute_williams_r(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+def compute_williams_r(
+    high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14
+) -> pd.Series:
     """
     Compute Williams %R - momentum indicator.
 
@@ -175,7 +195,9 @@ def compute_williams_r(high: pd.Series, low: pd.Series, close: pd.Series, period
     return williams_r
 
 
-def compute_cci(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 20) -> pd.Series:
+def compute_cci(
+    high: pd.Series, low: pd.Series, close: pd.Series, period: int = 20
+) -> pd.Series:
     """
     Compute Commodity Channel Index (CCI).
 
@@ -190,14 +212,20 @@ def compute_cci(high: pd.Series, low: pd.Series, close: pd.Series, period: int =
     """
     typical_price = (high + low + close) / 3
     sma = typical_price.rolling(window=period).mean()
-    mad = typical_price.rolling(window=period).apply(lambda x: np.abs(x - x.mean()).mean())
+    mad = typical_price.rolling(window=period).apply(
+        lambda x: np.abs(x - x.mean()).mean()
+    )
 
     cci = (typical_price - sma) / (0.015 * mad)
     return cci
 
 
 def compute_parabolic_sar(
-    high: pd.Series, low: pd.Series, close: pd.Series, af_start: float = 0.02, af_max: float = 0.2
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    af_start: float = 0.02,
+    af_max: float = 0.2,
 ) -> pd.Series:
     """
     Compute Parabolic SAR (Stop and Reverse).
@@ -227,7 +255,9 @@ def compute_parabolic_sar(
     return sar
 
 
-def compute_ichimoku(high: pd.Series, low: pd.Series, close: pd.Series) -> Dict[str, pd.Series]:
+def compute_ichimoku(
+    high: pd.Series, low: pd.Series, close: pd.Series
+) -> Dict[str, pd.Series]:
     """
     Compute Ichimoku Cloud components.
 
@@ -266,7 +296,11 @@ def compute_ichimoku(high: pd.Series, low: pd.Series, close: pd.Series) -> Dict[
 
 
 def compute_keltner_channels(
-    close: pd.Series, high: pd.Series, low: pd.Series, period: int = 20, multiplier: float = 2.0
+    close: pd.Series,
+    high: pd.Series,
+    low: pd.Series,
+    period: int = 20,
+    multiplier: float = 2.0,
 ) -> Dict[str, pd.Series]:
     """
     Compute Keltner Channels.
@@ -323,8 +357,12 @@ def get_fundamental_features(ticker: str) -> Dict[str, float]:
         }
 
         # Normalize large values
-        if fundamentals["free_cash_flow"] and not np.isnan(fundamentals["free_cash_flow"]):
-            fundamentals["free_cash_flow"] = fundamentals["free_cash_flow"] / 1e9  # Convert to billions
+        if fundamentals["free_cash_flow"] and not np.isnan(
+            fundamentals["free_cash_flow"]
+        ):
+            fundamentals["free_cash_flow"] = (
+                fundamentals["free_cash_flow"] / 1e9
+            )  # Convert to billions
 
         return fundamentals
 
@@ -379,7 +417,13 @@ def get_sentiment_features(ticker: str) -> Dict[str, float]:
             recent_recs = recommendations.tail(10)
 
             # Map to scores: Strong Buy = 1, Buy = 0.5, Hold = 0, Sell = -0.5, Strong Sell = -1
-            rating_map = {"strongBuy": 1.0, "buy": 0.5, "hold": 0.0, "sell": -0.5, "strongSell": -1.0}
+            rating_map = {
+                "strongBuy": 1.0,
+                "buy": 0.5,
+                "hold": 0.0,
+                "sell": -0.5,
+                "strongSell": -1.0,
+            }
 
             # Average the ratings
             if "To Grade" in recent_recs.columns:
@@ -444,7 +488,11 @@ def get_macro_features() -> Dict[str, float]:
         # Sector performance (using SPY as proxy)
         spy = yf.Ticker("SPY")
         spy_data = spy.history(period="1mo")
-        sector_performance = (spy_data["Close"].iloc[-1] / spy_data["Close"].iloc[0] - 1) if not spy_data.empty else 0.0
+        sector_performance = (
+            (spy_data["Close"].iloc[-1] / spy_data["Close"].iloc[0] - 1)
+            if not spy_data.empty
+            else 0.0
+        )
 
         return {
             "vix": vix_close,
@@ -501,8 +549,14 @@ def add_all_features(df: pd.DataFrame, ticker: str = None) -> pd.DataFrame:
     # Extract OHLCV as Series (squeeze to avoid DataFrame)
     high = df["High"].squeeze() if isinstance(df["High"], pd.DataFrame) else df["High"]
     low = df["Low"].squeeze() if isinstance(df["Low"], pd.DataFrame) else df["Low"]
-    close = df["Close"].squeeze() if isinstance(df["Close"], pd.DataFrame) else df["Close"]
-    volume = df["Volume"].squeeze() if isinstance(df["Volume"], pd.DataFrame) else df["Volume"]
+    close = (
+        df["Close"].squeeze() if isinstance(df["Close"], pd.DataFrame) else df["Close"]
+    )
+    volume = (
+        df["Volume"].squeeze()
+        if isinstance(df["Volume"], pd.DataFrame)
+        else df["Volume"]
+    )
 
     # ========================================================================
     # Original 9 features (keep for compatibility)
@@ -587,7 +641,13 @@ def add_all_features(df: pd.DataFrame, ticker: str = None) -> pd.DataFrame:
         for key, value in sentiment.items():
             df[key] = value
     else:
-        for key in ["analyst_rating", "institutional_ownership", "insider_ownership", "short_ratio", "news_sentiment"]:
+        for key in [
+            "analyst_rating",
+            "institutional_ownership",
+            "insider_ownership",
+            "short_ratio",
+            "news_sentiment",
+        ]:
             df[key] = 0.0
 
     # ========================================================================
@@ -629,8 +689,14 @@ def add_technical_features_only(df: pd.DataFrame) -> pd.DataFrame:
     # Extract OHLCV as Series (squeeze to avoid DataFrame)
     high = df["High"].squeeze() if isinstance(df["High"], pd.DataFrame) else df["High"]
     low = df["Low"].squeeze() if isinstance(df["Low"], pd.DataFrame) else df["Low"]
-    close = df["Close"].squeeze() if isinstance(df["Close"], pd.DataFrame) else df["Close"]
-    volume = df["Volume"].squeeze() if isinstance(df["Volume"], pd.DataFrame) else df["Volume"]
+    close = (
+        df["Close"].squeeze() if isinstance(df["Close"], pd.DataFrame) else df["Close"]
+    )
+    volume = (
+        df["Volume"].squeeze()
+        if isinstance(df["Volume"], pd.DataFrame)
+        else df["Volume"]
+    )
 
     # ========================================================================
     # Original 9 features (keep for compatibility)

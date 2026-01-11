@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { apiClient } from '../api';
-import './StockExplorer.css';
+import { useState, useEffect } from "react";
+import { apiClient } from "../api";
+import "./StockExplorer.css";
 
 /**
  * Modern Stock Explorer - Simplified and user-friendly
@@ -13,10 +13,10 @@ import './StockExplorer.css';
  * - Loading states with proper error handling
  */
 function StockExplorer() {
-  const [market, setMarket] = useState('global');
+  const [market, setMarket] = useState("global");
   const [stocks, setStocks] = useState([]);
   const [filteredStocks, setFilteredStocks] = useState([]);
-  const [searchTicker, setSearchTicker] = useState('');
+  const [searchTicker, setSearchTicker] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedStock, setSelectedStock] = useState(null);
@@ -28,12 +28,12 @@ function StockExplorer() {
 
   // Filter stocks when search changes
   useEffect(() => {
-    if (searchTicker.trim() === '') {
+    if (searchTicker.trim() === "") {
       setFilteredStocks(stocks);
     } else {
       const search = searchTicker.toLowerCase();
       const filtered = stocks.filter(
-        stock =>
+        (stock) =>
           stock.ticker.toLowerCase().includes(search) ||
           (stock.name && stock.name.toLowerCase().includes(search))
       );
@@ -47,16 +47,16 @@ function StockExplorer() {
 
     try {
       // Get rankings
-      const rankResponse = await apiClient.post('/api/rank', {
+      const rankResponse = await apiClient.post("/api/rank", {
         market,
-        limit: 50
+        limit: 50,
       });
 
       const rankings = rankResponse.data.rankings || [];
 
       // Get details for all tickers
-      const tickers = rankings.map(r => r.ticker);
-      const detailsPromises = tickers.map(async ticker => {
+      const tickers = rankings.map((r) => r.ticker);
+      const detailsPromises = tickers.map(async (ticker) => {
         try {
           const res = await apiClient.get(`/api/ticker/${ticker}`);
           return { ticker, ...res.data };
@@ -70,37 +70,37 @@ function StockExplorer() {
 
       // Combine rankings with details
       const enrichedStocks = rankings.map((r, index) => {
-        const detail = details.find(d => d.ticker === r.ticker) || {};
+        const detail = details.find((d) => d.ticker === r.ticker) || {};
         return {
           ...r,
           ...detail,
-          rank: index + 1
+          rank: index + 1,
         };
       });
 
       setStocks(enrichedStocks);
       setFilteredStocks(enrichedStocks);
     } catch (err) {
-      console.error('Error loading stocks:', err);
-      setError(err.response?.data?.detail || 'Failed to load stocks');
+      console.error("Error loading stocks:", err);
+      setError(err.response?.data?.detail || "Failed to load stocks");
     } finally {
       setLoading(false);
     }
   };
 
   const formatPrice = (price) => {
-    if (!price) return 'N/A';
+    if (!price) return "N/A";
     return `$${price.toFixed(2)}`;
   };
 
   const formatChange = (change) => {
-    if (change === undefined || change === null) return 'N/A';
-    const sign = change >= 0 ? '+' : '';
+    if (change === undefined || change === null) return "N/A";
+    const sign = change >= 0 ? "+" : "";
     return `${sign}${change.toFixed(2)}%`;
   };
 
   const formatMarketCap = (cap) => {
-    if (!cap) return 'N/A';
+    if (!cap) return "N/A";
     if (cap >= 1e12) return `$${(cap / 1e12).toFixed(2)}T`;
     if (cap >= 1e9) return `$${(cap / 1e9).toFixed(2)}B`;
     if (cap >= 1e6) return `$${(cap / 1e6).toFixed(2)}M`;
@@ -108,17 +108,17 @@ function StockExplorer() {
   };
 
   const getConfidenceBadge = (prob) => {
-    if (prob >= 0.65) return { text: 'Strong Buy', class: 'strong-buy' };
-    if (prob >= 0.55) return { text: 'Buy', class: 'buy' };
-    if (prob >= 0.45) return { text: 'Hold', class: 'hold' };
-    if (prob >= 0.35) return { text: 'Consider Selling', class: 'sell' };
-    return { text: 'Sell', class: 'strong-sell' };
+    if (prob >= 0.65) return { text: "Strong Buy", class: "strong-buy" };
+    if (prob >= 0.55) return { text: "Buy", class: "buy" };
+    if (prob >= 0.45) return { text: "Hold", class: "hold" };
+    if (prob >= 0.35) return { text: "Consider Selling", class: "sell" };
+    return { text: "Sell", class: "strong-sell" };
   };
 
   const getRankIcon = (rank) => {
-    if (rank === 1) return '🥇';
-    if (rank === 2) return '🥈';
-    if (rank === 3) return '🥉';
+    if (rank === 1) return "🥇";
+    if (rank === 2) return "🥈";
+    if (rank === 3) return "🥉";
     return `#${rank}`;
   };
 
@@ -142,22 +142,22 @@ function StockExplorer() {
         <h3>🌍 Select Market</h3>
         <div className="market-buttons">
           <button
-            className={`market-btn ${market === 'global' ? 'active' : ''}`}
-            onClick={() => setMarket('global')}
+            className={`market-btn ${market === "global" ? "active" : ""}`}
+            onClick={() => setMarket("global")}
             disabled={loading}
           >
             🌎 Global
           </button>
           <button
-            className={`market-btn ${market === 'us' ? 'active' : ''}`}
-            onClick={() => setMarket('us')}
+            className={`market-btn ${market === "us" ? "active" : ""}`}
+            onClick={() => setMarket("us")}
             disabled={loading}
           >
             🇺🇸 US
           </button>
           <button
-            className={`market-btn ${market === 'eu' ? 'active' : ''}`}
-            onClick={() => setMarket('eu')}
+            className={`market-btn ${market === "eu" ? "active" : ""}`}
+            onClick={() => setMarket("eu")}
             disabled={loading}
           >
             🇪🇺 EU
@@ -177,7 +177,7 @@ function StockExplorer() {
         />
         {searchTicker && (
           <div className="search-results-count">
-            Found {filteredStocks.length} {filteredStocks.length === 1 ? 'stock' : 'stocks'}
+            Found {filteredStocks.length} {filteredStocks.length === 1 ? "stock" : "stocks"}
           </div>
         )}
       </div>
@@ -195,7 +195,7 @@ function StockExplorer() {
         <div className="stocks-grid">
           {filteredStocks.slice(0, 20).map((stock) => {
             const badge = getConfidenceBadge(stock.prob);
-            const changeClass = stock.change >= 0 ? 'positive' : 'negative';
+            const changeClass = stock.change >= 0 ? "positive" : "negative";
 
             return (
               <div
@@ -210,11 +210,9 @@ function StockExplorer() {
                 <div className="stock-header">
                   <div className="ticker-name">
                     <h4>{stock.ticker}</h4>
-                    <p>{stock.name || 'N/A'}</p>
+                    <p>{stock.name || "N/A"}</p>
                   </div>
-                  <div className={`confidence-badge ${badge.class}`}>
-                    {badge.text}
-                  </div>
+                  <div className={`confidence-badge ${badge.class}`}>{badge.text}</div>
                 </div>
 
                 {/* Stock Metrics */}
@@ -241,12 +239,8 @@ function StockExplorer() {
 
                 {/* Footer */}
                 <div className="stock-footer">
-                  {stock.country && (
-                    <span className="country-tag">{stock.country}</span>
-                  )}
-                  {stock.sector && (
-                    <span className="sector-tag">{stock.sector}</span>
-                  )}
+                  {stock.country && <span className="country-tag">{stock.country}</span>}
+                  {stock.sector && <span className="sector-tag">{stock.sector}</span>}
                 </div>
               </div>
             );
@@ -267,7 +261,9 @@ function StockExplorer() {
       {selectedStock && (
         <div className="modal-overlay" onClick={() => setSelectedStock(null)}>
           <div className="modal-content card" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setSelectedStock(null)}>✕</button>
+            <button className="modal-close" onClick={() => setSelectedStock(null)}>
+              ✕
+            </button>
 
             <div className="modal-header">
               <h2>{selectedStock.ticker}</h2>
@@ -276,7 +272,7 @@ function StockExplorer() {
               </div>
             </div>
 
-            <h3>{selectedStock.name || 'N/A'}</h3>
+            <h3>{selectedStock.name || "N/A"}</h3>
 
             <div className="modal-metrics">
               <div className="modal-metric-card">
@@ -285,7 +281,7 @@ function StockExplorer() {
               </div>
               <div className="modal-metric-card">
                 <span className="label">Daily Change</span>
-                <span className={`value ${selectedStock.change >= 0 ? 'positive' : 'negative'}`}>
+                <span className={`value ${selectedStock.change >= 0 ? "positive" : "negative"}`}>
                   {formatChange(selectedStock.change)}
                 </span>
               </div>

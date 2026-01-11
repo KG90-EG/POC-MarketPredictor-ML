@@ -120,15 +120,21 @@ class MarketRegimeDetector:
         if regime_score >= self.RISK_ON_THRESHOLD:
             regime_status = "RISK_ON"
             allow_buys = True
-            recommendation = "Normal operations. Market conditions favorable for new positions."
+            recommendation = (
+                "Normal operations. Market conditions favorable for new positions."
+            )
         elif regime_score >= self.RISK_OFF_THRESHOLD:
             regime_status = "NEUTRAL"
             allow_buys = True
-            recommendation = "Cautious mode. Reduce position sizes by 50%. Monitor closely."
+            recommendation = (
+                "Cautious mode. Reduce position sizes by 50%. Monitor closely."
+            )
         else:
             regime_status = "RISK_OFF"
             allow_buys = False
-            recommendation = "Defensive mode. BLOCK all new BUY signals. Protect capital."
+            recommendation = (
+                "Defensive mode. BLOCK all new BUY signals. Protect capital."
+            )
 
         # Create regime state
         regime = RegimeState(
@@ -226,23 +232,31 @@ class MarketRegimeDetector:
         elif vix < self.VIX_MEDIUM:
             # Normal volatility
             # Linear scale: VIX 15 = 100, VIX 25 = 60
-            score = int(100 - ((vix - self.VIX_LOW) / (self.VIX_MEDIUM - self.VIX_LOW)) * 40)
+            score = int(
+                100 - ((vix - self.VIX_LOW) / (self.VIX_MEDIUM - self.VIX_LOW)) * 40
+            )
             return "MEDIUM", max(60, score)
         elif vix < self.VIX_HIGH:
             # Elevated volatility - caution
             # Linear scale: VIX 25 = 60, VIX 30 = 40
-            score = int(60 - ((vix - self.VIX_MEDIUM) / (self.VIX_HIGH - self.VIX_MEDIUM)) * 20)
+            score = int(
+                60 - ((vix - self.VIX_MEDIUM) / (self.VIX_HIGH - self.VIX_MEDIUM)) * 20
+            )
             return "HIGH", max(40, score)
         elif vix < self.VIX_EXTREME:
             # High volatility - risk-off
             # Linear scale: VIX 30 = 40, VIX 40 = 20
-            score = int(40 - ((vix - self.VIX_HIGH) / (self.VIX_EXTREME - self.VIX_HIGH)) * 20)
+            score = int(
+                40 - ((vix - self.VIX_HIGH) / (self.VIX_EXTREME - self.VIX_HIGH)) * 20
+            )
             return "HIGH", max(20, score)
         else:
             # Extreme volatility - panic
             return "EXTREME", 10
 
-    def _classify_trend(self, price: float, ma_50: float, ma_200: float) -> Tuple[str, int]:
+    def _classify_trend(
+        self, price: float, ma_50: float, ma_200: float
+    ) -> Tuple[str, int]:
         """
         Classify trend regime based on moving average relationships.
 
@@ -324,7 +338,9 @@ class MarketRegimeDetector:
             f"Trend: {regime.trend_regime}"
         )
 
-    def adjust_allocation(self, base_allocation: float, regime: Optional[RegimeState] = None) -> float:
+    def adjust_allocation(
+        self, base_allocation: float, regime: Optional[RegimeState] = None
+    ) -> float:
         """
         Adjust recommended allocation based on regime.
 

@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { apiClient } from '../api';
-import ConfirmDialog from './ConfirmDialog';
-import './SimulationDashboardV2.css';
+import { useState, useEffect } from "react";
+import { apiClient } from "../api";
+import ConfirmDialog from "./ConfirmDialog";
+import "./SimulationDashboardV2.css";
 
 /**
  * Modern Trading Simulation Dashboard - V2
@@ -24,31 +24,31 @@ function SimulationDashboardV2() {
   const [showHistory, setShowHistory] = useState(false);
 
   // Mode toggle
-  const [mode, setMode] = useState('manual'); // 'manual' or 'autopilot'
+  const [mode, setMode] = useState("manual"); // 'manual' or 'autopilot'
   const [autoPilotStatus, setAutoPilotStatus] = useState(null);
 
   // Form states
   const [newSimCapital, setNewSimCapital] = useState(10000);
   const [tradeForm, setTradeForm] = useState({
-    ticker: '',
-    action: 'BUY',
+    ticker: "",
+    action: "BUY",
     quantity: 10,
-    price: 0
+    price: 0,
   });
   const [resetConfirm, setResetConfirm] = useState(false);
 
   // Popular stocks for autocomplete
   const popularStocks = [
-    { ticker: 'AAPL', name: 'Apple Inc.' },
-    { ticker: 'MSFT', name: 'Microsoft' },
-    { ticker: 'GOOGL', name: 'Alphabet' },
-    { ticker: 'AMZN', name: 'Amazon' },
-    { ticker: 'TSLA', name: 'Tesla' },
-    { ticker: 'NVDA', name: 'NVIDIA' },
-    { ticker: 'META', name: 'Meta' },
-    { ticker: 'GC=F', name: 'Gold' },
-    { ticker: 'SI=F', name: 'Silver' },
-    { ticker: 'CL=F', name: 'Oil' },
+    { ticker: "AAPL", name: "Apple Inc." },
+    { ticker: "MSFT", name: "Microsoft" },
+    { ticker: "GOOGL", name: "Alphabet" },
+    { ticker: "AMZN", name: "Amazon" },
+    { ticker: "TSLA", name: "Tesla" },
+    { ticker: "NVDA", name: "NVIDIA" },
+    { ticker: "META", name: "Meta" },
+    { ticker: "GC=F", name: "Gold" },
+    { ticker: "SI=F", name: "Silver" },
+    { ticker: "CL=F", name: "Oil" },
   ];
 
   useEffect(() => {
@@ -61,10 +61,12 @@ function SimulationDashboardV2() {
   const loadPortfolio = async () => {
     if (!currentSim) return;
     try {
-      const response = await apiClient.get(`/api/simulations/${currentSim.simulation_id}/portfolio`);
+      const response = await apiClient.get(
+        `/api/simulations/${currentSim.simulation_id}/portfolio`
+      );
       setPortfolio(response.data);
     } catch (err) {
-      console.error('Error loading portfolio:', err);
+      console.error("Error loading portfolio:", err);
     }
   };
 
@@ -74,39 +76,45 @@ function SimulationDashboardV2() {
       const response = await apiClient.get(`/api/simulations/${currentSim.simulation_id}/history`);
       setTradeHistory(response.data.trades || []);
     } catch (err) {
-      console.error('Error loading trade history:', err);
+      console.error("Error loading trade history:", err);
     }
   };
 
   const loadRecommendations = async () => {
     if (!currentSim) {
-      setError('⚠️ No simulation loaded. Please start a simulation first.');
+      setError("⚠️ No simulation loaded. Please start a simulation first.");
       return;
     }
     setLoading(true);
     setError(null);
     setRecommendations([]); // Clear old recommendations
     try {
-      console.log('Loading recommendations for sim:', currentSim.simulation_id);
-      const response = await apiClient.post(`/api/simulations/${currentSim.simulation_id}/recommendations`);
-      console.log('Recommendations response:', response.data);
+      console.log("Loading recommendations for sim:", currentSim.simulation_id);
+      const response = await apiClient.post(
+        `/api/simulations/${currentSim.simulation_id}/recommendations`
+      );
+      console.log("Recommendations response:", response.data);
 
       const recs = response.data.recommendations || [];
 
       if (recs.length > 0) {
         setRecommendations(recs);
-        setError(`✓ Loaded ${recs.length} AI recommendation${recs.length > 1 ? 's' : ''}`);
+        setError(`✓ Loaded ${recs.length} AI recommendation${recs.length > 1 ? "s" : ""}`);
       } else {
         setRecommendations([]);
         // Better message explaining why no recommendations
         if (portfolio && portfolio.positions.length === 0) {
-          setError('ℹ️ No recommendations yet. Add some positions first or wait for high-confidence opportunities (>65% confidence).');
+          setError(
+            "ℹ️ No recommendations yet. Add some positions first or wait for high-confidence opportunities (>65% confidence)."
+          );
         } else {
-          setError('ℹ️ No recommendations available. Current market conditions show no strong buy/sell signals above confidence threshold.');
+          setError(
+            "ℹ️ No recommendations available. Current market conditions show no strong buy/sell signals above confidence threshold."
+          );
         }
       }
     } catch (err) {
-      console.error('Recommendations error:', err);
+      console.error("Recommendations error:", err);
       setRecommendations([]);
       const errorMsg = err.response?.data?.detail || err.message;
       setError(`❌ Failed to load recommendations: ${errorMsg}`);
@@ -119,21 +127,21 @@ function SimulationDashboardV2() {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.post('/api/simulations', {
-        user_id: 'default_user',
+      const response = await apiClient.post("/api/simulations", {
+        user_id: "default_user",
         initial_capital: newSimCapital,
-        mode: 'auto'
+        mode: "auto",
       });
       setCurrentSim(response.data);
       setNewSimCapital(10000);
     } catch (err) {
-      setError('Failed to create simulation: ' + err.message);
+      setError("Failed to create simulation: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const executeTrade = async (ticker, action, quantity, price, reason = '', confidence = 0) => {
+  const executeTrade = async (ticker, action, quantity, price, reason = "", confidence = 0) => {
     if (!currentSim) return;
 
     setLoading(true);
@@ -146,13 +154,13 @@ function SimulationDashboardV2() {
         quantity,
         price,
         reason,
-        confidence
+        confidence,
       });
 
       await Promise.all([loadPortfolio(), loadTradeHistory()]);
       setError(null);
     } catch (err) {
-      setError('Trade failed: ' + (err.response?.data?.detail || err.message));
+      setError("Trade failed: " + (err.response?.data?.detail || err.message));
     } finally {
       setLoading(false);
     }
@@ -163,18 +171,18 @@ function SimulationDashboardV2() {
     const { ticker, action, quantity, price } = tradeForm;
 
     if (!ticker || price <= 0 || quantity <= 0) {
-      setError('Please fill all trade fields');
+      setError("Please fill all trade fields");
       return;
     }
 
-    await executeTrade(ticker, action, quantity, price, 'Manual trade', 0);
+    await executeTrade(ticker, action, quantity, price, "Manual trade", 0);
 
     // Reset form
     setTradeForm({
-      ticker: '',
-      action: 'BUY',
+      ticker: "",
+      action: "BUY",
       quantity: 10,
-      price: 0
+      price: 0,
     });
   };
 
@@ -183,38 +191,37 @@ function SimulationDashboardV2() {
     const quantity = rec.quantity ?? 10;
 
     if (!price) {
-      setError('Price not available for recommendation');
+      setError("Price not available for recommendation");
       return;
     }
 
-    await executeTrade(
-      rec.ticker,
-      rec.action,
-      quantity,
-      price,
-      rec.reason,
-      rec.confidence
-    );
+    await executeTrade(rec.ticker, rec.action, quantity, price, rec.reason, rec.confidence);
   };
 
   const executeAutoTrade = async () => {
     if (!currentSim) {
-      setError('⚠️ No simulation loaded');
+      setError("⚠️ No simulation loaded");
       return;
     }
     setLoading(true);
     setError(null);
 
     try {
-      const response = await apiClient.post(`/api/simulations/${currentSim.simulation_id}/auto-trade`);
+      const response = await apiClient.post(
+        `/api/simulations/${currentSim.simulation_id}/auto-trade`
+      );
       await Promise.all([loadPortfolio(), loadTradeHistory()]);
 
       const { trades_executed, trades } = response.data;
       if (trades_executed > 0) {
-        const summary = trades.map(t => `${t.action} ${t.quantity} ${t.ticker}`).join(', ');
-        setError(`✓ Successfully executed ${trades_executed} trade${trades_executed > 1 ? 's' : ''}: ${summary}`);
+        const summary = trades.map((t) => `${t.action} ${t.quantity} ${t.ticker}`).join(", ");
+        setError(
+          `✓ Successfully executed ${trades_executed} trade${trades_executed > 1 ? "s" : ""}: ${summary}`
+        );
       } else {
-        setError('ℹ️ No trades executed. AI found no strong signals above confidence threshold (>65%).');
+        setError(
+          "ℹ️ No trades executed. AI found no strong signals above confidence threshold (>65%)."
+        );
       }
     } catch (err) {
       const errorMsg = err.response?.data?.detail || err.message;
@@ -226,13 +233,13 @@ function SimulationDashboardV2() {
 
   const runAutoPilot = async (rounds = 3) => {
     if (!currentSim) {
-      setError('⚠️ No simulation loaded');
+      setError("⚠️ No simulation loaded");
       return;
     }
 
     setLoading(true);
     setError(null);
-    setAutoPilotStatus('🚀 Starting Auto-Pilot...');
+    setAutoPilotStatus("🚀 Starting Auto-Pilot...");
 
     try {
       setAutoPilotStatus(`🤖 Running ${rounds} trading rounds...`);
@@ -247,12 +254,12 @@ function SimulationDashboardV2() {
 
       const { total_trades_executed, profit_loss, profit_loss_percent } = response.data;
 
-      const plSign = profit_loss >= 0 ? '+' : '';
-      const plColor = profit_loss >= 0 ? '✓' : '⚠️';
+      const plSign = profit_loss >= 0 ? "+" : "";
+      const plColor = profit_loss >= 0 ? "✓" : "⚠️";
 
       setAutoPilotStatus(
         `${plColor} Auto-Pilot completed! Executed ${total_trades_executed} trades. ` +
-        `P/L: ${plSign}${formatCurrency(profit_loss)} (${plSign}${profit_loss_percent.toFixed(2)}%)`
+          `P/L: ${plSign}${formatCurrency(profit_loss)} (${plSign}${profit_loss_percent.toFixed(2)}%)`
       );
 
       setError(`✓ Auto-Pilot session completed successfully!`);
@@ -273,35 +280,35 @@ function SimulationDashboardV2() {
       await apiClient.post(`/api/simulations/${currentSim.simulation_id}/reset`);
       await Promise.all([loadPortfolio(), loadTradeHistory()]);
       setResetConfirm(false);
-      setError('✓ Simulation reset successfully');
+      setError("✓ Simulation reset successfully");
     } catch (err) {
-      setError('Reset failed: ' + err.message);
+      setError("Reset failed: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
     }).format(value);
   };
 
   const formatPercent = (value) => {
-    const sign = value >= 0 ? '+' : '';
+    const sign = value >= 0 ? "+" : "";
     return `${sign}${value.toFixed(2)}%`;
   };
 
   const formatTimestamp = (value) => {
-    return new Date(value).toLocaleString('en-US');
+    return new Date(value).toLocaleString("en-US");
   };
 
   return (
     <div className="simulation-dashboard-v2">
       {error && (
-        <div className={`error-banner ${error.includes('✓') ? 'success' : ''}`}>
+        <div className={`error-banner ${error.includes("✓") ? "success" : ""}`}>
           <span>{error}</span>
           <button onClick={() => setError(null)}>✕</button>
         </div>
@@ -327,12 +334,8 @@ function SimulationDashboardV2() {
               <small>{formatCurrency(newSimCapital)}</small>
             </div>
 
-            <button
-              onClick={createSimulation}
-              disabled={loading}
-              className="btn-primary"
-            >
-              {loading ? 'Creating...' : '🚀 Start Simulation'}
+            <button onClick={createSimulation} disabled={loading} className="btn-primary">
+              {loading ? "Creating..." : "🚀 Start Simulation"}
             </button>
           </div>
 
@@ -357,15 +360,15 @@ function SimulationDashboardV2() {
               {/* Mode Toggle */}
               <div className="mode-toggle">
                 <button
-                  className={`mode-btn ${mode === 'manual' ? 'active' : ''}`}
-                  onClick={() => setMode('manual')}
+                  className={`mode-btn ${mode === "manual" ? "active" : ""}`}
+                  onClick={() => setMode("manual")}
                   disabled={loading}
                 >
                   🎮 Manual
                 </button>
                 <button
-                  className={`mode-btn ${mode === 'autopilot' ? 'active' : ''}`}
-                  onClick={() => setMode('autopilot')}
+                  className={`mode-btn ${mode === "autopilot" ? "active" : ""}`}
+                  onClick={() => setMode("autopilot")}
                   disabled={loading}
                 >
                   🤖 Auto-Pilot
@@ -375,7 +378,11 @@ function SimulationDashboardV2() {
               <button onClick={loadPortfolio} className="btn-icon" title="Refresh">
                 🔄
               </button>
-              <button onClick={() => setResetConfirm(true)} className="btn-danger-small" title="Reset">
+              <button
+                onClick={() => setResetConfirm(true)}
+                className="btn-danger-small"
+                title="Reset"
+              >
                 Reset
               </button>
             </div>
@@ -388,10 +395,12 @@ function SimulationDashboardV2() {
               <div className="metric-content">
                 <div className="metric-label">Portfolio Value</div>
                 <div className="metric-value">
-                  {portfolio ? formatCurrency(portfolio.total_value) : '...'}
+                  {portfolio ? formatCurrency(portfolio.total_value) : "..."}
                 </div>
                 {portfolio && (
-                  <div className={`metric-change ${portfolio.total_pnl >= 0 ? 'positive' : 'negative'}`}>
+                  <div
+                    className={`metric-change ${portfolio.total_pnl >= 0 ? "positive" : "negative"}`}
+                  >
                     {formatPercent(portfolio.total_pnl_percent)}
                   </div>
                 )}
@@ -403,7 +412,7 @@ function SimulationDashboardV2() {
               <div className="metric-content">
                 <div className="metric-label">Cash Available</div>
                 <div className="metric-value">
-                  {portfolio ? formatCurrency(portfolio.cash) : '...'}
+                  {portfolio ? formatCurrency(portfolio.cash) : "..."}
                 </div>
               </div>
             </div>
@@ -412,9 +421,7 @@ function SimulationDashboardV2() {
               <div className="metric-icon">📈</div>
               <div className="metric-content">
                 <div className="metric-label">Positions</div>
-                <div className="metric-value">
-                  {portfolio ? portfolio.positions.length : 0}
-                </div>
+                <div className="metric-value">{portfolio ? portfolio.positions.length : 0}</div>
               </div>
             </div>
 
@@ -425,7 +432,7 @@ function SimulationDashboardV2() {
                 <div className="metric-value">
                   {currentSim?.metrics?.win_rate_percent
                     ? `${currentSim.metrics.win_rate_percent.toFixed(1)}%`
-                    : 'N/A'}
+                    : "N/A"}
                 </div>
               </div>
             </div>
@@ -433,7 +440,7 @@ function SimulationDashboardV2() {
 
           {/* Main Content Grid */}
           <div className="main-content-grid">
-            {mode === 'manual' ? (
+            {mode === "manual" ? (
               <>
                 {/* AI Recommendations Section */}
                 <div className="recommendations-section">
@@ -445,7 +452,7 @@ function SimulationDashboardV2() {
                         disabled={loading}
                         className="btn-secondary-small"
                       >
-                        {loading ? 'Loading...' : 'Get Recommendations'}
+                        {loading ? "Loading..." : "Get Recommendations"}
                       </button>
                     </div>
 
@@ -475,7 +482,7 @@ function SimulationDashboardV2() {
                           disabled={loading}
                           className="btn-auto-trade"
                         >
-                          {loading ? 'Executing...' : '⚡ Execute All'}
+                          {loading ? "Executing..." : "⚡ Execute All"}
                         </button>
                       </div>
                     ) : (
@@ -498,12 +505,14 @@ function SimulationDashboardV2() {
                             type="text"
                             list="ticker-suggestions"
                             value={tradeForm.ticker}
-                            onChange={(e) => setTradeForm({...tradeForm, ticker: e.target.value.toUpperCase()})}
+                            onChange={(e) =>
+                              setTradeForm({ ...tradeForm, ticker: e.target.value.toUpperCase() })
+                            }
                             placeholder="AAPL, GOLD..."
                             required
                           />
                           <datalist id="ticker-suggestions">
-                            {popularStocks.map(stock => (
+                            {popularStocks.map((stock) => (
                               <option key={stock.ticker} value={stock.ticker}>
                                 {stock.name}
                               </option>
@@ -517,7 +526,7 @@ function SimulationDashboardV2() {
                           <label>Action</label>
                           <select
                             value={tradeForm.action}
-                            onChange={(e) => setTradeForm({...tradeForm, action: e.target.value})}
+                            onChange={(e) => setTradeForm({ ...tradeForm, action: e.target.value })}
                           >
                             <option value="BUY">Buy</option>
                             <option value="SELL">Sell</option>
@@ -528,7 +537,9 @@ function SimulationDashboardV2() {
                           <input
                             type="number"
                             value={tradeForm.quantity}
-                            onChange={(e) => setTradeForm({...tradeForm, quantity: Number(e.target.value)})}
+                            onChange={(e) =>
+                              setTradeForm({ ...tradeForm, quantity: Number(e.target.value) })
+                            }
                             min="1"
                             required
                           />
@@ -540,7 +551,9 @@ function SimulationDashboardV2() {
                         <input
                           type="number"
                           value={tradeForm.price}
-                          onChange={(e) => setTradeForm({...tradeForm, price: Number(e.target.value)})}
+                          onChange={(e) =>
+                            setTradeForm({ ...tradeForm, price: Number(e.target.value) })
+                          }
                           step="0.01"
                           min="0.01"
                           required
@@ -548,7 +561,7 @@ function SimulationDashboardV2() {
                       </div>
 
                       <button type="submit" disabled={loading} className="btn-primary">
-                        {loading ? 'Executing...' : 'Execute Trade'}
+                        {loading ? "Executing..." : "Execute Trade"}
                       </button>
                     </form>
                   </div>
@@ -560,14 +573,13 @@ function SimulationDashboardV2() {
                 <div className="card autopilot-card">
                   <div className="autopilot-header">
                     <h3>🤖 Auto-Pilot Trading</h3>
-                    <p>Let AI trade for you automatically. The bot will execute multiple rounds of trades based on market analysis.</p>
+                    <p>
+                      Let AI trade for you automatically. The bot will execute multiple rounds of
+                      trades based on market analysis.
+                    </p>
                   </div>
 
-                  {autoPilotStatus && (
-                    <div className="autopilot-status">
-                      {autoPilotStatus}
-                    </div>
-                  )}
+                  {autoPilotStatus && <div className="autopilot-status">{autoPilotStatus}</div>}
 
                   <div className="autopilot-controls">
                     <div className="autopilot-option">
@@ -576,7 +588,7 @@ function SimulationDashboardV2() {
                         disabled={loading}
                         className="btn-autopilot"
                       >
-                        {loading ? '🔄 Trading...' : '🚀 Start Auto-Pilot (3 Rounds)'}
+                        {loading ? "🔄 Trading..." : "🚀 Start Auto-Pilot (3 Rounds)"}
                       </button>
                       <small>Execute ~9 AI-recommended trades across 3 rounds</small>
                     </div>
@@ -587,7 +599,7 @@ function SimulationDashboardV2() {
                         disabled={loading}
                         className="btn-autopilot-long"
                       >
-                        {loading ? '🔄 Trading...' : '⚡ Extended Session (5 Rounds)'}
+                        {loading ? "🔄 Trading..." : "⚡ Extended Session (5 Rounds)"}
                       </button>
                       <small>Execute ~15 AI-recommended trades across 5 rounds</small>
                     </div>
@@ -598,7 +610,7 @@ function SimulationDashboardV2() {
                         disabled={loading}
                         className="btn-autopilot-max"
                       >
-                        {loading ? '🔄 Trading...' : '🔥 Maximum Session (10 Rounds)'}
+                        {loading ? "🔄 Trading..." : "🔥 Maximum Session (10 Rounds)"}
                       </button>
                       <small>Execute ~30 AI-recommended trades across 10 rounds</small>
                     </div>
@@ -628,7 +640,7 @@ function SimulationDashboardV2() {
                     <div key={pos.ticker} className="holding-card">
                       <div className="holding-header">
                         <h4>{pos.ticker}</h4>
-                        <div className={`pnl-badge ${pos.pnl >= 0 ? 'positive' : 'negative'}`}>
+                        <div className={`pnl-badge ${pos.pnl >= 0 ? "positive" : "negative"}`}>
                           {formatPercent(pos.pnl_percent)}
                         </div>
                       </div>
@@ -651,7 +663,7 @@ function SimulationDashboardV2() {
                         </div>
                         <div className="detail-row">
                           <span>P&L:</span>
-                          <strong className={pos.pnl >= 0 ? 'positive' : 'negative'}>
+                          <strong className={pos.pnl >= 0 ? "positive" : "negative"}>
                             {formatCurrency(pos.pnl)}
                           </strong>
                         </div>
@@ -672,7 +684,7 @@ function SimulationDashboardV2() {
             <div className="card">
               <div className="card-header clickable" onClick={() => setShowHistory(!showHistory)}>
                 <h3>📜 Trade History ({tradeHistory.length})</h3>
-                <span>{showHistory ? '▼' : '▶'}</span>
+                <span>{showHistory ? "▼" : "▶"}</span>
               </div>
 
               {showHistory && tradeHistory.length > 0 && (

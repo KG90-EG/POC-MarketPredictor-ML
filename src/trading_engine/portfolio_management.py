@@ -86,7 +86,9 @@ class PortfolioManager:
         """Initialize portfolio manager with limits"""
         self.limits = limits or PortfolioLimits()
 
-    def validate_allocation(self, positions: List[Dict], current_portfolio: Optional[Dict] = None) -> PortfolioAnalysis:
+    def validate_allocation(
+        self, positions: List[Dict], current_portfolio: Optional[Dict] = None
+    ) -> PortfolioAnalysis:
         """
         Validate proposed allocations against portfolio limits.
 
@@ -115,34 +117,51 @@ class PortfolioManager:
 
         # Calculate totals
         total_allocation = sum(p.allocation for p in position_objects)
-        equity_exposure = sum(p.allocation for p in position_objects if p.asset_type == "stock")
-        crypto_exposure = sum(p.allocation for p in position_objects if p.asset_type == "crypto")
+        equity_exposure = sum(
+            p.allocation for p in position_objects if p.asset_type == "stock"
+        )
+        crypto_exposure = sum(
+            p.allocation for p in position_objects if p.asset_type == "crypto"
+        )
         cash_reserve = 100.0 - total_allocation
 
         # Validate position limits
         for pos in position_objects:
-            if pos.asset_type == "stock" and pos.allocation > self.limits.max_stock_position:
+            if (
+                pos.asset_type == "stock"
+                and pos.allocation > self.limits.max_stock_position
+            ):
                 violations.append(
-                    f"⛔ {pos.ticker}: {pos.allocation:.1f}% exceeds stock limit " f"({self.limits.max_stock_position}%)"
+                    f"⛔ {pos.ticker}: {pos.allocation:.1f}% exceeds stock limit "
+                    f"({self.limits.max_stock_position}%)"
                 )
-            elif pos.asset_type == "crypto" and pos.allocation > self.limits.max_crypto_position:
+            elif (
+                pos.asset_type == "crypto"
+                and pos.allocation > self.limits.max_crypto_position
+            ):
                 violations.append(
-                    f"⛔ {pos.ticker}: {pos.allocation:.1f}% exceeds crypto limit " f"({self.limits.max_crypto_position}%)"
+                    f"⛔ {pos.ticker}: {pos.allocation:.1f}% exceeds crypto limit "
+                    f"({self.limits.max_crypto_position}%)"
                 )
 
         # Validate asset class limits
         if equity_exposure > self.limits.max_equity_exposure:
             violations.append(
-                f"⛔ Equity exposure: {equity_exposure:.1f}% exceeds limit " f"({self.limits.max_equity_exposure}%)"
+                f"⛔ Equity exposure: {equity_exposure:.1f}% exceeds limit "
+                f"({self.limits.max_equity_exposure}%)"
             )
 
         if crypto_exposure > self.limits.max_crypto_exposure:
             violations.append(
-                f"⛔ Crypto exposure: {crypto_exposure:.1f}% exceeds limit " f"({self.limits.max_crypto_exposure}%)"
+                f"⛔ Crypto exposure: {crypto_exposure:.1f}% exceeds limit "
+                f"({self.limits.max_crypto_exposure}%)"
             )
 
         if cash_reserve < self.limits.min_cash_reserve:
-            warnings.append(f"⚠️ Cash reserve: {cash_reserve:.1f}% below minimum " f"({self.limits.min_cash_reserve}%)")
+            warnings.append(
+                f"⚠️ Cash reserve: {cash_reserve:.1f}% below minimum "
+                f"({self.limits.min_cash_reserve}%)"
+            )
 
         # Check for concentrated positions (>8%)
         concentrated = [p.ticker for p in position_objects if p.allocation > 8.0]
@@ -261,7 +280,9 @@ class PortfolioManager:
 
         return corr_matrix, warnings
 
-    def suggest_rebalancing(self, current_positions: List[Dict], target_allocation: float = 100.0) -> List[Dict]:
+    def suggest_rebalancing(
+        self, current_positions: List[Dict], target_allocation: float = 100.0
+    ) -> List[Dict]:
         """
         Suggest portfolio rebalancing to meet limits.
 
@@ -316,8 +337,12 @@ class PortfolioManager:
 
             elif "Equity exposure" in violation:
                 # Suggest reducing equity positions proportionally
-                equity_positions = [p for p in current_positions if p.get("asset_type") == "stock"]
-                total_reduction = analysis.equity_exposure - self.limits.max_equity_exposure
+                equity_positions = [
+                    p for p in current_positions if p.get("asset_type") == "stock"
+                ]
+                total_reduction = (
+                    analysis.equity_exposure - self.limits.max_equity_exposure
+                )
 
                 for pos in sorted(equity_positions, key=lambda x: x.get("score", 0)):
                     # Reduce lowest-scoring positions first
@@ -342,7 +367,9 @@ class PortfolioManager:
 
         return actions
 
-    def get_allocation_recommendation(self, ticker: str, score: float, signal: str, asset_type: str = "stock") -> float:
+    def get_allocation_recommendation(
+        self, ticker: str, score: float, signal: str, asset_type: str = "stock"
+    ) -> float:
         """
         Get recommended allocation for a single position.
 
@@ -366,7 +393,11 @@ class PortfolioManager:
             base = 0.0
 
         # Apply position limit
-        max_limit = self.limits.max_stock_position if asset_type == "stock" else self.limits.max_crypto_position
+        max_limit = (
+            self.limits.max_stock_position
+            if asset_type == "stock"
+            else self.limits.max_crypto_position
+        )
 
         return min(base, max_limit)
 

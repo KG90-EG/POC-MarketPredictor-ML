@@ -48,13 +48,17 @@ class CacheManager:
                 logger.info(f"✅ Connected to Redis at {redis_url}")
                 self._redis_connection_attempted = True
             except Exception as e:
-                logger.info(f"ℹ️  Redis not available (USE_REDIS={self._use_redis}): {e}. Using in-memory cache.")
+                logger.info(
+                    f"ℹ️  Redis not available (USE_REDIS={self._use_redis}): {e}. Using in-memory cache."
+                )
                 self.redis_client = None
                 self._redis_connection_attempted = True
         elif not REDIS_AVAILABLE:
             logger.debug("Redis library not installed. Using in-memory cache.")
         else:
-            logger.debug("Redis disabled (set USE_REDIS=true to enable). Using in-memory cache.")
+            logger.debug(
+                "Redis disabled (set USE_REDIS=true to enable). Using in-memory cache."
+            )
 
     def get(self, key: str) -> Optional[Any]:
         """Get value from cache (Redis or in-memory)."""
@@ -87,7 +91,9 @@ class CacheManager:
         # Try Redis first
         if self.redis_client:
             try:
-                self.redis_client.setex(key, ttl_seconds, json.dumps(value, default=str))
+                self.redis_client.setex(
+                    key, ttl_seconds, json.dumps(value, default=str)
+                )
                 return True
             except Exception as e:
                 logger.error(f"Redis set error for key {key}: {e}")
@@ -135,7 +141,9 @@ class CacheManager:
                 logger.error(f"Redis clear pattern error for {pattern}: {e}")
 
         # Also clear from in-memory cache
-        keys_to_delete = [k for k in self.in_memory_cache.keys() if self._matches_pattern(k, pattern)]
+        keys_to_delete = [
+            k for k in self.in_memory_cache.keys() if self._matches_pattern(k, pattern)
+        ]
         for key in keys_to_delete:
             del self.in_memory_cache[key]
             if key in self.cache_timestamps:

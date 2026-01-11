@@ -65,7 +65,9 @@ class TradingSimulation:
         self.trades = trades
         self.created_at = created_at
 
-    def get_ai_recommendations(self, predictions: List[Dict], current_prices: Dict[str, float]) -> List[Dict]:
+    def get_ai_recommendations(
+        self, predictions: List[Dict], current_prices: Dict[str, float]
+    ) -> List[Dict]:
         """
         Generate buy/sell recommendations based on ML predictions.
 
@@ -85,19 +87,27 @@ class TradingSimulation:
         recommendations = []
 
         # BUY opportunities: High confidence stocks not in portfolio
-        buy_candidates = [p for p in predictions if p["confidence"] > 0.65 and p["ticker"] not in self.positions]
+        buy_candidates = [
+            p
+            for p in predictions
+            if p["confidence"] > 0.65 and p["ticker"] not in self.positions
+        ]
 
         # Sort by confidence, limit to available slots
         max_positions = 10
         available_slots = max_positions - len(self.positions)
-        buy_candidates = sorted(buy_candidates, key=lambda x: x["confidence"], reverse=True)[:available_slots]
+        buy_candidates = sorted(
+            buy_candidates, key=lambda x: x["confidence"], reverse=True
+        )[:available_slots]
 
         allocation_per_position = self.cash / max_positions if max_positions else 0
 
         for pred in buy_candidates:
             current_price = current_prices.get(pred["ticker"])
             if not current_price or current_price <= 0:
-                logger.warning("No valid price for %s, skipping buy recommendation", pred["ticker"])
+                logger.warning(
+                    "No valid price for %s, skipping buy recommendation", pred["ticker"]
+                )
                 continue
 
             quantity = int(allocation_per_position // current_price)
@@ -183,7 +193,13 @@ class TradingSimulation:
         return recommendations
 
     def execute_trade(
-        self, ticker: str, action: str, quantity: int, price: float, reason: str, ml_confidence: Optional[float] = None
+        self,
+        ticker: str,
+        action: str,
+        quantity: int,
+        price: float,
+        reason: str,
+        ml_confidence: Optional[float] = None,
     ) -> Dict:
         """
         Execute a buy or sell trade.
@@ -210,7 +226,9 @@ class TradingSimulation:
         if action == "BUY":
             cost = quantity * price
             if cost > self.cash:
-                raise ValueError(f"Insufficient cash: need ${cost:.2f}, have ${self.cash:.2f}")
+                raise ValueError(
+                    f"Insufficient cash: need ${cost:.2f}, have ${self.cash:.2f}"
+                )
 
             # Execute buy
             self.cash -= cost
@@ -227,9 +245,15 @@ class TradingSimulation:
                 }
             else:
                 # New position
-                self.positions[ticker] = {"quantity": quantity, "avg_cost": price, "current_price": price}
+                self.positions[ticker] = {
+                    "quantity": quantity,
+                    "avg_cost": price,
+                    "current_price": price,
+                }
 
-            logger.info(f"BUY {quantity} {ticker} @ ${price:.2f} " f"(total: ${cost:.2f})")
+            logger.info(
+                f"BUY {quantity} {ticker} @ ${price:.2f} " f"(total: ${cost:.2f})"
+            )
 
         elif action == "SELL":
             if ticker not in self.positions:
@@ -237,7 +261,9 @@ class TradingSimulation:
 
             pos = self.positions[ticker]
             if quantity > pos["quantity"]:
-                raise ValueError(f"Insufficient shares: need {quantity}, have {pos['quantity']}")
+                raise ValueError(
+                    f"Insufficient shares: need {quantity}, have {pos['quantity']}"
+                )
 
             # Execute sell
             proceeds = quantity * price
@@ -254,7 +280,10 @@ class TradingSimulation:
                 # Partial sell
                 self.positions[ticker]["quantity"] -= quantity
 
-            logger.info(f"SELL {quantity} {ticker} @ ${price:.2f} " f"(proceeds: ${proceeds:.2f}, P&L: ${realized_pnl:.2f})")
+            logger.info(
+                f"SELL {quantity} {ticker} @ ${price:.2f} "
+                f"(proceeds: ${proceeds:.2f}, P&L: ${realized_pnl:.2f})"
+            )
 
         # Record trade
         trade = {
@@ -285,7 +314,9 @@ class TradingSimulation:
             if ticker in current_prices:
                 position["current_price"] = current_prices[ticker]
 
-        holdings_value = sum(pos["quantity"] * pos["current_price"] for pos in self.positions.values())
+        holdings_value = sum(
+            pos["quantity"] * pos["current_price"] for pos in self.positions.values()
+        )
 
         return self.cash + holdings_value
 
@@ -342,7 +373,9 @@ class TradingSimulation:
                         buy["quantity"] -= sell["quantity"]
 
         total_closed_trades = winning_trades + losing_trades
-        win_rate = winning_trades / total_closed_trades if total_closed_trades > 0 else 0
+        win_rate = (
+            winning_trades / total_closed_trades if total_closed_trades > 0 else 0
+        )
 
         return {
             "current_value": current_value,
@@ -370,13 +403,19 @@ class TradingSimulation:
             "initial_capital": self.initial_capital,
             "cash": self.cash,
             "positions": self.positions,
-            "trades": [{**trade, "timestamp": trade["timestamp"].isoformat()} for trade in self.trades],
+            "trades": [
+                {**trade, "timestamp": trade["timestamp"].isoformat()}
+                for trade in self.trades
+            ],
             "created_at": self.created_at.isoformat(),
         }
 
 
 def calculate_position_size(
-    available_cash: float, current_price: float, max_positions: int = 10, reserve_cash_pct: float = 0.10
+    available_cash: float,
+    current_price: float,
+    max_positions: int = 10,
+    reserve_cash_pct: float = 0.10,
 ) -> int:
     """
     Calculate optimal position size for a trade.

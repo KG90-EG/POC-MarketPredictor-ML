@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const MarketRegimeStatus = ({ regime, loading }) => {
   if (loading || !regime) {
@@ -13,42 +13,42 @@ const MarketRegimeStatus = ({ regime, loading }) => {
 
   // Determine regime color and icon
   const getRegimeStyle = (type) => {
-    switch(type) {
-      case 'RISK_ON':
+    switch (type) {
+      case "RISK_ON":
         return {
-          icon: '🟢',
-          color: '#10b981',
-          bgColor: '#d1fae5',
-          darkBg: '#064e3b',
-          label: 'Risk-On',
-          description: 'Favorable market conditions - Growth opportunities'
+          icon: "🟢",
+          color: "#10b981",
+          bgColor: "#d1fae5",
+          darkBg: "#064e3b",
+          label: "Risk-On",
+          description: "Favorable market conditions - Growth opportunities",
         };
-      case 'NEUTRAL':
+      case "NEUTRAL":
         return {
-          icon: '🟡',
-          color: '#f59e0b',
-          bgColor: '#fef3c7',
-          darkBg: '#78350f',
-          label: 'Neutral',
-          description: 'Mixed signals - Exercise caution'
+          icon: "🟡",
+          color: "#f59e0b",
+          bgColor: "#fef3c7",
+          darkBg: "#78350f",
+          label: "Neutral",
+          description: "Mixed signals - Exercise caution",
         };
-      case 'RISK_OFF':
+      case "RISK_OFF":
         return {
-          icon: '🔴',
-          color: '#ef4444',
-          bgColor: '#fee2e2',
-          darkBg: '#7f1d1d',
-          label: 'Risk-Off',
-          description: 'Defensive mode - Capital preservation priority'
+          icon: "🔴",
+          color: "#ef4444",
+          bgColor: "#fee2e2",
+          darkBg: "#7f1d1d",
+          label: "Risk-Off",
+          description: "Defensive mode - Capital preservation priority",
         };
       default:
         return {
-          icon: '⚪',
-          color: '#6b7280',
-          bgColor: '#f3f4f6',
-          darkBg: '#374151',
-          label: 'Unknown',
-          description: 'Unable to determine market regime'
+          icon: "⚪",
+          color: "#6b7280",
+          bgColor: "#f3f4f6",
+          darkBg: "#374151",
+          label: "Unknown",
+          description: "Unable to determine market regime",
         };
     }
   };
@@ -62,7 +62,7 @@ const MarketRegimeStatus = ({ regime, loading }) => {
         className="regime-badge"
         style={{
           backgroundColor: style.bgColor,
-          borderLeft: `4px solid ${style.color}`
+          borderLeft: `4px solid ${style.color}`,
         }}
       >
         <div className="regime-header">
@@ -88,13 +88,10 @@ const MarketRegimeStatus = ({ regime, loading }) => {
                 className="score-fill"
                 style={{
                   width: `${regime_score}%`,
-                  backgroundColor: style.color
+                  backgroundColor: style.color,
                 }}
               />
-              <div
-                className="score-marker"
-                style={{ left: `${regime_score}%` }}
-              >
+              <div className="score-marker" style={{ left: `${regime_score}%` }}>
                 {regime_score.toFixed(0)}
               </div>
             </div>
@@ -106,13 +103,13 @@ const MarketRegimeStatus = ({ regime, loading }) => {
           <div className="regime-detail-item">
             <span className="detail-label">VIX Level:</span>
             <span className={`detail-value vix-${vix_level?.toLowerCase()}`}>
-              {vix_level || 'Unknown'}
+              {vix_level || "Unknown"}
             </span>
           </div>
           <div className="regime-detail-item">
             <span className="detail-label">S&P 500 Trend:</span>
             <span className={`detail-value trend-${sp500_trend?.toLowerCase()}`}>
-              {sp500_trend || 'Unknown'}
+              {sp500_trend || "Unknown"}
             </span>
           </div>
         </div>
@@ -126,14 +123,14 @@ const MarketRegimeStatus = ({ regime, loading }) => {
       </div>
 
       {/* Risk-Off Warning Banner */}
-      {regimeType === 'RISK_OFF' && (
+      {regimeType === "RISK_OFF" && (
         <div className="regime-warning-banner risk-off">
           <div className="warning-icon">⚠️</div>
           <div className="warning-content">
             <div className="warning-title">DEFENSIVE MODE ACTIVE</div>
             <div className="warning-message">
-              Market conditions are unfavorable. BUY signals are suppressed.
-              Consider reducing position sizes and increasing cash reserves.
+              Market conditions are unfavorable. BUY signals are suppressed. Consider reducing
+              position sizes and increasing cash reserves.
             </div>
             <div className="warning-actions">
               <span className="warning-recommendation">
@@ -145,14 +142,14 @@ const MarketRegimeStatus = ({ regime, loading }) => {
       )}
 
       {/* High Volatility Warning */}
-      {vix_level === 'HIGH' && regimeType !== 'RISK_OFF' && (
+      {vix_level === "HIGH" && regimeType !== "RISK_OFF" && (
         <div className="regime-warning-banner high-volatility">
           <div className="warning-icon">⚡</div>
           <div className="warning-content">
             <div className="warning-title">HIGH VOLATILITY DETECTED</div>
             <div className="warning-message">
-              Market volatility is elevated. Consider 50% of normal allocation sizes.
-              Use wider stop-losses and avoid concentration.
+              Market volatility is elevated. Consider 50% of normal allocation sizes. Use wider
+              stop-losses and avoid concentration.
             </div>
           </div>
         </div>

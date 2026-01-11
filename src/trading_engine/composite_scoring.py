@@ -274,7 +274,9 @@ class CompositeScorer:
             ScoreBreakdown with complete score analysis
         """
         # Calculate component scores
-        technical_score, tech_positive, tech_negative = self.calculate_technical_score(df)
+        technical_score, tech_positive, tech_negative = self.calculate_technical_score(
+            df
+        )
         ml_score = ml_probability * 100  # Convert 0-1 to 0-100
         momentum_score, momentum_factors = self.calculate_momentum_score(df)
 
@@ -298,7 +300,9 @@ class CompositeScorer:
             if context_provider:
                 try:
                     asset_context = context_provider.get_asset_context(
-                        ticker=ticker, current_score=base_composite_score, lookback_days=7
+                        ticker=ticker,
+                        current_score=base_composite_score,
+                        lookback_days=7,
                     )
                     llm_adjustment = asset_context.context_adjustment
 
@@ -307,9 +311,16 @@ class CompositeScorer:
 
                     # Add LLM factors to positive/negative lists
                     if asset_context.positive_catalysts:
-                        tech_positive.extend([f"📰 {cat}" for cat in asset_context.positive_catalysts[:2]])
+                        tech_positive.extend(
+                            [
+                                f"📰 {cat}"
+                                for cat in asset_context.positive_catalysts[:2]
+                            ]
+                        )
                     if asset_context.risk_events:
-                        tech_negative.extend([f"⚠️ {risk}" for risk in asset_context.risk_events[:2]])
+                        tech_negative.extend(
+                            [f"⚠️ {risk}" for risk in asset_context.risk_events[:2]]
+                        )
 
                 except Exception as e:
                     import logging
@@ -343,7 +354,9 @@ class CompositeScorer:
             + ([f"Regime favorable: {regime_score}/100"] if regime_score > 70 else [])
         )
 
-        all_negative = tech_negative + ([f"Regime unfavorable: {regime_score}/100"] if regime_score < 40 else [])
+        all_negative = tech_negative + (
+            [f"Regime unfavorable: {regime_score}/100"] if regime_score < 40 else []
+        )
 
         return ScoreBreakdown(
             technical_score=round(technical_score, 1),
@@ -359,7 +372,9 @@ class CompositeScorer:
             llm_context=llm_context_str,
         )
 
-    def get_allocation_limit(self, score: float, signal: str, asset_type: str = "stock") -> float:
+    def get_allocation_limit(
+        self, score: float, signal: str, asset_type: str = "stock"
+    ) -> float:
         """
         Get maximum recommended allocation based on score and asset type.
 

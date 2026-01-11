@@ -40,7 +40,7 @@
 }
 
 .tooltip-top::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 100%;
   left: 50%;
@@ -56,7 +56,7 @@
 }
 
 .tooltip-bottom::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 100%;
   left: 50%;
@@ -72,7 +72,7 @@
 }
 
 .tooltip-right::after {
-  content: '';
+  content: "";
   position: absolute;
   right: 100%;
   top: 50%;
@@ -88,7 +88,7 @@
 }
 
 .tooltip-left::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 100%;
   top: 50%;

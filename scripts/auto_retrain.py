@@ -68,7 +68,9 @@ def run_training():
         return False
 
 
-def setup_auto_retraining(app=None, schedule="weekly", day_of_week="sun", time="02:00", enabled=True):
+def setup_auto_retraining(
+    app=None, schedule="weekly", day_of_week="sun", time="02:00", enabled=True
+):
     """
     Setup automatic retraining scheduler.
 
@@ -105,7 +107,9 @@ def setup_auto_retraining(app=None, schedule="weekly", day_of_week="sun", time="
         day_map = {"mon": 0, "tue": 1, "wed": 2, "thu": 3, "fri": 4, "sat": 5, "sun": 6}
         day = day_map.get(day_of_week.lower(), 6)  # Default to Sunday
         trigger = CronTrigger(day_of_week=day, hour=hour, minute=minute)
-        logger.info(f"📅 Scheduled weekly retraining on {day_of_week.upper()} at {time}")
+        logger.info(
+            f"📅 Scheduled weekly retraining on {day_of_week.upper()} at {time}"
+        )
 
     elif schedule == "monthly":
         trigger = CronTrigger(day=1, hour=hour, minute=minute)
@@ -144,7 +148,11 @@ def main():
     """Run as standalone scheduler service."""
     parser = argparse.ArgumentParser(description="Automatic model retraining scheduler")
     parser.add_argument(
-        "--schedule", type=str, default="weekly", choices=["daily", "weekly", "monthly"], help="Retraining schedule frequency"
+        "--schedule",
+        type=str,
+        default="weekly",
+        choices=["daily", "weekly", "monthly"],
+        help="Retraining schedule frequency",
     )
     parser.add_argument(
         "--day",
@@ -153,8 +161,15 @@ def main():
         choices=["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
         help="Day of week for weekly schedule",
     )
-    parser.add_argument("--time", type=str, default="02:00", help="Time to run retraining (HH:MM, 24-hour format)")
-    parser.add_argument("--run-now", action="store_true", help="Run training immediately on startup")
+    parser.add_argument(
+        "--time",
+        type=str,
+        default="02:00",
+        help="Time to run retraining (HH:MM, 24-hour format)",
+    )
+    parser.add_argument(
+        "--run-now", action="store_true", help="Run training immediately on startup"
+    )
 
     args = parser.parse_args()
 
@@ -169,7 +184,9 @@ def main():
     print("=" * 80)
 
     # Setup scheduler
-    scheduler = setup_auto_retraining(schedule=args.schedule, day_of_week=args.day, time=args.time, enabled=True)
+    scheduler = setup_auto_retraining(
+        schedule=args.schedule, day_of_week=args.day, time=args.time, enabled=True
+    )
 
     if scheduler is None:
         print("❌ Failed to setup scheduler")

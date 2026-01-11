@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, createContext, useContext } from "react";
 
 /**
  * A/B Testing Infrastructure
@@ -13,10 +13,10 @@ import { useState, useEffect, createContext, useContext } from 'react';
 
 // Create context for A/B testing
 const ABTestContext = createContext({
-  getVariant: () => 'A',
+  getVariant: () => "A",
   trackConversion: () => {},
   trackEvent: () => {},
-  experiments: {}
+  experiments: {},
 });
 
 export const useABTest = () => useContext(ABTestContext);
@@ -32,15 +32,15 @@ export const ABTestProvider = ({ children, experiments = {} }) => {
   // Initialize user ID and load saved variants
   useEffect(() => {
     // Get or create user ID
-    let id = localStorage.getItem('ab_user_id');
+    let id = localStorage.getItem("ab_user_id");
     if (!id) {
       id = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem('ab_user_id', id);
+      localStorage.setItem("ab_user_id", id);
     }
     setUserId(id);
 
     // Load saved variant assignments
-    const savedVariants = JSON.parse(localStorage.getItem('ab_variants') || '{}');
+    const savedVariants = JSON.parse(localStorage.getItem("ab_variants") || "{}");
     setUserVariants(savedVariants);
   }, []);
 
@@ -49,7 +49,7 @@ export const ABTestProvider = ({ children, experiments = {} }) => {
     const experiment = experiments[experimentName];
     if (!experiment) {
       console.warn(`[ABTest] Experiment "${experimentName}" not found`);
-      return 'A';
+      return "A";
     }
 
     // Return existing assignment if available
@@ -58,7 +58,7 @@ export const ABTestProvider = ({ children, experiments = {} }) => {
     }
 
     // Assign new variant based on weights
-    const variants = experiment.variants || ['A', 'B'];
+    const variants = experiment.variants || ["A", "B"];
     const weights = experiment.weights || variants.map(() => 1 / variants.length);
 
     const random = Math.random();
@@ -76,7 +76,7 @@ export const ABTestProvider = ({ children, experiments = {} }) => {
     // Save assignment
     const newVariants = { ...userVariants, [experimentName]: assignedVariant };
     setUserVariants(newVariants);
-    localStorage.setItem('ab_variants', JSON.stringify(newVariants));
+    localStorage.setItem("ab_variants", JSON.stringify(newVariants));
 
     // Track assignment
     trackAssignment(experimentName, assignedVariant);
@@ -92,22 +92,22 @@ export const ABTestProvider = ({ children, experiments = {} }) => {
       variant,
       timestamp: Date.now(),
       userAgent: navigator.userAgent,
-      screenSize: `${window.innerWidth}x${window.innerHeight}`
+      screenSize: `${window.innerWidth}x${window.innerHeight}`,
     };
 
     // Store in localStorage
-    const assignments = JSON.parse(localStorage.getItem('ab_assignments') || '[]');
+    const assignments = JSON.parse(localStorage.getItem("ab_assignments") || "[]");
     assignments.push(assignmentData);
-    localStorage.setItem('ab_assignments', JSON.stringify(assignments));
+    localStorage.setItem("ab_assignments", JSON.stringify(assignments));
 
     // Send to backend
-    sendToBackend('/api/ab-test/assignment', assignmentData);
+    sendToBackend("/api/ab-test/assignment", assignmentData);
 
-    console.log('[ABTest] User assigned:', assignmentData);
+    console.log("[ABTest] User assigned:", assignmentData);
   };
 
   // Track conversion events
-  const trackConversion = (experimentName, conversionType = 'default', value = 1) => {
+  const trackConversion = (experimentName, conversionType = "default", value = 1) => {
     const variant = userVariants[experimentName];
     if (!variant) {
       console.warn(`[ABTest] No variant assigned for experiment "${experimentName}"`);
@@ -120,18 +120,18 @@ export const ABTestProvider = ({ children, experiments = {} }) => {
       variant,
       conversionType,
       value,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     // Store in localStorage
-    const conversions = JSON.parse(localStorage.getItem('ab_conversions') || '[]');
+    const conversions = JSON.parse(localStorage.getItem("ab_conversions") || "[]");
     conversions.push(conversionData);
-    localStorage.setItem('ab_conversions', JSON.stringify(conversions));
+    localStorage.setItem("ab_conversions", JSON.stringify(conversions));
 
     // Send to backend
-    sendToBackend('/api/ab-test/conversion', conversionData);
+    sendToBackend("/api/ab-test/conversion", conversionData);
 
-    console.log('[ABTest] Conversion tracked:', conversionData);
+    console.log("[ABTest] Conversion tracked:", conversionData);
   };
 
   // Track custom events
@@ -148,29 +148,29 @@ export const ABTestProvider = ({ children, experiments = {} }) => {
       variant,
       eventName,
       data,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     // Store in localStorage
-    const events = JSON.parse(localStorage.getItem('ab_events') || '[]');
+    const events = JSON.parse(localStorage.getItem("ab_events") || "[]");
     events.push(eventData);
-    localStorage.setItem('ab_events', JSON.stringify(events));
+    localStorage.setItem("ab_events", JSON.stringify(events));
 
     // Send to backend
-    sendToBackend('/api/ab-test/event', eventData);
+    sendToBackend("/api/ab-test/event", eventData);
 
-    console.log('[ABTest] Event tracked:', eventData);
+    console.log("[ABTest] Event tracked:", eventData);
   };
 
   // Send data to backend
   const sendToBackend = async (endpoint, data) => {
     try {
       const response = await fetch(endpoint, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
@@ -187,14 +187,10 @@ export const ABTestProvider = ({ children, experiments = {} }) => {
     trackEvent,
     experiments,
     userId,
-    userVariants
+    userVariants,
   };
 
-  return (
-    <ABTestContext.Provider value={value}>
-      {children}
-    </ABTestContext.Provider>
-  );
+  return <ABTestContext.Provider value={value}>{children}</ABTestContext.Provider>;
 };
 
 /**
@@ -206,7 +202,7 @@ export const ABTest = ({ name, children }) => {
   const variant = getVariant(name);
 
   // Find the matching variant component
-  const variantComponent = children.find(child => child.props.variant === variant);
+  const variantComponent = children.find((child) => child.props.variant === variant);
 
   return variantComponent || children[0] || null;
 };
@@ -234,7 +230,7 @@ export const calculateSignificance = (variantA, variantB) => {
   const pooledP = (convA + convB) / (impA + impB);
 
   // Calculate standard error
-  const se = Math.sqrt(pooledP * (1 - pooledP) * (1/impA + 1/impB));
+  const se = Math.sqrt(pooledP * (1 - pooledP) * (1 / impA + 1 / impB));
 
   // Calculate z-score
   const zScore = (rateA - rateB) / se;
@@ -250,30 +246,31 @@ export const calculateSignificance = (variantA, variantB) => {
     variantA: {
       rate: rateA,
       conversions: convA,
-      impressions: impA
+      impressions: impA,
     },
     variantB: {
       rate: rateB,
       conversions: convB,
-      impressions: impB
+      impressions: impB,
     },
     difference: diff,
     confidenceInterval: {
       lower: diff - ci,
-      upper: diff + ci
+      upper: diff + ci,
     },
     zScore,
     pValue,
     significant: pValue < 0.05,
-    confidence: (1 - pValue) * 100
+    confidence: (1 - pValue) * 100,
   };
 };
 
 // Helper: Normal CDF approximation
 const normalCDF = (x) => {
   const t = 1 / (1 + 0.2316419 * Math.abs(x));
-  const d = 0.3989423 * Math.exp(-x * x / 2);
-  const prob = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  const d = 0.3989423 * Math.exp((-x * x) / 2);
+  const prob =
+    d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
   return x > 0 ? 1 - prob : prob;
 };
 
@@ -281,15 +278,15 @@ const normalCDF = (x) => {
  * Analyze A/B test results from localStorage
  */
 export const analyzeABTestResults = () => {
-  const assignments = JSON.parse(localStorage.getItem('ab_assignments') || '[]');
-  const conversions = JSON.parse(localStorage.getItem('ab_conversions') || '[]');
-  const events = JSON.parse(localStorage.getItem('ab_events') || '[]');
+  const assignments = JSON.parse(localStorage.getItem("ab_assignments") || "[]");
+  const conversions = JSON.parse(localStorage.getItem("ab_conversions") || "[]");
+  const events = JSON.parse(localStorage.getItem("ab_events") || "[]");
 
   // Group by experiment
   const experimentResults = {};
 
   // Count impressions (assignments)
-  assignments.forEach(assignment => {
+  assignments.forEach((assignment) => {
     const { experiment, variant } = assignment;
     if (!experimentResults[experiment]) {
       experimentResults[experiment] = {};
@@ -298,14 +295,14 @@ export const analyzeABTestResults = () => {
       experimentResults[experiment][variant] = {
         impressions: 0,
         conversions: 0,
-        events: {}
+        events: {},
       };
     }
     experimentResults[experiment][variant].impressions++;
   });
 
   // Count conversions
-  conversions.forEach(conversion => {
+  conversions.forEach((conversion) => {
     const { experiment, variant, conversionType } = conversion;
     if (experimentResults[experiment]?.[variant]) {
       experimentResults[experiment][variant].conversions++;
@@ -318,7 +315,7 @@ export const analyzeABTestResults = () => {
   });
 
   // Count events
-  events.forEach(event => {
+  events.forEach((event) => {
     const { experiment, variant, eventName } = event;
     if (experimentResults[experiment]?.[variant]) {
       if (!experimentResults[experiment][variant].events[eventName]) {
@@ -329,14 +326,15 @@ export const analyzeABTestResults = () => {
   });
 
   // Calculate conversion rates and significance
-  Object.keys(experimentResults).forEach(experiment => {
+  Object.keys(experimentResults).forEach((experiment) => {
     const variants = Object.keys(experimentResults[experiment]);
 
-    variants.forEach(variant => {
+    variants.forEach((variant) => {
       const data = experimentResults[experiment][variant];
-      data.conversionRate = data.impressions > 0
-        ? (data.conversions / data.impressions * 100).toFixed(2) + '%'
-        : '0%';
+      data.conversionRate =
+        data.impressions > 0
+          ? ((data.conversions / data.impressions) * 100).toFixed(2) + "%"
+          : "0%";
     });
 
     // Calculate significance between first two variants

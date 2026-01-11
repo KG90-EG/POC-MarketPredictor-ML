@@ -69,7 +69,7 @@ body.dark-mode .price-summary .value {
 .axis-label {
   font-size: 11px;
   fill: #6c757d;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
 }
 
 body.dark-mode .axis-label {

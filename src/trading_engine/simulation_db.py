@@ -132,7 +132,11 @@ class SimulationDB:
     """Database operations for trading simulations."""
 
     @staticmethod
-    def create_simulation(user_id: str = "default_user", initial_capital: float = 10000.0, mode: str = "auto") -> int:
+    def create_simulation(
+        user_id: str = "default_user",
+        initial_capital: float = 10000.0,
+        mode: str = "auto",
+    ) -> int:
         """
         Create a new trading simulation.
 
@@ -154,7 +158,10 @@ class SimulationDB:
                 (user_id, initial_capital, initial_capital, mode),
             )
             simulation_id = cursor.lastrowid
-            logger.info(f"Created simulation {simulation_id} for user {user_id} " f"with ${initial_capital:.2f}")
+            logger.info(
+                f"Created simulation {simulation_id} for user {user_id} "
+                f"with ${initial_capital:.2f}"
+            )
             return simulation_id
 
     @staticmethod
@@ -188,7 +195,11 @@ class SimulationDB:
                 (simulation_id,),
             )
             positions = {
-                row["ticker"]: {"quantity": row["quantity"], "avg_cost": row["avg_cost"], "current_price": row["last_price"]}
+                row["ticker"]: {
+                    "quantity": row["quantity"],
+                    "avg_cost": row["avg_cost"],
+                    "current_price": row["last_price"],
+                }
                 for row in cursor.fetchall()
             }
 
@@ -253,7 +264,10 @@ class SimulationDB:
             )
 
             # Delete old positions
-            cursor.execute("DELETE FROM simulation_positions WHERE simulation_id = ?", (sim.simulation_id,))
+            cursor.execute(
+                "DELETE FROM simulation_positions WHERE simulation_id = ?",
+                (sim.simulation_id,),
+            )
 
             # Insert current positions
             for ticker, pos in sim.positions.items():
@@ -263,7 +277,13 @@ class SimulationDB:
                     (simulation_id, ticker, quantity, avg_cost, last_price)
                     VALUES (?, ?, ?, ?, ?)
                     """,
-                    (sim.simulation_id, ticker, pos["quantity"], pos["avg_cost"], pos["current_price"]),
+                    (
+                        sim.simulation_id,
+                        ticker,
+                        pos["quantity"],
+                        pos["avg_cost"],
+                        pos["current_price"],
+                    ),
                 )
 
             conn.commit()
@@ -354,7 +374,9 @@ class SimulationDB:
             cursor = conn.cursor()
 
             # Get initial capital
-            cursor.execute("SELECT initial_capital FROM simulations WHERE id = ?", (simulation_id,))
+            cursor.execute(
+                "SELECT initial_capital FROM simulations WHERE id = ?", (simulation_id,)
+            )
             row = cursor.fetchone()
             if not row:
                 raise ValueError(f"Simulation {simulation_id} not found")
@@ -372,8 +394,14 @@ class SimulationDB:
             )
 
             # Clear trades and positions
-            cursor.execute("DELETE FROM simulation_trades WHERE simulation_id = ?", (simulation_id,))
-            cursor.execute("DELETE FROM simulation_positions WHERE simulation_id = ?", (simulation_id,))
+            cursor.execute(
+                "DELETE FROM simulation_trades WHERE simulation_id = ?",
+                (simulation_id,),
+            )
+            cursor.execute(
+                "DELETE FROM simulation_positions WHERE simulation_id = ?",
+                (simulation_id,),
+            )
 
             conn.commit()
             logger.info(f"Reset simulation {simulation_id}")

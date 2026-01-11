@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import './Onboarding.css';
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
+import "./Onboarding.css";
 
 const Onboarding = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -8,7 +8,7 @@ const Onboarding = ({ onComplete }) => {
 
   useEffect(() => {
     // Check if user has completed onboarding before
-    const hasCompletedOnboarding = localStorage.getItem('onboarding_completed');
+    const hasCompletedOnboarding = localStorage.getItem("onboarding_completed");
     if (!hasCompletedOnboarding) {
       setIsVisible(true);
     }
@@ -16,38 +16,42 @@ const Onboarding = ({ onComplete }) => {
 
   const steps = [
     {
-      title: '👋 Welcome to Market Predictor!',
-      content: 'AI-powered stock & crypto analysis to help you make smarter investment decisions.',
-      image: '📊',
-      cta: 'Get Started'
+      title: "👋 Welcome to Market Predictor!",
+      content: "AI-powered stock & crypto analysis to help you make smarter investment decisions.",
+      image: "📊",
+      cta: "Get Started",
     },
     {
-      title: '🎯 Find Buy Opportunities',
-      content: 'Our AI analyzes thousands of stocks and crypto assets to find the best opportunities based on momentum, volatility, and market trends.',
-      image: '🔍',
-      cta: 'Next',
-      highlight: 'market-selector'
+      title: "🎯 Find Buy Opportunities",
+      content:
+        "Our AI analyzes thousands of stocks and crypto assets to find the best opportunities based on momentum, volatility, and market trends.",
+      image: "🔍",
+      cta: "Next",
+      highlight: "market-selector",
     },
     {
-      title: '📈 Track Your Watchlist',
-      content: 'Add your favorite stocks and cryptos to your watchlist. Set price alerts and track AI predictions in one place.',
-      image: '⭐',
-      cta: 'Next',
-      highlight: 'watchlist'
+      title: "📈 Track Your Watchlist",
+      content:
+        "Add your favorite stocks and cryptos to your watchlist. Set price alerts and track AI predictions in one place.",
+      image: "⭐",
+      cta: "Next",
+      highlight: "watchlist",
     },
     {
-      title: '📊 Analyze Details',
-      content: 'Click on any stock or crypto to see detailed analysis: price charts, news, technical indicators, and AI confidence scores.',
-      image: '🔬',
-      cta: 'Next',
-      highlight: 'rankings'
+      title: "📊 Analyze Details",
+      content:
+        "Click on any stock or crypto to see detailed analysis: price charts, news, technical indicators, and AI confidence scores.",
+      image: "🔬",
+      cta: "Next",
+      highlight: "rankings",
     },
     {
-      title: '✨ You\'re All Set!',
-      content: 'Start exploring buy opportunities, build your watchlist, and let AI help guide your investment decisions.',
-      image: '🚀',
-      cta: 'Start Exploring'
-    }
+      title: "✨ You're All Set!",
+      content:
+        "Start exploring buy opportunities, build your watchlist, and let AI help guide your investment decisions.",
+      image: "🚀",
+      cta: "Start Exploring",
+    },
   ];
 
   const handleNext = () => {
@@ -63,7 +67,7 @@ const Onboarding = ({ onComplete }) => {
   };
 
   const handleComplete = () => {
-    localStorage.setItem('onboarding_completed', 'true');
+    localStorage.setItem("onboarding_completed", "true");
     setIsVisible(false);
     if (onComplete) {
       onComplete();
@@ -83,11 +87,7 @@ const Onboarding = ({ onComplete }) => {
   return (
     <div className="onboarding-overlay">
       <div className="onboarding-modal">
-        <button
-          className="onboarding-skip"
-          onClick={handleSkip}
-          aria-label="Skip onboarding"
-        >
+        <button className="onboarding-skip" onClick={handleSkip} aria-label="Skip onboarding">
           Skip
         </button>
 
@@ -103,7 +103,7 @@ const Onboarding = ({ onComplete }) => {
             {steps.map((_, index) => (
               <button
                 key={index}
-                className={`onboarding-dot ${index === currentStep ? 'active' : ''} ${index < currentStep ? 'completed' : ''}`}
+                className={`onboarding-dot ${index === currentStep ? "active" : ""} ${index < currentStep ? "completed" : ""}`}
                 onClick={() => handleDotClick(index)}
                 aria-label={`Go to step ${index + 1}`}
               />
@@ -119,10 +119,7 @@ const Onboarding = ({ onComplete }) => {
                 Back
               </button>
             )}
-            <button
-              className="onboarding-btn onboarding-btn-primary"
-              onClick={handleNext}
-            >
+            <button className="onboarding-btn onboarding-btn-primary" onClick={handleNext}>
               {step.cta}
             </button>
           </div>
@@ -137,7 +134,7 @@ const Onboarding = ({ onComplete }) => {
 };
 
 Onboarding.propTypes = {
-  onComplete: PropTypes.func
+  onComplete: PropTypes.func,
 };
 
 export default Onboarding;

@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import './Toast.css';
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
+import "./Toast.css";
 
 /**
  * Toast Notification Component
  * Shows temporary success/error/info messages
  */
-function Toast({ message, type = 'info', duration = 3000, onClose }) {
+function Toast({ message, type = "info", duration = 3000, onClose }) {
   const [isVisible, setIsVisible] = useState(true);
   const [isExiting, setIsExiting] = useState(false);
 
@@ -26,22 +26,29 @@ function Toast({ message, type = 'info', duration = 3000, onClose }) {
 
   const getIcon = () => {
     switch (type) {
-      case 'success': return '✅';
-      case 'error': return '❌';
-      case 'warning': return '⚠️';
-      case 'info': return 'ℹ️';
-      default: return 'ℹ️';
+      case "success":
+        return "✅";
+      case "error":
+        return "❌";
+      case "warning":
+        return "⚠️";
+      case "info":
+        return "ℹ️";
+      default:
+        return "ℹ️";
     }
   };
 
   return (
     <div
-      className={`toast toast-${type} ${isExiting ? 'toast-exit' : 'toast-enter'}`}
+      className={`toast toast-${type} ${isExiting ? "toast-exit" : "toast-enter"}`}
       role="alert"
       aria-live="polite"
       aria-atomic="true"
     >
-      <span className="toast-icon" aria-hidden="true">{getIcon()}</span>
+      <span className="toast-icon" aria-hidden="true">
+        {getIcon()}
+      </span>
       <span className="toast-message">{message}</span>
       <button
         className="toast-close"
@@ -62,9 +69,9 @@ function Toast({ message, type = 'info', duration = 3000, onClose }) {
 
 Toast.propTypes = {
   message: PropTypes.string.isRequired,
-  type: PropTypes.oneOf(['success', 'error', 'warning', 'info']),
+  type: PropTypes.oneOf(["success", "error", "warning", "info"]),
   duration: PropTypes.number,
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
 };
 
 /**
@@ -87,13 +94,15 @@ export function ToastContainer({ toasts = [], onRemove }) {
 }
 
 ToastContainer.propTypes = {
-  toasts: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    message: PropTypes.string.isRequired,
-    type: PropTypes.string,
-    duration: PropTypes.number
-  })),
-  onRemove: PropTypes.func
+  toasts: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      message: PropTypes.string.isRequired,
+      type: PropTypes.string,
+      duration: PropTypes.number,
+    })
+  ),
+  onRemove: PropTypes.func,
 };
 
 export default Toast;

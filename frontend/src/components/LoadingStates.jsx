@@ -1,41 +1,41 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+import React from "react";
+import PropTypes from "prop-types";
 
 /**
  * Reusable loading spinner component
  */
-export function LoadingSpinner({ size = 'medium', message = 'Loading...' }) {
+export function LoadingSpinner({ size = "medium", message = "Loading..." }) {
   const sizeClasses = {
-    small: 'spinner-small',
-    medium: 'spinner-medium',
-    large: 'spinner-large'
-  }
-  
+    small: "spinner-small",
+    medium: "spinner-medium",
+    large: "spinner-large",
+  };
+
   return (
     <div className="loading-container">
       <div className={`spinner ${sizeClasses[size]}`}></div>
       {message && <p className="loading-message">{message}</p>}
     </div>
-  )
+  );
 }
 
 LoadingSpinner.propTypes = {
-  size: PropTypes.oneOf(['small', 'medium', 'large']),
-  message: PropTypes.string
-}
+  size: PropTypes.oneOf(["small", "medium", "large"]),
+  message: PropTypes.string,
+};
 
 /**
  * Progress bar for batch operations
  */
 export function ProgressBar({ current, total, label }) {
-  const percentage = total > 0 ? Math.round((current / total) * 100) : 0
-  
+  const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
+
   return (
     <div className="progress-container">
       {label && <div className="progress-label">{label}</div>}
       <div className="progress-bar">
-        <div 
-          className="progress-fill" 
+        <div
+          className="progress-fill"
           style={{ width: `${percentage}%` }}
           role="progressbar"
           aria-valuenow={current}
@@ -49,14 +49,14 @@ export function ProgressBar({ current, total, label }) {
         {current} / {total} items
       </div>
     </div>
-  )
+  );
 }
 
 ProgressBar.propTypes = {
   current: PropTypes.number.isRequired,
   total: PropTypes.number.isRequired,
-  label: PropTypes.string
-}
+  label: PropTypes.string,
+};
 
 /**
  * Skeleton loader for tables
@@ -70,21 +70,21 @@ export function SkeletonRow({ columns = 8 }) {
         </td>
       ))}
     </tr>
-  )
+  );
 }
 
 SkeletonRow.propTypes = {
-  columns: PropTypes.number
-}
+  columns: PropTypes.number,
+};
 
 /**
  * Empty state placeholder
  */
-export function EmptyState({ 
-  icon = '📊', 
-  title = 'No data available', 
-  message = 'Try adjusting your filters or refresh the page',
-  action
+export function EmptyState({
+  icon = "📊",
+  title = "No data available",
+  message = "Try adjusting your filters or refresh the page",
+  action,
 }) {
   return (
     <div className="empty-state">
@@ -97,7 +97,7 @@ export function EmptyState({
         </button>
       )}
     </div>
-  )
+  );
 }
 
 EmptyState.propTypes = {
@@ -106,13 +106,13 @@ EmptyState.propTypes = {
   message: PropTypes.string,
   action: PropTypes.shape({
     label: PropTypes.string.isRequired,
-    onClick: PropTypes.func.isRequired
-  })
-}
+    onClick: PropTypes.func.isRequired,
+  }),
+};
 
 export default {
   LoadingSpinner,
   ProgressBar,
   SkeletonRow,
-  EmptyState
-}
+  EmptyState,
+};

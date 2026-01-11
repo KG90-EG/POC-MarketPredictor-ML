@@ -1,8 +1,17 @@
-import { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { api, apiClient, fetchWatchlists, createWatchlist, deleteWatchlist, addStockToWatchlist, removeStockFromWatchlist, CURRENT_USER_ID } from '../api';
-import ConfirmDialog from './ConfirmDialog';
-import './WatchlistManagerV2.css';
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
+import {
+  api,
+  apiClient,
+  fetchWatchlists,
+  createWatchlist,
+  deleteWatchlist,
+  addStockToWatchlist,
+  removeStockFromWatchlist,
+  CURRENT_USER_ID,
+} from "../api";
+import ConfirmDialog from "./ConfirmDialog";
+import "./WatchlistManagerV2.css";
 
 /**
  * Modern Watchlist Manager - Simplified & User-Friendly
@@ -20,51 +29,51 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newWatchlistName, setNewWatchlistName] = useState('');
-  const [newStockTicker, setNewStockTicker] = useState('');
-  const [newStockNotes, setNewStockNotes] = useState('');
-  const [newStockAlert, setNewStockAlert] = useState('');
+  const [newWatchlistName, setNewWatchlistName] = useState("");
+  const [newStockTicker, setNewStockTicker] = useState("");
+  const [newStockNotes, setNewStockNotes] = useState("");
+  const [newStockAlert, setNewStockAlert] = useState("");
   const [stockData, setStockData] = useState({});
   const [loadingStocks, setLoadingStocks] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { id, name }
   const [editingWatchlist, setEditingWatchlist] = useState(null); // { id, name }
-  const [editName, setEditName] = useState('');
+  const [editName, setEditName] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
 
   // Popular stocks, commodities, and Swiss companies
   const popularStocks = [
     // US Tech Stocks
-    { ticker: 'AAPL', name: 'Apple Inc.' },
-    { ticker: 'MSFT', name: 'Microsoft Corporation' },
-    { ticker: 'GOOGL', name: 'Alphabet Inc.' },
-    { ticker: 'AMZN', name: 'Amazon.com Inc.' },
-    { ticker: 'TSLA', name: 'Tesla Inc.' },
-    { ticker: 'NVDA', name: 'NVIDIA Corporation' },
-    { ticker: 'META', name: 'Meta Platforms Inc.' },
+    { ticker: "AAPL", name: "Apple Inc." },
+    { ticker: "MSFT", name: "Microsoft Corporation" },
+    { ticker: "GOOGL", name: "Alphabet Inc." },
+    { ticker: "AMZN", name: "Amazon.com Inc." },
+    { ticker: "TSLA", name: "Tesla Inc." },
+    { ticker: "NVDA", name: "NVIDIA Corporation" },
+    { ticker: "META", name: "Meta Platforms Inc." },
     // Commodities / Rohstoffe
-    { ticker: 'GC=F', name: 'Gold Futures' },
-    { ticker: 'SI=F', name: 'Silver Futures (Silber)' },
-    { ticker: 'CL=F', name: 'Crude Oil Futures (Rohöl)' },
-    { ticker: 'NG=F', name: 'Natural Gas Futures (Erdgas)' },
-    { ticker: 'HG=F', name: 'Copper Futures (Kupfer)' },
-    { ticker: 'PL=F', name: 'Platinum Futures (Platin)' },
-    { ticker: 'PA=F', name: 'Palladium Futures' },
-    { ticker: 'ZC=F', name: 'Corn Futures (Mais)' },
-    { ticker: 'ZW=F', name: 'Wheat Futures (Weizen)' },
-    { ticker: 'CT=F', name: 'Cotton Futures (Baumwolle)' },
+    { ticker: "GC=F", name: "Gold Futures" },
+    { ticker: "SI=F", name: "Silver Futures (Silber)" },
+    { ticker: "CL=F", name: "Crude Oil Futures (Rohöl)" },
+    { ticker: "NG=F", name: "Natural Gas Futures (Erdgas)" },
+    { ticker: "HG=F", name: "Copper Futures (Kupfer)" },
+    { ticker: "PL=F", name: "Platinum Futures (Platin)" },
+    { ticker: "PA=F", name: "Palladium Futures" },
+    { ticker: "ZC=F", name: "Corn Futures (Mais)" },
+    { ticker: "ZW=F", name: "Wheat Futures (Weizen)" },
+    { ticker: "CT=F", name: "Cotton Futures (Baumwolle)" },
     // Swiss companies
-    { ticker: 'NESN.SW', name: 'Nestlé (Swiss)' },
-    { ticker: 'NOVN.SW', name: 'Novartis (Swiss)' },
-    { ticker: 'ROG.SW', name: 'Roche (Swiss)' },
-    { ticker: 'ABBN.SW', name: 'ABB (Swiss)' },
-    { ticker: 'UBSG.SW', name: 'UBS Group (Swiss)' },
-    { ticker: 'CSGN.SW', name: 'Credit Suisse (Swiss)' },
-    { ticker: 'ZURN.SW', name: 'Zurich Insurance (Swiss)' },
-    { ticker: 'SCMN.SW', name: 'Swisscom (Swiss)' },
-    { ticker: 'SLHN.SW', name: 'Swiss Life (Swiss)' },
-    { ticker: 'LONN.SW', name: 'Lonza (Swiss)' },
-    { ticker: 'HOLN.SW', name: 'Holcim (Swiss)' },
+    { ticker: "NESN.SW", name: "Nestlé (Swiss)" },
+    { ticker: "NOVN.SW", name: "Novartis (Swiss)" },
+    { ticker: "ROG.SW", name: "Roche (Swiss)" },
+    { ticker: "ABBN.SW", name: "ABB (Swiss)" },
+    { ticker: "UBSG.SW", name: "UBS Group (Swiss)" },
+    { ticker: "CSGN.SW", name: "Credit Suisse (Swiss)" },
+    { ticker: "ZURN.SW", name: "Zurich Insurance (Swiss)" },
+    { ticker: "SCMN.SW", name: "Swisscom (Swiss)" },
+    { ticker: "SLHN.SW", name: "Swiss Life (Swiss)" },
+    { ticker: "LONN.SW", name: "Lonza (Swiss)" },
+    { ticker: "HOLN.SW", name: "Holcim (Swiss)" },
   ];
 
   useEffect(() => {
@@ -73,7 +82,7 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
 
   useEffect(() => {
     if (selectedWatchlist?.items?.length > 0) {
-      fetchStockData(selectedWatchlist.items.map(item => item.ticker));
+      fetchStockData(selectedWatchlist.items.map((item) => item.ticker));
     }
   }, [selectedWatchlist]);
 
@@ -90,7 +99,7 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
         handleSelectWatchlist(watchlistArray[0]);
       }
     } catch (err) {
-      setError('Failed to load watchlists');
+      setError("Failed to load watchlists");
       console.error(err);
     } finally {
       setLoading(false);
@@ -99,7 +108,7 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
 
   const handleCreateWatchlist = async (e) => {
     e.preventDefault();
-    console.log('Creating watchlist:', newWatchlistName);
+    console.log("Creating watchlist:", newWatchlistName);
     if (!newWatchlistName.trim()) return;
 
     setLoading(true);
@@ -107,15 +116,15 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
     try {
       const result = await createWatchlist(userId, {
         name: newWatchlistName,
-        description: ''
+        description: "",
       });
-      console.log('Watchlist created:', result);
-      setNewWatchlistName('');
+      console.log("Watchlist created:", result);
+      setNewWatchlistName("");
       setShowCreateForm(false);
       await loadWatchlists();
     } catch (err) {
-      console.error('Create watchlist error:', err);
-      setError(err.response?.data?.detail || 'Failed to create watchlist');
+      console.error("Create watchlist error:", err);
+      setError(err.response?.data?.detail || "Failed to create watchlist");
     } finally {
       setLoading(false);
     }
@@ -128,7 +137,7 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
       const response = await api.getWatchlist(userId, watchlist.id);
       setSelectedWatchlist(response.data);
     } catch (err) {
-      setError('Failed to load watchlist details');
+      setError("Failed to load watchlist details");
       console.error(err);
     } finally {
       setLoading(false);
@@ -149,7 +158,7 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
       await loadWatchlists();
       setDeleteConfirm(null);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to delete watchlist');
+      setError(err.response?.data?.detail || "Failed to delete watchlist");
     } finally {
       setLoading(false);
     }
@@ -163,11 +172,11 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
     try {
       await api.updateWatchlist(userId, watchlistId, {
         name: editName,
-        description: ''
+        description: "",
       });
 
       setEditingWatchlist(null);
-      setEditName('');
+      setEditName("");
       await loadWatchlists();
 
       // Update selected watchlist if it was edited
@@ -176,7 +185,7 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
         setSelectedWatchlist(response.data);
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to update watchlist');
+      setError(err.response?.data?.detail || "Failed to update watchlist");
     } finally {
       setLoading(false);
     }
@@ -189,16 +198,17 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
 
   const cancelEditing = () => {
     setEditingWatchlist(null);
-    setEditName('');
+    setEditName("");
   };
 
   const handleTickerInput = (value) => {
     setNewStockTicker(value);
 
     if (value.length >= 1) {
-      const filtered = popularStocks.filter(stock =>
-        stock.ticker.toLowerCase().includes(value.toLowerCase()) ||
-        stock.name.toLowerCase().includes(value.toLowerCase())
+      const filtered = popularStocks.filter(
+        (stock) =>
+          stock.ticker.toLowerCase().includes(value.toLowerCase()) ||
+          stock.name.toLowerCase().includes(value.toLowerCase())
       );
       setSuggestions(filtered.slice(0, 8)); // Show max 8 suggestions
       setShowSuggestions(true);
@@ -221,8 +231,8 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
     try {
       const stockData = {
         ticker: newStockTicker.toUpperCase(),
-        notes: newStockNotes.trim() || '',
-        asset_type: 'stock'
+        notes: newStockNotes.trim() || "",
+        asset_type: "stock",
       };
 
       // Add price_alert only if provided
@@ -233,16 +243,16 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
       await addStockToWatchlist(userId, selectedWatchlist.id, stockData);
 
       // Clear form
-      setNewStockTicker('');
-      setNewStockNotes('');
-      setNewStockAlert('');
+      setNewStockTicker("");
+      setNewStockNotes("");
+      setNewStockAlert("");
 
       // Refresh watchlist
       const response = await api.getWatchlist(userId, selectedWatchlist.id);
       setSelectedWatchlist(response.data);
       await loadWatchlists();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to add stock');
+      setError(err.response?.data?.detail || "Failed to add stock");
     } finally {
       setLoading(false);
     }
@@ -261,7 +271,7 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
       setSelectedWatchlist(response.data);
       await loadWatchlists();
     } catch (err) {
-      setError('Failed to remove stock');
+      setError("Failed to remove stock");
     } finally {
       setLoading(false);
     }
@@ -272,16 +282,16 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
 
     setLoadingStocks(true);
     try {
-      const dataPromises = tickers.map(async ticker => {
+      const dataPromises = tickers.map(async (ticker) => {
         try {
           const [infoRes, predRes] = await Promise.all([
             apiClient.get(`/ticker_info/${ticker}`),
-            apiClient.get(`/predict_ticker/${ticker}`)
+            apiClient.get(`/predict_ticker/${ticker}`),
           ]);
           return {
             ticker,
             info: infoRes.data,
-            prediction: predRes.data
+            prediction: predRes.data,
           };
         } catch (err) {
           console.error(`Failed to fetch data for ${ticker}:`, err);
@@ -291,16 +301,16 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
 
       const results = await Promise.all(dataPromises);
       const dataMap = {};
-      results.forEach(result => {
+      results.forEach((result) => {
         dataMap[result.ticker] = {
           info: result.info,
-          prediction: result.prediction
+          prediction: result.prediction,
         };
       });
 
       setStockData(dataMap);
     } catch (err) {
-      console.error('Failed to fetch stock data:', err);
+      console.error("Failed to fetch stock data:", err);
     } finally {
       setLoadingStocks(false);
     }
@@ -319,15 +329,11 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
           onClick={() => setShowCreateForm(!showCreateForm)}
           disabled={loading}
         >
-          {showCreateForm ? '✕ Cancel' : '+ New Watchlist'}
+          {showCreateForm ? "✕ Cancel" : "+ New Watchlist"}
         </button>
       </div>
 
-      {error && (
-        <div className="alert-error">
-          ⚠️ {error}
-        </div>
-      )}
+      {error && <div className="alert-error">⚠️ {error}</div>}
 
       {/* Create Form */}
       {showCreateForm && (
@@ -353,7 +359,7 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
           <div className="spinner"></div>
           <p>Loading watchlists...</p>
         </div>
-      ) : (!watchlists || watchlists.length === 0) ? (
+      ) : !watchlists || watchlists.length === 0 ? (
         <div className="empty-state">
           <span className="empty-icon">📊</span>
           <h3>No watchlists yet</h3>
@@ -364,7 +370,7 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
           {(watchlists || []).map((watchlist) => (
             <div
               key={watchlist.id}
-              className={`watchlist-card ${selectedWatchlist?.id === watchlist.id ? 'selected' : ''}`}
+              className={`watchlist-card ${selectedWatchlist?.id === watchlist.id ? "selected" : ""}`}
               onClick={() => handleSelectWatchlist(watchlist)}
             >
               <div className="card-header">
@@ -386,7 +392,9 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
                       autoFocus
                       onClick={(e) => e.stopPropagation()}
                     />
-                    <button type="submit" className="btn-save-small" title="Save">✓</button>
+                    <button type="submit" className="btn-save-small" title="Save">
+                      ✓
+                    </button>
                     <button
                       type="button"
                       className="btn-cancel-small"
@@ -500,9 +508,7 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
           </form>
 
           {/* Stocks List */}
-          {loadingStocks && (
-            <div className="loading-stocks">Loading prices...</div>
-          )}
+          {loadingStocks && <div className="loading-stocks">Loading prices...</div>}
 
           {selectedWatchlist.items?.length > 0 ? (
             <div className="stocks-grid">
@@ -512,12 +518,30 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
                 const prediction = data?.prediction;
                 const price = info?.price;
                 const change = info?.change;
-                const changePercent = (change && price) ? (change / (price - change)) * 100 : 0;
+                const changePercent = change && price ? (change / (price - change)) * 100 : 0;
 
                 // Prediction signal
                 const prob = prediction?.prob || 0.5;
-                const signal = prob >= 0.65 ? 'BUY' : prob >= 0.55 ? 'WEAK BUY' : prob >= 0.45 ? 'HOLD' : prob >= 0.35 ? 'WEAK SELL' : 'SELL';
-                const signalColor = prob >= 0.65 ? '#10b981' : prob >= 0.55 ? '#84cc16' : prob >= 0.45 ? '#f59e0b' : prob >= 0.35 ? '#f97316' : '#ef4444';
+                const signal =
+                  prob >= 0.65
+                    ? "BUY"
+                    : prob >= 0.55
+                      ? "WEAK BUY"
+                      : prob >= 0.45
+                        ? "HOLD"
+                        : prob >= 0.35
+                          ? "WEAK SELL"
+                          : "SELL";
+                const signalColor =
+                  prob >= 0.65
+                    ? "#10b981"
+                    : prob >= 0.55
+                      ? "#84cc16"
+                      : prob >= 0.45
+                        ? "#f59e0b"
+                        : prob >= 0.35
+                          ? "#f97316"
+                          : "#ef4444";
 
                 return (
                   <div key={item.id} className="stock-card">
@@ -538,18 +562,17 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
                     {price && (
                       <div className="price-section">
                         <div className="price-main">${price.toFixed(2)}</div>
-                        <div className={`price-change ${changePercent >= 0 ? 'positive' : 'negative'}`}>
-                          {changePercent >= 0 ? '↑' : '↓'} {Math.abs(changePercent).toFixed(2)}%
+                        <div
+                          className={`price-change ${changePercent >= 0 ? "positive" : "negative"}`}
+                        >
+                          {changePercent >= 0 ? "↑" : "↓"} {Math.abs(changePercent).toFixed(2)}%
                         </div>
                       </div>
                     )}
 
                     {prediction && (
                       <div className="prediction-section">
-                        <div
-                          className="signal-badge"
-                          style={{ backgroundColor: signalColor }}
-                        >
+                        <div className="signal-badge" style={{ backgroundColor: signalColor }}>
                           {signal}
                         </div>
                         <div className="confidence-bar">
@@ -557,7 +580,7 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
                             className="confidence-fill"
                             style={{
                               width: `${prob * 100}%`,
-                              backgroundColor: signalColor
+                              backgroundColor: signalColor,
                             }}
                           />
                         </div>
@@ -571,13 +594,14 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
                         <div className="alert-label">🔔 Alert at:</div>
                         <div className="alert-price">${item.price_alert.toFixed(2)}</div>
                         {price && (
-                          <div className={`alert-status ${
-                            (item.price_alert >= price) ? 'below' : 'above'
-                          }`}>
-                            {(item.price_alert >= price)
-                              ? `📉 ${((item.price_alert - price) / price * 100).toFixed(1)}% below alert`
-                              : `📈 ${((price - item.price_alert) / item.price_alert * 100).toFixed(1)}% above alert`
-                            }
+                          <div
+                            className={`alert-status ${
+                              item.price_alert >= price ? "below" : "above"
+                            }`}
+                          >
+                            {item.price_alert >= price
+                              ? `📉 ${(((item.price_alert - price) / price) * 100).toFixed(1)}% below alert`
+                              : `📈 ${(((price - item.price_alert) / item.price_alert) * 100).toFixed(1)}% above alert`}
                           </div>
                         )}
                       </div>
@@ -606,7 +630,11 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
       <ConfirmDialog
         isOpen={!!deleteConfirm}
         title="Delete Watchlist?"
-        message={deleteConfirm ? `Are you sure you want to delete "${deleteConfirm.name}"? This action cannot be undone.` : ''}
+        message={
+          deleteConfirm
+            ? `Are you sure you want to delete "${deleteConfirm.name}"? This action cannot be undone.`
+            : ""
+        }
         confirmText="Delete"
         cancelText="Cancel"
         confirmType="danger"
@@ -622,7 +650,7 @@ function WatchlistManagerV2({ userId = CURRENT_USER_ID }) {
 }
 
 WatchlistManagerV2.propTypes = {
-  userId: PropTypes.string
+  userId: PropTypes.string,
 };
 
 export default WatchlistManagerV2;

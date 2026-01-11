@@ -44,14 +44,14 @@
 }
 
 .market-button:hover:not(:disabled) {
-  border-color: #4CAF50;
+  border-color: #4caf50;
   background: #f9fff9;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(76, 175, 80, 0.15);
 }
 
 .market-button.selected {
-  border-color: #4CAF50;
+  border-color: #4caf50;
   background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
   box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
 }
@@ -62,7 +62,7 @@
 }
 
 .market-button .checkmark {
-  color: #4CAF50;
+  color: #4caf50;
   font-weight: bold;
   margin-left: 4px;
 }

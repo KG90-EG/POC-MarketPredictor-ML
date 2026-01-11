@@ -1,8 +1,8 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+import React from "react";
+import PropTypes from "prop-types";
 
 function HelpModal({ isOpen, onClose }) {
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div
@@ -21,8 +21,8 @@ function HelpModal({ isOpen, onClose }) {
         <div className="help-section">
           <h3>🚀 Getting Started</h3>
           <p>
-            Rankings load automatically when you open the app. The system analyzes 50 popular
-            stocks using machine learning and provides buy/sell recommendations.
+            Rankings load automatically when you open the app. The system analyzes 50 popular stocks
+            using machine learning and provides buy/sell recommendations.
           </p>
         </div>
 
@@ -85,27 +85,27 @@ function HelpModal({ isOpen, onClose }) {
         <div className="help-section">
           <h3>🤖 AI Analysis (Optional)</h3>
           <p>
-            Add context like &quot;focus on tech stocks&quot; or &quot;conservative
-            portfolio&quot; to get personalized AI-powered recommendations. The system provides
-            specific buy/sell advice, risk assessment, and action plans.
+            Add context like &quot;focus on tech stocks&quot; or &quot;conservative portfolio&quot;
+            to get personalized AI-powered recommendations. The system provides specific buy/sell
+            advice, risk assessment, and action plans.
           </p>
         </div>
 
         <div className="help-section">
           <h3>🌓 Theme Toggle</h3>
           <p>
-            Click the sun/moon icon to switch between light and dark modes. Your preference is
-            saved automatically.
+            Click the sun/moon icon to switch between light and dark modes. Your preference is saved
+            automatically.
           </p>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 HelpModal.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-}
+};
 
-export default HelpModal
+export default HelpModal;

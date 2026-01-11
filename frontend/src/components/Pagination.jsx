@@ -1,39 +1,33 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+import React from "react";
+import PropTypes from "prop-types";
 
 /**
  * Pagination component for table navigation
  */
-export function Pagination({ 
-  currentPage, 
-  totalPages, 
-  onPageChange, 
-  itemsPerPage,
-  totalItems 
-}) {
+export function Pagination({ currentPage, totalPages, onPageChange, itemsPerPage, totalItems }) {
   const handlePrevious = () => {
     if (currentPage > 1) {
-      onPageChange(currentPage - 1)
+      onPageChange(currentPage - 1);
     }
-  }
+  };
 
   const handleNext = () => {
     if (currentPage < totalPages) {
-      onPageChange(currentPage + 1)
+      onPageChange(currentPage + 1);
     }
-  }
+  };
 
   const handlePageSelect = (e) => {
-    const page = parseInt(e.target.value, 10)
-    onPageChange(page)
-  }
+    const page = parseInt(e.target.value, 10);
+    onPageChange(page);
+  };
 
   // Calculate displayed item range
-  const startItem = (currentPage - 1) * itemsPerPage + 1
-  const endItem = Math.min(currentPage * itemsPerPage, totalItems)
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   if (totalPages <= 1) {
-    return null // Don't show pagination if only one page
+    return null; // Don't show pagination if only one page
   }
 
   return (
@@ -41,7 +35,7 @@ export function Pagination({
       <div className="pagination-info">
         Showing {startItem}-{endItem} of {totalItems} results
       </div>
-      
+
       <div className="pagination-controls">
         <button
           onClick={handlePrevious}
@@ -61,7 +55,7 @@ export function Pagination({
             className="page-dropdown"
             aria-label="Select page"
           >
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <option key={page} value={page}>
                 {page}
               </option>
@@ -80,7 +74,7 @@ export function Pagination({
         </button>
       </div>
     </div>
-  )
+  );
 }
 
 Pagination.propTypes = {
@@ -88,7 +82,7 @@ Pagination.propTypes = {
   totalPages: PropTypes.number.isRequired,
   onPageChange: PropTypes.func.isRequired,
   itemsPerPage: PropTypes.number.isRequired,
-  totalItems: PropTypes.number.isRequired
-}
+  totalItems: PropTypes.number.isRequired,
+};
 
-export default Pagination
+export default Pagination;

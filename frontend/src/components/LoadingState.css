@@ -112,11 +112,11 @@
   .loading-message {
     color: #e5e7eb;
   }
-  
+
   .loading-items {
     color: #9ca3af;
   }
-  
+
   .progress-bar-wrapper {
     background-color: rgba(99, 102, 241, 0.2);
   }
@@ -124,7 +124,8 @@
 
 /* Pulse animation for spinner alternative */
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

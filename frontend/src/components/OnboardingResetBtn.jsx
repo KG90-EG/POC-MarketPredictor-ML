@@ -1,9 +1,9 @@
-import PropTypes from 'prop-types';
-import './OnboardingResetBtn.css';
+import PropTypes from "prop-types";
+import "./OnboardingResetBtn.css";
 
 const OnboardingResetBtn = ({ onReset }) => {
   const handleReset = () => {
-    localStorage.removeItem('onboarding_completed');
+    localStorage.removeItem("onboarding_completed");
     if (onReset) {
       onReset();
     }
@@ -29,7 +29,7 @@ const OnboardingResetBtn = ({ onReset }) => {
 };
 
 OnboardingResetBtn.propTypes = {
-  onReset: PropTypes.func
+  onReset: PropTypes.func,
 };
 
 export default OnboardingResetBtn;

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import './KeyboardShortcuts.css';
+import { useState, useEffect } from "react";
+import "./KeyboardShortcuts.css";
 
 /**
  * Keyboard Shortcuts Overlay
@@ -12,53 +12,53 @@ function KeyboardShortcuts() {
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Show shortcuts with "?" or "Shift+/"
-      if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+      if (e.key === "?" || (e.shiftKey && e.key === "/")) {
         e.preventDefault();
         setIsVisible(true);
       }
 
       // Hide with Escape
-      if (e.key === 'Escape' && isVisible) {
+      if (e.key === "Escape" && isVisible) {
         setIsVisible(false);
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isVisible]);
 
   if (!isVisible) return null;
 
   const shortcuts = [
     {
-      category: 'Navigation',
+      category: "Navigation",
       items: [
-        { keys: ['Tab'], description: 'Move to next element' },
-        { keys: ['Shift', 'Tab'], description: 'Move to previous element' },
-        { keys: ['Enter'], description: 'Activate focused element' },
-        { keys: ['Esc'], description: 'Close dialogs or cancel' },
-        { keys: ['0'], description: 'Skip to main content' }
-      ]
+        { keys: ["Tab"], description: "Move to next element" },
+        { keys: ["Shift", "Tab"], description: "Move to previous element" },
+        { keys: ["Enter"], description: "Activate focused element" },
+        { keys: ["Esc"], description: "Close dialogs or cancel" },
+        { keys: ["0"], description: "Skip to main content" },
+      ],
     },
     {
-      category: 'Views',
+      category: "Views",
       items: [
-        { keys: ['1'], description: 'Go to Buy Opportunities' },
-        { keys: ['2'], description: 'Go to Stock Rankings' },
-        { keys: ['3'], description: 'Go to Crypto Portfolio' },
-        { keys: ['4'], description: 'Go to Watchlist' },
-        { keys: ['5'], description: 'Go to Simulations' }
-      ]
+        { keys: ["1"], description: "Go to Buy Opportunities" },
+        { keys: ["2"], description: "Go to Stock Rankings" },
+        { keys: ["3"], description: "Go to Crypto Portfolio" },
+        { keys: ["4"], description: "Go to Watchlist" },
+        { keys: ["5"], description: "Go to Simulations" },
+      ],
     },
     {
-      category: 'Actions',
+      category: "Actions",
       items: [
-        { keys: ['/'], description: 'Focus search' },
-        { keys: ['?'], description: 'Show this help' },
-        { keys: ['r'], description: 'Refresh data' },
-        { keys: ['d'], description: 'Toggle dark mode' }
-      ]
-    }
+        { keys: ["/"], description: "Focus search" },
+        { keys: ["?"], description: "Show this help" },
+        { keys: ["r"], description: "Refresh data" },
+        { keys: ["d"], description: "Toggle dark mode" },
+      ],
+    },
   ];
 
   return (
@@ -69,10 +69,7 @@ function KeyboardShortcuts() {
       aria-modal="true"
       aria-labelledby="shortcuts-title"
     >
-      <div
-        className="keyboard-shortcuts-panel"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="keyboard-shortcuts-panel" onClick={(e) => e.stopPropagation()}>
         <div className="keyboard-shortcuts-header">
           <h2 id="shortcuts-title">⌨️ Keyboard Shortcuts</h2>
           <button
@@ -95,15 +92,11 @@ function KeyboardShortcuts() {
                       {shortcut.keys.map((key, j) => (
                         <span key={j}>
                           <kbd className="shortcut-key">{key}</kbd>
-                          {j < shortcut.keys.length - 1 && (
-                            <span className="shortcut-plus">+</span>
-                          )}
+                          {j < shortcut.keys.length - 1 && <span className="shortcut-plus">+</span>}
                         </span>
                       ))}
                     </div>
-                    <div className="shortcut-description">
-                      {shortcut.description}
-                    </div>
+                    <div className="shortcut-description">{shortcut.description}</div>
                   </div>
                 ))}
               </div>
@@ -112,7 +105,9 @@ function KeyboardShortcuts() {
         </div>
 
         <div className="keyboard-shortcuts-footer">
-          <p>Press <kbd>?</kbd> to show/hide this panel • Press <kbd>Esc</kbd> to close</p>
+          <p>
+            Press <kbd>?</kbd> to show/hide this panel • Press <kbd>Esc</kbd> to close
+          </p>
         </div>
       </div>
     </div>

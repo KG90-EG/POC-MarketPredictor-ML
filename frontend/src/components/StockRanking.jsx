@@ -1,8 +1,8 @@
-import PropTypes from 'prop-types'
-import Tooltip from './Tooltip'
-import FilterBar from './FilterBar'
-import ScoreExplanationModal from './ScoreExplanationModal'
-import React, { useState, useMemo, useCallback } from 'react'
+import PropTypes from "prop-types";
+import Tooltip from "./Tooltip";
+import FilterBar from "./FilterBar";
+import ScoreExplanationModal from "./ScoreExplanationModal";
+import React, { useState, useMemo, useCallback } from "react";
 
 const StockRanking = React.memo(function StockRanking({
   results,
@@ -10,48 +10,57 @@ const StockRanking = React.memo(function StockRanking({
   currentPage,
   itemsPerPage,
   onPageChange,
-  onRowClick
+  onRowClick,
 }) {
-  const [filteredResults, setFilteredResults] = useState(results)
-  const [selectedScore, setSelectedScore] = useState(null)
-  const [selectedTicker, setSelectedTicker] = useState(null)
+  const [filteredResults, setFilteredResults] = useState(results);
+  const [selectedScore, setSelectedScore] = useState(null);
+  const [selectedTicker, setSelectedTicker] = useState(null);
 
   // Prepare enriched stock data with details for filtering
   const enrichedStocks = useMemo(() => {
-    return results.map(r => ({
+    return results.map((r) => ({
       ...r,
-      name: tickerDetails[r.ticker]?.name || '',
-      country: tickerDetails[r.ticker]?.country || '',
-      sector: tickerDetails[r.ticker]?.sector || '',
+      name: tickerDetails[r.ticker]?.name || "",
+      country: tickerDetails[r.ticker]?.country || "",
+      sector: tickerDetails[r.ticker]?.sector || "",
       price: tickerDetails[r.ticker]?.price || 0,
       volume: tickerDetails[r.ticker]?.volume || 0,
       market_cap: tickerDetails[r.ticker]?.market_cap || 0,
       change: tickerDetails[r.ticker]?.change || 0,
-      rank: results.indexOf(r) + 1
-    }))
-  }, [results, tickerDetails])
+      rank: results.indexOf(r) + 1,
+    }));
+  }, [results, tickerDetails]);
 
-  const handleFilterChange = useCallback((filtered) => {
-    setFilteredResults(filtered)
-    onPageChange(1) // Reset to page 1 when filters change
-  }, [onPageChange])
+  const handleFilterChange = useCallback(
+    (filtered) => {
+      setFilteredResults(filtered);
+      onPageChange(1); // Reset to page 1 when filters change
+    },
+    [onPageChange]
+  );
 
   const formatNumber = useCallback((num) => {
-    if (!num) return 'N/A'
-    if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`
-    if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`
-    return `$${num.toFixed(2)}`
-  }, [])
+    if (!num) return "N/A";
+    if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`;
+    if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
+    return `$${num.toFixed(2)}`;
+  }, []);
 
   const getRankBadgeClass = useCallback((rank) => {
-    if (rank === 1) return 'rank-badge gold'
-    if (rank === 2) return 'rank-badge silver'
-    if (rank === 3) return 'rank-badge bronze'
-    return 'rank-badge'
-  }, [])
+    if (rank === 1) return "rank-badge gold";
+    if (rank === 2) return "rank-badge silver";
+    if (rank === 3) return "rank-badge bronze";
+    return "rank-badge";
+  }, []);
 
-  const totalPages = useMemo(() => Math.ceil(filteredResults.length / itemsPerPage), [filteredResults.length, itemsPerPage])
-  const paginatedResults = useMemo(() => filteredResults.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage), [filteredResults, currentPage, itemsPerPage])
+  const totalPages = useMemo(
+    () => Math.ceil(filteredResults.length / itemsPerPage),
+    [filteredResults.length, itemsPerPage]
+  );
+  const paginatedResults = useMemo(
+    () => filteredResults.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage),
+    [filteredResults, currentPage, itemsPerPage]
+  );
 
   return (
     <>
@@ -66,16 +75,18 @@ const StockRanking = React.memo(function StockRanking({
 
       {/* Results Summary */}
       {filteredResults.length < results.length && (
-        <div style={{
-          padding: '12px 16px',
-          background: 'linear-gradient(135deg, #667eea15 0%, #764ba215 100%)',
-          border: '2px solid #667eea30',
-          borderRadius: '8px',
-          marginBottom: '16px',
-          fontSize: '0.9rem',
-          color: '#667eea',
-          fontWeight: '600'
-        }}>
+        <div
+          style={{
+            padding: "12px 16px",
+            background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+            border: "2px solid #667eea30",
+            borderRadius: "8px",
+            marginBottom: "16px",
+            fontSize: "0.9rem",
+            color: "#667eea",
+            fontWeight: "600",
+          }}
+        >
           📊 Showing {filteredResults.length} of {results.length} stocks
         </div>
       )}
@@ -100,105 +111,119 @@ const StockRanking = React.memo(function StockRanking({
               </th>
               <th scope="col">Signal</th>
               <th scope="col">Price</th>
-            <th scope="col">
-              <Tooltip
-                content="Daily price change percentage. Positive (+) values indicate the stock is up today, negative (-) values mean it's down. Strong moves are typically ±3% or more for established stocks."
-                position="top"
-              >
-                Change % ⓘ
-              </Tooltip>
-            </th>
-            <th scope="col">Volume</th>
-            <th scope="col">Market Cap</th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedResults.map((r) => {
-            const detail = tickerDetails[r.ticker] || {}
-            const changeClass = detail.change > 0 ? 'positive' : detail.change < 0 ? 'negative' : ''
+              <th scope="col">
+                <Tooltip
+                  content="Daily price change percentage. Positive (+) values indicate the stock is up today, negative (-) values mean it's down. Strong moves are typically ±3% or more for established stocks."
+                  position="top"
+                >
+                  Change % ⓘ
+                </Tooltip>
+              </th>
+              <th scope="col">Volume</th>
+              <th scope="col">Market Cap</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paginatedResults.map((r) => {
+              const detail = tickerDetails[r.ticker] || {};
+              const changeClass =
+                detail.change > 0 ? "positive" : detail.change < 0 ? "negative" : "";
 
-            return (
-              <tr
-                key={r.ticker}
-                onClick={() => onRowClick(r.ticker)}
-                style={{ cursor: 'pointer' }}
-                title="Click for detailed information"
-              >
-                <td>
-                  <span className={getRankBadgeClass(r.rank)}>{r.rank}</span>
-                </td>
-                <td><span className="ticker-symbol">{r.ticker}</span></td>
-                <td>{detail.name || 'N/A'}</td>
-                <td>
-                  <span className="country-tag">{detail.country || 'N/A'}</span>
-                </td>
-                <td>
-                  <Tooltip
-                    content={`
+              return (
+                <tr
+                  key={r.ticker}
+                  onClick={() => onRowClick(r.ticker)}
+                  style={{ cursor: "pointer" }}
+                  title="Click for detailed information"
+                >
+                  <td>
+                    <span className={getRankBadgeClass(r.rank)}>{r.rank}</span>
+                  </td>
+                  <td>
+                    <span className="ticker-symbol">{r.ticker}</span>
+                  </td>
+                  <td>{detail.name || "N/A"}</td>
+                  <td>
+                    <span className="country-tag">{detail.country || "N/A"}</span>
+                  </td>
+                  <td>
+                    <Tooltip
+                      content={`
                       Composite Score: ${r.composite_score || (r.prob * 100).toFixed(1)}/100
 
                       Click "Explain" button to see full breakdown.
                     `}
-                    position="top"
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span className={
-                        (r.composite_score || r.prob * 100) >= 80 ? 'score-strong-buy' :
-                        (r.composite_score || r.prob * 100) >= 65 ? 'score-buy' : ''
-                      }>
-                        {r.composite_score ? r.composite_score.toFixed(1) : (r.prob * 100).toFixed(1)}
-                      </span>
-                      <button
-                        className="btn-explain-score"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedTicker(r.ticker);
-                          setSelectedScore(r);
-                        }}
-                        title="Explain score breakdown"
-                      >
-                        📊
-                      </button>
-                    </div>
-                  </Tooltip>
-                </td>
-                <td>
-                  <span className={`signal-badge signal-${(r.signal || r.action).toLowerCase()}`}>
-                    {r.signal || r.action}
-                  </span>
-                </td>
-                <td>{detail.price ? `$${detail.price.toFixed(2)}` : 'N/A'}</td>
-                <td>
-                  <Tooltip
-                    content={`${
-                      detail.change
-                        ? (detail.change > 0 ? `+${detail.change.toFixed(2)}%` : `${detail.change.toFixed(2)}%`)
-                        : 'N/A'
-                    } daily change. ${
-                      detail.change > 3
-                        ? '🚀 Strong upward move!'
-                        : detail.change > 0
-                        ? '✅ Positive momentum'
-                        : detail.change < -3
-                        ? '⚠️ Significant drop'
-                        : detail.change < 0
-                        ? '⬇️ Slight decline'
-                        : 'No change'
-                    }`}
-                    position="top"
-                  >
-                    <span className={changeClass}>
-                      {detail.change ? `${detail.change > 0 ? '+' : ''}${detail.change.toFixed(2)}%` : 'N/A'}
+                      position="top"
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span
+                          className={
+                            (r.composite_score || r.prob * 100) >= 80
+                              ? "score-strong-buy"
+                              : (r.composite_score || r.prob * 100) >= 65
+                                ? "score-buy"
+                                : ""
+                          }
+                        >
+                          {r.composite_score
+                            ? r.composite_score.toFixed(1)
+                            : (r.prob * 100).toFixed(1)}
+                        </span>
+                        <button
+                          className="btn-explain-score"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTicker(r.ticker);
+                            setSelectedScore(r);
+                          }}
+                          title="Explain score breakdown"
+                        >
+                          📊
+                        </button>
+                      </div>
+                    </Tooltip>
+                  </td>
+                  <td>
+                    <span className={`signal-badge signal-${(r.signal || r.action).toLowerCase()}`}>
+                      {r.signal || r.action}
                     </span>
-                  </Tooltip>
-                </td>
-                <td>{detail.volume ? detail.volume.toLocaleString() : 'N/A'}</td>
-                <td>{formatNumber(detail.market_cap)}</td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+                  </td>
+                  <td>{detail.price ? `$${detail.price.toFixed(2)}` : "N/A"}</td>
+                  <td>
+                    <Tooltip
+                      content={`${
+                        detail.change
+                          ? detail.change > 0
+                            ? `+${detail.change.toFixed(2)}%`
+                            : `${detail.change.toFixed(2)}%`
+                          : "N/A"
+                      } daily change. ${
+                        detail.change > 3
+                          ? "🚀 Strong upward move!"
+                          : detail.change > 0
+                            ? "✅ Positive momentum"
+                            : detail.change < -3
+                              ? "⚠️ Significant drop"
+                              : detail.change < 0
+                                ? "⬇️ Slight decline"
+                                : "No change"
+                      }`}
+                      position="top"
+                    >
+                      <span className={changeClass}>
+                        {detail.change
+                          ? `${detail.change > 0 ? "+" : ""}${detail.change.toFixed(2)}%`
+                          : "N/A"}
+                      </span>
+                    </Tooltip>
+                  </td>
+                  <td>{detail.volume ? detail.volume.toLocaleString() : "N/A"}</td>
+                  <td>{formatNumber(detail.market_cap)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       {/* Pagination Controls */}
@@ -217,8 +242,10 @@ const StockRanking = React.memo(function StockRanking({
               onChange={(e) => onPageChange(Number(e.target.value))}
               className="page-dropdown"
             >
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
-                <option key={pageNum} value={pageNum}>{pageNum}</option>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                <option key={pageNum} value={pageNum}>
+                  {pageNum}
+                </option>
               ))}
             </select>
             <span className="page-info">of {totalPages}</span>
@@ -234,14 +261,18 @@ const StockRanking = React.memo(function StockRanking({
 
       {/* No Results Message */}
       {filteredResults.length === 0 && (
-        <div style={{
-          textAlign: 'center',
-          padding: '40px 20px',
-          color: '#666'
-        }}>
-          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔍</div>
-          <h3 style={{ margin: '0 0 8px 0', color: '#333' }}>No stocks match your filters</h3>
-          <p style={{ margin: 0, fontSize: '0.9rem' }}>Try adjusting your search or filter criteria</p>
+        <div
+          style={{
+            textAlign: "center",
+            padding: "40px 20px",
+            color: "#666",
+          }}
+        >
+          <div style={{ fontSize: "3rem", marginBottom: "16px" }}>🔍</div>
+          <h3 style={{ margin: "0 0 8px 0", color: "#333" }}>No stocks match your filters</h3>
+          <p style={{ margin: 0, fontSize: "0.9rem" }}>
+            Try adjusting your search or filter criteria
+          </p>
         </div>
       )}
 
@@ -257,26 +288,30 @@ const StockRanking = React.memo(function StockRanking({
         />
       )}
     </>
-  )
-})
+  );
+});
 
 StockRanking.propTypes = {
-  results: PropTypes.arrayOf(PropTypes.shape({
-    ticker: PropTypes.string.isRequired,
-    prob: PropTypes.number.isRequired
-  })).isRequired,
-  tickerDetails: PropTypes.objectOf(PropTypes.shape({
-    name: PropTypes.string,
-    country: PropTypes.string,
-    price: PropTypes.number,
-    change: PropTypes.number,
-    volume: PropTypes.number,
-    market_cap: PropTypes.number
-  })).isRequired,
+  results: PropTypes.arrayOf(
+    PropTypes.shape({
+      ticker: PropTypes.string.isRequired,
+      prob: PropTypes.number.isRequired,
+    })
+  ).isRequired,
+  tickerDetails: PropTypes.objectOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      country: PropTypes.string,
+      price: PropTypes.number,
+      change: PropTypes.number,
+      volume: PropTypes.number,
+      market_cap: PropTypes.number,
+    })
+  ).isRequired,
   currentPage: PropTypes.number.isRequired,
   itemsPerPage: PropTypes.number.isRequired,
   onPageChange: PropTypes.func.isRequired,
-  onRowClick: PropTypes.func.isRequired
-}
+  onRowClick: PropTypes.func.isRequired,
+};
 
-export default StockRanking
+export default StockRanking;

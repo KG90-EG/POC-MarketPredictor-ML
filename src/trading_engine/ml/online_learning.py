@@ -239,12 +239,12 @@ class OnlineLearner:
             "is_fitted": self.is_fitted,
             "n_updates": self.n_updates,
             "total_samples": self.total_samples,
-            "X_buffer": self.X_buffer[-1000:]
-            if len(self.X_buffer) > 1000
-            else self.X_buffer,
-            "y_buffer": self.y_buffer[-1000:]
-            if len(self.y_buffer) > 1000
-            else self.y_buffer,
+            "X_buffer": (
+                self.X_buffer[-1000:] if len(self.X_buffer) > 1000 else self.X_buffer
+            ),
+            "y_buffer": (
+                self.y_buffer[-1000:] if len(self.y_buffer) > 1000 else self.y_buffer
+            ),
             "update_history": self.update_history[-100:],  # Keep recent history
         }
 
@@ -259,9 +259,7 @@ class OnlineLearner:
         with open(filepath, "rb") as f:
             state = pickle.load(f)
 
-        learner = cls(
-            model_type=state["model_type"], window_size=state["window_size"]
-        )
+        learner = cls(model_type=state["model_type"], window_size=state["window_size"])
         learner.model = state["model"]
         learner.scaler = state["scaler"]
         learner.is_fitted = state["is_fitted"]

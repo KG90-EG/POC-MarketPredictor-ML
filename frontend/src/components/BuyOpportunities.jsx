@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { apiClient } from '../api';
-import { convertAndFormat } from '../utils/currency';
-import './BuyOpportunities.css';
+import { useState, useEffect } from "react";
+import PropTypes from "prop-types";
+import { apiClient } from "../api";
+import { convertAndFormat } from "../utils/currency";
+import "./BuyOpportunities.css";
 
-function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
+function BuyOpportunities({ currency = "USD", exchangeRate = null }) {
   const [stockBuyOpportunities, setStockBuyOpportunities] = useState([]);
   const [stockHoldOpportunities, setStockHoldOpportunities] = useState([]);
   const [stockSellOpportunities, setStockSellOpportunities] = useState([]);
@@ -16,8 +16,8 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
   const [commoditySellOpportunities, setCommoditySellOpportunities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('stocks'); // 'stocks', 'crypto', or 'commodities'
-  const [userContext, setUserContext] = useState('');
+  const [activeTab, setActiveTab] = useState("stocks"); // 'stocks', 'crypto', or 'commodities'
+  const [userContext, setUserContext] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState(null);
 
@@ -40,51 +40,57 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
       const ranking = rankingResponse.data.ranking || [];
 
       console.log(`📊 Received ${ranking.length} stocks from /ranking endpoint`);
-      console.log('🔍 First 5 stocks:', ranking.slice(0, 5).map(s => `${s.ticker}=$${s.price.toFixed(2)}`).join(', '));
+      console.log(
+        "🔍 First 5 stocks:",
+        ranking
+          .slice(0, 5)
+          .map((s) => `${s.ticker}=$${s.price.toFixed(2)}`)
+          .join(", ")
+      );
 
       // Get stock names from /popular_stocks (for display only)
-      const popularResponse = await apiClient.get('/popular_stocks?limit=100');
+      const popularResponse = await apiClient.get("/popular_stocks?limit=100");
       const popularStocks = popularResponse.data.stocks || [];
       const stockNames = {};
-      popularStocks.forEach(s => {
+      popularStocks.forEach((s) => {
         stockNames[s.ticker] = s.name;
       });
 
       console.log(`📝 Loaded ${Object.keys(stockNames).length} stock names`);
 
       // Convert ranking data to predictions (no need for additional API calls)
-      const stockPredictions = ranking.map(item => {
+      const stockPredictions = ranking.map((item) => {
         const prediction = {
-          signal: item.action || (item.prob > 0.6 ? 'BUY' : item.prob < 0.4 ? 'SELL' : 'HOLD'),
+          signal: item.action || (item.prob > 0.6 ? "BUY" : item.prob < 0.4 ? "SELL" : "HOLD"),
           confidence: item.confidence || Math.round(item.prob * 100),
           reasoning: `AI Confidence: ${(item.prob * 100).toFixed(1)}%`,
           metrics: {
             probability: item.prob,
-            price: item.price
-          }
+            price: item.price,
+          },
         };
 
         return {
           ticker: item.ticker,
           name: stockNames[item.ticker] || item.ticker,
           current_price: item.price, // Use price from ranking
-          prediction
+          prediction,
         };
       });
 
       // Filter for BUY, HOLD, and SELL signals
       const buyStocks = stockPredictions
-        .filter(s => s.prediction.signal === 'BUY')
+        .filter((s) => s.prediction.signal === "BUY")
         .sort((a, b) => b.prediction.confidence - a.prediction.confidence)
         .slice(0, 6);
 
       const holdStocks = stockPredictions
-        .filter(s => s.prediction.signal === 'HOLD')
+        .filter((s) => s.prediction.signal === "HOLD")
         .sort((a, b) => b.prediction.confidence - a.prediction.confidence)
         .slice(0, 6);
 
       const sellStocks = stockPredictions
-        .filter(s => s.prediction.signal === 'SELL')
+        .filter((s) => s.prediction.signal === "SELL")
         .sort((a, b) => b.prediction.confidence - a.prediction.confidence)
         .slice(0, 6);
 
@@ -92,10 +98,12 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
       setStockHoldOpportunities(holdStocks);
       setStockSellOpportunities(sellStocks);
 
-      console.log(`✅ Loaded ${buyStocks.length} BUY, ${holdStocks.length} HOLD, ${sellStocks.length} SELL stocks`);
+      console.log(
+        `✅ Loaded ${buyStocks.length} BUY, ${holdStocks.length} HOLD, ${sellStocks.length} SELL stocks`
+      );
 
       // Fetch crypto rankings
-      const cryptoResponse = await apiClient.get('/crypto/ranking?limit=50');
+      const cryptoResponse = await apiClient.get("/crypto/ranking?limit=50");
       const cryptos = cryptoResponse.data.ranking || [];
 
       // Get predictions for top cryptos
@@ -105,19 +113,19 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
             // Use momentum score from crypto ranking as prediction
             const score = crypto.momentum_score || crypto.probability || 0.5;
             const prediction = {
-              signal: score > 0.6 ? 'BUY' : score < 0.4 ? 'SELL' : 'HOLD',
+              signal: score > 0.6 ? "BUY" : score < 0.4 ? "SELL" : "HOLD",
               confidence: Math.round(score * 100),
-              reasoning: `Momentum score: ${score.toFixed(2)}`
+              reasoning: `Momentum score: ${score.toFixed(2)}`,
             };
             return {
               ...crypto,
-              prediction
+              prediction,
             };
           } catch (err) {
             console.error(`Failed to get prediction for ${crypto.crypto_id}:`, err);
             return {
               ...crypto,
-              prediction: { signal: 'HOLD', confidence: 50, reasoning: 'No prediction available' }
+              prediction: { signal: "HOLD", confidence: 50, reasoning: "No prediction available" },
             };
           }
         })
@@ -125,17 +133,17 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
 
       // Filter for BUY, HOLD, and SELL signals
       const buyCryptos = cryptoPredictions
-        .filter(c => c.prediction.signal === 'BUY')
+        .filter((c) => c.prediction.signal === "BUY")
         .sort((a, b) => b.prediction.confidence - a.prediction.confidence)
         .slice(0, 6);
 
       const holdCryptos = cryptoPredictions
-        .filter(c => c.prediction.signal === 'HOLD')
+        .filter((c) => c.prediction.signal === "HOLD")
         .sort((a, b) => b.prediction.confidence - a.prediction.confidence)
         .slice(0, 6);
 
       const sellCryptos = cryptoPredictions
-        .filter(c => c.prediction.signal === 'SELL')
+        .filter((c) => c.prediction.signal === "SELL")
         .sort((a, b) => b.prediction.confidence - a.prediction.confidence)
         .slice(0, 6);
 
@@ -143,19 +151,20 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
       setCryptoHoldOpportunities(holdCryptos);
       setCryptoSellOpportunities(sellCryptos);
 
-      console.log(`✅ Loaded ${buyCryptos.length} crypto BUY, ${holdCryptos.length} HOLD, ${sellCryptos.length} SELL`);
+      console.log(
+        `✅ Loaded ${buyCryptos.length} crypto BUY, ${holdCryptos.length} HOLD, ${sellCryptos.length} SELL`
+      );
 
       // Load Commodities (Gold, Oil, Silver, etc.)
       try {
         await loadCommodities();
       } catch (commErr) {
-        console.warn('Commodities loading failed (non-critical):', commErr);
+        console.warn("Commodities loading failed (non-critical):", commErr);
         // Don't fail the whole page if commodities fail
       }
-
     } catch (err) {
-      console.error('Failed to load opportunities:', err);
-      console.error('Error details:', err.message, err.response?.data);
+      console.error("Failed to load opportunities:", err);
+      console.error("Error details:", err.message, err.response?.data);
       setError(`Failed to load opportunities: ${err.message}`);
     } finally {
       setLoading(false);
@@ -166,12 +175,12 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
     try {
       // Popular commodities
       const commodities = [
-        { ticker: 'GC=F', name: 'Gold', type: 'Precious Metal' },
-        { ticker: 'SI=F', name: 'Silver', type: 'Precious Metal' },
-        { ticker: 'CL=F', name: 'Crude Oil', type: 'Energy' },
-        { ticker: 'NG=F', name: 'Natural Gas', type: 'Energy' },
-        { ticker: 'HG=F', name: 'Copper', type: 'Industrial Metal' },
-        { ticker: 'PL=F', name: 'Platinum', type: 'Precious Metal' },
+        { ticker: "GC=F", name: "Gold", type: "Precious Metal" },
+        { ticker: "SI=F", name: "Silver", type: "Precious Metal" },
+        { ticker: "CL=F", name: "Crude Oil", type: "Energy" },
+        { ticker: "NG=F", name: "Natural Gas", type: "Energy" },
+        { ticker: "HG=F", name: "Copper", type: "Industrial Metal" },
+        { ticker: "PL=F", name: "Platinum", type: "Precious Metal" },
       ];
 
       const commodityPredictions = await Promise.all(
@@ -180,43 +189,43 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
             const predRes = await apiClient.get(`/api/predict/${commodity.ticker}`);
             const probability = predRes.data.probability || 0.5;
             const prediction = {
-              signal: probability > 0.6 ? 'BUY' : probability < 0.4 ? 'SELL' : 'HOLD',
+              signal: probability > 0.6 ? "BUY" : probability < 0.4 ? "SELL" : "HOLD",
               confidence: Math.round(probability * 100),
-              reasoning: `AI Confidence: ${(probability * 100).toFixed(1)}%`
+              reasoning: `AI Confidence: ${(probability * 100).toFixed(1)}%`,
             };
             return {
               ...commodity,
               current_price: predRes.data.price || 0,
-              prediction
+              prediction,
             };
           } catch (err) {
             console.error(`Failed to get prediction for ${commodity.ticker}:`, err);
             return {
               ...commodity,
               current_price: 0,
-              prediction: { signal: 'HOLD', confidence: 50, reasoning: 'No prediction available' }
+              prediction: { signal: "HOLD", confidence: 50, reasoning: "No prediction available" },
             };
           }
         })
       );
 
       const buyCommodities = commodityPredictions
-        .filter(c => c.prediction.signal === 'BUY')
+        .filter((c) => c.prediction.signal === "BUY")
         .sort((a, b) => b.prediction.confidence - a.prediction.confidence);
 
       const holdCommodities = commodityPredictions
-        .filter(c => c.prediction.signal === 'HOLD')
+        .filter((c) => c.prediction.signal === "HOLD")
         .sort((a, b) => b.prediction.confidence - a.prediction.confidence);
 
       const sellCommodities = commodityPredictions
-        .filter(c => c.prediction.signal === 'SELL')
+        .filter((c) => c.prediction.signal === "SELL")
         .sort((a, b) => b.prediction.confidence - a.prediction.confidence);
 
       setCommodityBuyOpportunities(buyCommodities);
       setCommodityHoldOpportunities(holdCommodities);
       setCommoditySellOpportunities(sellCommodities);
     } catch (err) {
-      console.error('Failed to load commodities:', err);
+      console.error("Failed to load commodities:", err);
     }
   };
 
@@ -229,37 +238,49 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
     setAnalysis(null);
 
     try {
-      const currentOpportunities = activeTab === 'stocks'
-        ? [...stockBuyOpportunities, ...stockHoldOpportunities, ...stockSellOpportunities]
-        : activeTab === 'crypto'
-        ? [...cryptoBuyOpportunities, ...cryptoHoldOpportunities, ...cryptoSellOpportunities]
-        : [...commodityBuyOpportunities, ...commodityHoldOpportunities, ...commoditySellOpportunities];
+      const currentOpportunities =
+        activeTab === "stocks"
+          ? [...stockBuyOpportunities, ...stockHoldOpportunities, ...stockSellOpportunities]
+          : activeTab === "crypto"
+            ? [...cryptoBuyOpportunities, ...cryptoHoldOpportunities, ...cryptoSellOpportunities]
+            : [
+                ...commodityBuyOpportunities,
+                ...commodityHoldOpportunities,
+                ...commoditySellOpportunities,
+              ];
 
-      const opportunitiesData = currentOpportunities.map(opp => ({
+      const opportunitiesData = currentOpportunities.map((opp) => ({
         ticker: opp.ticker || opp.symbol || opp.crypto_id,
         name: opp.name,
         signal: opp.prediction.signal,
         confidence: opp.prediction.confidence,
         reasoning: opp.prediction.reasoning,
-        price: opp.current_price || opp.price
+        price: opp.current_price || opp.price,
       }));
 
-      const response = await apiClient.post('/ai/analyze', {
-        context: userContext || `Analyze these ${activeTab} opportunities and provide investment insights.`,
+      const response = await apiClient.post("/ai/analyze", {
+        context:
+          userContext ||
+          `Analyze these ${activeTab} opportunities and provide investment insights.`,
         opportunities: opportunitiesData,
-        asset_type: activeTab
+        asset_type: activeTab,
       });
 
       setAnalysis(response.data.analysis);
     } catch (err) {
-      console.error('Failed to get AI analysis:', err);
-      setAnalysis('Failed to get AI analysis. Please try again.');
+      console.error("Failed to get AI analysis:", err);
+      setAnalysis("Failed to get AI analysis. Please try again.");
     } finally {
       setAnalyzing(false);
     }
   };
 
-  if (loading && stockBuyOpportunities.length === 0 && cryptoBuyOpportunities.length === 0 && commodityBuyOpportunities.length === 0) {
+  if (
+    loading &&
+    stockBuyOpportunities.length === 0 &&
+    cryptoBuyOpportunities.length === 0 &&
+    commodityBuyOpportunities.length === 0
+  ) {
     return (
       <div className="buy-opportunities">
         <div className="opportunities-header">
@@ -283,7 +304,7 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
           disabled={loading}
           title="Refresh opportunities"
         >
-          {loading ? '⟳' : '🔄'} Refresh
+          {loading ? "⟳" : "🔄"} Refresh
         </button>
       </div>
 
@@ -291,20 +312,20 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
 
       <div className="opportunities-tabs">
         <button
-          className={`tab-btn ${activeTab === 'stocks' ? 'active' : ''}`}
-          onClick={() => setActiveTab('stocks')}
+          className={`tab-btn ${activeTab === "stocks" ? "active" : ""}`}
+          onClick={() => setActiveTab("stocks")}
         >
           📈 Stocks
         </button>
         <button
-          className={`tab-btn ${activeTab === 'crypto' ? 'active' : ''}`}
-          onClick={() => setActiveTab('crypto')}
+          className={`tab-btn ${activeTab === "crypto" ? "active" : ""}`}
+          onClick={() => setActiveTab("crypto")}
         >
           ₿ Crypto
         </button>
         <button
-          className={`tab-btn ${activeTab === 'commodities' ? 'active' : ''}`}
-          onClick={() => setActiveTab('commodities')}
+          className={`tab-btn ${activeTab === "commodities" ? "active" : ""}`}
+          onClick={() => setActiveTab("commodities")}
         >
           🥇 Rohstoffe
         </button>
@@ -317,7 +338,7 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
           <textarea
             value={userContext}
             onChange={(e) => setUserContext(e.target.value)}
-            placeholder={`e.g., I'm interested in ${activeTab === 'stocks' ? 'tech stocks with growth potential' : activeTab === 'crypto' ? 'high momentum crypto' : 'commodities for inflation hedge'}, looking for short-term trades...`}
+            placeholder={`e.g., I'm interested in ${activeTab === "stocks" ? "tech stocks with growth potential" : activeTab === "crypto" ? "high momentum crypto" : "commodities for inflation hedge"}, looking for short-term trades...`}
             rows={3}
             aria-label="Enter context for AI analysis"
           />
@@ -334,7 +355,7 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
               Analyzing...
             </>
           ) : (
-            '✨ Get AI Recommendations'
+            "✨ Get AI Recommendations"
           )}
         </button>
       </section>
@@ -343,12 +364,12 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
       {analysis && (
         <section className="analysis-result" role="region" aria-label="AI analysis results">
           <h3>💡 AI Analysis & Recommendations</h3>
-          <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>{analysis}</p>
+          <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.7 }}>{analysis}</p>
         </section>
       )}
 
       <div className="opportunities-content">
-        {activeTab === 'stocks' && (
+        {activeTab === "stocks" && (
           <>
             {/* Buy Opportunities */}
             <div className="opportunity-section">
@@ -370,9 +391,7 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                         </div>
 
                         <div className="opportunity-signal">
-                          <div className="signal-badge buy">
-                            🟢 BUY
-                          </div>
+                          <div className="signal-badge buy">🟢 BUY</div>
                           <div className="confidence-score">
                             {stock.prediction.confidence.toFixed(0)}% confidence
                           </div>
@@ -382,18 +401,22 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                           {stock.prediction?.metrics?.probability != null && (
                             <div className="detail-item">
                               <span className="label">ML Probability:</span>
-                              <span className="value">{(stock.prediction.metrics.probability * 100).toFixed(1)}%</span>
+                              <span className="value">
+                                {(stock.prediction.metrics.probability * 100).toFixed(1)}%
+                              </span>
                             </div>
                           )}
                           <div className="detail-item">
                             <span className="label">Price:</span>
-                            <span className="value">{stock.current_price > 0 ? convertAndFormat(stock.current_price, currency, exchangeRate) : 'N/A'}</span>
+                            <span className="value">
+                              {stock.current_price > 0
+                                ? convertAndFormat(stock.current_price, currency, exchangeRate)
+                                : "N/A"}
+                            </span>
                           </div>
                         </div>
 
-                        <div className="opportunity-reasoning">
-                          {stock.prediction.reasoning}
-                        </div>
+                        <div className="opportunity-reasoning">{stock.prediction.reasoning}</div>
 
                         <div className="opportunity-actions">
                           <a
@@ -440,9 +463,7 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                         </div>
 
                         <div className="opportunity-signal">
-                          <div className="signal-badge hold">
-                            🟡 HOLD
-                          </div>
+                          <div className="signal-badge hold">🟡 HOLD</div>
                           <div className="confidence-score">
                             {stock.prediction.confidence.toFixed(0)}% confidence
                           </div>
@@ -452,18 +473,22 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                           {stock.prediction?.metrics?.probability != null && (
                             <div className="detail-item">
                               <span className="label">ML Probability:</span>
-                              <span className="value">{(stock.prediction.metrics.probability * 100).toFixed(1)}%</span>
+                              <span className="value">
+                                {(stock.prediction.metrics.probability * 100).toFixed(1)}%
+                              </span>
                             </div>
                           )}
                           <div className="detail-item">
                             <span className="label">Price:</span>
-                            <span className="value">{stock.current_price > 0 ? convertAndFormat(stock.current_price, currency, exchangeRate) : 'N/A'}</span>
+                            <span className="value">
+                              {stock.current_price > 0
+                                ? convertAndFormat(stock.current_price, currency, exchangeRate)
+                                : "N/A"}
+                            </span>
                           </div>
                         </div>
 
-                        <div className="opportunity-reasoning">
-                          {stock.prediction.reasoning}
-                        </div>
+                        <div className="opportunity-reasoning">{stock.prediction.reasoning}</div>
 
                         <div className="opportunity-actions">
                           <a
@@ -510,9 +535,7 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                         </div>
 
                         <div className="opportunity-signal">
-                          <div className="signal-badge sell">
-                            🔴 SELL
-                          </div>
+                          <div className="signal-badge sell">🔴 SELL</div>
                           <div className="confidence-score">
                             {stock.prediction.confidence.toFixed(0)}% confidence
                           </div>
@@ -522,18 +545,22 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                           {stock.prediction?.metrics?.probability != null && (
                             <div className="detail-item">
                               <span className="label">ML Probability:</span>
-                              <span className="value">{(stock.prediction.metrics.probability * 100).toFixed(1)}%</span>
+                              <span className="value">
+                                {(stock.prediction.metrics.probability * 100).toFixed(1)}%
+                              </span>
                             </div>
                           )}
                           <div className="detail-item">
                             <span className="label">Price:</span>
-                            <span className="value">{stock.current_price > 0 ? convertAndFormat(stock.current_price, currency, exchangeRate) : 'N/A'}</span>
+                            <span className="value">
+                              {stock.current_price > 0
+                                ? convertAndFormat(stock.current_price, currency, exchangeRate)
+                                : "N/A"}
+                            </span>
                           </div>
                         </div>
 
-                        <div className="opportunity-reasoning">
-                          {stock.prediction.reasoning}
-                        </div>
+                        <div className="opportunity-reasoning">{stock.prediction.reasoning}</div>
 
                         <div className="opportunity-actions">
                           <a
@@ -562,7 +589,7 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
           </>
         )}
 
-        {activeTab === 'crypto' && (
+        {activeTab === "crypto" && (
           <>
             {/* Buy Opportunities */}
             <div className="opportunity-section">
@@ -579,19 +606,13 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                       <div className="opportunity-rank">#{index + 1}</div>
                       <div className="opportunity-main">
                         <div className="opportunity-header">
-                          <img
-                            src={crypto.image}
-                            alt={crypto.name}
-                            className="crypto-icon"
-                          />
+                          <img src={crypto.image} alt={crypto.name} className="crypto-icon" />
                           <span className="opportunity-ticker">{crypto.symbol.toUpperCase()}</span>
                           <span className="opportunity-name">{crypto.name}</span>
                         </div>
 
                         <div className="opportunity-signal">
-                          <div className="signal-badge buy">
-                            🟢 BUY
-                          </div>
+                          <div className="signal-badge buy">🟢 BUY</div>
                           <div className="confidence-score">
                             {crypto.prediction.confidence.toFixed(0)}% confidence
                           </div>
@@ -604,8 +625,11 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                           </div>
                           <div className="detail-item">
                             <span className="label">24h Change:</span>
-                            <span className={`value ${crypto.change_24h >= 0 ? 'positive' : 'negative'}`}>
-                              {crypto.change_24h >= 0 ? '▲' : '▼'} {Math.abs(crypto.change_24h).toFixed(2)}%
+                            <span
+                              className={`value ${crypto.change_24h >= 0 ? "positive" : "negative"}`}
+                            >
+                              {crypto.change_24h >= 0 ? "▲" : "▼"}{" "}
+                              {Math.abs(crypto.change_24h).toFixed(2)}%
                             </span>
                           </div>
                           <div className="detail-item">
@@ -614,9 +638,7 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                           </div>
                         </div>
 
-                        <div className="opportunity-reasoning">
-                          {crypto.prediction.reasoning}
-                        </div>
+                        <div className="opportunity-reasoning">{crypto.prediction.reasoning}</div>
 
                         <div className="opportunity-actions">
                           <a
@@ -658,19 +680,13 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                       <div className="opportunity-rank">#{index + 1}</div>
                       <div className="opportunity-main">
                         <div className="opportunity-header">
-                          <img
-                            src={crypto.image}
-                            alt={crypto.name}
-                            className="crypto-icon"
-                          />
+                          <img src={crypto.image} alt={crypto.name} className="crypto-icon" />
                           <span className="opportunity-ticker">{crypto.symbol.toUpperCase()}</span>
                           <span className="opportunity-name">{crypto.name}</span>
                         </div>
 
                         <div className="opportunity-signal">
-                          <div className="signal-badge hold">
-                            🟡 HOLD
-                          </div>
+                          <div className="signal-badge hold">🟡 HOLD</div>
                           <div className="confidence-score">
                             {crypto.prediction.confidence.toFixed(0)}% confidence
                           </div>
@@ -683,8 +699,11 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                           </div>
                           <div className="detail-item">
                             <span className="label">24h Change:</span>
-                            <span className={`value ${crypto.change_24h >= 0 ? 'positive' : 'negative'}`}>
-                              {crypto.change_24h >= 0 ? '▲' : '▼'} {Math.abs(crypto.change_24h).toFixed(2)}%
+                            <span
+                              className={`value ${crypto.change_24h >= 0 ? "positive" : "negative"}`}
+                            >
+                              {crypto.change_24h >= 0 ? "▲" : "▼"}{" "}
+                              {Math.abs(crypto.change_24h).toFixed(2)}%
                             </span>
                           </div>
                           <div className="detail-item">
@@ -693,9 +712,7 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                           </div>
                         </div>
 
-                        <div className="opportunity-reasoning">
-                          {crypto.prediction.reasoning}
-                        </div>
+                        <div className="opportunity-reasoning">{crypto.prediction.reasoning}</div>
 
                         <div className="opportunity-actions">
                           <a
@@ -737,19 +754,13 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                       <div className="opportunity-rank">#{index + 1}</div>
                       <div className="opportunity-main">
                         <div className="opportunity-header">
-                          <img
-                            src={crypto.image}
-                            alt={crypto.name}
-                            className="crypto-icon"
-                          />
+                          <img src={crypto.image} alt={crypto.name} className="crypto-icon" />
                           <span className="opportunity-ticker">{crypto.symbol.toUpperCase()}</span>
                           <span className="opportunity-name">{crypto.name}</span>
                         </div>
 
                         <div className="opportunity-signal">
-                          <div className="signal-badge sell">
-                            🔴 SELL
-                          </div>
+                          <div className="signal-badge sell">🔴 SELL</div>
                           <div className="confidence-score">
                             {crypto.prediction.confidence.toFixed(0)}% confidence
                           </div>
@@ -762,8 +773,11 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                           </div>
                           <div className="detail-item">
                             <span className="label">24h Change:</span>
-                            <span className={`value ${crypto.change_24h >= 0 ? 'positive' : 'negative'}`}>
-                              {crypto.change_24h >= 0 ? '▲' : '▼'} {Math.abs(crypto.change_24h).toFixed(2)}%
+                            <span
+                              className={`value ${crypto.change_24h >= 0 ? "positive" : "negative"}`}
+                            >
+                              {crypto.change_24h >= 0 ? "▲" : "▼"}{" "}
+                              {Math.abs(crypto.change_24h).toFixed(2)}%
                             </span>
                           </div>
                           <div className="detail-item">
@@ -772,9 +786,7 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                           </div>
                         </div>
 
-                        <div className="opportunity-reasoning">
-                          {crypto.prediction.reasoning}
-                        </div>
+                        <div className="opportunity-reasoning">{crypto.prediction.reasoning}</div>
 
                         <div className="opportunity-actions">
                           <a
@@ -803,7 +815,7 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
           </>
         )}
 
-        {activeTab === 'commodities' && (
+        {activeTab === "commodities" && (
           <>
             {/* Buy Opportunities - Commodities */}
             <div className="opportunity-section">
@@ -822,15 +834,16 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                         <div className="opportunity-header">
                           <span className="opportunity-ticker">{commodity.ticker}</span>
                           <span className="opportunity-name">{commodity.name}</span>
-                          <span className="commodity-type" style={{fontSize: '0.8rem', color: '#666'}}>
+                          <span
+                            className="commodity-type"
+                            style={{ fontSize: "0.8rem", color: "#666" }}
+                          >
                             {commodity.type}
                           </span>
                         </div>
 
                         <div className="opportunity-signal">
-                          <div className="signal-badge buy">
-                            🟢 BUY
-                          </div>
+                          <div className="signal-badge buy">🟢 BUY</div>
                           <div className="confidence-score">
                             {commodity.prediction.confidence.toFixed(0)}% confidence
                           </div>
@@ -839,7 +852,11 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                         <div className="opportunity-details">
                           <div className="detail-item">
                             <span className="label">Price:</span>
-                            <span className="value">{commodity.current_price > 0 ? convertAndFormat(commodity.current_price, currency, exchangeRate) : 'N/A'}</span>
+                            <span className="value">
+                              {commodity.current_price > 0
+                                ? convertAndFormat(commodity.current_price, currency, exchangeRate)
+                                : "N/A"}
+                            </span>
                           </div>
                           <div className="detail-item">
                             <span className="label">Type:</span>
@@ -893,15 +910,16 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                         <div className="opportunity-header">
                           <span className="opportunity-ticker">{commodity.ticker}</span>
                           <span className="opportunity-name">{commodity.name}</span>
-                          <span className="commodity-type" style={{fontSize: '0.8rem', color: '#666'}}>
+                          <span
+                            className="commodity-type"
+                            style={{ fontSize: "0.8rem", color: "#666" }}
+                          >
                             {commodity.type}
                           </span>
                         </div>
 
                         <div className="opportunity-signal">
-                          <div className="signal-badge hold">
-                            🟡 HOLD
-                          </div>
+                          <div className="signal-badge hold">🟡 HOLD</div>
                           <div className="confidence-score">
                             {commodity.prediction.confidence.toFixed(0)}% confidence
                           </div>
@@ -910,7 +928,11 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                         <div className="opportunity-details">
                           <div className="detail-item">
                             <span className="label">Price:</span>
-                            <span className="value">{commodity.current_price > 0 ? convertAndFormat(commodity.current_price, currency, exchangeRate) : 'N/A'}</span>
+                            <span className="value">
+                              {commodity.current_price > 0
+                                ? convertAndFormat(commodity.current_price, currency, exchangeRate)
+                                : "N/A"}
+                            </span>
                           </div>
                           <div className="detail-item">
                             <span className="label">Type:</span>
@@ -964,15 +986,16 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                         <div className="opportunity-header">
                           <span className="opportunity-ticker">{commodity.ticker}</span>
                           <span className="opportunity-name">{commodity.name}</span>
-                          <span className="commodity-type" style={{fontSize: '0.8rem', color: '#666'}}>
+                          <span
+                            className="commodity-type"
+                            style={{ fontSize: "0.8rem", color: "#666" }}
+                          >
                             {commodity.type}
                           </span>
                         </div>
 
                         <div className="opportunity-signal">
-                          <div className="signal-badge sell">
-                            🔴 SELL
-                          </div>
+                          <div className="signal-badge sell">🔴 SELL</div>
                           <div className="confidence-score">
                             {commodity.prediction.confidence.toFixed(0)}% confidence
                           </div>
@@ -981,7 +1004,11 @@ function BuyOpportunities({ currency = 'USD', exchangeRate = null }) {
                         <div className="opportunity-details">
                           <div className="detail-item">
                             <span className="label">Price:</span>
-                            <span className="value">{commodity.current_price > 0 ? convertAndFormat(commodity.current_price, currency, exchangeRate) : 'N/A'}</span>
+                            <span className="value">
+                              {commodity.current_price > 0
+                                ? convertAndFormat(commodity.current_price, currency, exchangeRate)
+                                : "N/A"}
+                            </span>
                           </div>
                           <div className="detail-item">
                             <span className="label">Type:</span>

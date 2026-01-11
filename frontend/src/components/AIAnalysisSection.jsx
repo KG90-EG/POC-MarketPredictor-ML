@@ -1,13 +1,7 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+import React from "react";
+import PropTypes from "prop-types";
 
-function AIAnalysisSection({
-  userContext,
-  onContextChange,
-  onAnalyze,
-  analyzing,
-  analysis,
-}) {
+function AIAnalysisSection({ userContext, onContextChange, onAnalyze, analyzing, analysis }) {
   return (
     <>
       {/* AI Analysis Section */}
@@ -33,7 +27,7 @@ function AIAnalysisSection({
               Analyzing...
             </>
           ) : (
-            '✨ Get AI Recommendations'
+            "✨ Get AI Recommendations"
           )}
         </button>
       </section>
@@ -42,11 +36,11 @@ function AIAnalysisSection({
       {analysis && (
         <section className="analysis-result" role="region" aria-label="AI analysis results">
           <h3>💡 AI Analysis & Recommendations</h3>
-          <p style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>{analysis}</p>
+          <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.7 }}>{analysis}</p>
         </section>
       )}
     </>
-  )
+  );
 }
 
 AIAnalysisSection.propTypes = {
@@ -55,6 +49,6 @@ AIAnalysisSection.propTypes = {
   onAnalyze: PropTypes.func.isRequired,
   analyzing: PropTypes.bool.isRequired,
   analysis: PropTypes.string,
-}
+};
 
-export default AIAnalysisSection
+export default AIAnalysisSection;

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { apiClient } from '../api';
-import './AlertPanel.css';
+import { useState, useEffect } from "react";
+import { apiClient } from "../api";
+import "./AlertPanel.css";
 
 function AlertPanel() {
   const [alerts, setAlerts] = useState([]);
@@ -8,8 +8,8 @@ function AlertPanel() {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState({
     unreadOnly: false,
-    priority: '',
-    assetType: ''
+    priority: "",
+    assetType: "",
   });
   const [isOpen, setIsOpen] = useState(false);
 
@@ -23,63 +23,73 @@ function AlertPanel() {
   const loadAlerts = async () => {
     try {
       const params = new URLSearchParams();
-      if (filter.unreadOnly) params.append('unread_only', 'true');
-      if (filter.priority) params.append('priority', filter.priority);
-      if (filter.assetType) params.append('asset_type', filter.assetType);
-      params.append('limit', '50');
+      if (filter.unreadOnly) params.append("unread_only", "true");
+      if (filter.priority) params.append("priority", filter.priority);
+      if (filter.assetType) params.append("asset_type", filter.assetType);
+      params.append("limit", "50");
 
       const response = await apiClient.get(`/alerts?${params.toString()}`);
       setAlerts(response.data.alerts || []);
       setUnreadCount(response.data.unread_count || 0);
     } catch (error) {
-      console.error('Failed to load alerts:', error);
+      console.error("Failed to load alerts:", error);
     }
   };
 
   const markAsRead = async (alertIds) => {
     try {
-      await apiClient.post('/alerts/mark-read', alertIds);
+      await apiClient.post("/alerts/mark-read", alertIds);
       loadAlerts();
     } catch (error) {
-      console.error('Failed to mark alerts as read:', error);
+      console.error("Failed to mark alerts as read:", error);
     }
   };
 
   const markAllAsRead = async () => {
-    const unreadIds = alerts.filter(a => !a.read).map(a => a.alert_id);
+    const unreadIds = alerts.filter((a) => !a.read).map((a) => a.alert_id);
     if (unreadIds.length > 0) {
       await markAsRead(unreadIds);
     }
   };
 
   const clearOldAlerts = async () => {
-    if (confirm('Clear alerts older than 7 days?')) {
+    if (confirm("Clear alerts older than 7 days?")) {
       try {
-        await apiClient.delete('/alerts/clear?older_than_days=7');
+        await apiClient.delete("/alerts/clear?older_than_days=7");
         loadAlerts();
       } catch (error) {
-        console.error('Failed to clear old alerts:', error);
+        console.error("Failed to clear old alerts:", error);
       }
     }
   };
 
   const getPriorityIcon = (priority) => {
     switch (priority) {
-      case 'critical': return '🚨';
-      case 'high': return '🔴';
-      case 'medium': return '🟡';
-      case 'low': return '🟢';
-      default: return '📌';
+      case "critical":
+        return "🚨";
+      case "high":
+        return "🔴";
+      case "medium":
+        return "🟡";
+      case "low":
+        return "🟢";
+      default:
+        return "📌";
     }
   };
 
   const getAlertTypeLabel = (type) => {
     switch (type) {
-      case 'signal_change': return 'Signal Changed';
-      case 'high_confidence': return 'High Confidence';
-      case 'price_spike': return 'Price Spike';
-      case 'momentum_shift': return 'Momentum Shift';
-      default: return type;
+      case "signal_change":
+        return "Signal Changed";
+      case "high_confidence":
+        return "High Confidence";
+      case "price_spike":
+        return "Price Spike";
+      case "momentum_shift":
+        return "Momentum Shift";
+      default:
+        return type;
     }
   };
 
@@ -91,7 +101,7 @@ function AlertPanel() {
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return 'just now';
+    if (minutes < 1) return "just now";
     if (minutes < 60) return `${minutes}m ago`;
     if (hours < 24) return `${hours}h ago`;
     return `${days}d ago`;
@@ -100,14 +110,10 @@ function AlertPanel() {
   return (
     <>
       {/* Alert Bell Icon */}
-      <button
-        className="alert-bell"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Notifications"
-      >
+      <button className="alert-bell" onClick={() => setIsOpen(!isOpen)} aria-label="Notifications">
         🔔
         {unreadCount > 0 && (
-          <span className="alert-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+          <span className="alert-badge">{unreadCount > 99 ? "99+" : unreadCount}</span>
         )}
       </button>
 
@@ -116,7 +122,9 @@ function AlertPanel() {
         <div className="alert-panel">
           <div className="alert-header">
             <h3>Alerts</h3>
-            <button className="close-btn" onClick={() => setIsOpen(false)}>✕</button>
+            <button className="close-btn" onClick={() => setIsOpen(false)}>
+              ✕
+            </button>
           </div>
 
           <div className="alert-filters">
@@ -167,7 +175,7 @@ function AlertPanel() {
               alerts.map((alert) => (
                 <div
                   key={alert.alert_id}
-                  className={`alert-item ${alert.read ? 'read' : 'unread'} priority-${alert.priority}`}
+                  className={`alert-item ${alert.read ? "read" : "unread"} priority-${alert.priority}`}
                   onClick={() => !alert.read && markAsRead([alert.alert_id])}
                 >
                   <div className="alert-item-header">
@@ -195,8 +203,11 @@ function AlertPanel() {
                           </span>
                         )}
                         {alert.data.change_pct && (
-                          <span className={`detail-badge ${alert.data.change_pct > 0 ? 'positive' : 'negative'}`}>
-                            {alert.data.change_pct > 0 ? '+' : ''}{alert.data.change_pct.toFixed(1)}%
+                          <span
+                            className={`detail-badge ${alert.data.change_pct > 0 ? "positive" : "negative"}`}
+                          >
+                            {alert.data.change_pct > 0 ? "+" : ""}
+                            {alert.data.change_pct.toFixed(1)}%
                           </span>
                         )}
                       </div>

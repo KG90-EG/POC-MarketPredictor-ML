@@ -194,7 +194,9 @@ class AlertDB:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        cursor.execute("SELECT COUNT(*) FROM alerts WHERE user_id = ? AND is_read = 0", (user_id,))
+        cursor.execute(
+            "SELECT COUNT(*) FROM alerts WHERE user_id = ? AND is_read = 0", (user_id,)
+        )
 
         count = cursor.fetchone()[0]
         conn.close()
@@ -243,7 +245,9 @@ class AlertGenerator:
                 current_value=current_price,
             )
 
-    def create_volatility_alert(self, user_id: str, ticker: str, volatility: float, threshold: float = 0.05):
+    def create_volatility_alert(
+        self, user_id: str, ticker: str, volatility: float, threshold: float = 0.05
+    ):
         """Create alert for high volatility."""
         if volatility > threshold:
             self.db.create_alert(

@@ -155,7 +155,11 @@ async def track_analytics_events(batch: AnalyticsBatch):
             }
             append_to_jsonl(ANALYTICS_FILE, event_data)
 
-        return {"success": True, "eventsReceived": len(batch.events), "message": f"Tracked {len(batch.events)} events"}
+        return {
+            "success": True,
+            "eventsReceived": len(batch.events),
+            "message": f"Tracked {len(batch.events)} events",
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to track events: {str(e)}")
@@ -187,7 +191,9 @@ async def get_analytics_summary():
             "totalEvents": total_events,
             "uniqueUsers": unique_users,
             "uniqueSessions": unique_sessions,
-            "topEvents": [{"event": name, "count": count} for name, count in top_events],
+            "topEvents": [
+                {"event": name, "count": count} for name, count in top_events
+            ],
             "eventTypes": event_counts,
         }
 
@@ -202,26 +208,42 @@ async def get_analytics_summary():
 async def track_ab_assignment(assignment: ABAssignment):
     """Track A/B test variant assignment"""
     try:
-        data = {**assignment.dict(), "receivedAt": int(datetime.now().timestamp() * 1000)}
+        data = {
+            **assignment.dict(),
+            "receivedAt": int(datetime.now().timestamp() * 1000),
+        }
         append_to_jsonl(AB_ASSIGNMENTS_FILE, data)
 
-        return {"success": True, "message": f"Assignment tracked: {assignment.experiment} -> {assignment.variant}"}
+        return {
+            "success": True,
+            "message": f"Assignment tracked: {assignment.experiment} -> {assignment.variant}",
+        }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to track assignment: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to track assignment: {str(e)}"
+        )
 
 
 @router.post("/ab-test/conversion")
 async def track_ab_conversion(conversion: ABConversion):
     """Track A/B test conversion"""
     try:
-        data = {**conversion.dict(), "receivedAt": int(datetime.now().timestamp() * 1000)}
+        data = {
+            **conversion.dict(),
+            "receivedAt": int(datetime.now().timestamp() * 1000),
+        }
         append_to_jsonl(AB_CONVERSIONS_FILE, data)
 
-        return {"success": True, "message": f"Conversion tracked: {conversion.experiment}"}
+        return {
+            "success": True,
+            "message": f"Conversion tracked: {conversion.experiment}",
+        }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to track conversion: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to track conversion: {str(e)}"
+        )
 
 
 @router.post("/ab-test/event")
@@ -277,10 +299,16 @@ async def get_ab_test_results():
             for variant, data in variants.items():
                 results[exp][variant] = {
                     **data,
-                    "conversionRate": calculate_conversion_rate(data["conversions"], data["impressions"]),
+                    "conversionRate": calculate_conversion_rate(
+                        data["conversions"], data["impressions"]
+                    ),
                 }
 
-        return {"experiments": results, "totalAssignments": len(assignments), "totalConversions": len(conversions)}
+        return {
+            "experiments": results,
+            "totalAssignments": len(assignments),
+            "totalConversions": len(conversions),
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get results: {str(e)}")
@@ -298,10 +326,16 @@ async def track_usability_session(session: UsabilitySession):
         data = {**session.dict(), "receivedAt": int(datetime.now().timestamp() * 1000)}
         append_to_jsonl(USABILITY_SESSIONS_FILE, data)
 
-        return {"success": True, "sessionId": session.id, "message": f"Session tracked: {len(session.events)} events"}
+        return {
+            "success": True,
+            "sessionId": session.id,
+            "message": f"Session tracked: {len(session.events)} events",
+        }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to track session: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to track session: {str(e)}"
+        )
 
 
 @router.get("/usability/sessions")
@@ -359,7 +393,9 @@ async def get_usability_analysis():
             key = f"{target.get('tag', 'unknown')}.{target.get('className', '')}"
             click_targets[key] = click_targets.get(key, 0) + 1
 
-        top_clicks = sorted(click_targets.items(), key=lambda x: x[1], reverse=True)[:10]
+        top_clicks = sorted(click_targets.items(), key=lambda x: x[1], reverse=True)[
+            :10
+        ]
 
         # Error patterns
         error_patterns = {}
@@ -367,7 +403,9 @@ async def get_usability_analysis():
             msg = error.get("message", "Unknown error")
             error_patterns[msg] = error_patterns.get(msg, 0) + 1
 
-        top_errors = sorted(error_patterns.items(), key=lambda x: x[1], reverse=True)[:10]
+        top_errors = sorted(error_patterns.items(), key=lambda x: x[1], reverse=True)[
+            :10
+        ]
 
         return {
             "totalSessions": total_sessions,
@@ -380,4 +418,6 @@ async def get_usability_analysis():
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to analyze usability: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to analyze usability: {str(e)}"
+        )

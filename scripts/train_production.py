@@ -106,8 +106,12 @@ def main():
     print("🤖 PRODUCTION MODEL TRAINING - US + SWISS STOCKS")
     print("=" * 80)
     print(f"\n📊 Training on {len(DEFAULT_STOCKS)} stocks:")
-    print(f"   US Stocks (30): {', '.join([s for s in DEFAULT_STOCKS if not s.endswith('.SW')][:5])}...")
-    print(f"   Swiss SMI (20): {', '.join([s for s in DEFAULT_STOCKS if s.endswith('.SW')][:5])}...")
+    print(
+        f"   US Stocks (30): {', '.join([s for s in DEFAULT_STOCKS if not s.endswith('.SW')][:5])}..."
+    )
+    print(
+        f"   Swiss SMI (20): {', '.join([s for s in DEFAULT_STOCKS if s.endswith('.SW')][:5])}..."
+    )
     print(f"   (Total: {len(DEFAULT_STOCKS)} - 30 US + 20 Swiss)")
 
     # Setup MLflow tracking
@@ -131,8 +135,12 @@ def main():
         trading_module.USE_ALL_FEATURES = True  # Use 20 advanced technical features
 
         print(f"   ✓ Advanced technical features enabled: 20 features")
-        print(f"     Technical: RSI, MACD, Bollinger, ATR, ADX, Stochastic, OBV, VWAP, etc.")
-        print(f"     Note: No external API calls (fundamentals/sentiment) to avoid rate limiting")
+        print(
+            f"     Technical: RSI, MACD, Bollinger, ATR, ADX, Stochastic, OBV, VWAP, etc."
+        )
+        print(
+            f"     Note: No external API calls (fundamentals/sentiment) to avoid rate limiting"
+        )
 
         try:
             data = build_dataset(DEFAULT_STOCKS, period="5y")
@@ -156,8 +164,12 @@ def main():
         if "Outperform" in data.columns:
             class_counts = data["Outperform"].value_counts()
             print(f"\n📊 Class distribution:")
-            print(f"   Outperform: {class_counts.get(1, 0):,} ({class_counts.get(1, 0)/len(data)*100:.1f}%)")
-            print(f"   Underperform: {class_counts.get(0, 0):,} ({class_counts.get(0, 0)/len(data)*100:.1f}%)")
+            print(
+                f"   Outperform: {class_counts.get(1, 0):,} ({class_counts.get(1, 0)/len(data)*100:.1f}%)"
+            )
+            print(
+                f"   Underperform: {class_counts.get(0, 0):,} ({class_counts.get(0, 0)/len(data)*100:.1f}%)"
+            )
 
     except Exception as e:
         print(f"❌ ERROR: Failed to build dataset: {e}")

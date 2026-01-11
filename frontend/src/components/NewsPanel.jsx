@@ -1,29 +1,29 @@
-import React, { useState, useEffect } from 'react'
-import PropTypes from 'prop-types'
-import './NewsPanel.css'
+import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
+import "./NewsPanel.css";
 
 /**
  * NewsPanel Component
  * Displays financial news related to a ticker
  */
 function NewsPanel({ ticker, limit = 5 }) {
-  const [news, setNews] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [expanded, setExpanded] = useState(false)
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     if (!ticker) {
-      setNews([])
-      return
+      setNews([]);
+      return;
     }
 
-    fetchNews()
-  }, [ticker, limit])
+    fetchNews();
+  }, [ticker, limit]);
 
   const fetchNews = async () => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
       // TODO: Replace with real news API
@@ -31,37 +31,37 @@ function NewsPanel({ ticker, limit = 5 }) {
       // setNews(response.data.news)
 
       // Mock data for demo
-      const mockNews = generateMockNews(ticker, limit)
-      setNews(mockNews)
+      const mockNews = generateMockNews(ticker, limit);
+      setNews(mockNews);
     } catch (err) {
-      console.error('Failed to fetch news:', err)
-      setError('Failed to load news')
+      console.error("Failed to fetch news:", err);
+      setError("Failed to load news");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Generate mock news data
   const generateMockNews = (symbol, count) => {
     const templates = [
-      { title: `${symbol} Reports Strong Q4 Earnings`, sentiment: 'positive' },
-      { title: `Analysts Upgrade ${symbol} to Buy`, sentiment: 'positive' },
-      { title: `${symbol} Announces New Product Line`, sentiment: 'positive' },
-      { title: `${symbol} Faces Regulatory Challenges`, sentiment: 'negative' },
-      { title: `${symbol} CEO Steps Down Amid Controversy`, sentiment: 'negative' },
-      { title: `${symbol} Stock Price Volatility Continues`, sentiment: 'neutral' },
-      { title: `Institutional Investors Increase ${symbol} Holdings`, sentiment: 'positive' },
-      { title: `${symbol} Market Share Under Pressure`, sentiment: 'negative' },
-      { title: `${symbol} Maintains Steady Growth Trajectory`, sentiment: 'neutral' },
-      { title: `Breaking: ${symbol} Announces Major Acquisition`, sentiment: 'positive' }
-    ]
+      { title: `${symbol} Reports Strong Q4 Earnings`, sentiment: "positive" },
+      { title: `Analysts Upgrade ${symbol} to Buy`, sentiment: "positive" },
+      { title: `${symbol} Announces New Product Line`, sentiment: "positive" },
+      { title: `${symbol} Faces Regulatory Challenges`, sentiment: "negative" },
+      { title: `${symbol} CEO Steps Down Amid Controversy`, sentiment: "negative" },
+      { title: `${symbol} Stock Price Volatility Continues`, sentiment: "neutral" },
+      { title: `Institutional Investors Increase ${symbol} Holdings`, sentiment: "positive" },
+      { title: `${symbol} Market Share Under Pressure`, sentiment: "negative" },
+      { title: `${symbol} Maintains Steady Growth Trajectory`, sentiment: "neutral" },
+      { title: `Breaking: ${symbol} Announces Major Acquisition`, sentiment: "positive" },
+    ];
 
-    const sources = ['Bloomberg', 'Reuters', 'CNBC', 'WSJ', 'Financial Times', 'MarketWatch']
-    
+    const sources = ["Bloomberg", "Reuters", "CNBC", "WSJ", "Financial Times", "MarketWatch"];
+
     return Array.from({ length: count }, (_, i) => {
-      const template = templates[i % templates.length]
-      const hoursAgo = Math.floor(Math.random() * 24) + 1
-      const source = sources[Math.floor(Math.random() * sources.length)]
+      const template = templates[i % templates.length];
+      const hoursAgo = Math.floor(Math.random() * 24) + 1;
+      const source = sources[Math.floor(Math.random() * sources.length)];
 
       return {
         id: `news-${ticker}-${i}`,
@@ -70,40 +70,46 @@ function NewsPanel({ ticker, limit = 5 }) {
         published_at: new Date(Date.now() - hoursAgo * 60 * 60 * 1000).toISOString(),
         url: `https://example.com/news/${ticker.toLowerCase()}-${i}`,
         sentiment: template.sentiment,
-        summary: `Latest developments regarding ${symbol}. This article discusses recent market movements and analyst perspectives on the company's future outlook.`
-      }
-    })
-  }
+        summary: `Latest developments regarding ${symbol}. This article discusses recent market movements and analyst perspectives on the company's future outlook.`,
+      };
+    });
+  };
 
   const formatTimeAgo = (dateString) => {
-    const now = new Date()
-    const published = new Date(dateString)
-    const diffMs = now - published
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-    const diffDays = Math.floor(diffHours / 24)
+    const now = new Date();
+    const published = new Date(dateString);
+    const diffMs = now - published;
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
 
-    if (diffHours < 1) return 'Just now'
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays === 1) return 'Yesterday'
-    if (diffDays < 7) return `${diffDays}d ago`
-    return published.toLocaleDateString()
-  }
+    if (diffHours < 1) return "Just now";
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return published.toLocaleDateString();
+  };
 
   const getSentimentIcon = (sentiment) => {
     switch (sentiment) {
-      case 'positive': return '📈'
-      case 'negative': return '📉'
-      default: return '📊'
+      case "positive":
+        return "📈";
+      case "negative":
+        return "📉";
+      default:
+        return "📊";
     }
-  }
+  };
 
   const getSentimentColor = (sentiment) => {
     switch (sentiment) {
-      case 'positive': return '#28a745'
-      case 'negative': return '#dc3545'
-      default: return '#6c757d'
+      case "positive":
+        return "#28a745";
+      case "negative":
+        return "#dc3545";
+      default:
+        return "#6c757d";
     }
-  }
+  };
 
   if (!ticker) {
     return (
@@ -113,7 +119,7 @@ function NewsPanel({ ticker, limit = 5 }) {
           <p>Select a stock to see related news</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -123,9 +129,9 @@ function NewsPanel({ ticker, limit = 5 }) {
         <button
           onClick={() => setExpanded(!expanded)}
           className="expand-btn"
-          aria-label={expanded ? 'Collapse news' : 'Expand news'}
+          aria-label={expanded ? "Collapse news" : "Expand news"}
         >
-          {expanded ? '▼' : '▶'}
+          {expanded ? "▼" : "▶"}
         </button>
       </div>
 
@@ -137,7 +143,9 @@ function NewsPanel({ ticker, limit = 5 }) {
       ) : error ? (
         <div className="news-error">
           <span>⚠️ {error}</span>
-          <button onClick={fetchNews} className="retry-btn">Retry</button>
+          <button onClick={fetchNews} className="retry-btn">
+            Retry
+          </button>
         </div>
       ) : expanded && news.length > 0 ? (
         <div className="news-list">
@@ -165,9 +173,7 @@ function NewsPanel({ ticker, limit = 5 }) {
                 <span className="news-divider">•</span>
                 <span className="news-time">{formatTimeAgo(article.published_at)}</span>
               </div>
-              {article.summary && (
-                <p className="news-summary">{article.summary}</p>
-              )}
+              {article.summary && <p className="news-summary">{article.summary}</p>}
             </article>
           ))}
         </div>
@@ -178,16 +184,18 @@ function NewsPanel({ ticker, limit = 5 }) {
         </div>
       ) : (
         <div className="news-collapsed">
-          <p>Click to view {news.length} recent article{news.length !== 1 ? 's' : ''}</p>
+          <p>
+            Click to view {news.length} recent article{news.length !== 1 ? "s" : ""}
+          </p>
         </div>
       )}
     </div>
-  )
+  );
 }
 
 NewsPanel.propTypes = {
   ticker: PropTypes.string,
-  limit: PropTypes.number
-}
+  limit: PropTypes.number,
+};
 
-export default NewsPanel
+export default NewsPanel;

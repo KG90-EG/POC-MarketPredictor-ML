@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const AllocationBreakdown = ({ positions, limits }) => {
   if (!positions || positions.length === 0) {
@@ -16,14 +16,14 @@ const AllocationBreakdown = ({ positions, limits }) => {
 
   const getProgressColor = (allocation, limit) => {
     const percentage = (allocation / limit) * 100;
-    if (percentage >= 100) return '#ef4444'; // red - over limit
-    if (percentage >= 80) return '#f59e0b'; // orange - warning
-    return '#10b981'; // green - good
+    if (percentage >= 100) return "#ef4444"; // red - over limit
+    if (percentage >= 80) return "#f59e0b"; // orange - warning
+    return "#10b981"; // green - good
   };
 
   const getSignalBadgeClass = (signal) => {
-    if (!signal) return 'signal-badge signal-hold';
-    const normalized = signal.toLowerCase().replace(/\s+/g, '_');
+    if (!signal) return "signal-badge signal-hold";
+    const normalized = signal.toLowerCase().replace(/\s+/g, "_");
     return `signal-badge signal-${normalized}`;
   };
 
@@ -32,12 +32,8 @@ const AllocationBreakdown = ({ positions, limits }) => {
       <h2>Position Breakdown</h2>
 
       <div className="limits-info">
-        <span className="limit-badge">
-          Stock Limit: {stockLimit}%
-        </span>
-        <span className="limit-badge">
-          Crypto Limit: {cryptoLimit}%
-        </span>
+        <span className="limit-badge">Stock Limit: {stockLimit}%</span>
+        <span className="limit-badge">Crypto Limit: {cryptoLimit}%</span>
       </div>
 
       <div className="positions-table-container">
@@ -55,13 +51,13 @@ const AllocationBreakdown = ({ positions, limits }) => {
           </thead>
           <tbody>
             {positions.map((position, idx) => {
-              const limit = position.asset_type === 'stock' ? stockLimit : cryptoLimit;
+              const limit = position.asset_type === "stock" ? stockLimit : cryptoLimit;
               const progressColor = getProgressColor(position.allocation, limit);
               const progressWidth = Math.min((position.allocation / limit) * 100, 100);
               const isOverLimit = position.allocation > limit;
 
               return (
-                <tr key={idx} className={isOverLimit ? 'over-limit' : ''}>
+                <tr key={idx} className={isOverLimit ? "over-limit" : ""}>
                   <td className="ticker-cell">
                     <strong>{position.ticker}</strong>
                   </td>
@@ -72,22 +68,20 @@ const AllocationBreakdown = ({ positions, limits }) => {
                   </td>
                   <td className="allocation-cell">
                     <div className="allocation-wrapper">
-                      <div className="allocation-value">
-                        {position.allocation.toFixed(1)}%
-                      </div>
+                      <div className="allocation-value">{position.allocation.toFixed(1)}%</div>
                       <div className="allocation-bar">
                         <div
                           className="allocation-fill"
                           style={{
                             width: `${progressWidth}%`,
-                            backgroundColor: progressColor
+                            backgroundColor: progressColor,
                           }}
                         />
                       </div>
                     </div>
                   </td>
                   <td className="score-cell">
-                    {position.score ? position.score.toFixed(0) : 'N/A'}
+                    {position.score ? position.score.toFixed(0) : "N/A"}
                   </td>
                   <td className="signal-cell">
                     {position.signal && (
@@ -98,24 +92,16 @@ const AllocationBreakdown = ({ positions, limits }) => {
                   </td>
                   <td className="status-cell">
                     {isOverLimit && (
-                      <span className="status-badge status-violation">
-                        ⛔ Over Limit
-                      </span>
+                      <span className="status-badge status-violation">⛔ Over Limit</span>
                     )}
                     {!isOverLimit && position.allocation >= limit * 0.8 && (
-                      <span className="status-badge status-warning">
-                        ⚠ Near Limit
-                      </span>
+                      <span className="status-badge status-warning">⚠ Near Limit</span>
                     )}
                     {!isOverLimit && position.allocation < limit * 0.8 && (
-                      <span className="status-badge status-ok">
-                        ✓ OK
-                      </span>
+                      <span className="status-badge status-ok">✓ OK</span>
                     )}
                   </td>
-                  <td className="limit-cell">
-                    {limit}%
-                  </td>
+                  <td className="limit-cell">{limit}%</td>
                 </tr>
               );
             })}

@@ -117,8 +117,13 @@ body.dark-mode .health-header h3 {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .health-actions {
@@ -184,8 +189,12 @@ body.dark-mode .refresh-btn-small:hover {
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .health-grid {
@@ -255,7 +264,8 @@ body.dark-mode .health-detail {
   color: #9aa0aa;
 }
 
-.health-loading, .health-error {
+.health-loading,
+.health-error {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -410,13 +420,13 @@ body.dark-mode .metric-row strong {
   .metrics-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .health-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
-  
+
   .health-actions {
     width: 100%;
     justify-content: space-between;

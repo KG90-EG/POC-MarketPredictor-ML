@@ -46,7 +46,9 @@ def evaluate_backtest(df: pd.DataFrame):
 
 def from_predictions(preds: Iterable, prices: Iterable, threshold: float = 0.5):
     df = pd.DataFrame({"prob": list(preds), "Adj Close": list(prices)})
-    df = simulate_strategy(df, prob_col="prob", price_col="Adj Close", threshold=threshold)
+    df = simulate_strategy(
+        df, prob_col="prob", price_col="Adj Close", threshold=threshold
+    )
     metrics = evaluate_backtest(df)
     return df, metrics
 

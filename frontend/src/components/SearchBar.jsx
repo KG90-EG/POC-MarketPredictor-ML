@@ -1,30 +1,30 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+import React from "react";
+import PropTypes from "prop-types";
 
 /**
  * Search bar component for ticker lookup
  */
-export function SearchBar({ 
-  value, 
-  onChange, 
-  onSearch, 
+export function SearchBar({
+  value,
+  onChange,
+  onSearch,
   onClear,
-  placeholder = 'Enter stock symbol (e.g., AAPL, TSLA)',
+  placeholder = "Enter stock symbol (e.g., AAPL, TSLA)",
   disabled = false,
-  loading = false 
+  loading = false,
 }) {
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !disabled && !loading) {
-      onSearch()
+    if (e.key === "Enter" && !disabled && !loading) {
+      onSearch();
     }
-  }
+  };
 
   const handleClear = () => {
-    onChange('')
+    onChange("");
     if (onClear) {
-      onClear()
+      onClear();
     }
-  }
+  };
 
   return (
     <div className="search-bar">
@@ -39,7 +39,7 @@ export function SearchBar({
           className="search-input"
           aria-label="Stock search"
         />
-        
+
         {value && (
           <button
             onClick={handleClear}
@@ -50,26 +50,20 @@ export function SearchBar({
             ✕
           </button>
         )}
-        
+
         <button
           onClick={onSearch}
           disabled={disabled || loading || !value.trim()}
           className="search-btn"
           aria-label="Search"
         >
-          {loading ? (
-            <span className="spinner-small">⌛</span>
-          ) : (
-            '🔍 Search'
-          )}
+          {loading ? <span className="spinner-small">⌛</span> : "🔍 Search"}
         </button>
       </div>
-      
-      <div className="search-hint">
-        Press Enter or click Search to look up a stock
-      </div>
+
+      <div className="search-hint">Press Enter or click Search to look up a stock</div>
     </div>
-  )
+  );
 }
 
 SearchBar.propTypes = {
@@ -79,7 +73,7 @@ SearchBar.propTypes = {
   onClear: PropTypes.func,
   placeholder: PropTypes.string,
   disabled: PropTypes.bool,
-  loading: PropTypes.bool
-}
+  loading: PropTypes.bool,
+};
 
-export default SearchBar
+export default SearchBar;

@@ -1,17 +1,17 @@
-import PropTypes from 'prop-types';
-import './EmptyState.css';
+import PropTypes from "prop-types";
+import "./EmptyState.css";
 
 /**
  * EmptyState Component
  * Displays a friendly message when there's no data to show
  */
 function EmptyState({
-  icon = '📊',
-  title = 'No data yet',
-  description = 'Get started by selecting an option above',
+  icon = "📊",
+  title = "No data yet",
+  description = "Get started by selecting an option above",
   action = null,
-  actionLabel = 'Get Started',
-  onAction = null
+  actionLabel = "Get Started",
+  onAction = null,
 }) {
   return (
     <div className="empty-state">
@@ -19,11 +19,7 @@ function EmptyState({
       <h3 className="empty-state-title">{title}</h3>
       <p className="empty-state-description">{description}</p>
       {action && onAction && (
-        <button
-          className="empty-state-button"
-          onClick={onAction}
-          aria-label={actionLabel}
-        >
+        <button className="empty-state-button" onClick={onAction} aria-label={actionLabel}>
           {actionLabel}
         </button>
       )}
@@ -38,7 +34,7 @@ EmptyState.propTypes = {
   description: PropTypes.string,
   action: PropTypes.node,
   actionLabel: PropTypes.string,
-  onAction: PropTypes.func
+  onAction: PropTypes.func,
 };
 
 export default EmptyState;

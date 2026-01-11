@@ -1,21 +1,21 @@
-import React, { useState } from 'react'
-import PropTypes from 'prop-types'
-import './PriceAlert.css'
+import React, { useState } from "react";
+import PropTypes from "prop-types";
+import "./PriceAlert.css";
 
 /**
  * PriceAlert Component
  * Allows setting price alerts for watchlist items
  */
 function PriceAlert({ ticker, currentPrice, existingAlert, onSave, onDelete }) {
-  const [showForm, setShowForm] = useState(false)
-  const [alertType, setAlertType] = useState(existingAlert?.type || 'above')
-  const [targetPrice, setTargetPrice] = useState(existingAlert?.target_price || '')
-  const [notification, setNotification] = useState(existingAlert?.notification || 'browser')
-  
+  const [showForm, setShowForm] = useState(false);
+  const [alertType, setAlertType] = useState(existingAlert?.type || "above");
+  const [targetPrice, setTargetPrice] = useState(existingAlert?.target_price || "");
+  const [notification, setNotification] = useState(existingAlert?.notification || "browser");
+
   const handleSave = () => {
     if (!targetPrice || parseFloat(targetPrice) <= 0) {
-      alert('Please enter a valid target price')
-      return
+      alert("Please enter a valid target price");
+      return;
     }
 
     onSave({
@@ -23,75 +23,74 @@ function PriceAlert({ ticker, currentPrice, existingAlert, onSave, onDelete }) {
       type: alertType,
       target_price: parseFloat(targetPrice),
       notification,
-      current_price: currentPrice
-    })
-    
-    setShowForm(false)
-  }
+      current_price: currentPrice,
+    });
+
+    setShowForm(false);
+  };
 
   const handleDelete = () => {
-    if (confirm('Delete this price alert?')) {
-      onDelete(ticker)
-      setShowForm(false)
+    if (confirm("Delete this price alert?")) {
+      onDelete(ticker);
+      setShowForm(false);
     }
-  }
+  };
 
   const getAlertStatus = () => {
-    if (!existingAlert || !currentPrice) return null
+    if (!existingAlert || !currentPrice) return null;
 
-    const target = existingAlert.target_price
-    const current = currentPrice
+    const target = existingAlert.target_price;
+    const current = currentPrice;
 
-    if (existingAlert.type === 'above' && current >= target) {
-      return { triggered: true, message: `🚀 Target reached! Price is $${current.toFixed(2)} (target was $${target.toFixed(2)})` }
+    if (existingAlert.type === "above" && current >= target) {
+      return {
+        triggered: true,
+        message: `🚀 Target reached! Price is $${current.toFixed(2)} (target was $${target.toFixed(2)})`,
+      };
     }
-    if (existingAlert.type === 'below' && current <= target) {
-      return { triggered: true, message: `⚠️ Price dropped! Currently $${current.toFixed(2)} (target was $${target.toFixed(2)})` }
+    if (existingAlert.type === "below" && current <= target) {
+      return {
+        triggered: true,
+        message: `⚠️ Price dropped! Currently $${current.toFixed(2)} (target was $${target.toFixed(2)})`,
+      };
     }
 
-    const diff = alertType === 'above' ? target - current : current - target
-    const percentAway = ((Math.abs(target - current) / current) * 100).toFixed(1)
+    const diff = alertType === "above" ? target - current : current - target;
+    const percentAway = ((Math.abs(target - current) / current) * 100).toFixed(1);
 
     return {
       triggered: false,
-      message: `Watching... ${percentAway}% away from target ($${target.toFixed(2)})`
-    }
-  }
+      message: `Watching... ${percentAway}% away from target ($${target.toFixed(2)})`,
+    };
+  };
 
-  const status = getAlertStatus()
+  const status = getAlertStatus();
 
   return (
     <div className="price-alert-container">
       {existingAlert && !showForm ? (
-        <div className={`alert-badge ${status?.triggered ? 'triggered' : 'active'}`}>
+        <div className={`alert-badge ${status?.triggered ? "triggered" : "active"}`}>
           <div className="alert-info">
             <span className="alert-icon">
-              {status?.triggered ? '🔔' : alertType === 'above' ? '📈' : '📉'}
+              {status?.triggered ? "🔔" : alertType === "above" ? "📈" : "📉"}
             </span>
             <div className="alert-details">
               <div className="alert-type">
-                Alert: {alertType === 'above' ? 'Above' : 'Below'} ${existingAlert.target_price.toFixed(2)}
+                Alert: {alertType === "above" ? "Above" : "Below"} $
+                {existingAlert.target_price.toFixed(2)}
               </div>
               {status && (
-                <div className={`alert-status ${status.triggered ? 'triggered' : ''}`}>
+                <div className={`alert-status ${status.triggered ? "triggered" : ""}`}>
                   {status.message}
                 </div>
               )}
             </div>
           </div>
           <div className="alert-actions">
-            <button
-              onClick={() => setShowForm(true)}
-              className="edit-alert-btn"
-              title="Edit alert"
-            >
+            <button onClick={() => setShowForm(true)} className="edit-alert-btn" title="Edit alert">
               ✏️
             </button>
-            <button
-              onClick={handleDelete}
-              className="delete-alert-btn"
-              title="Delete alert"
-            >
+            <button onClick={handleDelete} className="delete-alert-btn" title="Delete alert">
               ✕
             </button>
           </div>
@@ -99,8 +98,8 @@ function PriceAlert({ ticker, currentPrice, existingAlert, onSave, onDelete }) {
       ) : showForm ? (
         <div className="alert-form">
           <h4>Set Price Alert for {ticker}</h4>
-          <p className="current-price">Current: ${currentPrice?.toFixed(2) || 'N/A'}</p>
-          
+          <p className="current-price">Current: ${currentPrice?.toFixed(2) || "N/A"}</p>
+
           <div className="form-group">
             <label htmlFor={`alert-type-${ticker}`}>Alert Type</label>
             <select
@@ -152,29 +151,25 @@ function PriceAlert({ ticker, currentPrice, existingAlert, onSave, onDelete }) {
           </div>
         </div>
       ) : (
-        <button
-          onClick={() => setShowForm(true)}
-          className="add-alert-btn"
-          title="Set price alert"
-        >
+        <button onClick={() => setShowForm(true)} className="add-alert-btn" title="Set price alert">
           🔔 Set Alert
         </button>
       )}
     </div>
-  )
+  );
 }
 
 PriceAlert.propTypes = {
   ticker: PropTypes.string.isRequired,
   currentPrice: PropTypes.number,
   existingAlert: PropTypes.shape({
-    type: PropTypes.oneOf(['above', 'below']).isRequired,
+    type: PropTypes.oneOf(["above", "below"]).isRequired,
     target_price: PropTypes.number.isRequired,
     notification: PropTypes.string,
-    triggered: PropTypes.bool
+    triggered: PropTypes.bool,
   }),
   onSave: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired
-}
+  onDelete: PropTypes.func.isRequired,
+};
 
-export default PriceAlert
+export default PriceAlert;

@@ -293,7 +293,10 @@ def cache_warmup(tickers: list[str]):
             logger.warning(f"Cache warmup failed for {ticker}: {e}")
 
     duration = time.time() - start_time
-    logger.info(f"🔥 Cache warmup complete: " f"{success_count}/{len(tickers)} tickers in {duration:.2f}s")
+    logger.info(
+        f"🔥 Cache warmup complete: "
+        f"{success_count}/{len(tickers)} tickers in {duration:.2f}s"
+    )
 
 
 # Backwards compatibility

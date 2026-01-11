@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
 /**
  * UsabilityTracker Component
@@ -27,11 +27,11 @@ const UsabilityTracker = ({ enabled = false, sessionId = null }) => {
       screenSize: `${window.innerWidth}x${window.innerHeight}`,
       viewport: `${window.visualViewport?.width || window.innerWidth}x${window.visualViewport?.height || window.innerHeight}`,
       language: navigator.language,
-      events: []
+      events: [],
     };
 
     setSession(newSession);
-    console.log('[UsabilityTracker] Session started:', newSession.id);
+    console.log("[UsabilityTracker] Session started:", newSession.id);
 
     return () => {
       if (events.length > 0) {
@@ -41,46 +41,52 @@ const UsabilityTracker = ({ enabled = false, sessionId = null }) => {
   }, [enabled, sessionId]);
 
   // Track click events
-  const trackClick = useCallback((event) => {
-    if (!enabled || !session) return;
+  const trackClick = useCallback(
+    (event) => {
+      if (!enabled || !session) return;
 
-    const clickData = {
-      type: 'click',
-      timestamp: Date.now(),
-      x: event.clientX,
-      y: event.clientY,
-      pageX: event.pageX,
-      pageY: event.pageY,
-      target: {
-        tag: event.target.tagName,
-        id: event.target.id,
-        className: event.target.className,
-        text: event.target.innerText?.substring(0, 50) || ''
-      },
-      path: event.composedPath().slice(0, 5).map(el => ({
-        tag: el.tagName,
-        id: el.id,
-        className: el.className
-      }))
-    };
+      const clickData = {
+        type: "click",
+        timestamp: Date.now(),
+        x: event.clientX,
+        y: event.clientY,
+        pageX: event.pageX,
+        pageY: event.pageY,
+        target: {
+          tag: event.target.tagName,
+          id: event.target.id,
+          className: event.target.className,
+          text: event.target.innerText?.substring(0, 50) || "",
+        },
+        path: event
+          .composedPath()
+          .slice(0, 5)
+          .map((el) => ({
+            tag: el.tagName,
+            id: el.id,
+            className: el.className,
+          })),
+      };
 
-    setEvents(prev => [...prev, clickData]);
-  }, [enabled, session]);
+      setEvents((prev) => [...prev, clickData]);
+    },
+    [enabled, session]
+  );
 
   // Track scroll events
   const trackScroll = useCallback(() => {
     if (!enabled || !session) return;
 
     const scrollData = {
-      type: 'scroll',
+      type: "scroll",
       timestamp: Date.now(),
       scrollX: window.scrollX,
       scrollY: window.scrollY,
       scrollHeight: document.documentElement.scrollHeight,
-      clientHeight: document.documentElement.clientHeight
+      clientHeight: document.documentElement.clientHeight,
     };
 
-    setEvents(prev => [...prev, scrollData]);
+    setEvents((prev) => [...prev, scrollData]);
   }, [enabled, session]);
 
   // Track page visibility changes
@@ -88,57 +94,66 @@ const UsabilityTracker = ({ enabled = false, sessionId = null }) => {
     if (!enabled || !session) return;
 
     const visibilityData = {
-      type: 'visibility',
+      type: "visibility",
       timestamp: Date.now(),
-      visible: !document.hidden
+      visible: !document.hidden,
     };
 
-    setEvents(prev => [...prev, visibilityData]);
+    setEvents((prev) => [...prev, visibilityData]);
   }, [enabled, session]);
 
   // Track navigation
-  const trackNavigation = useCallback((from, to) => {
-    if (!enabled || !session) return;
+  const trackNavigation = useCallback(
+    (from, to) => {
+      if (!enabled || !session) return;
 
-    const navigationData = {
-      type: 'navigation',
-      timestamp: Date.now(),
-      from,
-      to,
-      method: 'click' // could be 'back', 'forward', 'direct'
-    };
+      const navigationData = {
+        type: "navigation",
+        timestamp: Date.now(),
+        from,
+        to,
+        method: "click", // could be 'back', 'forward', 'direct'
+      };
 
-    setEvents(prev => [...prev, navigationData]);
-  }, [enabled, session]);
+      setEvents((prev) => [...prev, navigationData]);
+    },
+    [enabled, session]
+  );
 
   // Track errors
-  const trackError = useCallback((error, errorInfo) => {
-    if (!enabled || !session) return;
+  const trackError = useCallback(
+    (error, errorInfo) => {
+      if (!enabled || !session) return;
 
-    const errorData = {
-      type: 'error',
-      timestamp: Date.now(),
-      message: error.message,
-      stack: error.stack?.substring(0, 500),
-      componentStack: errorInfo?.componentStack?.substring(0, 500)
-    };
+      const errorData = {
+        type: "error",
+        timestamp: Date.now(),
+        message: error.message,
+        stack: error.stack?.substring(0, 500),
+        componentStack: errorInfo?.componentStack?.substring(0, 500),
+      };
 
-    setEvents(prev => [...prev, errorData]);
-  }, [enabled, session]);
+      setEvents((prev) => [...prev, errorData]);
+    },
+    [enabled, session]
+  );
 
   // Track custom events
-  const trackCustomEvent = useCallback((eventName, data = {}) => {
-    if (!enabled || !session) return;
+  const trackCustomEvent = useCallback(
+    (eventName, data = {}) => {
+      if (!enabled || !session) return;
 
-    const customData = {
-      type: 'custom',
-      name: eventName,
-      timestamp: Date.now(),
-      data
-    };
+      const customData = {
+        type: "custom",
+        name: eventName,
+        timestamp: Date.now(),
+        data,
+      };
 
-    setEvents(prev => [...prev, customData]);
-  }, [enabled, session]);
+      setEvents((prev) => [...prev, customData]);
+    },
+    [enabled, session]
+  );
 
   // Export session data
   const exportSession = useCallback(() => {
@@ -151,15 +166,15 @@ const UsabilityTracker = ({ enabled = false, sessionId = null }) => {
       events,
       statistics: {
         totalEvents: events.length,
-        clickCount: events.filter(e => e.type === 'click').length,
-        scrollCount: events.filter(e => e.type === 'scroll').length,
-        errorCount: events.filter(e => e.type === 'error').length,
-        navigationCount: events.filter(e => e.type === 'navigation').length
-      }
+        clickCount: events.filter((e) => e.type === "click").length,
+        scrollCount: events.filter((e) => e.type === "scroll").length,
+        errorCount: events.filter((e) => e.type === "error").length,
+        navigationCount: events.filter((e) => e.type === "navigation").length,
+      },
     };
 
     // Store in localStorage
-    const existingSessions = JSON.parse(localStorage.getItem('usability_sessions') || '[]');
+    const existingSessions = JSON.parse(localStorage.getItem("usability_sessions") || "[]");
     existingSessions.push(sessionData);
 
     // Keep only last 50 sessions
@@ -167,10 +182,10 @@ const UsabilityTracker = ({ enabled = false, sessionId = null }) => {
       existingSessions.shift();
     }
 
-    localStorage.setItem('usability_sessions', JSON.stringify(existingSessions));
+    localStorage.setItem("usability_sessions", JSON.stringify(existingSessions));
 
     // Also log to console for debugging
-    console.log('[UsabilityTracker] Session exported:', sessionData);
+    console.log("[UsabilityTracker] Session exported:", sessionData);
 
     // Send to backend if API is available
     sendToBackend(sessionData);
@@ -179,19 +194,19 @@ const UsabilityTracker = ({ enabled = false, sessionId = null }) => {
   // Send session data to backend
   const sendToBackend = async (sessionData) => {
     try {
-      const response = await fetch('/api/usability/sessions', {
-        method: 'POST',
+      const response = await fetch("/api/usability/sessions", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(sessionData)
+        body: JSON.stringify(sessionData),
       });
 
       if (response.ok) {
-        console.log('[UsabilityTracker] Session data sent to backend');
+        console.log("[UsabilityTracker] Session data sent to backend");
       }
     } catch (error) {
-      console.warn('[UsabilityTracker] Failed to send session data:', error);
+      console.warn("[UsabilityTracker] Failed to send session data:", error);
     }
   };
 
@@ -199,10 +214,10 @@ const UsabilityTracker = ({ enabled = false, sessionId = null }) => {
   useEffect(() => {
     if (!enabled) return;
 
-    document.addEventListener('click', trackClick);
-    window.addEventListener('scroll', trackScroll, { passive: true });
-    document.addEventListener('visibilitychange', trackVisibility);
-    window.addEventListener('error', (e) => trackError(e.error, { componentStack: e.filename }));
+    document.addEventListener("click", trackClick);
+    window.addEventListener("scroll", trackScroll, { passive: true });
+    document.addEventListener("visibilitychange", trackVisibility);
+    window.addEventListener("error", (e) => trackError(e.error, { componentStack: e.filename }));
 
     // Track scroll every 2 seconds max (throttled)
     let scrollTimeout;
@@ -213,13 +228,13 @@ const UsabilityTracker = ({ enabled = false, sessionId = null }) => {
         scrollTimeout = null;
       }, 2000);
     };
-    window.addEventListener('scroll', throttledScroll, { passive: true });
+    window.addEventListener("scroll", throttledScroll, { passive: true });
 
     return () => {
-      document.removeEventListener('click', trackClick);
-      window.removeEventListener('scroll', trackScroll);
-      document.removeEventListener('visibilitychange', trackVisibility);
-      window.removeEventListener('scroll', throttledScroll);
+      document.removeEventListener("click", trackClick);
+      window.removeEventListener("scroll", trackScroll);
+      document.removeEventListener("visibilitychange", trackVisibility);
+      window.removeEventListener("scroll", throttledScroll);
     };
   }, [enabled, trackClick, trackScroll, trackVisibility, trackError]);
 
@@ -231,10 +246,10 @@ const UsabilityTracker = ({ enabled = false, sessionId = null }) => {
       exportSession();
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
       exportSession();
     };
   }, [enabled, exportSession]);
@@ -249,7 +264,7 @@ const UsabilityTracker = ({ enabled = false, sessionId = null }) => {
       trackCustomEvent,
       exportSession,
       getEvents: () => events,
-      getSession: () => session
+      getSession: () => session,
     };
 
     return () => {
@@ -273,7 +288,7 @@ export const analyzeUsabilityData = (sessions) => {
       totalErrors: 0,
       clickHeatmap: [],
       commonPaths: [],
-      errorPatterns: []
+      errorPatterns: [],
     };
   }
 
@@ -281,26 +296,26 @@ export const analyzeUsabilityData = (sessions) => {
   const totalDuration = sessions.reduce((sum, s) => sum + s.duration, 0);
   const averageDuration = totalDuration / totalSessions;
 
-  const allEvents = sessions.flatMap(s => s.events);
-  const totalClicks = allEvents.filter(e => e.type === 'click').length;
-  const totalErrors = allEvents.filter(e => e.type === 'error').length;
+  const allEvents = sessions.flatMap((s) => s.events);
+  const totalClicks = allEvents.filter((e) => e.type === "click").length;
+  const totalErrors = allEvents.filter((e) => e.type === "error").length;
 
   // Generate click heatmap data
   const clickHeatmap = allEvents
-    .filter(e => e.type === 'click')
-    .map(e => ({
+    .filter((e) => e.type === "click")
+    .map((e) => ({
       x: e.x,
       y: e.y,
       pageX: e.pageX,
       pageY: e.pageY,
-      target: e.target
+      target: e.target,
     }));
 
   // Analyze common navigation paths
-  const navigationEvents = allEvents.filter(e => e.type === 'navigation');
+  const navigationEvents = allEvents.filter((e) => e.type === "navigation");
   const pathCounts = {};
 
-  navigationEvents.forEach(nav => {
+  navigationEvents.forEach((nav) => {
     const path = `${nav.from} → ${nav.to}`;
     pathCounts[path] = (pathCounts[path] || 0) + 1;
   });
@@ -311,10 +326,10 @@ export const analyzeUsabilityData = (sessions) => {
     .map(([path, count]) => ({ path, count }));
 
   // Analyze error patterns
-  const errorEvents = allEvents.filter(e => e.type === 'error');
+  const errorEvents = allEvents.filter((e) => e.type === "error");
   const errorCounts = {};
 
-  errorEvents.forEach(err => {
+  errorEvents.forEach((err) => {
     const key = err.message;
     errorCounts[key] = (errorCounts[key] || 0) + 1;
   });
@@ -332,6 +347,6 @@ export const analyzeUsabilityData = (sessions) => {
     clickHeatmap,
     commonPaths,
     errorPatterns,
-    sessionsAnalyzed: sessions.length
+    sessionsAnalyzed: sessions.length,
   };
 };

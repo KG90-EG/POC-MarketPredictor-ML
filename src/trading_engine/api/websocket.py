@@ -102,7 +102,9 @@ class ConnectionManager:
                                 current_price = float(hist["Close"].iloc[-1])
                                 prev_close = info.get("previousClose", current_price)
                                 change = current_price - prev_close
-                                change_percent = (change / prev_close * 100) if prev_close else 0
+                                change_percent = (
+                                    (change / prev_close * 100) if prev_close else 0
+                                )
 
                                 update = {
                                     "type": "price_update",
@@ -136,7 +138,9 @@ class ConnectionManager:
         return {
             "active_connections": len(self.active_connections),
             "subscribed_tickers": len(self.subscriptions),
-            "total_subscriptions": sum(len(subs) for subs in self.subscriptions.values()),
+            "total_subscriptions": sum(
+                len(subs) for subs in self.subscriptions.values()
+            ),
         }
 
 

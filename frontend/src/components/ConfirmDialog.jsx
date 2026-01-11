@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
-import './ConfirmDialog.css';
+import { useEffect, useRef } from "react";
+import PropTypes from "prop-types";
+import "./ConfirmDialog.css";
 
 /**
  * Confirmation Dialog Component
@@ -11,11 +11,11 @@ function ConfirmDialog({
   isOpen,
   title,
   message,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
-  confirmType = 'danger', // 'danger', 'warning', 'primary'
+  confirmText = "Confirm",
+  cancelText = "Cancel",
+  confirmType = "danger", // 'danger', 'warning', 'primary'
   onConfirm,
-  onCancel
+  onCancel,
 }) {
   const dialogRef = useRef(null);
   const confirmBtnRef = useRef(null);
@@ -32,16 +32,16 @@ function ConfirmDialog({
       }, 100);
 
       // Prevent body scroll
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
 
       // Trap focus inside dialog
       const handleKeyDown = (e) => {
-        if (e.key === 'Escape') {
+        if (e.key === "Escape") {
           onCancel();
         }
 
         // Tab key handling for focus trap
-        if (e.key === 'Tab') {
+        if (e.key === "Tab") {
           const focusableElements = dialogRef.current?.querySelectorAll(
             'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
           );
@@ -64,11 +64,11 @@ function ConfirmDialog({
         }
       };
 
-      document.addEventListener('keydown', handleKeyDown);
+      document.addEventListener("keydown", handleKeyDown);
 
       return () => {
-        document.removeEventListener('keydown', handleKeyDown);
-        document.body.style.overflow = '';
+        document.removeEventListener("keydown", handleKeyDown);
+        document.body.style.overflow = "";
         // Restore focus to previous element
         previousActiveElement.current?.focus();
       };
@@ -150,9 +150,9 @@ ConfirmDialog.propTypes = {
   message: PropTypes.string.isRequired,
   confirmText: PropTypes.string,
   cancelText: PropTypes.string,
-  confirmType: PropTypes.oneOf(['danger', 'warning', 'primary']),
+  confirmType: PropTypes.oneOf(["danger", "warning", "primary"]),
   onConfirm: PropTypes.func.isRequired,
-  onCancel: PropTypes.func.isRequired
+  onCancel: PropTypes.func.isRequired,
 };
 
 export default ConfirmDialog;

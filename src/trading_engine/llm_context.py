@@ -53,7 +53,9 @@ class LLMContextProvider:
         self.news_api_key = news_api_key
         self.MAX_ADJUSTMENT = 5.0  # ±5% maximum adjustment
 
-    async def get_asset_context(self, ticker: str, current_score: float, lookback_days: int = 7) -> AssetContext:
+    async def get_asset_context(
+        self, ticker: str, current_score: float, lookback_days: int = 7
+    ) -> AssetContext:
         """
         Get contextual information for an asset.
 
@@ -73,7 +75,9 @@ class LLMContextProvider:
                 return self._create_empty_context(ticker)
 
             # Ask LLM to summarize and analyze (NOT to recommend)
-            context = await self._analyze_news_with_llm(ticker=ticker, news_items=news_items, current_score=current_score)
+            context = await self._analyze_news_with_llm(
+                ticker=ticker, news_items=news_items, current_score=current_score
+            )
 
             return context
 
@@ -107,7 +111,9 @@ class LLMContextProvider:
         logger.debug(f"News fetch not implemented - returning empty for {ticker}")
         return []
 
-    async def _analyze_news_with_llm(self, ticker: str, news_items: List[Dict], current_score: float) -> AssetContext:
+    async def _analyze_news_with_llm(
+        self, ticker: str, news_items: List[Dict], current_score: float
+    ) -> AssetContext:
         """
         Ask LLM to analyze news WITHOUT making buy/sell decisions.
 
@@ -186,7 +192,9 @@ Format your response as JSON:
             logger.error(f"LLM analysis failed for {ticker}: {e}")
             return self._create_empty_context(ticker)
 
-    def _calculate_context_adjustment(self, sentiment: float, positive_catalysts: List[str], risk_factors: List[str]) -> float:
+    def _calculate_context_adjustment(
+        self, sentiment: float, positive_catalysts: List[str], risk_factors: List[str]
+    ) -> float:
         """
         Calculate context adjustment with STRICT ±5% limit.
 

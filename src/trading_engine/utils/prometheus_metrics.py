@@ -230,7 +230,9 @@ active_connections = Gauge(
 
 def track_prediction(model_name: str, predicted_class: int, confidence: float) -> None:
     """Track a single prediction."""
-    predictions_total.labels(model_name=model_name, predicted_class=predicted_class).inc()
+    predictions_total.labels(
+        model_name=model_name, predicted_class=predicted_class
+    ).inc()
     prediction_confidence.labels(model_name=model_name).observe(confidence)
 
 
@@ -268,9 +270,13 @@ def update_model_metrics(
     recall: float,
 ) -> None:
     """Update model performance metrics."""
-    model_accuracy.labels(model_name=model_name, model_version=model_version).set(accuracy)
+    model_accuracy.labels(model_name=model_name, model_version=model_version).set(
+        accuracy
+    )
     model_f1_score.labels(model_name=model_name, model_version=model_version).set(f1)
-    model_precision.labels(model_name=model_name, model_version=model_version).set(precision)
+    model_precision.labels(model_name=model_name, model_version=model_version).set(
+        precision
+    )
     model_recall.labels(model_name=model_name, model_version=model_version).set(recall)
 
 
@@ -306,14 +312,24 @@ def time_api_request(endpoint: str, method: str) -> Callable:
             try:
                 result = await func(*args, **kwargs)
                 duration = time.time() - start_time
-                api_request_duration.labels(endpoint=endpoint, method=method).observe(duration)
-                api_requests_total.labels(endpoint=endpoint, method=method, status="success").inc()
+                api_request_duration.labels(endpoint=endpoint, method=method).observe(
+                    duration
+                )
+                api_requests_total.labels(
+                    endpoint=endpoint, method=method, status="success"
+                ).inc()
                 return result
             except Exception as e:
                 duration = time.time() - start_time
-                api_request_duration.labels(endpoint=endpoint, method=method).observe(duration)
-                api_requests_total.labels(endpoint=endpoint, method=method, status="error").inc()
-                api_errors_total.labels(endpoint=endpoint, error_type=type(e).__name__).inc()
+                api_request_duration.labels(endpoint=endpoint, method=method).observe(
+                    duration
+                )
+                api_requests_total.labels(
+                    endpoint=endpoint, method=method, status="error"
+                ).inc()
+                api_errors_total.labels(
+                    endpoint=endpoint, error_type=type(e).__name__
+                ).inc()
                 raise
 
         @wraps(func)
@@ -322,14 +338,24 @@ def time_api_request(endpoint: str, method: str) -> Callable:
             try:
                 result = func(*args, **kwargs)
                 duration = time.time() - start_time
-                api_request_duration.labels(endpoint=endpoint, method=method).observe(duration)
-                api_requests_total.labels(endpoint=endpoint, method=method, status="success").inc()
+                api_request_duration.labels(endpoint=endpoint, method=method).observe(
+                    duration
+                )
+                api_requests_total.labels(
+                    endpoint=endpoint, method=method, status="success"
+                ).inc()
                 return result
             except Exception as e:
                 duration = time.time() - start_time
-                api_request_duration.labels(endpoint=endpoint, method=method).observe(duration)
-                api_requests_total.labels(endpoint=endpoint, method=method, status="error").inc()
-                api_errors_total.labels(endpoint=endpoint, error_type=type(e).__name__).inc()
+                api_request_duration.labels(endpoint=endpoint, method=method).observe(
+                    duration
+                )
+                api_requests_total.labels(
+                    endpoint=endpoint, method=method, status="error"
+                ).inc()
+                api_errors_total.labels(
+                    endpoint=endpoint, error_type=type(e).__name__
+                ).inc()
                 raise
 
         # Return async wrapper if function is async

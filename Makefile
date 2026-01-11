@@ -47,12 +47,24 @@ help: ## Show this help message
 # ============================================
 # Environment Setup
 # ============================================
-setup: check-env install ## Complete initial setup (venv + deps + .env check)
+setup: check-env install setup-git-hooks ## Complete initial setup (venv + deps + .env check)
 	@echo "✅ Setup complete!"
 	@echo ""
 	@echo "Next steps:"
 	@echo "  1. Review .env configuration"
 	@echo "  2. Run: make start"
+
+setup-git-hooks: ## Setup git hooks for pre-commit checks
+	@echo "Setting up git hooks..."
+	@if [ -d .git ]; then \
+		git config core.hooksPath .husky; \
+		chmod +x .husky/pre-commit .husky/_/husky.sh; \
+		echo "✅ Git hooks configured"; \
+		echo "   Pre-commit checks will run before each commit"; \
+		echo "   Use 'git commit --no-verify' to skip if needed"; \
+	else \
+		echo "⚠️  Not a git repository, skipping hooks setup"; \
+	fi
 
 check-env: ## Check if .env file exists
 	@if [ ! -f $(ENV_FILE) ]; then \

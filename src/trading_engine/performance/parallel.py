@@ -40,7 +40,9 @@ class ParallelProcessor:
 
         logger.info(f"Parallel processor initialized with {max_workers} workers")
 
-    def process_batch(self, items: List[Any], process_func: Callable, timeout: Optional[float] = None) -> List[Dict[str, Any]]:
+    def process_batch(
+        self, items: List[Any], process_func: Callable, timeout: Optional[float] = None
+    ) -> List[Dict[str, Any]]:
         """
         Process a batch of items in parallel.
 
@@ -59,7 +61,9 @@ class ParallelProcessor:
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # Submit all tasks
-            future_to_item = {executor.submit(process_func, item): item for item in items}
+            future_to_item = {
+                executor.submit(process_func, item): item for item in items
+            }
 
             # Collect results as they complete
             for future in as_completed(future_to_item, timeout=timeout):
@@ -135,7 +139,10 @@ def _process_single_ticker(args: tuple) -> Optional[Dict[str, Any]]:
     import pandas as pd
     import yfinance as yf
 
-    from ..ml.feature_engineering import add_technical_features_only, get_technical_feature_names
+    from ..ml.feature_engineering import (
+        add_technical_features_only,
+        get_technical_feature_names,
+    )
 
     ticker, model_pickle = args
 
@@ -206,7 +213,9 @@ def _process_single_ticker(args: tuple) -> Optional[Dict[str, Any]]:
         return None
 
 
-def parallel_stock_ranking(tickers: List[str], model: Any, features_list: List[str]) -> List[Dict[str, Any]]:
+def parallel_stock_ranking(
+    tickers: List[str], model: Any, features_list: List[str]
+) -> List[Dict[str, Any]]:
     """
     Rank stocks in parallel using ML model.
 
@@ -239,7 +248,9 @@ def parallel_stock_ranking(tickers: List[str], model: Any, features_list: List[s
     return results
 
 
-def parallel_predictions(tickers: List[str], predict_func: Callable[[str], Dict[str, Any]]) -> List[Dict[str, Any]]:
+def parallel_predictions(
+    tickers: List[str], predict_func: Callable[[str], Dict[str, Any]]
+) -> List[Dict[str, Any]]:
     """
     Generic parallel prediction function.
 

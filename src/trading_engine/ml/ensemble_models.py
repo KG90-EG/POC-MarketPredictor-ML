@@ -135,7 +135,9 @@ def create_lightgbm_model(**kwargs) -> Optional[object]:
 # ============================================================================
 
 
-def create_voting_ensemble(voting: str = "soft", weights: Optional[List[float]] = None) -> VotingClassifier:
+def create_voting_ensemble(
+    voting: str = "soft", weights: Optional[List[float]] = None
+) -> VotingClassifier:
     """
     Create a Voting Classifier ensemble.
 
@@ -177,7 +179,9 @@ def create_voting_ensemble(voting: str = "soft", weights: Optional[List[float]] 
     logger.info(f"Models: {[name for name, _ in estimators]}")
     logger.info(f"Weights: {weights}")
 
-    return VotingClassifier(estimators=estimators, voting=voting, weights=weights, n_jobs=-1)
+    return VotingClassifier(
+        estimators=estimators, voting=voting, weights=weights, n_jobs=-1
+    )
 
 
 # ============================================================================
@@ -185,7 +189,9 @@ def create_voting_ensemble(voting: str = "soft", weights: Optional[List[float]] 
 # ============================================================================
 
 
-def create_stacking_ensemble(meta_learner: Optional[object] = None, cv: int = 5) -> StackingClassifier:
+def create_stacking_ensemble(
+    meta_learner: Optional[object] = None, cv: int = 5
+) -> StackingClassifier:
     """
     Create a Stacking Classifier ensemble with meta-learner.
 
@@ -213,7 +219,9 @@ def create_stacking_ensemble(meta_learner: Optional[object] = None, cv: int = 5)
     logger.info(f"Creating stacking ensemble with {len(estimators)} base models")
     logger.info(f"Meta-learner: {type(meta_learner).__name__}")
 
-    return StackingClassifier(estimators=estimators, final_estimator=meta_learner, cv=cv, n_jobs=-1)
+    return StackingClassifier(
+        estimators=estimators, final_estimator=meta_learner, cv=cv, n_jobs=-1
+    )
 
 
 # ============================================================================
@@ -292,14 +300,24 @@ if HAS_TORCH:
         LSTM-based classifier for time series patterns.
         """
 
-        def __init__(self, input_size: int, hidden_size: int = 64, num_layers: int = 2, dropout: float = 0.2):
+        def __init__(
+            self,
+            input_size: int,
+            hidden_size: int = 64,
+            num_layers: int = 2,
+            dropout: float = 0.2,
+        ):
             super(LSTMClassifier, self).__init__()
 
             self.hidden_size = hidden_size
             self.num_layers = num_layers
 
             self.lstm = nn.LSTM(
-                input_size, hidden_size, num_layers, batch_first=True, dropout=dropout if num_layers > 1 else 0
+                input_size,
+                hidden_size,
+                num_layers,
+                batch_first=True,
+                dropout=dropout if num_layers > 1 else 0,
             )
 
             self.fc = nn.Linear(hidden_size, 1)
@@ -355,7 +373,9 @@ if HAS_TORCH:
 
         def fit(self, X: np.ndarray, y: np.ndarray):
             """Train LSTM model."""
-            self.model = LSTMClassifier(self.input_size, self.hidden_size, self.num_layers).to(self.device)
+            self.model = LSTMClassifier(
+                self.input_size, self.hidden_size, self.num_layers
+            ).to(self.device)
 
             # Prepare data
             X_seq = self._prepare_sequences(X)
@@ -383,7 +403,9 @@ if HAS_TORCH:
                     total_loss += loss.item()
 
                 if (epoch + 1) % 10 == 0:
-                    logger.info(f"Epoch {epoch + 1}/{self.epochs}, Loss: {total_loss:.4f}")
+                    logger.info(
+                        f"Epoch {epoch + 1}/{self.epochs}, Loss: {total_loss:.4f}"
+                    )
 
             return self
 
@@ -441,7 +463,9 @@ def create_ensemble(ensemble_type: str = "voting", **kwargs) -> object:
         raise ValueError(f"Unknown ensemble type: {ensemble_type}")
 
 
-def evaluate_ensemble(model: object, X: np.ndarray, y: np.ndarray, cv: int = 5) -> Dict[str, float]:
+def evaluate_ensemble(
+    model: object, X: np.ndarray, y: np.ndarray, cv: int = 5
+) -> Dict[str, float]:
     """
     Evaluate ensemble model performance.
 
@@ -464,7 +488,9 @@ def evaluate_ensemble(model: object, X: np.ndarray, y: np.ndarray, cv: int = 5) 
     from sklearn.model_selection import train_test_split
 
     # Train/test split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, stratify=y, random_state=42
+    )
 
     # Train model
     logger.info("Training ensemble model...")
@@ -472,7 +498,9 @@ def evaluate_ensemble(model: object, X: np.ndarray, y: np.ndarray, cv: int = 5) 
 
     # Predictions
     y_pred = model.predict(X_test)
-    y_proba = model.predict_proba(X_test)[:, 1] if hasattr(model, "predict_proba") else None
+    y_proba = (
+        model.predict_proba(X_test)[:, 1] if hasattr(model, "predict_proba") else None
+    )
 
     # Metrics
     metrics = {
@@ -530,8 +558,8 @@ def get_feature_importances(ensemble: object, feature_names: List[str]) -> pd.Da
     avg_importance = np.mean(importances, axis=0)
 
     # Create DataFrame
-    df_importance = pd.DataFrame({"feature": feature_names, "importance": avg_importance}).sort_values(
-        "importance", ascending=False
-    )
+    df_importance = pd.DataFrame(
+        {"feature": feature_names, "importance": avg_importance}
+    ).sort_values("importance", ascending=False)
 
     return df_importance

@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { apiClient } from '../api';
-import { translations, getTranslation } from '../translations';
-import './SimulationDashboard.css';
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { apiClient } from "../api";
+import { translations, getTranslation } from "../translations";
+import "./SimulationDashboard.css";
 
 /**
  * Trading Simulation Dashboard
@@ -14,7 +14,7 @@ import './SimulationDashboard.css';
  * - Track performance metrics
  */
 
-function SimulationDashboard({ language = 'en', onLanguageChange }) {
+function SimulationDashboard({ language = "en", onLanguageChange }) {
   const [simulations, setSimulations] = useState([]);
   const [currentSim, setCurrentSim] = useState(null);
   const [portfolio, setPortfolio] = useState(null);
@@ -22,154 +22,159 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
   const [tradeHistory, setTradeHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
 
   // Form states
   const [newSimCapital, setNewSimCapital] = useState(10000);
   const [tradeForm, setTradeForm] = useState({
-    ticker: '',
-    action: 'BUY',
+    ticker: "",
+    action: "BUY",
     quantity: 10,
-    price: 0
+    price: 0,
   });
-  const [localLanguage, setLocalLanguage] = useState(language || 'en');
+  const [localLanguage, setLocalLanguage] = useState(language || "en");
 
   // Helper functions
   const t = useCallback((key) => getTranslation(localLanguage, key), [localLanguage]);
-    const languageLocale = useMemo(() => ({
-      de: 'de-DE',
-      en: 'en-US',
-      it: 'it-IT',
-      es: 'es-ES',
-      fr: 'fr-FR'
-    }), []);
-    const formatTimestamp = useCallback(
-      (value) => new Date(value).toLocaleString(languageLocale[localLanguage] || 'en-US'),
-      [localLanguage, languageLocale]
-    );
-    const loadSimulation = useCallback(
-      async (simId) => {
-        setLoading(true);
-        setError(null);
-        try {
-          const response = await apiClient.get(`/api/simulations/${simId}`);
-          setCurrentSim(response.data);
-        } catch (err) {
-          setError(t('errorLoading') + ': ' + err.message);
-        } finally {
-          setLoading(false);
-        }
-      },
-      [t]
-    );
-    const loadPortfolio = useCallback(
-      async (simId = currentSim?.simulation_id) => {
-        if (!simId) return;
-        try {
-          const response = await apiClient.get(`/api/simulations/${simId}/portfolio`);
-          setPortfolio(response.data);
-        } catch (err) {
-          console.error('Error loading portfolio:', err);
-          setError(t('errorPortfolio'));
-        }
-      },
-      [currentSim?.simulation_id, t]
-    );
-    const loadTradeHistory = useCallback(
-      async (simId = currentSim?.simulation_id) => {
-        if (!simId) return;
-        try {
-          const response = await apiClient.get(`/api/simulations/${simId}/history`);
-          setTradeHistory(response.data.trades || []);
-        } catch (err) {
-          console.error('Error loading trade history:', err);
-        }
-      },
-      [currentSim?.simulation_id]
-    );
-    const loadRecommendations = useCallback(
-      async () => {
-        if (!currentSim) return;
-        setLoading(true);
-        setError(null);
-        try {
-          const response = await apiClient.post(`/api/simulations/${currentSim.simulation_id}/recommendations`);
-          setRecommendations(response.data.recommendations || []);
-        } catch (err) {
-          setError(t('errorRecommendations') + ': ' + err.message);
-        } finally {
-          setLoading(false);
-        }
-      },
-      [currentSim, t]
-    );
-    const loadUserSimulations = useCallback(
-      async () => {
-        try {
-          // Note: In production, use actual user_id from auth
-          const userId = 'default_user';
-          // This endpoint doesn't exist yet, we'll load individual sim for now
-          if (currentSim) {
-            await loadSimulation(currentSim.simulation_id);
-          }
-        } catch (err) {
-          console.error('Error loading simulations:', err);
-        }
-      },
-      [currentSim, loadSimulation]
-    );
-    useEffect(() => {
-      loadUserSimulations();
-    }, [loadUserSimulations]);
-    useEffect(() => {
-      if (currentSim) {
-        loadPortfolio();
-        loadTradeHistory();
-      }
-    }, [currentSim, loadPortfolio, loadTradeHistory]);
-    const createSimulation = async () => {
+  const languageLocale = useMemo(
+    () => ({
+      de: "de-DE",
+      en: "en-US",
+      it: "it-IT",
+      es: "es-ES",
+      fr: "fr-FR",
+    }),
+    []
+  );
+  const formatTimestamp = useCallback(
+    (value) => new Date(value).toLocaleString(languageLocale[localLanguage] || "en-US"),
+    [localLanguage, languageLocale]
+  );
+  const loadSimulation = useCallback(
+    async (simId) => {
       setLoading(true);
       setError(null);
       try {
-        const response = await apiClient.post('/api/simulations', {
-          user_id: 'default_user',
-          initial_capital: newSimCapital,
-          mode: 'auto'
-        });
-        const newSim = response.data;
-        setCurrentSim(newSim);
-        setNewSimCapital(10000); // Reset form
-        alert(`${t('simulationCreated')} #${newSim.simulation_id}: $${newSim.initial_capital.toLocaleString()}`);
+        const response = await apiClient.get(`/api/simulations/${simId}`);
+        setCurrentSim(response.data);
       } catch (err) {
-        setError(t('errorCreating') + ': ' + err.message);
+        setError(t("errorLoading") + ": " + err.message);
       } finally {
         setLoading(false);
       }
-    };
+    },
+    [t]
+  );
+  const loadPortfolio = useCallback(
+    async (simId = currentSim?.simulation_id) => {
+      if (!simId) return;
+      try {
+        const response = await apiClient.get(`/api/simulations/${simId}/portfolio`);
+        setPortfolio(response.data);
+      } catch (err) {
+        console.error("Error loading portfolio:", err);
+        setError(t("errorPortfolio"));
+      }
+    },
+    [currentSim?.simulation_id, t]
+  );
+  const loadTradeHistory = useCallback(
+    async (simId = currentSim?.simulation_id) => {
+      if (!simId) return;
+      try {
+        const response = await apiClient.get(`/api/simulations/${simId}/history`);
+        setTradeHistory(response.data.trades || []);
+      } catch (err) {
+        console.error("Error loading trade history:", err);
+      }
+    },
+    [currentSim?.simulation_id]
+  );
+  const loadRecommendations = useCallback(async () => {
+    if (!currentSim) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.post(
+        `/api/simulations/${currentSim.simulation_id}/recommendations`
+      );
+      setRecommendations(response.data.recommendations || []);
+    } catch (err) {
+      setError(t("errorRecommendations") + ": " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentSim, t]);
+  const loadUserSimulations = useCallback(async () => {
+    try {
+      // Note: In production, use actual user_id from auth
+      const userId = "default_user";
+      // This endpoint doesn't exist yet, we'll load individual sim for now
+      if (currentSim) {
+        await loadSimulation(currentSim.simulation_id);
+      }
+    } catch (err) {
+      console.error("Error loading simulations:", err);
+    }
+  }, [currentSim, loadSimulation]);
+  useEffect(() => {
+    loadUserSimulations();
+  }, [loadUserSimulations]);
+  useEffect(() => {
+    if (currentSim) {
+      loadPortfolio();
+      loadTradeHistory();
+    }
+  }, [currentSim, loadPortfolio, loadTradeHistory]);
+  const createSimulation = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.post("/api/simulations", {
+        user_id: "default_user",
+        initial_capital: newSimCapital,
+        mode: "auto",
+      });
+      const newSim = response.data;
+      setCurrentSim(newSim);
+      setNewSimCapital(10000); // Reset form
+      alert(
+        `${t("simulationCreated")} #${newSim.simulation_id}: $${newSim.initial_capital.toLocaleString()}`
+      );
+    } catch (err) {
+      setError(t("errorCreating") + ": " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const autoTrade = async () => {
     if (!currentSim) return;
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await apiClient.post(`/api/simulations/${currentSim.simulation_id}/auto-trade`);
-      
+      const response = await apiClient.post(
+        `/api/simulations/${currentSim.simulation_id}/auto-trade`
+      );
+
       // Reload portfolio and history
       await Promise.all([
         loadTradeHistory(currentSim.simulation_id),
-        loadSimulation(currentSim.simulation_id)
+        loadSimulation(currentSim.simulation_id),
       ]);
 
       const { trades_executed, trades } = response.data;
       if (trades_executed > 0) {
-        const summary = trades.map(trade => `${trade.action} ${trade.quantity} ${trade.ticker}`).join(', ');
-        alert(`✓ ${trades_executed} ${t('tradesExecuted')}:\n${summary}`);
+        const summary = trades
+          .map((trade) => `${trade.action} ${trade.quantity} ${trade.ticker}`)
+          .join(", ");
+        alert(`✓ ${trades_executed} ${t("tradesExecuted")}:\n${summary}`);
       } else {
-        alert(t('noTradesRecommended'));
+        alert(t("noTradesRecommended"));
       }
     } catch (err) {
-      setError(`${t('errorAutoTrade')}: ${err.response?.data?.detail || err.message}`);
+      setError(`${t("errorAutoTrade")}: ${err.response?.data?.detail || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -184,10 +189,10 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
       `Confidence: ${(rec.confidence * 100).toFixed(1)}%`,
       price ? `Price: $${price.toFixed(2)}` : null,
       `Quantity: ${quantity}`,
-      `Reason: ${rec.reason}`
+      `Reason: ${rec.reason}`,
     ]
       .filter(Boolean)
-      .join('\n');
+      .join("\n");
 
     if (!confirm(confirmationMessage)) {
       return;
@@ -195,22 +200,15 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
 
     const tradePrice = price || tradeForm.price;
     if (!tradePrice || tradePrice <= 0) {
-      setError(t('errorTrade') + ': ' + t('missingPrice'));
+      setError(t("errorTrade") + ": " + t("missingPrice"));
       return;
     }
-    await executeTrade(
-      rec.ticker,
-      rec.action,
-      quantity,
-      tradePrice,
-      rec.reason,
-      rec.confidence
-    );
+    await executeTrade(rec.ticker, rec.action, quantity, tradePrice, rec.reason, rec.confidence);
   };
 
   const resetSimulation = async () => {
     if (!currentSim) return;
-    if (!confirm('Simulation zurücksetzen? Alle Trades werden gelöscht.')) return;
+    if (!confirm("Simulation zurücksetzen? Alle Trades werden gelöscht.")) return;
 
     setLoading(true);
     try {
@@ -219,20 +217,20 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
       await loadSimulation(currentSim.simulation_id);
       await loadPortfolio(currentSim.simulation_id);
       await loadTradeHistory(currentSim.simulation_id);
-      alert('✓ Simulation zurückgesetzt');
+      alert("✓ Simulation zurückgesetzt");
     } catch (err) {
-      setError('Fehler beim Zurücksetzen: ' + err.message);
+      setError("Fehler beim Zurücksetzen: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const executeTrade = async (ticker, action, quantity, price, reason = '', confidence = 0) => {
+  const executeTrade = async (ticker, action, quantity, price, reason = "", confidence = 0) => {
     if (!currentSim) return;
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await apiClient.post(`/api/simulations/${currentSim.simulation_id}/trade`, {
         ticker,
@@ -240,19 +238,19 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
         quantity,
         price,
         reason,
-        confidence
+        confidence,
       });
-      
+
       // Reload data
       await Promise.all([
         loadPortfolio(currentSim.simulation_id),
         loadTradeHistory(currentSim.simulation_id),
-        loadSimulation(currentSim.simulation_id)
+        loadSimulation(currentSim.simulation_id),
       ]);
-      
+
       alert(`✓ ${action} ${quantity} ${ticker} @ $${price.toFixed(2)}`);
     } catch (err) {
-      setError(`${t('errorTrade')}: ${err.response?.data?.detail || err.message}`);
+      setError(`${t("errorTrade")}: ${err.response?.data?.detail || err.message}`);
     } finally {
       setLoading(false);
     }
@@ -260,27 +258,27 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
 
   const handleManualTrade = async (e) => {
     e.preventDefault();
-    
+
     if (!currentSim) {
-      setError(t('noSimulation'));
+      setError(t("noSimulation"));
       return;
     }
 
     const { ticker, action, quantity, price } = tradeForm;
-    
+
     if (!ticker || !price || price <= 0 || quantity <= 0) {
-      setError(t('invalidTradeForm'));
+      setError(t("invalidTradeForm"));
       return;
     }
 
-    await executeTrade(ticker, action, quantity, price, 'Manual trade', 0);
-    
+    await executeTrade(ticker, action, quantity, price, "Manual trade", 0);
+
     // Reset form on success
     setTradeForm({
-      ticker: '',
-      action: 'BUY',
+      ticker: "",
+      action: "BUY",
       quantity: 10,
-      price: 0
+      price: 0,
     });
   };
 
@@ -293,24 +291,25 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
     if (onLanguageChange) {
       onLanguageChange(lang);
     }
-    localStorage.setItem('simulation_language', lang);
+    localStorage.setItem("simulation_language", lang);
   };
 
   const formatCurrency = (value) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
     }).format(value);
   };
 
   const formatPercent = (value) => {
-    const sign = value >= 0 ? '+' : '';
+    const sign = value >= 0 ? "+" : "";
     return `${sign}${value.toFixed(2)}%`;
   };
 
   const startingValue = useMemo(() => {
-    const positionsValue = portfolio?.positions?.reduce((sum, pos) => sum + (pos.value || 0), 0) || 0;
+    const positionsValue =
+      portfolio?.positions?.reduce((sum, pos) => sum + (pos.value || 0), 0) || 0;
     const cashBalance =
       portfolio?.cash ?? currentSim?.available_cash ?? currentSim?.initial_capital ?? 0;
 
@@ -328,7 +327,7 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
       let realizedPnl = 0;
       const averageCostBefore = position > 0 ? costBasis / position : 0;
 
-      if (trade.action === 'BUY') {
+      if (trade.action === "BUY") {
         position += trade.quantity;
         costBasis += tradeValue;
         cash -= tradeValue;
@@ -351,7 +350,7 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
         cashAfter: cash,
         portfolioValue,
         realizedPnl,
-        cumulativePnl
+        cumulativePnl,
       };
     });
   }, [tradeHistory, currentSim, portfolio, startingValue]);
@@ -359,10 +358,10 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
   return (
     <div className="simulation-dashboard">
       <div className="dashboard-header">
-        <h2>📊 {t('holdings')}</h2>
+        <h2>📊 {t("holdings")}</h2>
         <div className="header-controls">
           <div className="language-selector">
-            <label>{t('language')}: </label>
+            <label>{t("language")}: </label>
             <select value={language} onChange={(e) => changeLanguage(e.target.value)}>
               <option value="de">🇩🇪 DE</option>
               <option value="en">🇬🇧 EN</option>
@@ -385,11 +384,11 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
         // No simulation - show creation form
         <div className="create-simulation">
           <div className="card">
-            <h3>{t('startSimulation')}</h3>
-            <p>{t('features')}</p>
+            <h3>{t("startSimulation")}</h3>
+            <p>{t("features")}</p>
 
             <div className="form-group">
-              <label>{t('initialCapital')}</label>
+              <label>{t("initialCapital")}</label>
               <input
                 type="number"
                 value={newSimCapital}
@@ -401,23 +400,19 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
               <small>{formatCurrency(newSimCapital)}</small>
             </div>
 
-            <button
-              onClick={createSimulation}
-              disabled={loading}
-              className="btn btn-primary"
-            >
-              {loading ? t('creating') : t('startSimulation')}
+            <button onClick={createSimulation} disabled={loading} className="btn btn-primary">
+              {loading ? t("creating") : t("startSimulation")}
             </button>
           </div>
 
           <div className="info-card">
-            <h4>{t('features')}</h4>
+            <h4>{t("features")}</h4>
             <ul>
-              <li>✓ {t('feature1')}</li>
-              <li>✓ {t('feature2')}</li>
-              <li>✓ {t('feature3')}</li>
-              <li>✓ {t('feature4')}</li>
-              <li>✓ {t('feature5')}</li>
+              <li>✓ {t("feature1")}</li>
+              <li>✓ {t("feature2")}</li>
+              <li>✓ {t("feature3")}</li>
+              <li>✓ {t("feature4")}</li>
+              <li>✓ {t("feature5")}</li>
             </ul>
           </div>
         </div>
@@ -427,37 +422,37 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
           {/* Summary Cards */}
           <div className="summary-cards">
             <div className="card metric-card">
-              <div className="metric-label">{t('portfolioValue')}</div>
+              <div className="metric-label">{t("portfolioValue")}</div>
               <div className="metric-value">
-                {portfolio ? formatCurrency(portfolio.total_value) : '...'}
+                {portfolio ? formatCurrency(portfolio.total_value) : "..."}
               </div>
               {portfolio && (
-                <div className={`metric-change ${portfolio.total_pnl >= 0 ? 'positive' : 'negative'}`}>
+                <div
+                  className={`metric-change ${portfolio.total_pnl >= 0 ? "positive" : "negative"}`}
+                >
                   {formatPercent(portfolio.total_pnl_percent)}
                 </div>
               )}
             </div>
 
             <div className="card metric-card">
-              <div className="metric-label">{t('cash')}</div>
+              <div className="metric-label">{t("cash")}</div>
               <div className="metric-value">
-                {portfolio ? formatCurrency(portfolio.cash) : '...'}
+                {portfolio ? formatCurrency(portfolio.cash) : "..."}
               </div>
             </div>
 
             <div className="card metric-card">
-              <div className="metric-label">{t('positions')}</div>
-              <div className="metric-value">
-                {portfolio ? portfolio.positions.length : 0}
-              </div>
+              <div className="metric-label">{t("positions")}</div>
+              <div className="metric-value">{portfolio ? portfolio.positions.length : 0}</div>
             </div>
 
             <div className="card metric-card">
-              <div className="metric-label">{t('winRate')}</div>
+              <div className="metric-label">{t("winRate")}</div>
               <div className="metric-value">
                 {currentSim?.metrics?.win_rate_percent
                   ? `${currentSim.metrics.win_rate_percent.toFixed(1)}%`
-                  : 'N/A'}
+                  : "N/A"}
               </div>
             </div>
           </div>
@@ -465,46 +460,46 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
           {/* Tabs */}
           <div className="tabs">
             <button
-              className={activeTab === 'overview' ? 'active' : ''}
-              onClick={() => setActiveTab('overview')}
+              className={activeTab === "overview" ? "active" : ""}
+              onClick={() => setActiveTab("overview")}
             >
-              {t('overview')}
+              {t("overview")}
             </button>
             <button
-              className={activeTab === 'recommendations' ? 'active' : ''}
-              onClick={() => setActiveTab('recommendations')}
+              className={activeTab === "recommendations" ? "active" : ""}
+              onClick={() => setActiveTab("recommendations")}
             >
-              {t('recommendations')}
+              {t("recommendations")}
             </button>
             <button
-              className={activeTab === 'trade' ? 'active' : ''}
-              onClick={() => setActiveTab('trade')}
+              className={activeTab === "trade" ? "active" : ""}
+              onClick={() => setActiveTab("trade")}
             >
-              {t('trade')}
+              {t("trade")}
             </button>
             <button
-              className={activeTab === 'history' ? 'active' : ''}
-              onClick={() => setActiveTab('history')}
+              className={activeTab === "history" ? "active" : ""}
+              onClick={() => setActiveTab("history")}
             >
-              {t('history')}
+              {t("history")}
             </button>
           </div>
 
           {/* Tab Content */}
           <div className="tab-content">
-            {activeTab === 'overview' && (
+            {activeTab === "overview" && (
               <div className="overview-tab">
                 <div className="card">
-                  <h3>{t('holdings')}</h3>
+                  <h3>{t("holdings")}</h3>
                   {portfolio && portfolio.positions.length > 0 ? (
                     <table className="holdings-table">
                       <thead>
                         <tr>
-                          <th>{t('ticker')}</th>
-                          <th>{t('quantity')}</th>
-                          <th>{t('avgCost')}</th>
-                          <th>{t('currentPrice')}</th>
-                          <th>{t('value')}</th>
+                          <th>{t("ticker")}</th>
+                          <th>{t("quantity")}</th>
+                          <th>{t("avgCost")}</th>
+                          <th>{t("currentPrice")}</th>
+                          <th>{t("value")}</th>
                           <th>P&L</th>
                           <th>P&L %</th>
                         </tr>
@@ -517,10 +512,10 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
                             <td>{formatCurrency(pos.avg_cost)}</td>
                             <td>{formatCurrency(pos.current_price)}</td>
                             <td>{formatCurrency(pos.value)}</td>
-                            <td className={pos.pnl >= 0 ? 'positive' : 'negative'}>
+                            <td className={pos.pnl >= 0 ? "positive" : "negative"}>
                               {formatCurrency(pos.pnl)}
                             </td>
-                            <td className={pos.pnl_percent >= 0 ? 'positive' : 'negative'}>
+                            <td className={pos.pnl_percent >= 0 ? "positive" : "negative"}>
                               {formatPercent(pos.pnl_percent)}
                             </td>
                           </tr>
@@ -529,43 +524,43 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
                     </table>
                   ) : (
                     <div className="empty-state">
-                      <p>{t('noPositions')}</p>
-                      <small>{t('noPositionsHint')}</small>
+                      <p>{t("noPositions")}</p>
+                      <small>{t("noPositionsHint")}</small>
                     </div>
                   )}
                 </div>
 
                 <div className="actions">
                   <button onClick={loadPortfolio} className="btn btn-secondary">
-                    🔄 {t('refresh')}
+                    🔄 {t("refresh")}
                   </button>
                   <button onClick={resetSimulation} className="btn btn-danger">
-                    {t('reset')}
+                    {t("reset")}
                   </button>
                 </div>
               </div>
             )}
 
-            {activeTab === 'recommendations' && (
+            {activeTab === "recommendations" && (
               <div className="recommendations-tab">
                 <div className="card">
                   <div className="card-header">
-                    <h3>{t('aiRecommendations')}</h3>
+                    <h3>{t("aiRecommendations")}</h3>
                     <div>
                       <button
                         onClick={loadRecommendations}
                         disabled={loading}
                         className="btn btn-secondary"
-                        style={{marginRight: '10px'}}
+                        style={{ marginRight: "10px" }}
                       >
-                        {loading ? t('loading') : '🤖 ' + t('loadRecommendations')}
+                        {loading ? t("loading") : "🤖 " + t("loadRecommendations")}
                       </button>
                       <button
                         onClick={executeAutoTrade}
                         disabled={loading}
                         className="btn btn-primary"
                       >
-                        {loading ? t('executing') : '⚡ ' + t('autoTrade')}
+                        {loading ? t("executing") : "⚡ " + t("autoTrade")}
                       </button>
                     </div>
                   </div>
@@ -597,18 +592,18 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
                     </div>
                   ) : (
                     <div className="empty-state">
-                      <p>{t('noRecommendations')}</p>
-                      <small>{t('loadFirst')}</small>
+                      <p>{t("noRecommendations")}</p>
+                      <small>{t("loadFirst")}</small>
                     </div>
                   )}
                 </div>
               </div>
             )}
 
-            {activeTab === 'trade' && (
+            {activeTab === "trade" && (
               <div className="trade-tab">
                 <div className="card">
-                  <h3>{t('manualTrade')}</h3>
+                  <h3>{t("manualTrade")}</h3>
                   <form onSubmit={handleManualTrade}>
                     <div className="form-row">
                       <div className="form-group">
@@ -616,17 +611,17 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
                         <input
                           type="text"
                           value={tradeForm.ticker}
-                          onChange={(e) => setTradeForm({...tradeForm, ticker: e.target.value})}
+                          onChange={(e) => setTradeForm({ ...tradeForm, ticker: e.target.value })}
                           placeholder="AAPL"
                           required
                         />
                       </div>
 
                       <div className="form-group">
-                        <label>{t('action')}</label>
+                        <label>{t("action")}</label>
                         <select
                           value={tradeForm.action}
-                          onChange={(e) => setTradeForm({...tradeForm, action: e.target.value})}
+                          onChange={(e) => setTradeForm({ ...tradeForm, action: e.target.value })}
                         >
                           <option value="BUY">BUY</option>
                           <option value="SELL">SELL</option>
@@ -636,22 +631,26 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
 
                     <div className="form-row">
                       <div className="form-group">
-                        <label>{t('quantity')}</label>
+                        <label>{t("quantity")}</label>
                         <input
                           type="number"
                           value={tradeForm.quantity}
-                          onChange={(e) => setTradeForm({...tradeForm, quantity: Number(e.target.value)})}
+                          onChange={(e) =>
+                            setTradeForm({ ...tradeForm, quantity: Number(e.target.value) })
+                          }
                           min="1"
                           required
                         />
                       </div>
 
                       <div className="form-group">
-                        <label>{t('price')}</label>
+                        <label>{t("price")}</label>
                         <input
                           type="number"
                           value={tradeForm.price}
-                          onChange={(e) => setTradeForm({...tradeForm, price: Number(e.target.value)})}
+                          onChange={(e) =>
+                            setTradeForm({ ...tradeForm, price: Number(e.target.value) })
+                          }
                           min="0.01"
                           step="0.01"
                           required
@@ -659,54 +658,47 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
                       </div>
                     </div>
 
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="btn btn-primary"
-                    >
-                      {loading ? t('executing') : t('executeTrade')}
+                    <button type="submit" disabled={loading} className="btn btn-primary">
+                      {loading ? t("executing") : t("executeTrade")}
                     </button>
                   </form>
                 </div>
               </div>
             )}
 
-            {activeTab === 'history' && (
+            {activeTab === "history" && (
               <div className="history-tab">
                 <div className="card">
                   <div className="card-header">
-                    <h3>{t('tradeHistory')}</h3>
-                    <button
-                      onClick={loadTradeHistory}
-                      className="btn btn-secondary"
-                    >
-                      🔄 {t('refresh')}
+                    <h3>{t("tradeHistory")}</h3>
+                    <button onClick={loadTradeHistory} className="btn btn-secondary">
+                      🔄 {t("refresh")}
                     </button>
                   </div>
                   {annotatedHistory.length > 0 ? (
                     <table className="history-table">
                       <thead>
                         <tr>
-                          <th>{t('time')}</th>
-                          <th>{t('action')}</th>
-                          <th>{t('ticker')}</th>
-                          <th>{t('quantity')}</th>
-                          <th>{t('price')}</th>
-                          <th>{t('total')}</th>
-                          <th>{t('confidence')}</th>
-                          <th>{t('reason')}</th>
-                          <th>{t('positionAfter')}</th>
-                          <th>{t('avgCostAfter')}</th>
-                          <th>{t('cashBalance')}</th>
-                          <th>{t('portfolioValue')}</th>
-                          <th>{t('cumulativePnl')}</th>
+                          <th>{t("time")}</th>
+                          <th>{t("action")}</th>
+                          <th>{t("ticker")}</th>
+                          <th>{t("quantity")}</th>
+                          <th>{t("price")}</th>
+                          <th>{t("total")}</th>
+                          <th>{t("confidence")}</th>
+                          <th>{t("reason")}</th>
+                          <th>{t("positionAfter")}</th>
+                          <th>{t("avgCostAfter")}</th>
+                          <th>{t("cashBalance")}</th>
+                          <th>{t("portfolioValue")}</th>
+                          <th>{t("cumulativePnl")}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {annotatedHistory.map((trade, idx) => (
                           <tr key={`${trade.timestamp}-${idx}`}>
                             <td>{formatTimestamp(trade.timestamp)}</td>
-                            <td className={trade.action === 'BUY' ? 'buy' : 'sell'}>
+                            <td className={trade.action === "BUY" ? "buy" : "sell"}>
                               {trade.action}
                             </td>
                             <td className="ticker">{trade.ticker}</td>
@@ -716,14 +708,14 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
                             <td>
                               {trade.ml_confidence
                                 ? `${(trade.ml_confidence * 100).toFixed(1)}%`
-                                : '-'}
+                                : "-"}
                             </td>
                             <td className="reason">{trade.reason}</td>
                             <td>{trade.positionAfter}</td>
-                            <td>{trade.avgCost ? formatCurrency(trade.avgCost) : '-'}</td>
+                            <td>{trade.avgCost ? formatCurrency(trade.avgCost) : "-"}</td>
                             <td>{formatCurrency(trade.cashAfter)}</td>
                             <td>{formatCurrency(trade.portfolioValue)}</td>
-                            <td className={trade.cumulativePnl >= 0 ? 'positive' : 'negative'}>
+                            <td className={trade.cumulativePnl >= 0 ? "positive" : "negative"}>
                               {formatCurrency(trade.cumulativePnl)}
                             </td>
                           </tr>
@@ -732,8 +724,8 @@ function SimulationDashboard({ language = 'en', onLanguageChange }) {
                     </table>
                   ) : (
                     <div className="empty-state">
-                      <p>{t('noTrades')}</p>
-                      <small>{t('noTradesHint')}</small>
+                      <p>{t("noTrades")}</p>
+                      <small>{t("noTradesHint")}</small>
                     </div>
                   )}
                 </div>

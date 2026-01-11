@@ -80,7 +80,8 @@ body.dark-mode .info-content {
   margin-bottom: 0;
 }
 
-.info-content ul, .info-content ol {
+.info-content ul,
+.info-content ol {
   margin: 8px 0;
   padding-left: 24px;
 }
@@ -112,7 +113,7 @@ body.dark-mode .info-content strong {
   background: rgba(0, 0, 0, 0.05);
   padding: 2px 6px;
   border-radius: 4px;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
   font-size: 0.9em;
 }
 

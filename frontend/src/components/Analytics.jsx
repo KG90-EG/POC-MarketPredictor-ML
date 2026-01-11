@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from "react";
 
 /**
  * Analytics Integration Component
@@ -19,34 +19,34 @@ class Analytics {
     this.userId = null;
     this.isInitialized = false;
     this.config = {
-      endpoint: '/api/analytics/events',
+      endpoint: "/api/analytics/events",
       batchSize: 10,
       flushInterval: 5000, // 5 seconds
-      debug: false
+      debug: false,
     };
   }
 
   // Initialize analytics
   init(config = {}) {
     if (this.isInitialized) {
-      console.warn('[Analytics] Already initialized');
+      console.warn("[Analytics] Already initialized");
       return;
     }
 
     this.config = { ...this.config, ...config };
 
     // Get or create session ID
-    this.sessionId = sessionStorage.getItem('analytics_session_id');
+    this.sessionId = sessionStorage.getItem("analytics_session_id");
     if (!this.sessionId) {
       this.sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      sessionStorage.setItem('analytics_session_id', this.sessionId);
+      sessionStorage.setItem("analytics_session_id", this.sessionId);
     }
 
     // Get or create user ID
-    this.userId = localStorage.getItem('analytics_user_id');
+    this.userId = localStorage.getItem("analytics_user_id");
     if (!this.userId) {
       this.userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem('analytics_user_id', this.userId);
+      localStorage.setItem("analytics_user_id", this.userId);
     }
 
     // Start flush interval
@@ -55,12 +55,12 @@ class Analytics {
     }, this.config.flushInterval);
 
     // Flush on page unload
-    window.addEventListener('beforeunload', () => {
+    window.addEventListener("beforeunload", () => {
       this.flush(true);
     });
 
     this.isInitialized = true;
-    this.log('Analytics initialized', { sessionId: this.sessionId, userId: this.userId });
+    this.log("Analytics initialized", { sessionId: this.sessionId, userId: this.userId });
 
     // Track initial page view
     this.trackPageView();
@@ -69,14 +69,14 @@ class Analytics {
   // Log debug messages
   log(...args) {
     if (this.config.debug) {
-      console.log('[Analytics]', ...args);
+      console.log("[Analytics]", ...args);
     }
   }
 
   // Add event to queue
   track(eventName, properties = {}) {
     if (!this.isInitialized) {
-      console.warn('[Analytics] Not initialized. Call init() first.');
+      console.warn("[Analytics] Not initialized. Call init() first.");
       return;
     }
 
@@ -91,11 +91,11 @@ class Analytics {
       referrer: document.referrer,
       userAgent: navigator.userAgent,
       screenSize: `${window.innerWidth}x${window.innerHeight}`,
-      language: navigator.language
+      language: navigator.language,
     };
 
     this.queue.push(event);
-    this.log('Event tracked:', event);
+    this.log("Event tracked:", event);
 
     // Auto-flush if batch size reached
     if (this.queue.length >= this.config.batchSize) {
@@ -105,100 +105,100 @@ class Analytics {
 
   // Track page view
   trackPageView(pageName = null) {
-    this.track('page_view', {
+    this.track("page_view", {
       page: pageName || document.title,
       pathname: window.location.pathname,
-      hash: window.location.hash
+      hash: window.location.hash,
     });
   }
 
   // Track click events
   trackClick(element, label = null) {
-    this.track('click', {
+    this.track("click", {
       element: element.tagName,
       elementId: element.id,
       elementClass: element.className,
-      label: label || element.innerText?.substring(0, 50) || element.getAttribute('aria-label'),
+      label: label || element.innerText?.substring(0, 50) || element.getAttribute("aria-label"),
       x: event?.clientX,
-      y: event?.clientY
+      y: event?.clientY,
     });
   }
 
   // Track form submission
   trackFormSubmit(formName, success = true, data = {}) {
-    this.track('form_submit', {
+    this.track("form_submit", {
       formName,
       success,
-      ...data
+      ...data,
     });
   }
 
   // Track search
   trackSearch(query, resultsCount = null) {
-    this.track('search', {
+    this.track("search", {
       query,
-      resultsCount
+      resultsCount,
     });
   }
 
   // Track feature usage
-  trackFeature(featureName, action = 'use', data = {}) {
-    this.track('feature_usage', {
+  trackFeature(featureName, action = "use", data = {}) {
+    this.track("feature_usage", {
       feature: featureName,
       action,
-      ...data
+      ...data,
     });
   }
 
   // Track errors
   trackError(error, errorInfo = {}) {
-    this.track('error', {
+    this.track("error", {
       message: error.message,
       stack: error.stack?.substring(0, 500),
-      ...errorInfo
+      ...errorInfo,
     });
   }
 
   // Track performance metrics
-  trackPerformance(metricName, value, unit = 'ms') {
-    this.track('performance', {
+  trackPerformance(metricName, value, unit = "ms") {
+    this.track("performance", {
       metric: metricName,
       value,
-      unit
+      unit,
     });
   }
 
   // Track user timing
   trackTiming(category, variable, time, label = null) {
-    this.track('timing', {
+    this.track("timing", {
       category,
       variable,
       time,
-      label
+      label,
     });
   }
 
   // Track conversion
-  trackConversion(conversionName, value = null, currency = 'USD') {
-    this.track('conversion', {
+  trackConversion(conversionName, value = null, currency = "USD") {
+    this.track("conversion", {
       conversion: conversionName,
       value,
-      currency
+      currency,
     });
   }
 
   // Track engagement
   trackEngagement(action, target, value = null) {
-    this.track('engagement', {
+    this.track("engagement", {
       action,
       target,
-      value
+      value,
     });
   }
 
   // Set user properties
   setUserProperties(properties) {
-    this.track('user_properties', properties);
+    this.track("user_properties", properties);
   }
 
   // Flush events to backend
@@ -213,38 +213,38 @@ class Analytics {
       meta: {
         flushTime: Date.now(),
         sessionId: this.sessionId,
-        userId: this.userId
-      }
+        userId: this.userId,
+      },
     };
 
-    this.log('Flushing events:', events.length);
+    this.log("Flushing events:", events.length);
 
     try {
       if (synchronous && navigator.sendBeacon) {
         // Use sendBeacon for synchronous flushing (on page unload)
-        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
         navigator.sendBeacon(this.config.endpoint, blob);
       } else {
         // Use fetch for normal flushing
         const response = await fetch(this.config.endpoint, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
         });
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
 
-        this.log('Events sent successfully');
+        this.log("Events sent successfully");
       }
 
       // Also store in localStorage for backup
       this.storeLocally(events);
     } catch (error) {
-      console.error('[Analytics] Failed to send events:', error);
+      console.error("[Analytics] Failed to send events:", error);
       // Re-add events to queue on failure
       this.queue.unshift(...events);
     }
@@ -253,7 +253,7 @@ class Analytics {
   // Store events locally as backup
   storeLocally(events) {
     try {
-      const stored = JSON.parse(localStorage.getItem('analytics_events') || '[]');
+      const stored = JSON.parse(localStorage.getItem("analytics_events") || "[]");
       stored.push(...events);
 
       // Keep only last 1000 events
@@ -261,25 +261,25 @@ class Analytics {
         stored.splice(0, stored.length - 1000);
       }
 
-      localStorage.setItem('analytics_events', JSON.stringify(stored));
+      localStorage.setItem("analytics_events", JSON.stringify(stored));
     } catch (error) {
-      console.warn('[Analytics] Failed to store events locally:', error);
+      console.warn("[Analytics] Failed to store events locally:", error);
     }
   }
 
   // Get stored events
   getStoredEvents() {
     try {
-      return JSON.parse(localStorage.getItem('analytics_events') || '[]');
+      return JSON.parse(localStorage.getItem("analytics_events") || "[]");
     } catch (error) {
-      console.warn('[Analytics] Failed to retrieve stored events:', error);
+      console.warn("[Analytics] Failed to retrieve stored events:", error);
       return [];
     }
   }
 
   // Clear stored events
   clearStoredEvents() {
-    localStorage.removeItem('analytics_events');
+    localStorage.removeItem("analytics_events");
   }
 
   // Destroy analytics instance
@@ -289,7 +289,7 @@ class Analytics {
     }
     this.flush(true);
     this.isInitialized = false;
-    this.log('Analytics destroyed');
+    this.log("Analytics destroyed");
   }
 }
 
@@ -344,7 +344,7 @@ export const useAnalytics = () => {
     trackSearch,
     trackError,
     trackConversion,
-    setUserProperties: analytics.setUserProperties.bind(analytics)
+    setUserProperties: analytics.setUserProperties.bind(analytics),
   };
 };
 
@@ -356,7 +356,7 @@ export const AnalyticsProvider = ({ children, config = {} }) => {
   useEffect(() => {
     analytics.init({
       debug: import.meta.env.DEV,
-      ...config
+      ...config,
     });
 
     return () => {
@@ -372,31 +372,31 @@ export const AnalyticsProvider = ({ children, config = {} }) => {
  */
 export const trackWebVitals = () => {
   // Track FCP (First Contentful Paint)
-  if ('PerformanceObserver' in window) {
+  if ("PerformanceObserver" in window) {
     const observer = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        if (entry.name === 'first-contentful-paint') {
-          analytics.trackPerformance('FCP', Math.round(entry.startTime));
+        if (entry.name === "first-contentful-paint") {
+          analytics.trackPerformance("FCP", Math.round(entry.startTime));
         }
       }
     });
-    observer.observe({ type: 'paint', buffered: true });
+    observer.observe({ type: "paint", buffered: true });
 
     // Track LCP (Largest Contentful Paint)
     const lcpObserver = new PerformanceObserver((list) => {
       const entries = list.getEntries();
       const lastEntry = entries[entries.length - 1];
-      analytics.trackPerformance('LCP', Math.round(lastEntry.startTime));
+      analytics.trackPerformance("LCP", Math.round(lastEntry.startTime));
     });
-    lcpObserver.observe({ type: 'largest-contentful-paint', buffered: true });
+    lcpObserver.observe({ type: "largest-contentful-paint", buffered: true });
 
     // Track FID (First Input Delay)
     const fidObserver = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        analytics.trackPerformance('FID', Math.round(entry.processingStart - entry.startTime));
+        analytics.trackPerformance("FID", Math.round(entry.processingStart - entry.startTime));
       }
     });
-    fidObserver.observe({ type: 'first-input', buffered: true });
+    fidObserver.observe({ type: "first-input", buffered: true });
 
     // Track CLS (Cumulative Layout Shift)
     let clsValue = 0;
@@ -404,17 +404,17 @@ export const trackWebVitals = () => {
       for (const entry of list.getEntries()) {
         if (!entry.hadRecentInput) {
           clsValue += entry.value;
-          analytics.trackPerformance('CLS', Math.round(clsValue * 1000) / 1000, 'score');
+          analytics.trackPerformance("CLS", Math.round(clsValue * 1000) / 1000, "score");
         }
       }
     });
-    clsObserver.observe({ type: 'layout-shift', buffered: true });
+    clsObserver.observe({ type: "layout-shift", buffered: true });
   }
 
   // Track page load time
-  window.addEventListener('load', () => {
+  window.addEventListener("load", () => {
     const perfData = window.performance.timing;
     const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
-    analytics.trackPerformance('PageLoad', pageLoadTime);
+    analytics.trackPerformance("PageLoad", pageLoadTime);
   });
 };

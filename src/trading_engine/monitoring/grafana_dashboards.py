@@ -187,7 +187,9 @@ DASHBOARD_CONFIG = {
             {
                 "title": "Cache Hit Ratio",
                 "type": "gauge",
-                "targets": [{"expr": "cache_hit_ratio", "legendFormat": "{{cache_type}}"}],
+                "targets": [
+                    {"expr": "cache_hit_ratio", "legendFormat": "{{cache_type}}"}
+                ],
                 "gridPos": {"x": 6, "y": 40, "w": 6, "h": 4},
             },
             {

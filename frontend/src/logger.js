@@ -1,6 +1,6 @@
 /**
  * Frontend Logger Utility
- * 
+ *
  * Provides structured logging with levels and optional backend integration.
  */
 
@@ -8,12 +8,12 @@ const LOG_LEVELS = {
   DEBUG: 0,
   INFO: 1,
   WARN: 2,
-  ERROR: 3
+  ERROR: 3,
 };
 
 class Logger {
   constructor() {
-    this.level = process.env.NODE_ENV === 'production' ? LOG_LEVELS.WARN : LOG_LEVELS.DEBUG;
+    this.level = process.env.NODE_ENV === "production" ? LOG_LEVELS.WARN : LOG_LEVELS.DEBUG;
     this.enableBackendLogging = false; // Set to true to send errors to backend
   }
 
@@ -33,7 +33,7 @@ class Logger {
       message,
       context,
       userAgent: navigator.userAgent,
-      url: window.location.href
+      url: window.location.href,
     };
   }
 
@@ -41,41 +41,41 @@ class Logger {
     if (!this.enableBackendLogging) return;
 
     try {
-      await fetch('/api/frontend-logs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(logEntry)
+      await fetch("/api/frontend-logs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(logEntry),
       });
     } catch (err) {
       // Silent fail - don't break the app if logging fails
-      console.warn('Failed to send log to backend:', err);
+      console.warn("Failed to send log to backend:", err);
     }
   }
 
   debug(message, context) {
     if (this.level <= LOG_LEVELS.DEBUG) {
-      const entry = this.formatMessage('DEBUG', message, context);
+      const entry = this.formatMessage("DEBUG", message, context);
       console.debug(`[DEBUG] ${message}`, context);
     }
   }
 
   info(message, context) {
     if (this.level <= LOG_LEVELS.INFO) {
-      const entry = this.formatMessage('INFO', message, context);
+      const entry = this.formatMessage("INFO", message, context);
       console.info(`[INFO] ${message}`, context);
     }
   }
 
   warn(message, context) {
     if (this.level <= LOG_LEVELS.WARN) {
-      const entry = this.formatMessage('WARN', message, context);
+      const entry = this.formatMessage("WARN", message, context);
       console.warn(`[WARN] ${message}`, context);
     }
   }
 
   error(message, context) {
     if (this.level <= LOG_LEVELS.ERROR) {
-      const entry = this.formatMessage('ERROR', message, context);
+      const entry = this.formatMessage("ERROR", message, context);
       console.error(`[ERROR] ${message}`, context);
       this.sendToBackend(entry);
     }
@@ -89,7 +89,7 @@ class Logger {
       status: error.response?.status,
       statusText: error.response?.statusText,
       data: error.response?.data,
-      message: error.message
+      message: error.message,
     });
   }
 

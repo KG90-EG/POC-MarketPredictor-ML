@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react'
-import PropTypes from 'prop-types'
-import './PriceChart.css'
+import React, { useMemo } from "react";
+import PropTypes from "prop-types";
+import "./PriceChart.css";
 
 /**
  * PriceChart Component
@@ -8,71 +8,80 @@ import './PriceChart.css'
  * Uses SVG for lightweight rendering without external dependencies
  * Memoized for performance with large datasets
  */
-const PriceChart = React.memo(function PriceChart({ data, width = 400, height = 200, color = '#667eea' }) {
+const PriceChart = React.memo(function PriceChart({
+  data,
+  width = 400,
+  height = 200,
+  color = "#667eea",
+}) {
   if (!data || data.length === 0) {
     return (
       <div className="price-chart-empty" style={{ width, height }}>
         <div className="empty-icon">📊</div>
         <p>No price data available</p>
       </div>
-    )
+    );
   }
 
   // Find min and max prices for scaling
-  const prices = data.map(d => d.price)
-  const minPrice = Math.min(...prices)
-  const maxPrice = Math.max(...prices)
-  const priceRange = maxPrice - minPrice || 1 // Avoid division by zero
+  const prices = data.map((d) => d.price);
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+  const priceRange = maxPrice - minPrice || 1; // Avoid division by zero
 
   // Add padding
-  const padding = { top: 20, right: 20, bottom: 40, left: 60 }
-  const chartWidth = width - padding.left - padding.right
-  const chartHeight = height - padding.top - padding.bottom
+  const padding = { top: 20, right: 20, bottom: 40, left: 60 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
 
   // Calculate points for the line
   const points = data.map((d, i) => {
-    const x = padding.left + (i / (data.length - 1)) * chartWidth
-    const y = padding.top + chartHeight - ((d.price - minPrice) / priceRange) * chartHeight
-    return { x, y, ...d }
-  })
+    const x = padding.left + (i / (data.length - 1)) * chartWidth;
+    const y = padding.top + chartHeight - ((d.price - minPrice) / priceRange) * chartHeight;
+    return { x, y, ...d };
+  });
 
   // Create path for line chart
-  const linePath = points.map((p, i) =>
-    `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`
-  ).join(' ')
+  const linePath = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
 
   // Create path for gradient fill area
-  const areaPath = `${linePath} L ${points[points.length - 1].x} ${height - padding.bottom} L ${padding.left} ${height - padding.bottom} Z`
+  const areaPath = `${linePath} L ${points[points.length - 1].x} ${height - padding.bottom} L ${padding.left} ${height - padding.bottom} Z`;
 
   // Format date for x-axis labels
   const formatDate = (dateStr) => {
-    const date = new Date(dateStr)
-    const month = date.toLocaleDateString('en-US', { month: 'short' })
-    const day = date.getDate()
-    return `${month} ${day}`
-  }
+    const date = new Date(dateStr);
+    const month = date.toLocaleDateString("en-US", { month: "short" });
+    const day = date.getDate();
+    return `${month} ${day}`;
+  };
 
   // Select 5 evenly spaced dates for x-axis
-  const xAxisLabels = [0, Math.floor(data.length / 4), Math.floor(data.length / 2), Math.floor(3 * data.length / 4), data.length - 1]
+  const xAxisLabels = [
+    0,
+    Math.floor(data.length / 4),
+    Math.floor(data.length / 2),
+    Math.floor((3 * data.length) / 4),
+    data.length - 1,
+  ]
     .filter((i, idx, arr) => arr.indexOf(i) === idx) // Remove duplicates
-    .map(i => ({
+    .map((i) => ({
       x: padding.left + (i / (data.length - 1)) * chartWidth,
-      label: formatDate(data[i].date)
-    }))
+      label: formatDate(data[i].date),
+    }));
 
   // Y-axis labels (min, mid, max)
   const yAxisLabels = [
     { y: padding.top, label: `$${maxPrice.toFixed(2)}` },
     { y: padding.top + chartHeight / 2, label: `$${((minPrice + maxPrice) / 2).toFixed(2)}` },
-    { y: padding.top + chartHeight, label: `$${minPrice.toFixed(2)}` }
-  ]
+    { y: padding.top + chartHeight, label: `$${minPrice.toFixed(2)}` },
+  ];
 
   // Calculate price change
-  const firstPrice = data[0].price
-  const lastPrice = data[data.length - 1].price
-  const priceChange = lastPrice - firstPrice
-  const priceChangePercent = (priceChange / firstPrice) * 100
-  const isPositive = priceChange >= 0
+  const firstPrice = data[0].price;
+  const lastPrice = data[data.length - 1].price;
+  const priceChange = lastPrice - firstPrice;
+  const priceChangePercent = (priceChange / firstPrice) * 100;
+  const isPositive = priceChange >= 0;
 
   return (
     <div className="price-chart-container">
@@ -82,10 +91,12 @@ const PriceChart = React.memo(function PriceChart({ data, width = 400, height = 
           <span className="label">Current Price</span>
           <span className="value">${lastPrice.toFixed(2)}</span>
         </div>
-        <div className={`price-change ${isPositive ? 'positive' : 'negative'}`}>
+        <div className={`price-change ${isPositive ? "positive" : "negative"}`}>
           <span className="label">Change</span>
           <span className="value">
-            {isPositive ? '+' : ''}{priceChange.toFixed(2)} ({isPositive ? '+' : ''}{priceChangePercent.toFixed(2)}%)
+            {isPositive ? "+" : ""}
+            {priceChange.toFixed(2)} ({isPositive ? "+" : ""}
+            {priceChangePercent.toFixed(2)}%)
           </span>
         </div>
       </div>
@@ -96,12 +107,13 @@ const PriceChart = React.memo(function PriceChart({ data, width = 400, height = 
         height={height}
         className="price-chart"
         role="img"
-        aria-label={`Price history chart showing ${isPositive ? 'increase' : 'decrease'} from $${firstPrice.toFixed(2)} to $${lastPrice.toFixed(2)}, a change of ${isPositive ? '+' : ''}${priceChangePercent.toFixed(2)}%`}
+        aria-label={`Price history chart showing ${isPositive ? "increase" : "decrease"} from $${firstPrice.toFixed(2)} to $${lastPrice.toFixed(2)}, a change of ${isPositive ? "+" : ""}${priceChangePercent.toFixed(2)}%`}
       >
         <title>Price History Chart</title>
         <desc>
-          Line chart showing price movement from ${formatDate(data[0].date)} to ${formatDate(data[data.length - 1].date)}.
-          Price {isPositive ? 'increased' : 'decreased'} by ${Math.abs(priceChangePercent).toFixed(2)}%.
+          Line chart showing price movement from ${formatDate(data[0].date)} to $
+          {formatDate(data[data.length - 1].date)}. Price {isPositive ? "increased" : "decreased"}{" "}
+          by ${Math.abs(priceChangePercent).toFixed(2)}%.
         </desc>
         {/* Gradient for area fill */}
         <defs>
@@ -127,11 +139,7 @@ const PriceChart = React.memo(function PriceChart({ data, width = 400, height = 
         ))}
 
         {/* Area fill */}
-        <path
-          d={areaPath}
-          fill={`url(#gradient-${color})`}
-          stroke="none"
-        />
+        <path d={areaPath} fill={`url(#gradient-${color})`} stroke="none" />
 
         {/* Line chart */}
         <path
@@ -189,20 +197,24 @@ const PriceChart = React.memo(function PriceChart({ data, width = 400, height = 
 
       {/* Time period indicator */}
       <div className="chart-period">
-        <span>{data.length} day{data.length > 1 ? 's' : ''} history</span>
+        <span>
+          {data.length} day{data.length > 1 ? "s" : ""} history
+        </span>
       </div>
     </div>
-  )
-})
+  );
+});
 
 PriceChart.propTypes = {
-  data: PropTypes.arrayOf(PropTypes.shape({
-    date: PropTypes.string.isRequired,
-    price: PropTypes.number.isRequired
-  })).isRequired,
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      date: PropTypes.string.isRequired,
+      price: PropTypes.number.isRequired,
+    })
+  ).isRequired,
   width: PropTypes.number,
   height: PropTypes.number,
-  color: PropTypes.string
-}
+  color: PropTypes.string,
+};
 
-export default PriceChart
+export default PriceChart;

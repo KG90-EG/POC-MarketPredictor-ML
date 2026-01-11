@@ -105,7 +105,9 @@ class WatchlistDB:
     """Database operations for watchlists."""
 
     @staticmethod
-    def create_watchlist(user_id: str, name: str, description: Optional[str] = None) -> int:
+    def create_watchlist(
+        user_id: str, name: str, description: Optional[str] = None
+    ) -> int:
         """Create a new watchlist."""
         with get_db_connection() as conn:
             cursor = conn.cursor()
@@ -246,7 +248,9 @@ class WatchlistDB:
                 return False
 
     @staticmethod
-    def remove_stock_from_watchlist(watchlist_id: int, user_id: str, ticker: str) -> bool:
+    def remove_stock_from_watchlist(
+        watchlist_id: int, user_id: str, ticker: str
+    ) -> bool:
         """Remove a stock from a watchlist."""
         with get_db_connection() as conn:
             cursor = conn.cursor()

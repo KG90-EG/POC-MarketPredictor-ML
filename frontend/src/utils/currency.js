@@ -11,19 +11,19 @@
  * @returns {number} Converted price
  */
 export function convertPrice(priceUSD, targetCurrency, exchangeRate = null) {
-  if (targetCurrency === 'USD' || !priceUSD) {
-    return priceUSD
+  if (targetCurrency === "USD" || !priceUSD) {
+    return priceUSD;
   }
 
-  if (targetCurrency === 'CHF') {
+  if (targetCurrency === "CHF") {
     if (!exchangeRate) {
-      console.warn('Exchange rate not available, using fallback')
-      return priceUSD * 0.85 // Fallback rate
+      console.warn("Exchange rate not available, using fallback");
+      return priceUSD * 0.85; // Fallback rate
     }
-    return priceUSD * exchangeRate
+    return priceUSD * exchangeRate;
   }
 
-  return priceUSD
+  return priceUSD;
 }
 
 /**
@@ -32,20 +32,20 @@ export function convertPrice(priceUSD, targetCurrency, exchangeRate = null) {
  * @param {string} currency - Currency code ('USD' or 'CHF')
  * @returns {string} Formatted price with symbol
  */
-export function formatPrice(price, currency = 'USD') {
+export function formatPrice(price, currency = "USD") {
   if (price === null || price === undefined || isNaN(price)) {
-    return currency === 'USD' ? '$--' : 'CHF --'
+    return currency === "USD" ? "$--" : "CHF --";
   }
 
-  const formatted = price.toFixed(2)
+  const formatted = price.toFixed(2);
 
-  if (currency === 'USD') {
-    return `$${formatted}`
-  } else if (currency === 'CHF') {
-    return `CHF ${formatted}`
+  if (currency === "USD") {
+    return `$${formatted}`;
+  } else if (currency === "CHF") {
+    return `CHF ${formatted}`;
   }
 
-  return `${currency} ${formatted}`
+  return `${currency} ${formatted}`;
 }
 
 /**
@@ -56,6 +56,6 @@ export function formatPrice(price, currency = 'USD') {
  * @returns {string} Formatted price with symbol
  */
 export function convertAndFormat(priceUSD, targetCurrency, exchangeRate = null) {
-  const converted = convertPrice(priceUSD, targetCurrency, exchangeRate)
-  return formatPrice(converted, targetCurrency)
+  const converted = convertPrice(priceUSD, targetCurrency, exchangeRate);
+  return formatPrice(converted, targetCurrency);
 }
