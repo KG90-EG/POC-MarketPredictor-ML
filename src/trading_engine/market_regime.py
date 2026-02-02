@@ -12,13 +12,45 @@ Risk-off regimes should block BUY signals to protect capital.
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, Optional, Tuple
 
-import pandas as pd
 import yfinance as yf
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class PositionLimits:
+    """Position limits based on market regime"""
+
+    single_stock_max: float  # Max % per single stock
+    single_crypto_max: float  # Max % per single crypto
+    total_equity_max: float  # Max % in equities
+    total_crypto_max: float  # Max % in crypto
+    min_cash: float  # Minimum cash reserve %
+
+    @classmethod
+    def default(cls) -> "PositionLimits":
+        """Normal market limits (Constitution compliant)"""
+        return cls(
+            single_stock_max=10.0,
+            single_crypto_max=5.0,
+            total_equity_max=70.0,
+            total_crypto_max=20.0,
+            min_cash=10.0,
+        )
+
+    @classmethod
+    def defensive(cls) -> "PositionLimits":
+        """Defensive mode limits (50% reduced)"""
+        return cls(
+            single_stock_max=5.0,
+            single_crypto_max=2.5,
+            total_equity_max=35.0,
+            total_crypto_max=10.0,
+            min_cash=30.0,
+        )
 
 
 @dataclass
@@ -45,6 +77,59 @@ class RegimeState:
     # Metadata
     timestamp: datetime
     recommendation: str  # Human-readable recommendation
+
+    @property
+    def defensive_mode(self) -> bool:
+        """True if market is in defensive mode (RISK_OFF)"""
+        return self.regime_status == "RISK_OFF"
+
+    @property
+    def caution_badge(self) -> bool:
+        """True if caution should be shown (VIX > 25 OR NEUTRAL regime)"""
+        return self.vix_value > 25 or self.regime_status == "NEUTRAL"
+
+    def get_position_limits(self) -> PositionLimits:
+        """Get current position limits based on regime"""
+        if self.defensive_mode:
+            return PositionLimits.defensive()
+        return PositionLimits.default()
+
+    def check_position_limit(self, current_allocation: float, asset_type: str) -> Dict[str, any]:
+        """
+        Check if a position allocation is within limits.
+
+        Args:
+            current_allocation: Current % allocation
+            asset_type: "stock", "crypto", "equity_total", "crypto_total"
+
+        Returns:
+            {"allowed": bool, "warning": str or None, "limit": float}
+        """
+        limits = self.get_position_limits()
+
+        limit_map = {
+            "stock": limits.single_stock_max,
+            "crypto": limits.single_crypto_max,
+            "equity_total": limits.total_equity_max,
+            "crypto_total": limits.total_crypto_max,
+        }
+
+        limit = limit_map.get(asset_type, 10.0)
+        allowed = current_allocation <= limit
+
+        warning = None
+        if not allowed:
+            warning = (
+                f"Position exceeds {asset_type} limit ({current_allocation:.1f}% > {limit:.1f}%)"
+            )
+            logger.warning(warning)
+
+        return {
+            "allowed": allowed,
+            "warning": warning,
+            "limit": limit,
+            "current": current_allocation,
+        }
 
 
 class MarketRegimeDetector:
@@ -120,21 +205,15 @@ class MarketRegimeDetector:
         if regime_score >= self.RISK_ON_THRESHOLD:
             regime_status = "RISK_ON"
             allow_buys = True
-            recommendation = (
-                "Normal operations. Market conditions favorable for new positions."
-            )
+            recommendation = "Normal operations. Market conditions favorable for new positions."
         elif regime_score >= self.RISK_OFF_THRESHOLD:
             regime_status = "NEUTRAL"
             allow_buys = True
-            recommendation = (
-                "Cautious mode. Reduce position sizes by 50%. Monitor closely."
-            )
+            recommendation = "Cautious mode. Reduce position sizes by 50%. Monitor closely."
         else:
             regime_status = "RISK_OFF"
             allow_buys = False
-            recommendation = (
-                "Defensive mode. BLOCK all new BUY signals. Protect capital."
-            )
+            recommendation = "Defensive mode. BLOCK all new BUY signals. Protect capital."
 
         # Create regime state
         regime = RegimeState(
@@ -232,31 +311,23 @@ class MarketRegimeDetector:
         elif vix < self.VIX_MEDIUM:
             # Normal volatility
             # Linear scale: VIX 15 = 100, VIX 25 = 60
-            score = int(
-                100 - ((vix - self.VIX_LOW) / (self.VIX_MEDIUM - self.VIX_LOW)) * 40
-            )
+            score = int(100 - ((vix - self.VIX_LOW) / (self.VIX_MEDIUM - self.VIX_LOW)) * 40)
             return "MEDIUM", max(60, score)
         elif vix < self.VIX_HIGH:
             # Elevated volatility - caution
             # Linear scale: VIX 25 = 60, VIX 30 = 40
-            score = int(
-                60 - ((vix - self.VIX_MEDIUM) / (self.VIX_HIGH - self.VIX_MEDIUM)) * 20
-            )
+            score = int(60 - ((vix - self.VIX_MEDIUM) / (self.VIX_HIGH - self.VIX_MEDIUM)) * 20)
             return "HIGH", max(40, score)
         elif vix < self.VIX_EXTREME:
             # High volatility - risk-off
             # Linear scale: VIX 30 = 40, VIX 40 = 20
-            score = int(
-                40 - ((vix - self.VIX_HIGH) / (self.VIX_EXTREME - self.VIX_HIGH)) * 20
-            )
+            score = int(40 - ((vix - self.VIX_HIGH) / (self.VIX_EXTREME - self.VIX_HIGH)) * 20)
             return "HIGH", max(20, score)
         else:
             # Extreme volatility - panic
             return "EXTREME", 10
 
-    def _classify_trend(
-        self, price: float, ma_50: float, ma_200: float
-    ) -> Tuple[str, int]:
+    def _classify_trend(self, price: float, ma_50: float, ma_200: float) -> Tuple[str, int]:
         """
         Classify trend regime based on moving average relationships.
 
@@ -280,7 +351,7 @@ class MarketRegimeDetector:
         # Calculate distance percentages
         price_vs_50_pct = ((price - ma_50) / ma_50) * 100
         price_vs_200_pct = ((price - ma_200) / ma_200) * 100
-        ma_50_vs_200_pct = ((ma_50 - ma_200) / ma_200) * 100
+        # Note: ma_50_vs_200 could be used for golden/death cross detection
 
         # Strong bull market
         if price_above_50 and price_above_200 and ma_50_above_200:

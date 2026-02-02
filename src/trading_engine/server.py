@@ -47,6 +47,7 @@ from .ml.trading import (
     features,
 )
 from .portfolio_management import get_portfolio_manager
+from .risk_scoring import get_risk_scorer
 from .services import HealthService, StockService, ValidationService
 from .simulation_db import SimulationDB
 from .utils import metrics as prom_metrics
@@ -87,7 +88,9 @@ logger = setup_logging(app_config.logging.log_level)
 try:
     from .performance import init_feature_cache
 
-    feature_cache = init_feature_cache(redis_client=cache.redis_client if hasattr(cache, "redis_client") else None)
+    feature_cache = init_feature_cache(
+        redis_client=cache.redis_client if hasattr(cache, "redis_client") else None
+    )
     logger.info("Feature cache initialized for performance optimization")
 except Exception as e:
     logger.warning(f"Feature cache initialization failed: {e}")
@@ -793,12 +796,32 @@ def predict_ticker(ticker: str):
     # Get current price for response
     current_price = float(df["Close"].iloc[-1])
 
+    # Calculate risk score for this ticker
+    risk_scorer = get_risk_scorer()
+    risk_breakdown = risk_scorer.get_risk_score(ticker)
+
+    # Get market regime for caution badge
+    regime_detector = get_regime_detector()
+    regime = regime_detector.get_regime()
+
     return {
         "ticker": ticker,
         "probability": float(prob),
         "prediction": int(prob > 0.5),
         "current_price": current_price,
         "price": current_price,
+        # Risk Management additions (Phase 4)
+        "risk_score": risk_breakdown.composite_score,
+        "risk_level": risk_breakdown.risk_level,
+        "risk_breakdown": {
+            "volatility": risk_breakdown.volatility_score,
+            "drawdown": risk_breakdown.drawdown_score,
+            "correlation": risk_breakdown.correlation_score,
+        },
+        "caution_badge": regime.caution_badge,
+        "position_multiplier": risk_scorer.get_position_size_multiplier(
+            risk_breakdown.composite_score
+        ),
     }
 
 
@@ -834,7 +857,9 @@ async def predict_ticker_alias(ticker: str):
     Returns stocks sorted by prediction probability (highest first).
     """,
 )
-def ranking(tickers: str = "", country: str = "Global", use_parallel: bool = False):  # TEMP: Disabled parallel
+def ranking(
+    tickers: str = "", country: str = "Global", use_parallel: bool = False
+):  # TEMP: Disabled parallel
     """
     Rank stocks by ML prediction probability.
 
@@ -997,7 +1022,9 @@ def ranking(tickers: str = "", country: str = "Global", use_parallel: bool = Fal
 
         # Track model prediction metrics
         pred_duration = time.time() - pred_start
-        prom_metrics.track_model_prediction("composite_scorer", score_breakdown.composite_score / 100, pred_duration)
+        prom_metrics.track_model_prediction(
+            "composite_scorer", score_breakdown.composite_score / 100, pred_duration
+        )
 
         result.append(
             {
@@ -1083,12 +1110,25 @@ def get_regime_status():
         regime_detector = get_regime_detector()
         regime = regime_detector.get_regime()
 
+        # Get position limits based on current regime
+        position_limits = regime.get_position_limits()
+
         # Format response
         return {
             "status": regime.regime_status,
             "score": regime.regime_score,
             "allow_buys": regime.allow_buys,
             "recommendation": regime.recommendation,
+            # Phase 4 Risk Management additions
+            "defensive_mode": regime.defensive_mode,
+            "caution_badge": regime.caution_badge,
+            "position_limits": {
+                "single_stock_max": position_limits.single_stock_max,
+                "single_crypto_max": position_limits.single_crypto_max,
+                "total_equity_max": position_limits.total_equity_max,
+                "total_crypto_max": position_limits.total_crypto_max,
+                "min_cash": position_limits.min_cash,
+            },
             "volatility": {
                 "vix": round(regime.vix_value, 2),
                 "regime": regime.volatility_regime,
@@ -1345,12 +1385,16 @@ def validate_portfolio_allocation(allocation: Dict[str, Any]):
                 crypto_total += percentage
                 max_single = 5.0 if regime.regime_status == "RISK_ON" else 2.0
                 if percentage > max_single:
-                    errors.append(f"{ticker}: {percentage}% exceeds single crypto limit ({max_single}%)")
+                    errors.append(
+                        f"{ticker}: {percentage}% exceeds single crypto limit ({max_single}%)"
+                    )
             else:
                 stock_total += percentage
                 max_single = 10.0 if regime.regime_status == "RISK_ON" else 5.0
                 if percentage > max_single:
-                    errors.append(f"{ticker}: {percentage}% exceeds single stock limit ({max_single}%)")
+                    errors.append(
+                        f"{ticker}: {percentage}% exceeds single stock limit ({max_single}%)"
+                    )
 
         # Check total limits
         max_stocks = 70.0 if regime.regime_status == "RISK_ON" else 50.0
@@ -1524,12 +1568,20 @@ def search_stocks(query: str = "", market: str = "all", limit: int = 20):
                         else (
                             "SIX"
                             if country == "Switzerland"
-                            else ("XETRA" if country == "Germany" else ("LSE" if country == "United Kingdom" else "EURONEXT"))
+                            else (
+                                "XETRA"
+                                if country == "Germany"
+                                else ("LSE" if country == "United Kingdom" else "EURONEXT")
+                            )
                         )
                     )
 
                 # Match against ticker symbol or company name
-                if not query or query in ticker_symbol.upper() or (company_name and query in company_name.upper()):
+                if (
+                    not query
+                    or query in ticker_symbol.upper()
+                    or (company_name and query in company_name.upper())
+                ):
                     results.append(
                         {
                             "ticker": ticker_symbol,
@@ -1607,7 +1659,9 @@ def get_countries():
                     "stock_count": len(tickers),
                     "status": status,
                     "exchange": exchange_map.get(country, "Unknown"),
-                    "tickers": (ticker_list if len(ticker_list) <= 10 else ticker_list[:10] + ["..."]),
+                    "tickers": (
+                        ticker_list if len(ticker_list) <= 10 else ticker_list[:10] + ["..."]
+                    ),
                 }
             )
 
@@ -1942,7 +1996,9 @@ def search_stocks(query: str, limit: int = 10) -> Dict[str, Any]:
 
             # Filter by query
             matching = [
-                stock for stock in all_stocks if query_lower in stock["ticker"].lower() or query_lower in stock["name"].lower()
+                stock
+                for stock in all_stocks
+                if query_lower in stock["ticker"].lower() or query_lower in stock["name"].lower()
             ]
 
             return {"stocks": matching[:limit]}
@@ -2239,7 +2295,9 @@ def get_watchlists(user_id: str = "default_user"):
 def create_watchlist(watchlist: WatchlistCreate, user_id: str = "default_user"):
     """Create a new watchlist."""
     try:
-        watchlist_id = WatchlistDB.create_watchlist(user_id=user_id, name=watchlist.name, description=watchlist.description)
+        watchlist_id = WatchlistDB.create_watchlist(
+            user_id=user_id, name=watchlist.name, description=watchlist.description
+        )
         return {
             "id": watchlist_id,
             "message": f"Watchlist '{watchlist.name}' created successfully",
@@ -2300,7 +2358,9 @@ def delete_watchlist(watchlist_id: int, user_id: str = "default_user"):
 
 
 @app.post("/watchlists/{watchlist_id}/stocks", tags=["Watchlists"])
-def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: str = "default_user"):
+def add_stock_to_watchlist(
+    watchlist_id: int, stock: AddStockRequest, user_id: str = "default_user"
+):
     """Add a stock or crypto to a watchlist."""
     try:
         # For crypto assets, skip validation (CoinGecko IDs don't need ticker validation)
@@ -2309,7 +2369,9 @@ def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: s
             company_name = stock.ticker
         else:
             # Validate and verify ticker (auto-corrects common mistakes like APPLE -> AAPL)
-            validated_ticker, company_name = ValidationService.validate_and_verify_ticker(stock.ticker)
+            validated_ticker, company_name = ValidationService.validate_and_verify_ticker(
+                stock.ticker
+            )
 
         # Use company name in notes if no notes provided
         notes = stock.notes or company_name
@@ -2331,7 +2393,9 @@ def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: s
         response = {"message": f"{stock.asset_type.title()} {validated_ticker} added to watchlist"}
         if stock.asset_type == "stock" and validated_ticker != stock.ticker.upper():
             response["corrected_from"] = stock.ticker
-            response["message"] = f"Stock {stock.ticker} auto-corrected to {validated_ticker} and added to watchlist"
+            response["message"] = (
+                f"Stock {stock.ticker} auto-corrected to {validated_ticker} and added to watchlist"
+            )
         return response
     except ValueError as e:
         # Validation error with suggestions
@@ -2347,7 +2411,9 @@ def add_stock_to_watchlist(watchlist_id: int, stock: AddStockRequest, user_id: s
 def remove_stock_from_watchlist(watchlist_id: int, ticker: str, user_id: str = "default_user"):
     """Remove a stock from a watchlist."""
     try:
-        success = WatchlistDB.remove_stock_from_watchlist(watchlist_id=watchlist_id, user_id=user_id, ticker=ticker)
+        success = WatchlistDB.remove_stock_from_watchlist(
+            watchlist_id=watchlist_id, user_id=user_id, ticker=ticker
+        )
         if not success:
             raise HTTPException(
                 status_code=404,
@@ -2381,7 +2447,9 @@ def get_market_context(request: AnalysisRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=503, detail="LLM not configured (set OPENAI_API_KEY)")
 
     # Create cache key from ranking + context
-    cache_key = hashlib.md5(f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()).hexdigest()
+    cache_key = hashlib.md5(
+        f"{[r['ticker'] for r in request.ranking[:10]]}{request.user_context}".encode()
+    ).hexdigest()
 
     # Check cache
     cached_data = cache.get(f"market_context:{cache_key}")
@@ -2491,7 +2559,8 @@ def get_market_context(request: AnalysisRequest) -> Dict[str, Any]:
                     else:
                         raise HTTPException(
                             status_code=429,
-                            detail="OpenAI rate limit exceeded. " "Please wait a moment and try again.",
+                            detail="OpenAI rate limit exceeded. "
+                            "Please wait a moment and try again.",
                         )
                 else:
                     raise
@@ -2634,12 +2703,18 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
 
             if action == "subscribe" and ticker:
                 ws_manager.subscribe(client_id, ticker)
-                await ws_manager.send_personal_message({"type": "subscribed", "ticker": ticker}, client_id)
+                await ws_manager.send_personal_message(
+                    {"type": "subscribed", "ticker": ticker}, client_id
+                )
             elif action == "unsubscribe" and ticker:
                 ws_manager.unsubscribe(client_id, ticker)
-                await ws_manager.send_personal_message({"type": "unsubscribed", "ticker": ticker}, client_id)
+                await ws_manager.send_personal_message(
+                    {"type": "unsubscribed", "ticker": ticker}, client_id
+                )
             elif action == "ping":
-                await ws_manager.send_personal_message({"type": "pong", "timestamp": time.time()}, client_id)
+                await ws_manager.send_personal_message(
+                    {"type": "pong", "timestamp": time.time()}, client_id
+                )
             else:
                 await ws_manager.send_personal_message(
                     {"type": "error", "message": "Invalid action or missing ticker"},
@@ -2934,7 +3009,9 @@ async def get_portfolio(simulation_id: int):
             "total_value": portfolio_value,
             "initial_capital": sim.initial_capital,
             "total_pnl": portfolio_value - sim.initial_capital,
-            "total_pnl_percent": ((portfolio_value - sim.initial_capital) / sim.initial_capital * 100),
+            "total_pnl_percent": (
+                (portfolio_value - sim.initial_capital) / sim.initial_capital * 100
+            ),
         }
 
     except HTTPException:
@@ -3030,7 +3107,10 @@ def get_model_info():
         feature_importances = None
         if hasattr(MODEL, "feature_importances_"):
             importances = MODEL.feature_importances_
-            feature_importances = [{"feature": feat, "importance": float(imp)} for feat, imp in zip(features, importances)]
+            feature_importances = [
+                {"feature": feat, "importance": float(imp)}
+                for feat, imp in zip(features, importances)
+            ]
             feature_importances.sort(key=lambda x: x["importance"], reverse=True)
 
         # Model parameters
@@ -3151,7 +3231,9 @@ def trigger_retraining(stocks_limit: int = 50, test_mode: bool = False):
 
         job_id = str(uuid.uuid4())
 
-        logger.info(f"🔄 Retraining triggered: Job {job_id} (stocks={stocks_limit}, test={test_mode})")
+        logger.info(
+            f"🔄 Retraining triggered: Job {job_id} (stocks={stocks_limit}, test={test_mode})"
+        )
 
         return {
             "success": True,
@@ -3616,7 +3698,9 @@ async def run_backtest(
         report = generate_backtest_report(results)
         response["report"] = report
 
-        logger.info(f"Backtest complete. Best return: {best_return.strategy_name} ({best_return.total_return:.2f}%)")
+        logger.info(
+            f"Backtest complete. Best return: {best_return.strategy_name} ({best_return.total_return:.2f}%)"
+        )
 
         return response
 

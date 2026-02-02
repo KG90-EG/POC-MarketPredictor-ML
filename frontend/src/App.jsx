@@ -58,7 +58,12 @@ function ViewSelectorMenu({ currentView, onViewChange }) {
   const menuRef = React.useRef(null);
 
   const views = [
-    { id: "buy-opportunities", icon: "🎯", label: "Trading Signals", description: "Today's best opportunities" },
+    {
+      id: "buy-opportunities",
+      icon: "🎯",
+      label: "Trading Signals",
+      description: "Today's best opportunities",
+    },
     { id: "stocks", icon: "💹", label: "Top Stocks", description: "AI-ranked stocks" },
     { id: "crypto", icon: "🪙", label: "Crypto", description: "Digital assets" },
     { id: "watchlists", icon: "⭐", label: "Watchlist", description: "Your saved stocks" },
@@ -66,7 +71,7 @@ function ViewSelectorMenu({ currentView, onViewChange }) {
     { id: "backtest", icon: "📊", label: "Backtest", description: "Historical analysis" },
   ];
 
-  const currentViewData = views.find(v => v.id === currentView) || views[0];
+  const currentViewData = views.find((v) => v.id === currentView) || views[0];
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -134,7 +139,7 @@ function SettingsMenu({
   showHealthPanel,
   setShowHealthPanel,
   setShowHelp,
-  setShowMarketContext
+  setShowMarketContext,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = React.useRef(null);
@@ -150,11 +155,15 @@ function SettingsMenu({
   }, []);
 
   const getHealthIcon = () => {
-    switch(healthStatus) {
-      case "healthy": return "✅";
-      case "warning": return "⚠️";
-      case "error": return "❌";
-      default: return "⏳";
+    switch (healthStatus) {
+      case "healthy":
+        return "✅";
+      case "warning":
+        return "⚠️";
+      case "error":
+        return "❌";
+      default:
+        return "⏳";
     }
   };
 
@@ -200,7 +209,9 @@ function SettingsMenu({
               <span className="item-title">Currency</span>
               <span className="item-value">
                 {currency}
-                {currency === "CHF" && exchangeRate ? ` (1 USD = ${exchangeRate.toFixed(4)} CHF)` : ""}
+                {currency === "CHF" && exchangeRate
+                  ? ` (1 USD = ${exchangeRate.toFixed(4)} CHF)`
+                  : ""}
               </span>
             </span>
           </button>

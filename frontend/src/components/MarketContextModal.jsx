@@ -28,41 +28,41 @@ function MarketContextModal({ isOpen, onClose }) {
       // First, fetch current stock rankings (required by backend)
       const rankingsResponse = await apiClient.get("/ranking?country=Global");
       const rankings = rankingsResponse.data.results || [];
-      
+
       // Convert to format expected by backend
-      const rankingData = rankings.slice(0, 20).map(stock => ({
+      const rankingData = rankings.slice(0, 20).map((stock) => ({
         ticker: stock.ticker,
         prob: stock.prob,
-        signal: stock.signal
+        signal: stock.signal,
       }));
 
       // Then fetch market context with rankings
       const response = await apiClient.post("/api/context/market", {
         ranking: rankingData,
-        user_context: "General market overview"
+        user_context: "General market overview",
       });
 
       setMarketContext(response.data);
     } catch (err) {
       console.error("Failed to fetch market context:", err);
-      
+
       // Handle error detail properly (could be string, object, or array)
       let errorMessage = "Failed to load market context. Please try again.";
-      
+
       if (err.response?.data?.detail) {
         const detail = err.response.data.detail;
         if (typeof detail === "string") {
           errorMessage = detail;
         } else if (Array.isArray(detail)) {
           // Validation errors from FastAPI
-          errorMessage = detail.map(e => e.msg || JSON.stringify(e)).join(", ");
+          errorMessage = detail.map((e) => e.msg || JSON.stringify(e)).join(", ");
         } else if (typeof detail === "object") {
           errorMessage = detail.msg || JSON.stringify(detail);
         }
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
     } finally {
       setLoading(false);

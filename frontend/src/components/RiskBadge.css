@@ -1,0 +1,165 @@
+/* RiskBadge.css - Risk Management Phase 4 */
+
+/* Base Badge Styles */
+.risk-badge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  position: relative;
+  cursor: help;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.risk-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.risk-badge-score {
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.risk-badge-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+
+/* Compact Badge */
+.risk-badge-compact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: help;
+}
+
+/* Risk Level Colors */
+.risk-low {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: white;
+}
+
+.risk-medium {
+  background: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
+  color: #1f2937;
+}
+
+.risk-high {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+/* Tooltip */
+.risk-badge-tooltip {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: white;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  z-index: 100;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.risk-badge-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #1f2937;
+}
+
+.risk-badge:hover .risk-badge-tooltip {
+  display: block;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 3px 0;
+}
+
+.tooltip-row:not(:last-child) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tooltip-row span:first-child {
+  opacity: 0.8;
+}
+
+.tooltip-row span:last-child {
+  font-weight: 600;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .risk-badge-tooltip {
+    background: #374151;
+  }
+
+  .risk-badge-tooltip::after {
+    border-top-color: #374151;
+  }
+
+  .risk-medium {
+    color: #fef3c7;
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .risk-badge {
+    padding: 4px 8px;
+  }
+
+  .risk-badge-score {
+    font-size: 0.95rem;
+  }
+
+  .risk-badge-label {
+    font-size: 0.6rem;
+  }
+
+  .risk-badge-compact {
+    min-width: 28px;
+    height: 22px;
+    font-size: 0.7rem;
+  }
+}
