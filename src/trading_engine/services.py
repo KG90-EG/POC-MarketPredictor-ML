@@ -38,9 +38,7 @@ class StockService:
             return cached
 
         # Get seed list for country
-        seed_list = config.market.country_seeds.get(
-            country, config.market.default_stocks
-        )
+        seed_list = config.market.country_seeds.get(country, config.market.default_stocks)
 
         # Validate and rank by market cap in parallel
         validated_stocks = StockService._validate_stocks_parallel(seed_list, country)
@@ -132,9 +130,7 @@ class StockService:
                 "name": info.get("longName", info.get("shortName", "N/A")),
                 "price": float(current_price) if current_price else None,
                 "change": (
-                    float(current_price - prev_close)
-                    if current_price and prev_close
-                    else None
+                    float(current_price - prev_close) if current_price and prev_close else None
                 ),
                 "volume": int(info.get("volume", 0)) if info.get("volume") else None,
                 "market_cap": info.get("marketCap", None),
@@ -302,9 +298,7 @@ class ValidationService:
                 # Suggest similar tickers if available
                 suggestion = ValidationService._suggest_ticker(ticker)
                 if suggestion:
-                    raise ValueError(
-                        f"Ticker '{ticker}' not found. Did you mean '{suggestion}'?"
-                    )
+                    raise ValueError(f"Ticker '{ticker}' not found. Did you mean '{suggestion}'?")
                 raise ValueError(f"Ticker '{ticker}' not found or delisted")
 
             company_name = info.get("longName") or info.get("shortName")
@@ -318,12 +312,8 @@ class ValidationService:
             # Try to suggest a correction
             suggestion = ValidationService._suggest_ticker(ticker)
             if suggestion:
-                raise ValueError(
-                    f"Cannot verify ticker '{ticker}'. Did you mean '{suggestion}'?"
-                )
-            raise ValueError(
-                f"Cannot verify ticker '{ticker}'. Please check if it's correct."
-            )
+                raise ValueError(f"Cannot verify ticker '{ticker}'. Did you mean '{suggestion}'?")
+            raise ValueError(f"Cannot verify ticker '{ticker}'. Please check if it's correct.")
 
     @staticmethod
     def _suggest_ticker(ticker: str) -> Optional[str]:
@@ -373,14 +363,10 @@ class ValidationService:
         Raises:
             ValueError: If country is invalid
         """
-        valid_countries = ["Global", "United States"] + list(
-            config.market.country_seeds.keys()
-        )
+        valid_countries = ["Global", "United States"] + list(config.market.country_seeds.keys())
 
         if country not in valid_countries:
-            raise ValueError(
-                f"Invalid country. Must be one of: {', '.join(valid_countries)}"
-            )
+            raise ValueError(f"Invalid country. Must be one of: {', '.join(valid_countries)}")
 
         return country
 

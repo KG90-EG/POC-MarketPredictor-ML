@@ -113,14 +113,14 @@ class Analytics {
   }
 
   // Track click events
-  trackClick(element, label = null) {
+  trackClick(element, label = null, clickEvent = null) {
     this.track("click", {
       element: element.tagName,
       elementId: element.id,
       elementClass: element.className,
       label: label || element.innerText?.substring(0, 50) || element.getAttribute("aria-label"),
-      x: event?.clientX,
-      y: event?.clientY,
+      x: clickEvent?.clientX,
+      y: clickEvent?.clientY,
     });
   }
 

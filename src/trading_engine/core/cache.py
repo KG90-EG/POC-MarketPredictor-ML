@@ -56,9 +56,7 @@ class CacheManager:
         elif not REDIS_AVAILABLE:
             logger.debug("Redis library not installed. Using in-memory cache.")
         else:
-            logger.debug(
-                "Redis disabled (set USE_REDIS=true to enable). Using in-memory cache."
-            )
+            logger.debug("Redis disabled (set USE_REDIS=true to enable). Using in-memory cache.")
 
     def get(self, key: str) -> Optional[Any]:
         """Get value from cache (Redis or in-memory)."""
@@ -91,9 +89,7 @@ class CacheManager:
         # Try Redis first
         if self.redis_client:
             try:
-                self.redis_client.setex(
-                    key, ttl_seconds, json.dumps(value, default=str)
-                )
+                self.redis_client.setex(key, ttl_seconds, json.dumps(value, default=str))
                 return True
             except Exception as e:
                 logger.error(f"Redis set error for key {key}: {e}")

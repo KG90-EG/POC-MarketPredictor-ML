@@ -49,15 +49,11 @@ class InMemoryRateLimiter:
 
         # Remove expired entries
         if ip in self._requests:
-            self._requests[ip] = [
-                (ts, ep) for ts, ep in self._requests[ip] if ts > cutoff
-            ]
+            self._requests[ip] = [(ts, ep) for ts, ep in self._requests[ip] if ts > cutoff]
 
         # Check limit
         if len(self._requests[ip]) >= self.requests_per_minute:
-            logger.warning(
-                f"Rate limit exceeded for IP {ip} ({len(self._requests[ip])} requests)"
-            )
+            logger.warning(f"Rate limit exceeded for IP {ip} ({len(self._requests[ip])} requests)")
             return False
 
         # Add this request
@@ -79,9 +75,7 @@ class InMemoryRateLimiter:
 
         # Clean expired
         if ip in self._requests:
-            self._requests[ip] = [
-                (ts, ep) for ts, ep in self._requests[ip] if ts > cutoff
-            ]
+            self._requests[ip] = [(ts, ep) for ts, ep in self._requests[ip] if ts > cutoff]
             current_count = len(self._requests[ip])
         else:
             current_count = 0

@@ -96,9 +96,7 @@ class HistoricalBacktester:
 
         # Strategy 1: Composite Score System
         logger.info("Running Strategy 1: Composite Score System...")
-        results["composite"] = self._run_composite_strategy(
-            tickers, start_date, end_date
-        )
+        results["composite"] = self._run_composite_strategy(tickers, start_date, end_date)
 
         # Strategy 2: ML-Only
         logger.info("Running Strategy 2: ML-Only...")
@@ -161,9 +159,7 @@ class HistoricalBacktester:
                 try:
                     # Get price at current_date
                     stock = yf.Ticker(ticker)
-                    hist = stock.history(
-                        start=current_date, end=current_date + timedelta(days=2)
-                    )
+                    hist = stock.history(start=current_date, end=current_date + timedelta(days=2))
 
                     if hist.empty:
                         continue
@@ -173,9 +169,7 @@ class HistoricalBacktester:
 
                     # Hold for 30 days
                     exit_date = current_date + timedelta(days=30)
-                    exit_hist = stock.history(
-                        start=exit_date, end=exit_date + timedelta(days=2)
-                    )
+                    exit_hist = stock.history(start=exit_date, end=exit_date + timedelta(days=2))
 
                     if exit_hist.empty:
                         continue
@@ -246,9 +240,7 @@ class HistoricalBacktester:
             for ticker, ml_score in top_stocks:
                 try:
                     stock = yf.Ticker(ticker)
-                    hist = stock.history(
-                        start=current_date, end=current_date + timedelta(days=2)
-                    )
+                    hist = stock.history(start=current_date, end=current_date + timedelta(days=2))
 
                     if hist.empty:
                         continue
@@ -257,9 +249,7 @@ class HistoricalBacktester:
                     shares = position_value / entry_price
 
                     exit_date = current_date + timedelta(days=30)
-                    exit_hist = stock.history(
-                        start=exit_date, end=exit_date + timedelta(days=2)
-                    )
+                    exit_hist = stock.history(start=exit_date, end=exit_date + timedelta(days=2))
 
                     if exit_hist.empty:
                         continue
@@ -441,7 +431,9 @@ def generate_backtest_report(results: Dict[str, BacktestResult]) -> str:
     report += f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
 
     report += "## Strategy Comparison\n\n"
-    report += "| Strategy | Total Return | Max Drawdown | Sharpe Ratio | Win Rate | Calmar Ratio |\n"
+    report += (
+        "| Strategy | Total Return | Max Drawdown | Sharpe Ratio | Win Rate | Calmar Ratio |\n"
+    )
     report += "|----------|--------------|--------------|--------------|----------|-------------|\n"
 
     for name, result in results.items():
@@ -475,7 +467,9 @@ def generate_backtest_report(results: Dict[str, BacktestResult]) -> str:
             if alpha > 0:
                 report += f"  - ✅ Composite strategy outperformed benchmark by {alpha:.2f}%\n"
             else:
-                report += f"  - ⚠️ Composite strategy underperformed benchmark by {abs(alpha):.2f}%\n"
+                report += (
+                    f"  - ⚠️ Composite strategy underperformed benchmark by {abs(alpha):.2f}%\n"
+                )
 
     report += "\n## Detailed Results\n\n"
 
@@ -489,9 +483,7 @@ def generate_backtest_report(results: Dict[str, BacktestResult]) -> str:
         report += f"- **Number of Trades:** {result.num_trades}\n"
         report += f"- **Win Rate:** {result.win_rate:.1f}%\n"
         report += f"- **Average Trade Return:** {result.avg_trade_return:.2f}%\n"
-        report += (
-            f"- **Final Portfolio Value:** ${result.final_portfolio_value:,.2f}\n\n"
-        )
+        report += f"- **Final Portfolio Value:** ${result.final_portfolio_value:,.2f}\n\n"
 
     return report
 
@@ -515,9 +507,7 @@ if __name__ == "__main__":
     ]
 
     backtester = HistoricalBacktester(initial_capital=100000)
-    results = backtester.run_comparison(
-        tickers, start_date="2025-01-01", end_date="2026-01-11"
-    )
+    results = backtester.run_comparison(tickers, start_date="2025-01-01", end_date="2026-01-11")
 
     # Generate report
     report = generate_backtest_report(results)

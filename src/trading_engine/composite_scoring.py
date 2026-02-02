@@ -274,9 +274,7 @@ class CompositeScorer:
             ScoreBreakdown with complete score analysis
         """
         # Calculate component scores
-        technical_score, tech_positive, tech_negative = self.calculate_technical_score(
-            df
-        )
+        technical_score, tech_positive, tech_negative = self.calculate_technical_score(df)
         ml_score = ml_probability * 100  # Convert 0-1 to 0-100
         momentum_score, momentum_factors = self.calculate_momentum_score(df)
 
@@ -312,10 +310,7 @@ class CompositeScorer:
                     # Add LLM factors to positive/negative lists
                     if asset_context.positive_catalysts:
                         tech_positive.extend(
-                            [
-                                f"📰 {cat}"
-                                for cat in asset_context.positive_catalysts[:2]
-                            ]
+                            [f"📰 {cat}" for cat in asset_context.positive_catalysts[:2]]
                         )
                     if asset_context.risk_events:
                         tech_negative.extend(
@@ -372,9 +367,7 @@ class CompositeScorer:
             llm_context=llm_context_str,
         )
 
-    def get_allocation_limit(
-        self, score: float, signal: str, asset_type: str = "stock"
-    ) -> float:
+    def get_allocation_limit(self, score: float, signal: str, asset_type: str = "stock") -> float:
         """
         Get maximum recommended allocation based on score and asset type.
 

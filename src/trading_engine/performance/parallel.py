@@ -61,9 +61,7 @@ class ParallelProcessor:
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             # Submit all tasks
-            future_to_item = {
-                executor.submit(process_func, item): item for item in items
-            }
+            future_to_item = {executor.submit(process_func, item): item for item in items}
 
             # Collect results as they complete
             for future in as_completed(future_to_item, timeout=timeout):

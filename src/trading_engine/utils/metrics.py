@@ -28,22 +28,14 @@ model_prediction_confidence = Histogram(
 )
 
 # System metrics
-model_loaded = Gauge(
-    "model_loaded", "Whether ML model is loaded (1=loaded, 0=not loaded)"
-)
+model_loaded = Gauge("model_loaded", "Whether ML model is loaded (1=loaded, 0=not loaded)")
 
-openai_configured = Gauge(
-    "openai_configured", "Whether OpenAI is configured (1=yes, 0=no)"
-)
+openai_configured = Gauge("openai_configured", "Whether OpenAI is configured (1=yes, 0=no)")
 
 # Cache metrics
-cache_hits_total = Counter(
-    "cache_hits_total", "Total number of cache hits", ["cache_type"]
-)
+cache_hits_total = Counter("cache_hits_total", "Total number of cache hits", ["cache_type"])
 
-cache_misses_total = Counter(
-    "cache_misses_total", "Total number of cache misses", ["cache_type"]
-)
+cache_misses_total = Counter("cache_misses_total", "Total number of cache misses", ["cache_type"])
 
 # Business metrics
 simulations_created_total = Counter(
@@ -76,16 +68,10 @@ def track_model_prediction(model_name: str, confidence: float, duration: float):
     model_prediction_confidence.labels(model=model_name).observe(confidence)
 
 
-def track_request_metrics(
-    method: str, endpoint: str, status_code: int, duration: float
-):
+def track_request_metrics(method: str, endpoint: str, status_code: int, duration: float):
     """Track HTTP request metrics."""
-    http_requests_total.labels(
-        method=method, endpoint=endpoint, status=str(status_code)
-    ).inc()
-    http_request_duration_seconds.labels(method=method, endpoint=endpoint).observe(
-        duration
-    )
+    http_requests_total.labels(method=method, endpoint=endpoint, status=str(status_code)).inc()
+    http_request_duration_seconds.labels(method=method, endpoint=endpoint).observe(duration)
 
 
 def track_ranking_generation(country: str, stock_count: int, duration: float):

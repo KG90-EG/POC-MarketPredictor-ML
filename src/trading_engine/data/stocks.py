@@ -65,7 +65,11 @@ STOCKS_BY_COUNTRY = {
         {"ticker": "GSK.L", "name": "GlaxoSmithKline plc", "market": "LSE"},
     ],
     "France": [
-        {"ticker": "MC.PA", "name": "LVMH Moët Hennessy Louis Vuitton SE", "market": "Euronext Paris"},
+        {
+            "ticker": "MC.PA",
+            "name": "LVMH Moët Hennessy Louis Vuitton SE",
+            "market": "Euronext Paris",
+        },
         {"ticker": "OR.PA", "name": "L'Oréal S.A.", "market": "Euronext Paris"},
         {"ticker": "SAN.PA", "name": "Sanofi S.A.", "market": "Euronext Paris"},
         {"ticker": "TTE.PA", "name": "TotalEnergies SE", "market": "Euronext Paris"},

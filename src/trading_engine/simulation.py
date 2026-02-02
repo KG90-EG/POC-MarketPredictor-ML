@@ -22,7 +22,7 @@ Usage:
 
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -88,26 +88,22 @@ class TradingSimulation:
 
         # BUY opportunities: High confidence stocks not in portfolio
         buy_candidates = [
-            p
-            for p in predictions
-            if p["confidence"] > 0.65 and p["ticker"] not in self.positions
+            p for p in predictions if p["confidence"] > 0.65 and p["ticker"] not in self.positions
         ]
 
         # Sort by confidence, limit to available slots
         max_positions = 10
         available_slots = max_positions - len(self.positions)
-        buy_candidates = sorted(
-            buy_candidates, key=lambda x: x["confidence"], reverse=True
-        )[:available_slots]
+        buy_candidates = sorted(buy_candidates, key=lambda x: x["confidence"], reverse=True)[
+            :available_slots
+        ]
 
         allocation_per_position = self.cash / max_positions if max_positions else 0
 
         for pred in buy_candidates:
             current_price = current_prices.get(pred["ticker"])
             if not current_price or current_price <= 0:
-                logger.warning(
-                    "No valid price for %s, skipping buy recommendation", pred["ticker"]
-                )
+                logger.warning("No valid price for %s, skipping buy recommendation", pred["ticker"])
                 continue
 
             quantity = int(allocation_per_position // current_price)
@@ -155,12 +151,13 @@ class TradingSimulation:
 
             # SELL reasons
             if current_pred["confidence"] < 0.40:
+                conf = current_pred["confidence"]
                 recommendations.append(
                     {
                         "action": "SELL",
                         "ticker": ticker,
-                        "confidence": current_pred["confidence"],
-                        "reason": f"Low confidence ({current_pred['confidence']:.1%}), exit position",
+                        "confidence": conf,
+                        "reason": f"Low confidence ({conf:.1%}), exit position",
                         "price": current_price,
                         "quantity": position["quantity"],
                     }
@@ -226,9 +223,7 @@ class TradingSimulation:
         if action == "BUY":
             cost = quantity * price
             if cost > self.cash:
-                raise ValueError(
-                    f"Insufficient cash: need ${cost:.2f}, have ${self.cash:.2f}"
-                )
+                raise ValueError(f"Insufficient cash: need ${cost:.2f}, have ${self.cash:.2f}")
 
             # Execute buy
             self.cash -= cost
@@ -251,9 +246,7 @@ class TradingSimulation:
                     "current_price": price,
                 }
 
-            logger.info(
-                f"BUY {quantity} {ticker} @ ${price:.2f} " f"(total: ${cost:.2f})"
-            )
+            logger.info(f"BUY {quantity} {ticker} @ ${price:.2f} " f"(total: ${cost:.2f})")
 
         elif action == "SELL":
             if ticker not in self.positions:
@@ -261,9 +254,7 @@ class TradingSimulation:
 
             pos = self.positions[ticker]
             if quantity > pos["quantity"]:
-                raise ValueError(
-                    f"Insufficient shares: need {quantity}, have {pos['quantity']}"
-                )
+                raise ValueError(f"Insufficient shares: need {quantity}, have {pos['quantity']}")
 
             # Execute sell
             proceeds = quantity * price
@@ -373,9 +364,7 @@ class TradingSimulation:
                         buy["quantity"] -= sell["quantity"]
 
         total_closed_trades = winning_trades + losing_trades
-        win_rate = (
-            winning_trades / total_closed_trades if total_closed_trades > 0 else 0
-        )
+        win_rate = winning_trades / total_closed_trades if total_closed_trades > 0 else 0
 
         return {
             "current_value": current_value,
@@ -404,8 +393,7 @@ class TradingSimulation:
             "cash": self.cash,
             "positions": self.positions,
             "trades": [
-                {**trade, "timestamp": trade["timestamp"].isoformat()}
-                for trade in self.trades
+                {**trade, "timestamp": trade["timestamp"].isoformat()} for trade in self.trades
             ],
             "created_at": self.created_at.isoformat(),
         }

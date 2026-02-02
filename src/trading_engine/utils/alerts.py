@@ -194,9 +194,7 @@ class AlertDB:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        cursor.execute(
-            "SELECT COUNT(*) FROM alerts WHERE user_id = ? AND is_read = 0", (user_id,)
-        )
+        cursor.execute("SELECT COUNT(*) FROM alerts WHERE user_id = ? AND is_read = 0", (user_id,))
 
         count = cursor.fetchone()[0]
         conn.close()
@@ -240,7 +238,10 @@ class AlertGenerator:
                 alert_type="price_alert",
                 priority="high",
                 title=f"{ticker} Price Alert",
-                message=f"{ticker} has dropped to ${current_price:.2f} (target: ${target_price:.2f})",
+                message=(
+                    f"{ticker} has dropped to ${current_price:.2f} "
+                    f"(target: ${target_price:.2f})"
+                ),
                 threshold_value=target_price,
                 current_value=current_price,
             )
@@ -257,7 +258,10 @@ class AlertGenerator:
                 alert_type="volatility",
                 priority="medium",
                 title=f"{ticker} High Volatility",
-                message=f"{ticker} volatility is {volatility*100:.1f}% (threshold: {threshold*100:.1f}%)",
+                message=(
+                    f"{ticker} volatility is {volatility*100:.1f}% "
+                    f"(threshold: {threshold*100:.1f}%)"
+                ),
                 threshold_value=threshold,
                 current_value=volatility,
             )
@@ -279,7 +283,9 @@ class AlertGenerator:
             alert_type="recommendation",
             priority="high" if confidence > 0.8 else "medium",
             title=f"{action} {ticker}",
-            message=f"AI recommends {action} {ticker}: {reason} (confidence: {confidence*100:.0f}%)",
+            message=(
+                f"AI recommends {action} {ticker}: {reason} " f"(confidence: {confidence*100:.0f}%)"
+            ),
             threshold_value=0.7,
             current_value=confidence,
         )

@@ -107,9 +107,7 @@ def setup_auto_retraining(
         day_map = {"mon": 0, "tue": 1, "wed": 2, "thu": 3, "fri": 4, "sat": 5, "sun": 6}
         day = day_map.get(day_of_week.lower(), 6)  # Default to Sunday
         trigger = CronTrigger(day_of_week=day, hour=hour, minute=minute)
-        logger.info(
-            f"📅 Scheduled weekly retraining on {day_of_week.upper()} at {time}"
-        )
+        logger.info(f"📅 Scheduled weekly retraining on {day_of_week.upper()} at {time}")
 
     elif schedule == "monthly":
         trigger = CronTrigger(day=1, hour=hour, minute=minute)

@@ -135,12 +135,8 @@ def main():
         trading_module.USE_ALL_FEATURES = True  # Use 20 advanced technical features
 
         print(f"   ✓ Advanced technical features enabled: 20 features")
-        print(
-            f"     Technical: RSI, MACD, Bollinger, ATR, ADX, Stochastic, OBV, VWAP, etc."
-        )
-        print(
-            f"     Note: No external API calls (fundamentals/sentiment) to avoid rate limiting"
-        )
+        print(f"     Technical: RSI, MACD, Bollinger, ATR, ADX, Stochastic, OBV, VWAP, etc.")
+        print(f"     Note: No external API calls (fundamentals/sentiment) to avoid rate limiting")
 
         try:
             data = build_dataset(DEFAULT_STOCKS, period="5y")

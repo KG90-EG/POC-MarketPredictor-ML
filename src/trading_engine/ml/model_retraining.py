@@ -82,24 +82,18 @@ class ModelRetrainingService:
 
         # Check absolute thresholds
         if metrics["f1_score"] < MIN_F1_SCORE:
-            logger.warning(
-                f"F1 score {metrics['f1_score']:.3f} below threshold {MIN_F1_SCORE}"
-            )
+            logger.warning(f"F1 score {metrics['f1_score']:.3f} below threshold {MIN_F1_SCORE}")
             return False
 
         if metrics["accuracy"] < MIN_ACCURACY:
-            logger.warning(
-                f"Accuracy {metrics['accuracy']:.3f} below threshold {MIN_ACCURACY}"
-            )
+            logger.warning(f"Accuracy {metrics['accuracy']:.3f} below threshold {MIN_ACCURACY}")
             return False
 
         # Check for performance degradation
         if self.current_metrics["f1_score"] > 0:
             f1_drop = self.current_metrics["f1_score"] - metrics["f1_score"]
             if f1_drop > MAX_PERFORMANCE_DROP:
-                logger.warning(
-                    f"F1 score dropped by {f1_drop:.3f} (>{MAX_PERFORMANCE_DROP})"
-                )
+                logger.warning(f"F1 score dropped by {f1_drop:.3f} (>{MAX_PERFORMANCE_DROP})")
                 return False
 
         return True
@@ -297,8 +291,7 @@ class ModelRetrainingService:
             "current_metrics": self.current_metrics,
             "next_retraining": (jobs[0].next_run_time.isoformat() if jobs else None),
             "scheduled_jobs": [
-                {"name": job.name, "next_run": job.next_run_time.isoformat()}
-                for job in jobs
+                {"name": job.name, "next_run": job.next_run_time.isoformat()} for job in jobs
             ],
             "model_path": str(PROD_MODEL_PATH),
             "backup_path": str(BACKUP_MODEL_PATH),

@@ -117,28 +117,18 @@ class PortfolioManager:
 
         # Calculate totals
         total_allocation = sum(p.allocation for p in position_objects)
-        equity_exposure = sum(
-            p.allocation for p in position_objects if p.asset_type == "stock"
-        )
-        crypto_exposure = sum(
-            p.allocation for p in position_objects if p.asset_type == "crypto"
-        )
+        equity_exposure = sum(p.allocation for p in position_objects if p.asset_type == "stock")
+        crypto_exposure = sum(p.allocation for p in position_objects if p.asset_type == "crypto")
         cash_reserve = 100.0 - total_allocation
 
         # Validate position limits
         for pos in position_objects:
-            if (
-                pos.asset_type == "stock"
-                and pos.allocation > self.limits.max_stock_position
-            ):
+            if pos.asset_type == "stock" and pos.allocation > self.limits.max_stock_position:
                 violations.append(
                     f"⛔ {pos.ticker}: {pos.allocation:.1f}% exceeds stock limit "
                     f"({self.limits.max_stock_position}%)"
                 )
-            elif (
-                pos.asset_type == "crypto"
-                and pos.allocation > self.limits.max_crypto_position
-            ):
+            elif pos.asset_type == "crypto" and pos.allocation > self.limits.max_crypto_position:
                 violations.append(
                     f"⛔ {pos.ticker}: {pos.allocation:.1f}% exceeds crypto limit "
                     f"({self.limits.max_crypto_position}%)"
@@ -337,12 +327,8 @@ class PortfolioManager:
 
             elif "Equity exposure" in violation:
                 # Suggest reducing equity positions proportionally
-                equity_positions = [
-                    p for p in current_positions if p.get("asset_type") == "stock"
-                ]
-                total_reduction = (
-                    analysis.equity_exposure - self.limits.max_equity_exposure
-                )
+                equity_positions = [p for p in current_positions if p.get("asset_type") == "stock"]
+                total_reduction = analysis.equity_exposure - self.limits.max_equity_exposure
 
                 for pos in sorted(equity_positions, key=lambda x: x.get("score", 0)):
                     # Reduce lowest-scoring positions first

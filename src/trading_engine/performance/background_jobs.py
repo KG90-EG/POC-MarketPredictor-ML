@@ -108,9 +108,7 @@ def update_rankings_job():
                 else:  # Global
                     stocks = DEFAULT_STOCKS[:10]
 
-                logger.info(
-                    f"Pre-computing rankings for {country} ({len(stocks)} stocks)"
-                )
+                logger.info(f"Pre-computing rankings for {country} ({len(stocks)} stocks)")
 
                 # Compute rankings using parallel processing
                 result = parallel_stock_ranking(stocks, MODEL, features_legacy)

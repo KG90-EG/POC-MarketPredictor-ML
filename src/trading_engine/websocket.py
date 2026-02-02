@@ -6,7 +6,7 @@ Clients can subscribe to price updates, signal changes, and alerts.
 """
 
 import logging
-from typing import Dict, List, Set
+from typing import Dict, Set
 
 logger = logging.getLogger(__name__)
 
@@ -87,9 +87,7 @@ class WebSocketManager:
         return {
             "backend": "in_memory",
             "active_connections": total_connections,
-            "channels": {
-                channel: len(clients) for channel, clients in self._connections.items()
-            },
+            "channels": {channel: len(clients) for channel, clients in self._connections.items()},
             "total_messages_sent": self._total_messages,
         }
 

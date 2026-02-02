@@ -7,8 +7,7 @@ Uses European Central Bank (ECB) API for reliable, free exchange rates.
 
 import logging
 from datetime import datetime, timedelta
-from functools import lru_cache
-from typing import Dict, Optional
+from typing import Dict
 
 import requests
 
@@ -46,9 +45,7 @@ def get_exchange_rate(from_currency: str = "USD", to_currency: str = "CHF") -> f
     if cache_key in _rate_cache:
         rate, timestamp = _rate_cache[cache_key]
         if datetime.now() - timestamp < CACHE_DURATION:
-            logger.debug(
-                f"Using cached rate: 1 {from_currency} = {rate:.4f} {to_currency}"
-            )
+            logger.debug(f"Using cached rate: 1 {from_currency} = {rate:.4f} {to_currency}")
             return rate
 
     # Fetch new rate from API
@@ -70,9 +67,7 @@ def get_exchange_rate(from_currency: str = "USD", to_currency: str = "CHF") -> f
         # Cache the rate
         _rate_cache[cache_key] = (rate, datetime.now())
 
-        logger.info(
-            f"✓ Exchange rate updated: 1 {from_currency} = {rate:.4f} {to_currency}"
-        )
+        logger.info(f"✓ Exchange rate updated: 1 {from_currency} = {rate:.4f} {to_currency}")
         return rate
 
     except Exception as e:
@@ -112,9 +107,7 @@ def _get_fallback_rate(from_currency: str, to_currency: str) -> float:
     return rate
 
 
-def convert_price(
-    price: float, from_currency: str = "USD", to_currency: str = "CHF"
-) -> float:
+def convert_price(price: float, from_currency: str = "USD", to_currency: str = "CHF") -> float:
     """
     Convert price from one currency to another.
 
@@ -136,9 +129,7 @@ def convert_price(
     rate = get_exchange_rate(from_currency, to_currency)
     converted = price * rate
 
-    logger.debug(
-        f"Converted {price:.2f} {from_currency} → {converted:.2f} {to_currency}"
-    )
+    logger.debug(f"Converted {price:.2f} {from_currency} → {converted:.2f} {to_currency}")
     return converted
 
 

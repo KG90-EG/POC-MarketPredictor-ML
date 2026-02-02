@@ -294,8 +294,7 @@ def cache_warmup(tickers: list[str]):
 
     duration = time.time() - start_time
     logger.info(
-        f"🔥 Cache warmup complete: "
-        f"{success_count}/{len(tickers)} tickers in {duration:.2f}s"
+        f"🔥 Cache warmup complete: " f"{success_count}/{len(tickers)} tickers in {duration:.2f}s"
     )
 
 

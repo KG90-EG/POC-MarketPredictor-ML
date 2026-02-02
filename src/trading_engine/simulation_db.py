@@ -374,9 +374,7 @@ class SimulationDB:
             cursor = conn.cursor()
 
             # Get initial capital
-            cursor.execute(
-                "SELECT initial_capital FROM simulations WHERE id = ?", (simulation_id,)
-            )
+            cursor.execute("SELECT initial_capital FROM simulations WHERE id = ?", (simulation_id,))
             row = cursor.fetchone()
             if not row:
                 raise ValueError(f"Simulation {simulation_id} not found")

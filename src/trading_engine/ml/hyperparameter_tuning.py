@@ -83,9 +83,7 @@ class HyperparameterTuner:
         scorer = make_scorer(f1_score, average="weighted")
 
         try:
-            scores = cross_val_score(
-                model, X, y, cv=self.cv_folds, scoring=scorer, n_jobs=1
-            )
+            scores = cross_val_score(model, X, y, cv=self.cv_folds, scoring=scorer, n_jobs=1)
             return np.mean(scores)
         except Exception as e:
             logger.warning(f"XGBoost trial failed: {e}")
@@ -100,9 +98,7 @@ class HyperparameterTuner:
             "max_depth": trial.suggest_int("max_depth", 3, 20),
             "min_samples_split": trial.suggest_int("min_samples_split", 2, 20),
             "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 10),
-            "max_features": trial.suggest_categorical(
-                "max_features", ["sqrt", "log2", None]
-            ),
+            "max_features": trial.suggest_categorical("max_features", ["sqrt", "log2", None]),
             "bootstrap": trial.suggest_categorical("bootstrap", [True, False]),
             "random_state": self.random_state,
             "n_jobs": 1,
@@ -112,9 +108,7 @@ class HyperparameterTuner:
         scorer = make_scorer(f1_score, average="weighted")
 
         try:
-            scores = cross_val_score(
-                model, X, y, cv=self.cv_folds, scoring=scorer, n_jobs=1
-            )
+            scores = cross_val_score(model, X, y, cv=self.cv_folds, scoring=scorer, n_jobs=1)
             return np.mean(scores)
         except Exception as e:
             logger.warning(f"RandomForest trial failed: {e}")
@@ -131,9 +125,7 @@ class HyperparameterTuner:
             "subsample": trial.suggest_float("subsample", 0.6, 1.0),
             "min_samples_split": trial.suggest_int("min_samples_split", 2, 20),
             "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 10),
-            "max_features": trial.suggest_categorical(
-                "max_features", ["sqrt", "log2", None]
-            ),
+            "max_features": trial.suggest_categorical("max_features", ["sqrt", "log2", None]),
             "random_state": self.random_state,
         }
 
@@ -141,9 +133,7 @@ class HyperparameterTuner:
         scorer = make_scorer(f1_score, average="weighted")
 
         try:
-            scores = cross_val_score(
-                model, X, y, cv=self.cv_folds, scoring=scorer, n_jobs=1
-            )
+            scores = cross_val_score(model, X, y, cv=self.cv_folds, scoring=scorer, n_jobs=1)
             return np.mean(scores)
         except Exception as e:
             logger.warning(f"GradientBoosting trial failed: {e}")
@@ -176,9 +166,7 @@ class HyperparameterTuner:
         scorer = make_scorer(f1_score, average="weighted")
 
         try:
-            scores = cross_val_score(
-                model, X, y, cv=self.cv_folds, scoring=scorer, n_jobs=1
-            )
+            scores = cross_val_score(model, X, y, cv=self.cv_folds, scoring=scorer, n_jobs=1)
             return np.mean(scores)
         except Exception as e:
             logger.warning(f"LightGBM trial failed: {e}")
@@ -217,8 +205,7 @@ class HyperparameterTuner:
 
         if model_type not in objectives:
             raise ValueError(
-                f"Unknown model_type: {model_type}. "
-                f"Choose from: {list(objectives.keys())}"
+                f"Unknown model_type: {model_type}. " f"Choose from: {list(objectives.keys())}"
             )
 
         logger.info(f"Starting hyperparameter optimization for {model_type}")
@@ -246,10 +233,7 @@ class HyperparameterTuner:
         self.studies[model_type] = study
         self.best_params[model_type] = study.best_params
 
-        logger.info(
-            f"✅ {model_type} optimization complete. "
-            f"Best F1: {study.best_value:.4f}"
-        )
+        logger.info(f"✅ {model_type} optimization complete. " f"Best F1: {study.best_value:.4f}")
         logger.info(f"Best params: {study.best_params}")
 
         return study.best_params
@@ -277,9 +261,7 @@ class HyperparameterTuner:
         results = {}
         for model_type in models:
             try:
-                params = self.optimize_model(
-                    model_type, X, y, show_progress=show_progress
-                )
+                params = self.optimize_model(model_type, X, y, show_progress=show_progress)
                 results[model_type] = params
             except Exception as e:
                 logger.error(f"Failed to optimize {model_type}: {e}")
@@ -310,8 +292,7 @@ class HyperparameterTuner:
             "n_trials": len(study.trials),
             "best_trial_number": study.best_trial.number,
             "optimization_history": [
-                {"trial": i, "value": trial.value}
-                for i, trial in enumerate(study.trials)
+                {"trial": i, "value": trial.value} for i, trial in enumerate(study.trials)
             ],
             "param_importances": None,
         }
@@ -388,9 +369,7 @@ def optimize_ensemble_weights(
 
     def objective(trial: optuna.Trial) -> float:
         # Suggest weights (sum to 1.0)
-        weights = [
-            trial.suggest_float(f"weight_{name}", 0.1, 3.0) for name in model_names
-        ]
+        weights = [trial.suggest_float(f"weight_{name}", 0.1, 3.0) for name in model_names]
 
         # Normalize weights
         total = sum(weights)
@@ -398,9 +377,7 @@ def optimize_ensemble_weights(
 
         # Create weighted voting ensemble
         estimators = list(zip(model_names, models))
-        ensemble = VotingClassifier(
-            estimators=estimators, voting="soft", weights=weights
-        )
+        ensemble = VotingClassifier(estimators=estimators, voting="soft", weights=weights)
 
         # Evaluate
         scorer = make_scorer(f1_score, average="weighted")

@@ -81,9 +81,7 @@ def compute_macd(
     return macd, sig
 
 
-def compute_bollinger(
-    series: pd.Series, window: int = 20
-) -> Tuple[pd.Series, pd.Series]:
+def compute_bollinger(series: pd.Series, window: int = 20) -> Tuple[pd.Series, pd.Series]:
     """Compute Bollinger Bands.
 
     Args:
@@ -144,9 +142,7 @@ def load_data(
         DataFrame with features and target, or None if failed
     """
     try:
-        df = yf.download(
-            ticker, period=period, interval="1d", auto_adjust=False, progress=False
-        )
+        df = yf.download(ticker, period=period, interval="1d", auto_adjust=False, progress=False)
     except Exception as e:
         logging.warning("Failed to download data for %s: %s", ticker, e)
         return None
@@ -190,15 +186,11 @@ def check_xgboost_and_openmp():
         try:
             import ctypes.util
 
-            found = ctypes.util.find_library("omp") or ctypes.util.find_library(
-                "libomp"
-            )
+            found = ctypes.util.find_library("omp") or ctypes.util.find_library("libomp")
         except Exception:
             found = None
         if found:
-            logging.warning(
-                "xgboost import failed but libomp appears present (%s).", found
-            )
+            logging.warning("xgboost import failed but libomp appears present (%s).", found)
         else:
             if shutil.which("brew"):
                 logging.warning(
@@ -241,18 +233,14 @@ def parse_args():
         default="5y",
         help="History period for yfinance downloads (e.g., 1y, 5y)",
     )
-    parser.add_argument(
-        "--top-n", type=int, default=10, help="Number of top tickers to print"
-    )
+    parser.add_argument("--top-n", type=int, default=10, help="Number of top tickers to print")
     parser.add_argument(
         "--rank-period",
         type=str,
         default="300d",
         help="History period for ranking calculation (e.g., 300d)",
     )
-    parser.add_argument(
-        "--use-xgb", action="store_true", help="Prefer XGBoost if available"
-    )
+    parser.add_argument("--use-xgb", action="store_true", help="Prefer XGBoost if available")
     parser.add_argument("--quiet", action="store_true", help="Reduce logging verbosity")
     return parser.parse_args()
 
@@ -312,11 +300,7 @@ def train_model(
 
     # Feature selection
     selected_features = available_features
-    if (
-        use_feature_selection
-        and USE_ALL_FEATURES
-        and len(available_features) > n_features
-    ):
+    if use_feature_selection and USE_ALL_FEATURES and len(available_features) > n_features:
         logging.info(
             f"Applying feature selection: {len(available_features)} → {n_features} features"
         )
@@ -334,9 +318,7 @@ def train_model(
     if optimize_hyperparams and model_type not in ["voting", "stacking"]:
         from .hyperparameter_tuning import HyperparameterTuner
 
-        logging.info(
-            f"Starting hyperparameter optimization for {model_type} ({n_trials} trials)"
-        )
+        logging.info(f"Starting hyperparameter optimization for {model_type} ({n_trials} trials)")
 
         # Map model_type to optimization name
         optim_type_map = {
@@ -353,9 +335,7 @@ def train_model(
             )
             logging.info(f"✅ Optimization complete. Best params: {optimized_params}")
         else:
-            logging.warning(
-                f"Hyperparameter optimization not supported for {model_type}"
-            )
+            logging.warning(f"Hyperparameter optimization not supported for {model_type}")
 
     # Model selection
     if model_type == "voting":
@@ -405,9 +385,7 @@ def train_model(
         features_path = save_path.replace(".bin", "_features.txt")
         with open(features_path, "w") as f:
             f.write("\n".join(selected_features))
-        logging.info(
-            f"Saved model to {save_path} with {len(selected_features)} features"
-        )
+        logging.info(f"Saved model to {save_path} with {len(selected_features)} features")
 
     # Evaluate
     from sklearn.metrics import (
@@ -419,11 +397,7 @@ def train_model(
     )
 
     preds = model.predict(X_test.values)
-    proba = (
-        model.predict_proba(X_test.values)[:, 1]
-        if hasattr(model, "predict_proba")
-        else None
-    )
+    proba = model.predict_proba(X_test.values)[:, 1] if hasattr(model, "predict_proba") else None
     acc = accuracy_score(y_test.values, preds)
     prec = precision_score(y_test.values, preds, zero_division=0)
     rec = recall_score(y_test.values, preds, zero_division=0)
@@ -464,9 +438,7 @@ def train_model(
                 "optimize_hyperparams": optimize_hyperparams,
             }
             if optimized_params:
-                params_to_log.update(
-                    {f"hp_{k}": v for k, v in optimized_params.items()}
-                )
+                params_to_log.update({f"hp_{k}": v for k, v in optimized_params.items()})
 
             mlflow_tracker.log_params(params_to_log)
 
@@ -483,9 +455,7 @@ def train_model(
 
             # Log feature importance
             if hasattr(model, "feature_importances_"):
-                mlflow_tracker.log_feature_importance(
-                    selected_features, model.feature_importances_
-                )
+                mlflow_tracker.log_feature_importance(selected_features, model.feature_importances_)
 
             # Log confusion matrix
             mlflow_tracker.log_confusion_matrix(y_test, preds, labels=["Down", "Up"])
@@ -525,9 +495,7 @@ def main(args=None):
     ranking = {}
     for t in chosen_tickers:
         try:
-            latest = yf.download(t, period=args.rank_period, auto_adjust=False)[
-                "Adj Close"
-            ]
+            latest = yf.download(t, period=args.rank_period, auto_adjust=False)["Adj Close"]
         except Exception:
             logging.warning("Failed to download latest for %s", t)
             continue
@@ -551,8 +519,6 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     args = parse_args()
     main(args)

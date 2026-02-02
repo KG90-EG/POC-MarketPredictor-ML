@@ -117,9 +117,7 @@ class DDM(DriftDetector):
 
         # Check for drift/warning (only after min_samples)
         if self.n_samples >= self.min_samples:
-            threshold_warning = (
-                self.min_error_rate + self.warning_level * self.min_std_dev
-            )
+            threshold_warning = self.min_error_rate + self.warning_level * self.min_std_dev
             threshold_drift = self.min_error_rate + self.drift_level * self.min_std_dev
 
             if self.error_rate + self.std_dev >= threshold_drift:
@@ -336,8 +334,7 @@ class DriftMonitor:
         self.drift_count = 0
 
         logger.info(
-            f"DriftMonitor initialized (DDM + PageHinkley"
-            f"{' + KSWIN' if enable_kswin else ''})"
+            f"DriftMonitor initialized (DDM + PageHinkley" f"{' + KSWIN' if enable_kswin else ''})"
         )
 
     def update(

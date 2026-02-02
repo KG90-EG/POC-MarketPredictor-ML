@@ -68,9 +68,7 @@ class OnlineLearner:
         self.total_samples = 0
         self.update_history: List[Dict[str, Any]] = []
 
-        logger.info(
-            f"OnlineLearner initialized: model={model_type}, window={window_size}"
-        )
+        logger.info(f"OnlineLearner initialized: model={model_type}, window={window_size}")
 
     def _create_model(self) -> Any:
         """Create incremental learning model based on type."""
@@ -239,12 +237,8 @@ class OnlineLearner:
             "is_fitted": self.is_fitted,
             "n_updates": self.n_updates,
             "total_samples": self.total_samples,
-            "X_buffer": (
-                self.X_buffer[-1000:] if len(self.X_buffer) > 1000 else self.X_buffer
-            ),
-            "y_buffer": (
-                self.y_buffer[-1000:] if len(self.y_buffer) > 1000 else self.y_buffer
-            ),
+            "X_buffer": (self.X_buffer[-1000:] if len(self.X_buffer) > 1000 else self.X_buffer),
+            "y_buffer": (self.y_buffer[-1000:] if len(self.y_buffer) > 1000 else self.y_buffer),
             "update_history": self.update_history[-100:],  # Keep recent history
         }
 
@@ -304,9 +298,7 @@ def create_online_ensemble(
 
     ensemble = {}
     for model_type in models:
-        ensemble[model_type] = OnlineLearner(
-            model_type=model_type, window_size=window_size
-        )
+        ensemble[model_type] = OnlineLearner(model_type=model_type, window_size=window_size)
 
     logger.info(f"Online ensemble created with {len(ensemble)} models: {models}")
     return ensemble
@@ -333,9 +325,7 @@ def ensemble_predict(
         predictions = [learner.predict(X) for learner in ensemble.values()]
         predictions = np.array(predictions)
         # Majority vote
-        return np.apply_along_axis(
-            lambda x: np.argmax(np.bincount(x)), axis=0, arr=predictions
-        )
+        return np.apply_along_axis(lambda x: np.argmax(np.bincount(x)), axis=0, arr=predictions)
     elif method == "average_proba":
         # Soft voting with probability averaging
         probas = [learner.predict_proba(X) for learner in ensemble.values()]

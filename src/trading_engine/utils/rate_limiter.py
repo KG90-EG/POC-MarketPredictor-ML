@@ -21,9 +21,7 @@ class RateLimiter(BaseHTTPMiddleware):
         self.requests_per_minute = requests_per_minute
         self.window_seconds = 60
         # Store: {ip: {endpoint: [(timestamp, request_count)]}}
-        self.requests: Dict[str, Dict[str, list]] = defaultdict(
-            lambda: defaultdict(list)
-        )
+        self.requests: Dict[str, Dict[str, list]] = defaultdict(lambda: defaultdict(list))
 
     def _clean_old_requests(self, request_list: list, current_time: float):
         """Remove requests older than the window."""
@@ -75,9 +73,7 @@ class RateLimiter(BaseHTTPMiddleware):
         remaining = self.requests_per_minute - request_count - 1
         response.headers["X-RateLimit-Limit"] = str(self.requests_per_minute)
         response.headers["X-RateLimit-Remaining"] = str(max(0, remaining))
-        response.headers["X-RateLimit-Reset"] = str(
-            int(current_time + self.window_seconds)
-        )
+        response.headers["X-RateLimit-Reset"] = str(int(current_time + self.window_seconds))
 
         return response
 

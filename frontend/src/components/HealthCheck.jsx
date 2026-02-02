@@ -3,7 +3,6 @@ import { api } from "../api";
 import "./HealthCheck.css";
 
 function HealthCheck({ isOpen, onClose }) {
-  if (!isOpen) return null;
   const [health, setHealth] = useState(null);
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -33,11 +32,14 @@ function HealthCheck({ isOpen, onClose }) {
   };
 
   useEffect(() => {
+    if (!isOpen) return;
     checkHealth();
     // Auto-refresh every 30 seconds
     const interval = setInterval(checkHealth, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isOpen]);
+
+  if (!isOpen) return null;
 
   const getStatusColor = (status) => {
     if (status === "ok" || status === "connected" || status === true) return "#10b981";

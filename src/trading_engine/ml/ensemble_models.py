@@ -179,9 +179,7 @@ def create_voting_ensemble(
     logger.info(f"Models: {[name for name, _ in estimators]}")
     logger.info(f"Weights: {weights}")
 
-    return VotingClassifier(
-        estimators=estimators, voting=voting, weights=weights, n_jobs=-1
-    )
+    return VotingClassifier(estimators=estimators, voting=voting, weights=weights, n_jobs=-1)
 
 
 # ============================================================================
@@ -219,9 +217,7 @@ def create_stacking_ensemble(
     logger.info(f"Creating stacking ensemble with {len(estimators)} base models")
     logger.info(f"Meta-learner: {type(meta_learner).__name__}")
 
-    return StackingClassifier(
-        estimators=estimators, final_estimator=meta_learner, cv=cv, n_jobs=-1
-    )
+    return StackingClassifier(estimators=estimators, final_estimator=meta_learner, cv=cv, n_jobs=-1)
 
 
 # ============================================================================
@@ -373,9 +369,9 @@ if HAS_TORCH:
 
         def fit(self, X: np.ndarray, y: np.ndarray):
             """Train LSTM model."""
-            self.model = LSTMClassifier(
-                self.input_size, self.hidden_size, self.num_layers
-            ).to(self.device)
+            self.model = LSTMClassifier(self.input_size, self.hidden_size, self.num_layers).to(
+                self.device
+            )
 
             # Prepare data
             X_seq = self._prepare_sequences(X)
@@ -403,9 +399,7 @@ if HAS_TORCH:
                     total_loss += loss.item()
 
                 if (epoch + 1) % 10 == 0:
-                    logger.info(
-                        f"Epoch {epoch + 1}/{self.epochs}, Loss: {total_loss:.4f}"
-                    )
+                    logger.info(f"Epoch {epoch + 1}/{self.epochs}, Loss: {total_loss:.4f}")
 
             return self
 
@@ -463,9 +457,7 @@ def create_ensemble(ensemble_type: str = "voting", **kwargs) -> object:
         raise ValueError(f"Unknown ensemble type: {ensemble_type}")
 
 
-def evaluate_ensemble(
-    model: object, X: np.ndarray, y: np.ndarray, cv: int = 5
-) -> Dict[str, float]:
+def evaluate_ensemble(model: object, X: np.ndarray, y: np.ndarray, cv: int = 5) -> Dict[str, float]:
     """
     Evaluate ensemble model performance.
 
@@ -498,9 +490,7 @@ def evaluate_ensemble(
 
     # Predictions
     y_pred = model.predict(X_test)
-    y_proba = (
-        model.predict_proba(X_test)[:, 1] if hasattr(model, "predict_proba") else None
-    )
+    y_proba = model.predict_proba(X_test)[:, 1] if hasattr(model, "predict_proba") else None
 
     # Metrics
     metrics = {

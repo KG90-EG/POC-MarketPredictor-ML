@@ -191,9 +191,7 @@ async def get_analytics_summary():
             "totalEvents": total_events,
             "uniqueUsers": unique_users,
             "uniqueSessions": unique_sessions,
-            "topEvents": [
-                {"event": name, "count": count} for name, count in top_events
-            ],
+            "topEvents": [{"event": name, "count": count} for name, count in top_events],
             "eventTypes": event_counts,
         }
 
@@ -220,9 +218,7 @@ async def track_ab_assignment(assignment: ABAssignment):
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to track assignment: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to track assignment: {str(e)}")
 
 
 @router.post("/ab-test/conversion")
@@ -241,9 +237,7 @@ async def track_ab_conversion(conversion: ABConversion):
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to track conversion: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to track conversion: {str(e)}")
 
 
 @router.post("/ab-test/event")
@@ -333,9 +327,7 @@ async def track_usability_session(session: UsabilitySession):
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to track session: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to track session: {str(e)}")
 
 
 @router.get("/usability/sessions")
@@ -393,9 +385,7 @@ async def get_usability_analysis():
             key = f"{target.get('tag', 'unknown')}.{target.get('className', '')}"
             click_targets[key] = click_targets.get(key, 0) + 1
 
-        top_clicks = sorted(click_targets.items(), key=lambda x: x[1], reverse=True)[
-            :10
-        ]
+        top_clicks = sorted(click_targets.items(), key=lambda x: x[1], reverse=True)[:10]
 
         # Error patterns
         error_patterns = {}
@@ -403,9 +393,7 @@ async def get_usability_analysis():
             msg = error.get("message", "Unknown error")
             error_patterns[msg] = error_patterns.get(msg, 0) + 1
 
-        top_errors = sorted(error_patterns.items(), key=lambda x: x[1], reverse=True)[
-            :10
-        ]
+        top_errors = sorted(error_patterns.items(), key=lambda x: x[1], reverse=True)[:10]
 
         return {
             "totalSessions": total_sessions,
@@ -418,6 +406,4 @@ async def get_usability_analysis():
         }
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Failed to analyze usability: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to analyze usability: {str(e)}")
