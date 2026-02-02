@@ -65,6 +65,34 @@ Jeder Score muss erklärbar sein:
 - Jede neue Datei wird auf Duplikate geprüft
 - Stale Files (>90 Tage ohne Änderung) werden reviewed
 
+### IX. Pre-Commit Validation - Keine Broken Builds
+**Vor JEDEM Commit müssen folgende Checks bestehen:**
+
+1. **Backend Validation**
+   - `python3 -m pytest tests/` - Alle Tests grün
+   - `flake8 src/` - Keine Linting-Fehler
+   - `black --check src/` - Code korrekt formatiert
+
+2. **Frontend Validation**
+   - `npx eslint src/` - Keine ESLint-Fehler (Errors = Blocker)
+   - `npm run build` - Build muss erfolgreich sein
+   - JSX Syntax korrekt (kein unescaptes `<` oder `>`)
+
+3. **Integration Check**
+   - Backend startet ohne Fehler
+   - Frontend startet ohne Fehler
+   - Health-Endpoint erreichbar
+
+**Warum?** 
+- CI/CD Pipelines dürfen NIEMALS wegen vermeidbarer Fehler failen
+- Broken UI ist inakzeptabel für Production
+- Zeit für Debugging = Zeit für Features verloren
+
+**Konsequenz bei Verstoß:**
+- Commit wird revertiert
+- Issue wird erstellt für Root Cause Analysis
+- Kein Blame, aber Prozess wird verbessert
+
 ## Technology Constraints
 
 ### Backend
@@ -88,18 +116,26 @@ Jeder Score muss erklärbar sein:
 
 ## Quality Gates
 
+### Before Commit (MANDATORY)
+1. ✅ Backend tests pass (`python3 -m pytest tests/`)
+2. ✅ No Python linting errors (`flake8 src/`)
+3. ✅ No ESLint errors in frontend (`npx eslint src/`)
+4. ✅ Frontend builds successfully (`npm run build`)
+5. ✅ Python formatted (`black src/`)
+6. ✅ Frontend formatted (`npm run format`)
+
 ### Before Merge
-1. ✅ All tests pass (`pytest tests/`)
-2. ✅ No linting errors (`flake8`, `eslint`)
-3. ✅ Code formatted (`black`, `prettier`)
-4. ✅ No new unused files (daily cleanup)
-5. ✅ Constitution compliance verified
+1. ✅ All Quality Gates from "Before Commit" pass
+2. ✅ No new unused files (daily cleanup)
+3. ✅ Constitution compliance verified
+4. ✅ Spec-Kit Checklist completed (if applicable)
 
 ### Before Production
 1. ✅ Full test suite green
 2. ✅ Health check passing
 3. ✅ Market regime API responding
 4. ✅ Model loaded and validated
+5. ✅ All endpoints return valid responses
 
 ## Governance
 
@@ -108,4 +144,4 @@ Jeder Score muss erklärbar sein:
 - All code reviews must verify Constitution compliance
 - Violations are blockers - no exceptions
 
-**Version**: 1.0.0 | **Ratified**: 2026-02-02 | **Owner**: Kevin Garcia
+**Version**: 1.1.0 | **Updated**: 2026-02-02 | **Owner**: Kevin Garcia

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import './ExposureChart.css';
 
 /**
@@ -92,17 +92,17 @@ const ExposureChart = ({ exposure, limits, defensiveMode }) => {
         <div className="exposure-warnings">
           {equityWarning && (
             <div className="warning-item">
-              ⚠️ Equity allocation exceeds limit ({equity.toFixed(1)}% > {equityLimit}%)
+              ⚠️ Equity allocation exceeds limit ({equity.toFixed(1)}% &gt; {equityLimit}%)
             </div>
           )}
           {cryptoWarning && (
             <div className="warning-item">
-              ⚠️ Crypto allocation exceeds limit ({crypto.toFixed(1)}% > {cryptoLimit}%)
+              ⚠️ Crypto allocation exceeds limit ({crypto.toFixed(1)}% &gt; {cryptoLimit}%)
             </div>
           )}
           {cashWarning && (
             <div className="warning-item">
-              ⚠️ Cash reserve below minimum ({cash.toFixed(1)}% < {minCash}%)
+              ⚠️ Cash reserve below minimum ({cash.toFixed(1)}% &lt; {minCash}%)
             </div>
           )}
         </div>
