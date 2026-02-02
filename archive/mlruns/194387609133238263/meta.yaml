@@ -1,6 +1,0 @@
-artifact_location: file:///Users/kevingarcia/Documents/POC-MarketPredictor-ML/mlruns/194387609133238263
-creation_time: 1767339605610
-experiment_id: '194387609133238263'
-last_update_time: 1767339605610
-lifecycle_stage: active
-name: test_model_logging

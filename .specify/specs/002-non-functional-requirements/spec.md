@@ -113,6 +113,34 @@ Diese Spezifikation definiert die Non-Functional Requirements (NFRs) für den Ma
 
 ---
 
+### NFR-8: Automatische Dokumentation
+**Als** Entwickler  
+**möchte ich** dass die Dokumentation automatisch aktualisiert wird  
+**damit** README und Docs immer aktuell sind
+
+**Akzeptanzkriterien:**
+- [ ] Nach jedem Feature-Commit wird README.md geprüft
+- [ ] Changelog wird automatisch generiert (conventional commits)
+- [ ] API-Dokumentation wird aus Code generiert (OpenAPI)
+- [ ] Post-Commit Hook oder CI-Job für Docs-Update
+- [ ] Warnung wenn Docs veraltet sind (>1 Woche ohne Update)
+
+---
+
+### NFR-9: Feature-Audit (Unused Sections)
+**Als** Product Owner  
+**möchte ich** dass ungenutzte Features entfernt werden  
+**damit** die App schlank und fokussiert bleibt
+
+**Akzeptanzkriterien:**
+- [ ] Audit aller UI-Sections durchführen
+- [ ] Analytics prüfen: Welche Features werden genutzt?
+- [ ] Ungenutzte Sections identifizieren (z.B. Watchlist, Practice)
+- [ ] Entscheidung dokumentieren: Keep/Remove
+- [ ] Code und UI für entfernte Features löschen
+
+---
+
 ## 📊 Success Metrics
 
 | NFR | Metrik | Zielwert | Aktuell |
@@ -124,6 +152,8 @@ Diese Spezifikation definiert die Non-Functional Requirements (NFRs) für den Ma
 | NFR-5 | CI Success Rate | 100% | ❓ |
 | NFR-6 | Pre-Commit Pass Rate | 100% | ~60% |
 | NFR-7 | Dead Code Files | 0 | 12 archived |
+| NFR-8 | Docs Freshness | < 7 days | ❓ |
+| NFR-9 | Unused Features | 0 | 2 (Watchlist, Practice) |
 
 ---
 

@@ -12,7 +12,6 @@ import AIAnalysisSection from "./components/AIAnalysisSection";
 import StockRanking from "./components/StockRanking";
 import CryptoPortfolio from "./components/CryptoPortfolio";
 import MarketSelector from "./components/MarketSelector";
-import WatchlistManagerV2 from "./components/WatchlistManagerV2";
 import BuyOpportunities from "./components/BuyOpportunities";
 import AlertPanel from "./components/AlertPanel";
 import PortfolioSummary from "./components/PortfolioSummary";
@@ -37,9 +36,6 @@ import ExposureChart from "./components/ExposureChart";
 import "./components/ViewSelectorMenu.css";
 import "./components/SettingsMenu.css";
 import "./styles.css";
-
-// Lazy load heavy components for better performance
-const SimulationDashboardV2 = lazy(() => import("./components/SimulationDashboardV2"));
 
 // Create a React Query client with optimized cache settings
 const queryClient = new QueryClient({
@@ -68,8 +64,6 @@ function ViewSelectorMenu({ currentView, onViewChange }) {
     },
     { id: "stocks", icon: "💹", label: "Top Stocks", description: "AI-ranked stocks" },
     { id: "crypto", icon: "🪙", label: "Crypto", description: "Digital assets" },
-    { id: "watchlists", icon: "⭐", label: "Watchlist", description: "Your saved stocks" },
-    { id: "simulation", icon: "🎮", label: "Practice", description: "Trading simulator" },
     { id: "backtest", icon: "📊", label: "Backtest", description: "Historical analysis" },
   ];
 
@@ -1144,46 +1138,6 @@ function AppContent() {
               )}
             </section>
           </div>
-        )}
-
-        {/* Watchlists View */}
-        {portfolioView === "watchlists" && (
-          <>
-            <InfoCard title="Watchlist Pro Tips" type="tip" dismissible={false}>
-              <p>Get the most out of your watchlists:</p>
-              <ul>
-                <li>
-                  <strong>Price Alerts:</strong> Set alerts to get notified when a stock hits your
-                  target price
-                </li>
-                <li>
-                  <strong>AI Predictions:</strong> View real-time buy/sell/hold signals for each
-                  stock
-                </li>
-                <li>
-                  <strong>Mix Assets:</strong> Add both stocks and cryptocurrencies to the same
-                  watchlist
-                </li>
-                <li>
-                  <strong>Notes:</strong> Add personal notes to track your investment thesis
-                </li>
-              </ul>
-            </InfoCard>
-            <WatchlistManagerV2 userId="default_user" />
-          </>
-        )}
-
-        {/* Trading Simulation View */}
-        {portfolioView === "simulation" && (
-          <Suspense
-            fallback={
-              <div style={{ textAlign: "center", padding: "40px" }}>
-                <SkeletonTable />
-              </div>
-            }
-          >
-            <SimulationDashboardV2 />
-          </Suspense>
         )}
 
         {/* Backtest Dashboard View */}
