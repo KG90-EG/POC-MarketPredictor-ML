@@ -22,7 +22,7 @@ export const CURRENT_USER_ID = getUserId();
 // Create axios instance with default config
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 30 second timeout
+  timeout: 60000, // 60 second timeout (ranking can take 30-45s)
   headers: {
     "Content-Type": "application/json",
   },

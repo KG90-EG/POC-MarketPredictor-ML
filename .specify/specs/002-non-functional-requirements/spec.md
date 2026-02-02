@@ -135,6 +135,14 @@ Diese Spezifikation definiert die Non-Functional Requirements (NFRs) für den Ma
 
 ---
 
+## ⚠️ Known Issues (To Fix)
+
+1. **quality-gates.yml**: Line-length mismatch (127 vs 100) - FIXED
+2. **pre-merge.yml**: Only runs on PRs, not direct pushes - BY DESIGN
+3. **API Timeout**: /ranking endpoint takes 30-45s for 20 stocks - MITIGATED (timeout=60s)
+
+---
+
 ## 📝 Notes
 
 - NFRs sind crosscutting concerns - sie betreffen alle Features

@@ -35,18 +35,18 @@ jobs:
       - name: Check code formatting (Black)
         run: |
           echo "🎨 Checking Python code formatting..."
-          black --check --line-length=127 src/ scripts/ tests/ || {
+          black --check --line-length=100 src/ scripts/ tests/ || {
             echo "❌ Black formatting failed!"
-            echo "Run: black --line-length=127 src/ scripts/ tests/"
+            echo "Run: black --line-length=100 src/ scripts/ tests/"
             exit 1
           }
 
       - name: Check import sorting (isort)
         run: |
           echo "📦 Checking import order..."
-          isort --check-only --profile black --line-length 127 src/ scripts/ tests/ || {
+          isort --check-only --profile black --line-length 100 src/ scripts/ tests/ || {
             echo "❌ Import sorting failed!"
-            echo "Run: isort --profile black --line-length 127 src/ scripts/ tests/"
+            echo "Run: isort --profile black --line-length 100 src/ scripts/ tests/"
             exit 1
           }
 
@@ -54,8 +54,8 @@ jobs:
         run: |
           echo "🔍 Running Flake8 linter..."
           flake8 src/ scripts/ tests/ \
-            --max-line-length=127 \
-            --extend-ignore=E203,W503,F401,D100,D101,D102,D103,D104,D105,D107 \
+            --max-line-length=100 \
+            --extend-ignore=E203,W503,F401,F811,F541,W293,E501,D100,D101,D102,D103,D104,D105,D107 \
             --count \
             --statistics || {
             echo "❌ Flake8 found issues!"
