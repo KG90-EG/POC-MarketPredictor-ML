@@ -1320,6 +1320,89 @@ def get_portfolio_limits():
         raise HTTPException(status_code=500, detail=f"Failed to fetch portfolio limits: {str(e)}")
 
 
+@app.get(
+    "/api/portfolio/exposure",
+    tags=["Portfolio"],
+    summary="Portfolio Exposure with Regime-Based Limits",
+    description="""
+    Get current portfolio exposure with regime-aware position limits.
+    
+    **Phase 4 Risk Management Feature**
+    
+    Returns:
+    - Current allocation percentages (equity, crypto, cash)
+    - Active position limits (adjusted for regime)
+    - Defensive mode status
+    - Compliance warnings
+    
+    Use this endpoint to:
+    - Display ExposureChart component
+    - Check before placing new positions
+    - Monitor portfolio compliance
+    """,
+)
+def get_portfolio_exposure():
+    """Get portfolio exposure for Phase 4 Risk Management UI."""
+    try:
+        # Get current regime
+        regime_detector = get_regime_detector()
+        regime = regime_detector.get_regime()
+
+        # Get position limits based on regime
+        position_limits = regime.get_position_limits()
+
+        # Demo allocation data (would come from portfolio tracking in production)
+        # This simulates a realistic portfolio state
+        demo_allocation = {
+            "equity_total": 55.0,
+            "crypto_total": 15.0,
+            "cash": 30.0,
+        }
+
+        # Check compliance
+        warnings = []
+        equity_limit = position_limits.total_equity_max
+        crypto_limit = position_limits.total_crypto_max
+        min_cash = position_limits.min_cash
+
+        if demo_allocation["equity_total"] > equity_limit:
+            warnings.append(
+                f"Equity allocation ({demo_allocation['equity_total']}%) exceeds "
+                f"limit ({equity_limit}%)"
+            )
+        if demo_allocation["crypto_total"] > crypto_limit:
+            warnings.append(
+                f"Crypto allocation ({demo_allocation['crypto_total']}%) exceeds "
+                f"limit ({crypto_limit}%)"
+            )
+        if demo_allocation["cash"] < min_cash:
+            warnings.append(
+                f"Cash reserve ({demo_allocation['cash']}%) below " f"minimum ({min_cash}%)"
+            )
+
+        return {
+            "exposure": demo_allocation,
+            "limits": {
+                "single_stock_max": position_limits.single_stock_max,
+                "single_crypto_max": position_limits.single_crypto_max,
+                "total_equity_max": position_limits.total_equity_max,
+                "total_crypto_max": position_limits.total_crypto_max,
+                "min_cash": position_limits.min_cash,
+            },
+            "defensive_mode": regime.defensive_mode,
+            "caution_badge": regime.caution_badge,
+            "regime_status": regime.regime_status,
+            "compliance": {
+                "within_limits": len(warnings) == 0,
+                "warnings": warnings,
+            },
+            "timestamp": datetime.now().isoformat(),
+        }
+    except Exception as e:
+        logger.error(f"Error fetching portfolio exposure: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch portfolio exposure: {str(e)}")
+
+
 @app.post(
     "/api/portfolio/validate",
     tags=["Portfolio"],

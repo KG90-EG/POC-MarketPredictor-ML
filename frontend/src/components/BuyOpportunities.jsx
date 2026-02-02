@@ -2,9 +2,17 @@ import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { apiClient } from "../api";
 import { convertAndFormat } from "../utils/currency";
+import RiskBadge from "./RiskBadge";
 import "./BuyOpportunities.css";
 
-function BuyOpportunities({ currency = "USD", exchangeRate = null }) {
+function BuyOpportunities({ currency = "USD", exchangeRate = null, marketRegime = null }) {
+  // Phase 4: Determine if caution should be shown
+  const showCaution =
+    marketRegime?.caution_badge ||
+    marketRegime?.status === "NEUTRAL" ||
+    marketRegime?.status === "RISK_OFF";
+  const defensiveMode = marketRegime?.defensive_mode || marketRegime?.status === "RISK_OFF";
+
   const [stockBuyOpportunities, setStockBuyOpportunities] = useState([]);
   const [stockHoldOpportunities, setStockHoldOpportunities] = useState([]);
   const [stockSellOpportunities, setStockSellOpportunities] = useState([]);
@@ -392,6 +400,14 @@ function BuyOpportunities({ currency = "USD", exchangeRate = null }) {
 
                         <div className="opportunity-signal">
                           <div className="signal-badge buy">🟢 BUY</div>
+                          {showCaution && (
+                            <div
+                              className="signal-badge caution"
+                              title="Market regime suggests caution"
+                            >
+                              ⚠️ CAUTION
+                            </div>
+                          )}
                           <div className="confidence-score">
                             {stock.prediction.confidence.toFixed(0)}% confidence
                           </div>
@@ -613,6 +629,14 @@ function BuyOpportunities({ currency = "USD", exchangeRate = null }) {
 
                         <div className="opportunity-signal">
                           <div className="signal-badge buy">🟢 BUY</div>
+                          {showCaution && (
+                            <div
+                              className="signal-badge caution"
+                              title="Market regime suggests caution"
+                            >
+                              ⚠️ CAUTION
+                            </div>
+                          )}
                           <div className="confidence-score">
                             {crypto.prediction.confidence.toFixed(0)}% confidence
                           </div>
@@ -1054,6 +1078,11 @@ function BuyOpportunities({ currency = "USD", exchangeRate = null }) {
 BuyOpportunities.propTypes = {
   currency: PropTypes.string,
   exchangeRate: PropTypes.number,
+  marketRegime: PropTypes.shape({
+    status: PropTypes.string,
+    caution_badge: PropTypes.bool,
+    defensive_mode: PropTypes.bool,
+  }),
 };
 
 export default BuyOpportunities;

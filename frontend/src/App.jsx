@@ -32,6 +32,8 @@ import { AnalyticsProvider } from "./components/Analytics";
 import analytics, { trackWebVitals } from "./components/Analytics";
 import MarketContextModal from "./components/MarketContextModal";
 import BacktestDashboard from "./components/BacktestDashboard";
+import DefensiveModeBar from "./components/DefensiveModeBar";
+import ExposureChart from "./components/ExposureChart";
 import "./components/ViewSelectorMenu.css";
 import "./components/SettingsMenu.css";
 import "./styles.css";
@@ -353,6 +355,9 @@ function AppContent() {
   const [marketRegime, setMarketRegime] = useState(null);
   const [regimeLoading, setRegimeLoading] = useState(false);
 
+  // Portfolio Exposure state (Phase 4 Risk Management)
+  const [portfolioExposure, setPortfolioExposure] = useState(null);
+
   // Portfolio Management state
   const [portfolioData, setPortfolioData] = useState(null);
   const [portfolioLimits, setPortfolioLimits] = useState(null);
@@ -418,6 +423,7 @@ function AppContent() {
   useEffect(() => {
     fetchRanking();
     fetchMarketRegime();
+    fetchPortfolioExposure(); // Phase 4: Load exposure data
   }, []);
 
   // Fetch market regime periodically (every 5 minutes)
@@ -425,6 +431,7 @@ function AppContent() {
     const interval = setInterval(
       () => {
         fetchMarketRegime();
+        fetchPortfolioExposure(); // Phase 4: Refresh exposure too
       },
       5 * 60 * 1000
     ); // 5 minutes
@@ -572,6 +579,16 @@ function AppContent() {
       // Don't show error toast - regime is supplementary info
     } finally {
       setRegimeLoading(false);
+    }
+  }
+
+  // Phase 4: Fetch portfolio exposure with regime-based limits
+  async function fetchPortfolioExposure() {
+    try {
+      const resp = await api.get("/api/portfolio/exposure");
+      setPortfolioExposure(resp.data);
+    } catch (e) {
+      console.error("Failed to fetch portfolio exposure:", e);
     }
   }
 
@@ -795,6 +812,12 @@ function AppContent() {
 
   return (
     <div className="container">
+      {/* Phase 4: Defensive Mode Warning Banner - Sticky at top */}
+      <DefensiveModeBar
+        active={portfolioExposure?.defensive_mode || marketRegime?.defensive_mode}
+        limits={portfolioExposure?.limits || marketRegime?.position_limits}
+      />
+
       {/* Onboarding Flow */}
       <Onboarding />
 
@@ -900,6 +923,18 @@ function AppContent() {
 
         {/* Market Regime Status - Display for all views */}
         <MarketRegimeStatus regime={marketRegime} loading={regimeLoading} />
+
+        {/* Phase 4: Portfolio Exposure Chart - Show for trading views */}
+        {portfolioExposure &&
+          (portfolioView === "buy-opportunities" ||
+            portfolioView === "stocks" ||
+            portfolioView === "crypto") && (
+            <ExposureChart
+              exposure={portfolioExposure.exposure}
+              limits={portfolioExposure.limits}
+              defensiveMode={portfolioExposure.defensive_mode}
+            />
+          )}
 
         {/* Market View Selector - Only for stocks */}
         {portfolioView === "stocks" && (
@@ -1156,7 +1191,11 @@ function AppContent() {
 
         {/* Buy Opportunities View */}
         {portfolioView === "buy-opportunities" && (
-          <BuyOpportunities currency={currency} exchangeRate={exchangeRate} />
+          <BuyOpportunities
+            currency={currency}
+            exchangeRate={exchangeRate}
+            marketRegime={marketRegime}
+          />
         )}
 
         {/* Portfolio Management View - Only for stocks */}

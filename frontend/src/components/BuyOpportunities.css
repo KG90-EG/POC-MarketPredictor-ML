@@ -355,6 +355,26 @@
   border: 2px solid #ef4444;
 }
 
+/* Phase 4: Caution badge for regime-aware trading */
+.signal-badge.caution {
+  background: #fff7ed;
+  color: #ea580c;
+  border: 2px solid #ea580c;
+  font-size: 0.9rem;
+  padding: 6px 12px;
+  animation: pulse-caution 2s ease-in-out infinite;
+}
+
+@keyframes pulse-caution {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(234, 88, 12, 0);
+  }
+}
+
 .confidence-score {
   font-size: 1.1rem;
   font-weight: 600;

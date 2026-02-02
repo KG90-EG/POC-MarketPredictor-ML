@@ -3,6 +3,7 @@ import Tooltip from "./Tooltip";
 import FilterBar from "./FilterBar";
 import ScoreExplanationModal from "./ScoreExplanationModal";
 import AssetContextButton from "./AssetContextButton";
+import RiskBadge from "./RiskBadge";
 import React, { useState, useMemo, useCallback } from "react";
 
 const StockRanking = React.memo(function StockRanking({
@@ -110,6 +111,14 @@ const StockRanking = React.memo(function StockRanking({
                   Score ⓘ
                 </Tooltip>
               </th>
+              <th scope="col">
+                <Tooltip
+                  content="Risk Score (0-100) based on Volatility (40%), Max Drawdown (35%), and Correlation to S&P 500 (25%). LOW (0-40) = Safe, MEDIUM (41-70) = Standard, HIGH (71-100) = Reduce position size."
+                  position="top"
+                >
+                  Risk ⓘ
+                </Tooltip>
+              </th>
               <th scope="col">Signal</th>
               <th scope="col">Price</th>
               <th scope="col">
@@ -184,6 +193,15 @@ const StockRanking = React.memo(function StockRanking({
                         </button>
                       </div>
                     </Tooltip>
+                  </td>
+                  <td>
+                    {/* Phase 4: Risk Score Badge */}
+                    <RiskBadge
+                      score={r.risk_score || 50}
+                      level={r.risk_level || "MEDIUM"}
+                      breakdown={r.risk_breakdown}
+                      compact={true}
+                    />
                   </td>
                   <td>
                     <span className={`signal-badge signal-${(r.signal || r.action).toLowerCase()}`}>
