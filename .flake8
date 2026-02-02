@@ -1,0 +1,58 @@
+# Flake8 Configuration
+# Consistent linting settings for CI and local development
+
+[flake8]
+# Line length (consistent with Black, isort, ESLint)
+max-line-length = 100
+
+# Ignore specific rules
+extend-ignore =
+    # Black compatibility
+    E203,  # whitespace before ':'
+    W503,  # line break before binary operator
+    # Docstrings (too verbose for POC)
+    D100,  # Missing docstring in public module
+    D101,  # Missing docstring in public class
+    D102,  # Missing docstring in public method
+    D103,  # Missing docstring in public function
+    D104,  # Missing docstring in public package
+    D105,  # Missing docstring in magic method
+    D107,  # Missing docstring in __init__
+    D200,  # One-line docstring should fit on one line
+    D205,  # 1 blank line required between summary and description
+    D400,  # First line should end with a period
+    D401,  # First line should be in imperative mood
+    D403,  # First word of the first line should be properly capitalized
+    # Imports (handled by isort)
+    F401,  # Module imported but unused (handled during cleanup)
+    # Line too long (sometimes unavoidable)
+    E501,
+
+# Exclude directories
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    build,
+    dist,
+    *.egg-info,
+    .eggs,
+    .mypy_cache,
+    .pytest_cache,
+    mlruns,
+    node_modules,
+    frontend,
+    archive,
+
+# Max complexity
+max-complexity = 12
+
+# Show source code for errors
+show-source = true
+
+# Show statistics
+statistics = true
+
+# Count errors
+count = true

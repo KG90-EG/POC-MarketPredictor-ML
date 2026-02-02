@@ -357,9 +357,8 @@ jobs:
           
           # Check for essential documentation
           REQUIRED_DOCS=(
-            "docs/DECISION_SUPPORT_SYSTEM_REQUIREMENTS.md"
-            "docs/deployment/DEPLOYMENT_GUIDE.md"
             "docs/TRADER_GUIDE.md"
+            "docs/architecture/SPECIFICATION.md"
           )
           
           for doc in "${REQUIRED_DOCS[@]}"; do

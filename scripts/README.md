@@ -1,110 +1,115 @@
-# Repository Maintenance Scripts
+# Scripts Directory
 
-This directory contains scripts for maintaining a clean and organized repository.
+Scripts for server management, maintenance, and automation.
+
+## 🚀 Server Management
+
+### `start.sh`
+Start backend (FastAPI) and frontend (Vite) servers.
+
+```bash
+./scripts/start.sh
+```
+
+### `stop.sh`
+Stop all running servers gracefully.
+
+```bash
+./scripts/stop.sh
+```
+
+### `health_check.sh`
+Check if all services are running and healthy.
+
+```bash
+./scripts/health_check.sh
+```
+
+**Output:**
+- Backend API status (port 8000)
+- Frontend status (port 5173)
+- API endpoint checks
+- Process IDs and log file sizes
+
+---
 
 ## 🧹 Cleanup Scripts
 
-### `cleanup.sh`
-
-**Purpose**: Comprehensive repository cleanup - removes artifacts, logs, cache files
-
-**What it cleans**:
-
-- ✗ Python cache files (`__pycache__/`, `*.pyc`, `*.pyo`)
-- ✗ Pytest cache (`.pytest_cache/`)
-- ✗ OS-specific files (`.DS_Store`, `Thumbs.db`)
-- ✗ Old model files (keeps only `prod_model.bin`)
-- ✗ Old MLflow runs (keeps last 5)
-- ✗ Temporary/log files (organizes to `logs/`)
-- ✗ Empty directories
-- ✓ Verifies critical directory structure
-
-**Usage**:
+### `daily_cleanup.sh`
+Automated daily cleanup of cache files and logs.
 
 ```bash
-# Direct
-./scripts/cleanup.sh
-
-# Via Makefile (recommended)
-make clean
+./scripts/daily_cleanup.sh
 ```
 
-**Features**:
-- Progress tracking with counters
-- Safe deletion with error handling
-- Detailed summary report
-- Color-coded output
-
-**Safety**: Safe to run repeatedly - only removes actual clutter
-
-**Frequency**: Run monthly or before major releases
+### `detect_dead_code.sh`
+Find unused Python code with vulture.
 
 ```bash
-./scripts/cleanup_repo.sh
-# or
-make cleanup-structure
+./scripts/detect_dead_code.sh
 ```
 
-**Frequency**: Run when you notice files in wrong locations
+### `check_duplicates.sh`
+Find duplicate Python code blocks.
 
----
+```bash
+./scripts/check_duplicates.sh
+```
 
 ### `validate_structure.sh`
-
-**Purpose**: Validate repository structure (no changes made)
-
-**What it checks**:
-
-- Files in root directory (only essential files allowed)
-- Documentation placement
-- Config file organization
-
-**Usage**:
+Validate repository structure (runs in pre-commit).
 
 ```bash
 ./scripts/validate_structure.sh
-# or
-make check-structure
 ```
-
-**Frequency**: Run before commits (automated via pre-commit hook)
 
 ---
 
-## 📋 Other Scripts
+## 🤖 ML Training
 
 ### `train_production.py`
-
-Train production ML model on 30 US stocks with 20 technical features
-
-```bash
-python3 scripts/train_production.py
-# or
-make train-model
-```
-
-### `deploy_production.sh`
-
-Deploy to production (Railway)
+Train production ML model on 50 stocks with 20 technical features.
 
 ```bash
-./scripts/deploy_production.sh
+python scripts/train_production.py
 ```
 
-### `test_application.sh`
-
-Run full application test suite
+### `auto_retrain.py`
+Automated model retraining with MLflow tracking.
 
 ```bash
-./scripts/test_application.sh
+python scripts/auto_retrain.py
 ```
+
+---
+
+## 🔒 Security
+
+### `security_check.sh`
+Run security scans (bandit, safety).
+
+```bash
+./scripts/security_check.sh
+```
+
+---
+
+## 📋 Quick Reference
+
+| Script | Purpose | When to Use |
+|--------|---------|-------------|
+| `start.sh` | Start all servers | Development |
+| `stop.sh` | Stop all servers | End of session |
+| `health_check.sh` | Verify services | Debugging |
+| `daily_cleanup.sh` | Clean cache/logs | Daily (cron) |
+| `detect_dead_code.sh` | Find unused code | Weekly |
+| `train_production.py` | Train ML model | Monthly |
 
 ---
 
 ## 🔄 Automation
 
 ### Pre-commit Hook
-
 Structure validation runs automatically before each commit:
 
 ```bash
@@ -112,52 +117,11 @@ pip install pre-commit
 pre-commit install
 ```
 
-### GitHub Actions
-
-`.github/workflows/structure-check.yml` validates structure on every push/PR
-
----
-
-## 📊 Maintenance Workflow
-
-**Monthly**:
-
+### Cron Jobs (Optional)
 ```bash
-make deep-clean        # Remove outdated files
-make check-structure   # Verify organization
-git status             # Review changes
-git add -A
-git commit -m "chore: monthly cleanup"
+# Daily cleanup at 3 AM
+0 3 * * * /path/to/scripts/daily_cleanup.sh
+
+# Weekly dead code report
+0 4 * * 0 /path/to/scripts/detect_dead_code.sh
 ```
-
-**Before Major Release**:
-
-```bash
-make deep-clean
-make test
-make check-structure
-# Review and commit
-```
-
-**When Files Are Misplaced**:
-
-```bash
-make cleanup-structure
-```
-
----
-
-## 🎯 Quick Reference
-
-| Command | Purpose | Frequency |
-|---------|---------|-----------|
-| `make deep-clean` | Remove outdated/duplicate files | Monthly |
-| `make cleanup-structure` | Reorganize misplaced files | As needed |
-| `make check-structure` | Validate structure | Before commits |
-| `make clean` | Remove Python cache only | Daily |
-
----
-
-## 📖 Documentation
-
-See `docs/development/REPOSITORY_STRUCTURE.md` for full structure guidelines.

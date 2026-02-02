@@ -23,12 +23,10 @@ This system helps identify **where capital should be allocated and where it shou
 
 ## 🚀 Quick Links
 
-- 📚 [Master Requirements](docs/DECISION_SUPPORT_SYSTEM_REQUIREMENTS.md)
-- 📋 [Project Backlog](docs/BACKLOG.md)
-- 🐳 [Deployment](docs/deployment/DEPLOYMENT.md)
+- 📚 [Trader Guide](docs/TRADER_GUIDE.md)
+- 🏗️ [Architecture](docs/architecture/)
 - 📊 [API Docs](http://localhost:8000/docs)
-- 🔗 [Endpoint Status](docs/ENDPOINT_IMPLEMENTATION_STATUS.md)
-- 🛡️ [CI/CD Setup](docs/BRANCH_PROTECTION_SETUP.md)
+- 📋 [Specifications](.specify/specs/)
 
 ## ✨ Core Features
 
@@ -327,94 +325,58 @@ docker-compose -f config/deployment/docker-compose.yml up
 ## 📖 Documentation
 
 ### Getting Started
-- **Quick Start:** Run `make setup && make start`
+- **Quick Start:** Run `make setup && make start` or `./scripts/start.sh`
 - **API Documentation:** http://localhost:8000/docs
+- **Health Check:** `./scripts/health_check.sh`
 
-### Requirements & Planning
-- [Decision Support System Requirements](docs/DECISION_SUPPORT_SYSTEM_REQUIREMENTS.md) ⭐ **Master Document**
-- [Project Backlog](docs/BACKLOG.md) - Weekly tasks & progress
-- [Endpoint Implementation Status](docs/ENDPOINT_IMPLEMENTATION_STATUS.md) - API inventory
+### Guides
+- [Trader Guide](docs/TRADER_GUIDE.md) - How to use the system
 
 ### Technical Documentation
 - [Architecture](docs/architecture/) - System design & ADRs
 - [API Reference](docs/api/openapi.json) - OpenAPI spec
-- [Git Hooks](docs/GIT_HOOKS.md) - Pre-commit automation
-- [CI/CD Quality Gates](docs/BRANCH_PROTECTION_SETUP.md) - Automated testing
 
-### Features & Guides
-- [Market Regime Detection](docs/BACKLOG.md#week-2-phase-1---market-regime-detection) - Week 2 implementation
-- [Composite Scoring](docs/BACKLOG.md#week-2-phase-1---composite-scoring) - Multi-factor ranking
-- [Portfolio Risk Management](docs/ENDPOINT_IMPLEMENTATION_STATUS.md#4-portfolio-risk-management) - Exposure limits
-
-### Deployment
-- [Deployment Guide](docs/deployment/DEPLOYMENT.md) - Production setup
-- [Backend Deployment](docs/deployment/BACKEND_DEPLOYMENT.md) - Railway/Render
-- [Frontend Deployment](docs/deployment/FRONTEND_DEPLOYMENT.md) - Netlify/Vercel
-- [Production Ready](docs/deployment/PRODUCTION_READY.md) - Checklist
-
-### Changelog
-- [2026-01-11](CHANGELOG_2026-01-11.md) - Endpoint cleanup & implementation
-- [History](docs/history/) - Previous changelogs
+### Specifications (Spec-Kit)
+- [001 - Risk Management](.specify/specs/001-risk-management/) - Phase 4 ✅
+- [002 - NFRs](.specify/specs/002-non-functional-requirements/) - Quality & Automation
+- [003 - LLM Analysis](.specify/specs/003-llm-analysis/) - AI Explanations
+- [004 - ML Pipeline](.specify/specs/004-ml-training-pipeline/) - Training Automation
 
 ## 🎯 Requirements Compliance
 
-| Requirement | Section | Status | Implementation |
-|-------------|---------|--------|----------------|
-| Market Data Ingestion | 5.1 | ✅ Implemented | yfinance (300d lookback) |
-| Quantitative Signals | 5.2 | ✅ Implemented | 20 technical features |
-| **Market Regime Detection** | 5.3 | ✅ **CRITICAL** | VIX + S&P 500 (Week 2) |
-| **LLM Context** | 5.4 | ✅ Implemented | Market & asset context (no recommendations) |
-| **Composite Scoring** | 5.5 | ✅ Implemented | Tech 40% + ML 30% + Mom 20% + Reg 10% |
-| **Risk Management** | 5.6 | ✅ Implemented | Portfolio limits + validation |
-| Decision Interface | 6 | ✅ Implemented | React UI with regime badge |
-| Explainability | 7.1 | ✅ Implemented | Score breakdown modal |
-| Simplicity | 7.2 | ✅ Compliant | Modular architecture |
-| Non-Goals | 8 | ✅ Compliant | No automated trading |
+| Requirement | Status | Implementation |
+|-------------|--------|----------------|
+| Market Data Ingestion | ✅ Implemented | yfinance (300d lookback) |
+| Quantitative Signals | ✅ Implemented | 20 technical features |
+| Market Regime Detection | ✅ Implemented | VIX + S&P 500 trend |
+| Composite Scoring | ✅ Implemented | Tech 40% + ML 30% + Mom 20% + Reg 10% |
+| Risk Management | ✅ Implemented | Portfolio limits + validation |
+| Decision Interface | ✅ Implemented | React UI with regime badge |
+| Explainability | ✅ Implemented | Score breakdown modal |
 
-**Overall Compliance:** ✅ **100%** (12/12 documented requirements)  
-**Critical Gaps:** 0 remaining
+**Overall Compliance:** ✅ **100%**
 
-**See:** [DECISION_SUPPORT_SYSTEM_REQUIREMENTS.md](docs/DECISION_SUPPORT_SYSTEM_REQUIREMENTS.md)
+**See:** [Architecture Docs](docs/architecture/)
 
-## 🚀 Current Status (Week 2 ✅)
+## 🚀 Current Status
 
-### ✅ Completed (2026-01-11)
+### ✅ Completed Phases
 
-**Phase 1: Critical Gaps ✅**
+**Phase 1-3: Core Features ✅**
 - ✅ Market Regime Detection (VIX + S&P 500 trend)
 - ✅ Composite Scoring System (4-factor weighted)
 - ✅ Capital Allocation Framework (position limits)
 
-**Phase 2: Enhanced Explainability ✅**
-- ✅ Signal Breakdown UI (ScoreExplanationModal)
-- ✅ LLM Redesign (/api/context/market, /api/context/asset/{ticker})
-- ✅ Feature Importance Analysis
-- ✅ Deprecated /analyze endpoint (violated Decision Support principle)
-
-**Additional Features ✅**
-- ✅ Portfolio Risk Management (3 endpoints)
-- ✅ Stock/Crypto Discovery (3 endpoints)
-- ✅ MLOps Dashboard (4 endpoints)
-- ✅ Endpoint Cleanup (removed 3 non-compliant)
+**Phase 4: Risk Management ✅**
+- ✅ Risk Scoring Service
+- ✅ Exposure Tracking API
+- ✅ Frontend Risk Components (DefensiveModeBar, RiskBadge, ExposureChart)
 
 ### 🔜 Next Steps
 
-**Phase 3: Historical Validation (Week 5-6)**
-- [ ] Backtest Framework (1-year simulation)
-- [ ] Performance Tracking Dashboard
-- [ ] Benchmark Comparison (vs S&P 500)
-- [ ] Win rate & Sharpe ratio analysis
-
-**Phase 4: Risk Management Enhancement (Week 7)**
-- [ ] Individual Asset Risk Scoring
-- [ ] Sector Concentration Limits
-- [ ] Regime-Based Auto-Adjustments
-
-**Production Features**
-- [ ] Real Portfolio Tracking (replace demo data)
-- [ ] Model Versioning & Rollback (full implementation)
-- [ ] Scheduled Retraining Jobs (weekly automation)
-- [ ] Admin Authentication (MLOps endpoints)
+See [Specifications](.specify/specs/) for upcoming work:
+- **FR-003:** LLM-Powered Market Analysis
+- **NFR-010:** ML Training Pipeline Automation
 
 ## 📊 Metrics
 
