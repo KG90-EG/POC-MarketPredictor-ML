@@ -93,6 +93,21 @@ Jeder Score muss erklärbar sein:
 - Issue wird erstellt für Root Cause Analysis
 - Kein Blame, aber Prozess wird verbessert
 
+### X. Living Documentation
+Nach jedem Feature-Commit müssen relevante Docs aktualisiert werden:
+
+1. **README.md** - Bei neuen Features, Commands, oder API-Änderungen
+2. **TRADER_GUIDE.md** - Bei user-facing Features
+3. **openapi.json** - Bei API-Endpoint Änderungen (auto-generiert)
+4. **ADR erstellen** - Bei Architektur-Entscheidungen
+
+**Regel:** Code ohne aktuelle Doku ist nicht fertig.
+
+**Ausnahmen:**
+- Reine Bugfixes (kein neues Feature)
+- Refactoring ohne Funktionsänderung
+- Test-Only Commits
+
 ## Technology Constraints
 
 ### Backend
@@ -144,4 +159,4 @@ Jeder Score muss erklärbar sein:
 - All code reviews must verify Constitution compliance
 - Violations are blockers - no exceptions
 
-**Version**: 1.1.0 | **Updated**: 2026-02-02 | **Owner**: Kevin Garcia
+**Version**: 1.2.0 | **Updated**: 2026-02-02 | **Owner**: Kevin Garcia
