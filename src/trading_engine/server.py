@@ -1164,9 +1164,9 @@ def get_regime_status():
     summary="Portfolio Exposure Summary",
     description="""
     Get comprehensive portfolio exposure analysis and allocation limits.
-    
+
     **Purpose:** Risk management and compliance with allocation limits per DECISION_SUPPORT_SYSTEM_REQUIREMENTS.md
-    
+
     Returns:
     - Current exposure percentages by asset class (stocks, crypto, cash)
     - Individual position sizes
@@ -1178,7 +1178,7 @@ def get_regime_status():
       - Cash reserve: Min 10%
     - Warnings if limits exceeded
     - Available capacity for new positions
-    
+
     **Requirements Reference:** Section 5.6 - Risk Management
     """,
 )
@@ -1243,12 +1243,12 @@ def get_portfolio_summary():
     summary="Portfolio Allocation Limits",
     description="""
     Get current portfolio allocation limits and rules.
-    
+
     Returns the risk management framework limits for:
     - Individual position sizes (stocks, crypto)
     - Asset class exposure limits
     - Regime-based adjustments
-    
+
     **Requirements Reference:** Section 5.6 - Risk Management
     """,
 )
@@ -1325,15 +1325,15 @@ def get_portfolio_limits():
     summary="Portfolio Exposure with Regime-Based Limits",
     description="""
     Get current portfolio exposure with regime-aware position limits.
-    
+
     **Phase 4 Risk Management Feature**
-    
+
     Returns:
     - Current allocation percentages (equity, crypto, cash)
     - Active position limits (adjusted for regime)
     - Defensive mode status
     - Compliance warnings
-    
+
     Use this endpoint to:
     - Display ExposureChart component
     - Check before placing new positions
@@ -1408,16 +1408,16 @@ def get_portfolio_exposure():
     summary="Validate Portfolio Allocation",
     description="""
     Validate a proposed portfolio allocation against risk limits.
-    
+
     **Input:** Proposed allocation (ticker, percentage)
     **Output:** Validation result with warnings/errors
-    
+
     Checks:
     - Individual position size limits
     - Asset class exposure limits
     - Cash reserve requirements
     - Regime-based restrictions
-    
+
     **Requirements Reference:** Section 5.6 - Risk Management
     """,
 )
@@ -1582,19 +1582,19 @@ def crypto_ranking(
     summary="Search Stocks by Name or Ticker",
     description="""
     Search for stocks across multiple markets by name or ticker symbol.
-    
+
     **Supported Markets:**
     - United States (S&P 500)
     - Switzerland (SMI)
     - Germany (DAX) - Planned
     - United Kingdom (FTSE 100) - Planned
     - France (CAC 40) - Planned
-    
+
     **Use Cases:**
     - Stock discovery for portfolio expansion
     - Finding specific stocks by partial name/ticker
     - Market expansion preparation (DAX, FTSE, CAC)
-    
+
     **Requirements Reference:** Section 4.1 - Asset Universe Expansion
     """,
 )
@@ -1697,13 +1697,13 @@ def search_stocks(query: str = "", market: str = "all", limit: int = 20):
     summary="Get Available Countries/Markets",
     description="""
     Get list of supported countries and markets with stock counts.
-    
+
     Returns:
     - Country names
     - Number of tracked stocks per country
     - Market status (active, planned)
     - Exchange information
-    
+
     **Requirements Reference:** Section 4.1 - Asset Universe
     """,
 )
@@ -1765,18 +1765,18 @@ def get_countries():
     summary="Get Popular Cryptocurrencies",
     description="""
     Get list of popular cryptocurrencies by market capitalization.
-    
+
     **Selection Criteria:**
     - Top cryptocurrencies by market cap
     - Excludes stablecoins (optional)
     - Excludes NFT/meme tokens (optional)
     - Minimum liquidity requirements
-    
+
     **Use Cases:**
     - Crypto portfolio discovery
     - Market overview
     - Quick access to major digital assets
-    
+
     **Requirements Reference:** Section 4.1 - Digital Assets
     """,
 )
@@ -1803,7 +1803,7 @@ def get_popular_cryptos(
         min_market_cap_rank = min(max(1, min_market_cap_rank), 500)
 
         # Fetch from CoinGecko
-        url = f"https://api.coingecko.com/api/v3/coins/markets"
+        url = "https://api.coingecko.com/api/v3/coins/markets"
         params = {
             "vs_currency": "usd",
             "order": "market_cap_desc",
@@ -2818,7 +2818,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     summary="Get ML Model Information",
     description="""
     Get comprehensive information about the currently loaded ML model.
-    
+
     Returns:
     - Model type and algorithm
     - Training metrics (accuracy, precision, recall, F1)
@@ -2826,7 +2826,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
     - Model version and training date
     - Hyperparameters
     - Performance statistics
-    
+
     **Use Case:** MLOps dashboard for model monitoring and validation
     """,
 )
@@ -2887,14 +2887,14 @@ def get_model_info():
     summary="Get Model Retraining Status",
     description="""
     Get status of model retraining process.
-    
+
     Returns:
     - Current retraining status (idle, training, completed, failed)
     - Progress percentage
     - Start/end timestamps
     - Training metrics (if completed)
     - Error messages (if failed)
-    
+
     **Use Case:** Monitor long-running retraining jobs
     """,
 )
@@ -2934,7 +2934,7 @@ def get_retraining_status():
     summary="Trigger Model Retraining",
     description="""
     Manually trigger model retraining process.
-    
+
     **Process:**
     1. Fetch latest market data (last 300 days)
     2. Compute features for all stocks
@@ -2942,9 +2942,9 @@ def get_retraining_status():
     4. Validate model performance
     5. Replace current model if accuracy improves
     6. Log results to MLflow
-    
+
     **Note:** This is a long-running operation (15-60 minutes)
-    
+
     **Requirements:** Admin access (TODO: implement auth)
     """,
 )
@@ -2978,7 +2978,7 @@ def trigger_retraining(stocks_limit: int = 50, test_mode: bool = False):
             "estimated_duration_minutes": 30 if not test_mode else 5,
             "stocks_count": stocks_limit,
             "test_mode": test_mode,
-            "status_endpoint": f"/api/ml/retraining/status",
+            "status_endpoint": "/api/ml/retraining/status",
             "timestamp": datetime.now().isoformat(),
         }
 
@@ -2993,15 +2993,15 @@ def trigger_retraining(stocks_limit: int = 50, test_mode: bool = False):
     summary="Rollback to Previous Model",
     description="""
     Rollback to previous model version.
-    
+
     **Use Case:** If new model performs worse than previous version
-    
+
     **Process:**
     1. Identify previous model version
     2. Load previous model from backup
     3. Replace current model
     4. Log rollback event
-    
+
     **Requirements:** Admin access (TODO: implement auth)
     """,
 )

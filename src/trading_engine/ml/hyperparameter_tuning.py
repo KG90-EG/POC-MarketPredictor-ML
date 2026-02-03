@@ -219,7 +219,8 @@ class HyperparameterTuner:
         )
 
         # Optimize
-        objective_fn = lambda trial: objectives[model_type](trial, X, y)
+        def objective_fn(trial):
+            return objectives[model_type](trial, X, y)
 
         study.optimize(
             objective_fn,
