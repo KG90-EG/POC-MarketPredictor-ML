@@ -48,11 +48,11 @@ from pathlib import Path
 
 import mlflow
 
-# Add project root to path FIRST
+from src.trading_engine.trading import build_dataset, train_model
+
+# Add project root to path
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
-
-from src.trading_engine.trading import build_dataset, train_model  # noqa: E402
 
 # Exit codes
 EXIT_SUCCESS = 0
