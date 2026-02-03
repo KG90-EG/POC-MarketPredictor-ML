@@ -8,10 +8,18 @@ from typing import Any, Dict, List, Optional
 import joblib
 import numpy as np
 import pandas as pd
+import requests
 import yfinance as yf
 from dotenv import load_dotenv
-from fastapi import (BackgroundTasks, FastAPI, HTTPException, Request,
-                     Response, WebSocket, WebSocketDisconnect)
+from fastapi import (
+    BackgroundTasks,
+    FastAPI,
+    HTTPException,
+    Request,
+    Response,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
@@ -20,17 +28,15 @@ from pydantic import BaseModel
 from .api.analytics_routes import router as analytics_router
 from .api.websocket import manager as ws_manager
 from .composite_scoring import get_composite_scorer
+
 # Import new modules
 from .core.cache import cache
 from .core.config import config as app_config
 from .crypto import get_crypto_details, get_crypto_ranking, search_crypto
 from .market_regime import get_regime_detector
-from .ml.feature_engineering import (add_technical_features_only,
-                                     get_technical_feature_names)
-from .ml.model_retraining import (get_retraining_service,
-                                  start_retraining_scheduler)
-from .ml.trading import (compute_bollinger, compute_macd, compute_momentum,
-                         compute_rsi, features)
+from .ml.feature_engineering import add_technical_features_only, get_technical_feature_names
+from .ml.model_retraining import get_retraining_service, start_retraining_scheduler
+from .ml.trading import compute_bollinger, compute_macd, compute_momentum, compute_rsi, features
 from .portfolio_management import get_portfolio_manager
 from .risk_scoring import get_risk_scorer
 from .services import HealthService, StockService, ValidationService
@@ -3113,8 +3119,7 @@ async def run_backtest(
     Returns:
         Comparison results with metrics for each strategy
     """
-    from ..backtest.historical_validator import (HistoricalBacktester,
-                                                 generate_backtest_report)
+    from ..backtest.historical_validator import HistoricalBacktester, generate_backtest_report
 
     # Default to top US stocks if not specified
     if not tickers:

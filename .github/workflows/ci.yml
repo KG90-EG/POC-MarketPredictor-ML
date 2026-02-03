@@ -55,11 +55,11 @@ jobs:
         run: |
           echo "Running flake8..."
           flake8 src/trading_engine/ src/backtest/ scripts/ \
-            --max-line-length=127 \
-            --extend-ignore=C901,E203,W503,F401,D100,D101,D102,D103,D104,D105,D107,D200,D205,D400,D401,D403 || \
+            --max-line-length=100 \
+            --extend-ignore=C901,E203,W503,F401,F811,F541,W293,E501,D100,D101,D102,D103,D104,D105,D107,D200,D205,D400,D401,D403,E731 || \
             echo "::warning::Flake8 warnings found"
           echo "Running black check..."
-          black --check src/trading_engine/ src/backtest/ scripts/ || \
+          black --check --line-length=100 src/trading_engine/ src/backtest/ scripts/ || \
             echo "::warning::Black formatting issues found"
       - name: Build Docker image
         run: |

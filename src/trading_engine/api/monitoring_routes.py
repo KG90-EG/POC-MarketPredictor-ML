@@ -14,8 +14,7 @@ from prometheus_client import CONTENT_TYPE_LATEST
 from ..core.cache import cache
 from ..core.config import config
 from ..ml.drift_detection import DriftMonitor
-from ..utils.prometheus_metrics import (export_metrics, metrics_collector,
-                                        system_health)
+from ..utils.prometheus_metrics import export_metrics, metrics_collector, system_health
 
 logger = logging.getLogger(__name__)
 

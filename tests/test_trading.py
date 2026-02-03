@@ -3,9 +3,13 @@
 import numpy as np
 import pandas as pd
 
-from src.trading_engine.trading import (compute_bollinger, compute_macd,
-                                        compute_momentum, compute_rsi,
-                                        features)
+from src.trading_engine.trading import (
+    compute_bollinger,
+    compute_macd,
+    compute_momentum,
+    compute_rsi,
+    features,
+)
 
 
 class TestTechnicalIndicators:

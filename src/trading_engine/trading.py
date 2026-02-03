@@ -8,8 +8,7 @@ import yfinance as yf
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
-from .ml.feature_engineering import \
-    add_all_features  # noqa: F401 - re-exported
+from .ml.feature_engineering import add_all_features  # noqa: F401 - re-exported
 from .ml.feature_engineering import get_feature_names, select_best_features
 
 try:
@@ -433,8 +432,13 @@ def train_model(
         logging.info(f"Saved model to {save_path} with {len(selected_features)} features")
 
     # Evaluate
-    from sklearn.metrics import (accuracy_score, f1_score, precision_score,
-                                 recall_score, roc_auc_score)
+    from sklearn.metrics import (
+        accuracy_score,
+        f1_score,
+        precision_score,
+        recall_score,
+        roc_auc_score,
+    )
 
     preds = model.predict(X_test.values)
     proba = model.predict_proba(X_test.values)[:, 1] if hasattr(model, "predict_proba") else None

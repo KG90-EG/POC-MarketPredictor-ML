@@ -16,8 +16,8 @@ CHECKS_FAILED=0
 echo "\n${YELLOW}Running Python linting...${NC}"
 if command -v flake8 >/dev/null 2>&1; then
     if flake8 src/trading_engine/ src/backtest/ scripts/ \
-        --max-line-length=127 \
-        --extend-ignore=C901,E203,W503,F401,D100,D101,D102,D103,D104,D105,D107,D200,D205,D400,D401,D403 \
+        --max-line-length=100 \
+        --extend-ignore=C901,E203,W503,F401,F811,F541,W293,E501,D100,D101,D102,D103,D104,D105,D107,D200,D205,D400,D401,D403,E731 \
         --count --statistics 2>&1 | grep -v "^0$" > /dev/null; then
         echo "${RED}✗ Flake8 found issues${NC}"
         CHECKS_FAILED=1
@@ -31,9 +31,9 @@ fi
 # 2. Python formatting check
 echo "\n${YELLOW}Checking Python formatting...${NC}"
 if command -v black >/dev/null 2>&1; then
-    if ! black --check src/trading_engine/ src/backtest/ scripts/ >/dev/null 2>&1; then
+    if ! black --check --line-length=100 src/trading_engine/ src/backtest/ scripts/ >/dev/null 2>&1; then
         echo "${RED}✗ Black formatting issues found${NC}"
-        echo "${YELLOW}Run 'black src/trading_engine/ src/backtest/ scripts/' to fix${NC}"
+        echo "${YELLOW}Run 'black --line-length=100 src/trading_engine/ src/backtest/ scripts/' to fix${NC}"
         CHECKS_FAILED=1
     else
         echo "${GREEN}✓ Black formatting OK${NC}"

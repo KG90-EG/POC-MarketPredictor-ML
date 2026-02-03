@@ -17,9 +17,13 @@ class TestEndToEndPrediction:
             "Test uses outdated feature list - needs update to match current 75-feature system"
         )
 
-        from src.trading_engine.trading import (compute_bollinger,
-                                                compute_macd, compute_momentum,
-                                                compute_rsi, features)
+        from src.trading_engine.trading import (
+            compute_bollinger,
+            compute_macd,
+            compute_momentum,
+            compute_rsi,
+            features,
+        )
 
         # Compute indicators
         df = sample_stock_data.copy()

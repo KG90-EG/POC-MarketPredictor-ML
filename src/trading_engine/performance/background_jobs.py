@@ -96,8 +96,7 @@ def update_rankings_job():
         # Import here to avoid circular dependencies
         from ..core.cache import cache
         from ..ml.trading import MODEL, features_legacy
-        from ..performance import (get_parallel_processor,
-                                   parallel_stock_ranking)
+        from ..performance import get_parallel_processor, parallel_stock_ranking
 
         for country in POPULAR_COUNTRIES:
             try:

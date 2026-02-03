@@ -16,8 +16,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.trading_engine.risk_scoring import (RiskBreakdown, RiskScorer,
-                                             get_risk_scorer)
+from src.trading_engine.risk_scoring import RiskBreakdown, RiskScorer, get_risk_scorer
 
 
 class TestRiskBreakdown:

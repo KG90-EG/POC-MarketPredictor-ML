@@ -17,9 +17,12 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.ensemble import (GradientBoostingClassifier,
-                              RandomForestClassifier, StackingClassifier,
-                              VotingClassifier)
+from sklearn.ensemble import (
+    GradientBoostingClassifier,
+    RandomForestClassifier,
+    StackingClassifier,
+    VotingClassifier,
+)
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_val_score
 
@@ -467,8 +470,13 @@ def evaluate_ensemble(model: object, X: np.ndarray, y: np.ndarray, cv: int = 5) 
     Returns:
         Dictionary of performance metrics
     """
-    from sklearn.metrics import (accuracy_score, f1_score, precision_score,
-                                 recall_score, roc_auc_score)
+    from sklearn.metrics import (
+        accuracy_score,
+        f1_score,
+        precision_score,
+        recall_score,
+        roc_auc_score,
+    )
     from sklearn.model_selection import train_test_split
 
     # Train/test split
