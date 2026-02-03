@@ -5,36 +5,36 @@
  * Color-coded with expand-on-click for headlines.
  */
 
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import './SentimentBadge.css';
+import React, { useState } from "react";
+import PropTypes from "prop-types";
+import "./SentimentBadge.css";
 
 const SENTIMENT_CONFIG = {
   bullish: {
-    color: '#22c55e',
-    bgColor: '#dcfce7',
-    icon: '📈',
-    label: 'Bullish',
+    color: "#22c55e",
+    bgColor: "#dcfce7",
+    icon: "📈",
+    label: "Bullish",
   },
   bearish: {
-    color: '#ef4444',
-    bgColor: '#fee2e2',
-    icon: '📉',
-    label: 'Bearish',
+    color: "#ef4444",
+    bgColor: "#fee2e2",
+    icon: "📉",
+    label: "Bearish",
   },
   neutral: {
-    color: '#6b7280',
-    bgColor: '#f3f4f6',
-    icon: '➡️',
-    label: 'Neutral',
+    color: "#6b7280",
+    bgColor: "#f3f4f6",
+    icon: "➡️",
+    label: "Neutral",
   },
 };
 
 export function SentimentBadge({
-  sentiment = 'neutral',
+  sentiment = "neutral",
   score,
   headlines = [],
-  size = 'medium',
+  size = "medium",
   showLabel = true,
   expandable = true,
 }) {
@@ -55,41 +55,34 @@ export function SentimentBadge({
         style={{
           backgroundColor: config.bgColor,
           color: config.color,
-          cursor: expandable && headlines.length > 0 ? 'pointer' : 'default',
+          cursor: expandable && headlines.length > 0 ? "pointer" : "default",
         }}
         onClick={handleClick}
-        title={`${config.label} sentiment${score !== undefined ? ` (${score > 0 ? '+' : ''}${score.toFixed(2)})` : ''}`}
+        title={`${config.label} sentiment${score !== undefined ? ` (${score > 0 ? "+" : ""}${score.toFixed(2)})` : ""}`}
       >
         <span className="sentiment-badge__icon">{config.icon}</span>
-        {showLabel && (
-          <span className="sentiment-badge__label">{config.label}</span>
-        )}
+        {showLabel && <span className="sentiment-badge__label">{config.label}</span>}
         {score !== undefined && (
           <span className="sentiment-badge__score">
-            {score > 0 ? '+' : ''}{score.toFixed(1)}
+            {score > 0 ? "+" : ""}
+            {score.toFixed(1)}
           </span>
         )}
         {expandable && headlines.length > 0 && (
-          <span className={`sentiment-badge__expand ${isExpanded ? 'expanded' : ''}`}>
-            ▼
-          </span>
+          <span className={`sentiment-badge__expand ${isExpanded ? "expanded" : ""}`}>▼</span>
         )}
       </button>
 
       {/* Expanded Headlines */}
       {isExpanded && headlines.length > 0 && (
         <div className="sentiment-headlines">
-          <div className="sentiment-headlines__header">
-            Recent Headlines
-          </div>
+          <div className="sentiment-headlines__header">Recent Headlines</div>
           <ul className="sentiment-headlines__list">
             {headlines.slice(0, 5).map((headline, index) => (
               <li key={index} className="sentiment-headlines__item">
                 {headline.title || headline}
                 {headline.source && (
-                  <span className="sentiment-headlines__source">
-                    — {headline.source}
-                  </span>
+                  <span className="sentiment-headlines__source">— {headline.source}</span>
                 )}
               </li>
             ))}
@@ -101,7 +94,7 @@ export function SentimentBadge({
 }
 
 SentimentBadge.propTypes = {
-  sentiment: PropTypes.oneOf(['bullish', 'bearish', 'neutral']),
+  sentiment: PropTypes.oneOf(["bullish", "bearish", "neutral"]),
   score: PropTypes.number,
   headlines: PropTypes.arrayOf(
     PropTypes.oneOfType([
@@ -113,7 +106,7 @@ SentimentBadge.propTypes = {
       }),
     ])
   ),
-  size: PropTypes.oneOf(['small', 'medium', 'large']),
+  size: PropTypes.oneOf(["small", "medium", "large"]),
   showLabel: PropTypes.bool,
   expandable: PropTypes.bool,
 };

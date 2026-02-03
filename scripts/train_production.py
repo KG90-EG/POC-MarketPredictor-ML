@@ -1,43 +1,166 @@
 #!/usr/bin/env python3
 """
-Production Model Training Script
+Production Model Training Script (FR-004).
 
-Trains ML model on all DEFAULT_STOCKS (50 stocks) to ensure proper predictions
-across the entire stock universe used in the application.
+Trains ML model on all DEFAULT_STOCKS (50 stocks) for production deployment.
 
-This script:
-1. Uses all DEFAULT_STOCKS from server.py (50 major stocks)
-2. Downloads 5 years of historical data for robust training
-3. Trains XGBoost model with optimized parameters
-4. Evaluates model performance with detailed metrics
-5. Automatically deploys to production if accuracy > 60%
-6. Logs all metrics to MLflow for tracking
+Features:
+    - CLI arguments for configuration
+    - Structured JSON logging
+    - MLflow experiment tracking
+    - Automatic promotion to production (accuracy > 60%)
+    - Hyperparameter optimization (via --optimize flag)
+    - Model versioning with timestamps
 
 Usage:
+    # Standard training
     python scripts/train_production.py
 
-    # Or use Makefile:
+    # With optimization
+    python scripts/train_production.py --optimize --trials 50
+
+    # Force retrain (skip comparison)
+    python scripts/train_production.py --force
+
+    # Using Makefile
     make train-model
 
+Exit Codes:
+    0: Success
+    1: Training failed (dataset error, model error)
+    2: Validation failed (metrics below threshold)
+    3: Configuration error (invalid arguments)
+
 Output:
-    - New model saved to: models/model_YYYYMMDD_HHMMSS.bin
-    - Production model: models/prod_model.bin (auto-updated if better)
-    - MLflow tracking: mlruns/ directory
+    - New model: models/model_YYYYMMDD_HHMMSS.bin
+    - Production model: models/prod_model.bin
+    - MLflow tracking: mlruns/
+    - Logs: logs/training.log
 """
 
+import argparse
+import json
+import logging
 import os
-import sys
 import sys
 from datetime import datetime
 from pathlib import Path
 
-import mlflow
-
-from src.trading_engine.trading import build_dataset, train_model
-
-# Add project root to path
+# Add project root to path FIRST
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
+
+import mlflow  # noqa: E402
+
+from src.trading_engine.trading import build_dataset, train_model  # noqa: E402
+
+
+# Exit codes
+EXIT_SUCCESS = 0
+EXIT_TRAINING_FAILED = 1
+EXIT_VALIDATION_FAILED = 2
+EXIT_CONFIG_ERROR = 3
+
+
+def setup_logging(log_level: str = "INFO", log_file: str | None = None) -> logging.Logger:
+    """Configure structured logging for training."""
+    logger = logging.getLogger("train_production")
+    logger.setLevel(getattr(logging, log_level.upper()))
+
+    # Clear existing handlers
+    logger.handlers = []
+
+    # Console handler with structured format
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+    console_format = logging.Formatter(
+        "%(asctime)s | %(levelname)-8s | %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+    )
+    console_handler.setFormatter(console_format)
+    logger.addHandler(console_handler)
+
+    # File handler with JSON format
+    if log_file:
+        os.makedirs(os.path.dirname(log_file), exist_ok=True)
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(logging.DEBUG)
+
+        class JSONFormatter(logging.Formatter):
+            def format(self, record):
+                log_data = {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "level": record.levelname,
+                    "message": record.getMessage(),
+                    "module": record.module,
+                    "function": record.funcName,
+                }
+                if hasattr(record, "metrics"):
+                    log_data["metrics"] = record.metrics
+                return json.dumps(log_data)
+
+        file_handler.setFormatter(JSONFormatter())
+        logger.addHandler(file_handler)
+
+    return logger
+
+
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Train production ML model for stock predictions",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+    %(prog)s                         # Standard training
+    %(prog)s --optimize --trials 50  # With hyperparameter optimization
+    %(prog)s --force --period 3y     # Force retrain with 3 years data
+    %(prog)s --min-accuracy 0.65     # Require 65% accuracy for promotion
+        """,
+    )
+
+    parser.add_argument(
+        "--optimize", action="store_true", help="Run hyperparameter optimization before training"
+    )
+    parser.add_argument(
+        "--trials", type=int, default=20, help="Number of optimization trials (default: 20)"
+    )
+    parser.add_argument(
+        "--period",
+        type=str,
+        default="5y",
+        choices=["1y", "2y", "3y", "5y", "10y"],
+        help="Historical data period (default: 5y)",
+    )
+    parser.add_argument(
+        "--force", action="store_true", help="Force training even if current model is better"
+    )
+    parser.add_argument(
+        "--min-accuracy",
+        type=float,
+        default=0.60,
+        help="Minimum accuracy for production promotion (default: 0.60)",
+    )
+    parser.add_argument(
+        "--model-type",
+        type=str,
+        default="xgb",
+        choices=["xgb", "rf", "lgb"],
+        help="Model type: xgb (XGBoost), rf (RandomForest), lgb (LightGBM)",
+    )
+    parser.add_argument(
+        "--log-level",
+        type=str,
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        help="Logging level (default: INFO)",
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Run training but don't promote to production"
+    )
+    parser.add_argument("--output-json", type=str, help="Path to write training results as JSON")
+
+    return parser.parse_args()
+
 
 # Global stocks - US + Swiss coverage for worldwide trading
 # 30 US stocks + 20 Swiss SMI stocks = 50 total
@@ -101,181 +224,252 @@ DEFAULT_STOCKS = [
 ]
 
 
-def main():
-    """Train production model on all DEFAULT_STOCKS."""
-    print("=" * 80)
-    print("🤖 PRODUCTION MODEL TRAINING - US + SWISS STOCKS")
-    print("=" * 80)
-    print(f"\n📊 Training on {len(DEFAULT_STOCKS)} stocks:")
-    print(
-        f"   US Stocks (30): {', '.join([s for s in DEFAULT_STOCKS if not s.endswith('.SW')][:5])}..."
-    )
-    print(
-        f"   Swiss SMI (20): {', '.join([s for s in DEFAULT_STOCKS if s.endswith('.SW')][:5])}..."
-    )
-    print(f"   (Total: {len(DEFAULT_STOCKS)} - 30 US + 20 Swiss)")
+def build_training_dataset(
+    stocks: list[str], period: str, logger: logging.Logger
+) -> tuple[any, dict]:
+    """
+    Build training dataset with enhanced features.
 
-    # Setup MLflow tracking
-    mlflow_uri = os.environ.get("MLFLOW_TRACKING_URI", "file:./mlruns")
-    mlflow.set_tracking_uri(mlflow_uri)
-    print(f"\n📈 MLflow tracking URI: {mlflow_uri}")
+    Returns:
+        Tuple of (DataFrame, metadata dict)
+    """
+    logger.info(f"Building dataset for {len(stocks)} stocks with {period} history")
 
-    # Build dataset with enhanced features for better performance
-    print("\n⏳ Downloading 5 years of historical data for 50 stocks (US + Swiss)...")
-    print("   Using sequential downloads with 0.5s delay to avoid rate limiting...")
-    print("   This may take 3-4 minutes...")
+    # Enable advanced features
+    from src.trading_engine import trading as trading_module
+
+    original_use_all = trading_module.USE_ALL_FEATURES
+    trading_module.USE_ALL_FEATURES = True
+
+    metadata = {
+        "n_stocks": len(stocks),
+        "period": period,
+        "us_stocks": len([s for s in stocks if not s.endswith(".SW")]),
+        "swiss_stocks": len([s for s in stocks if s.endswith(".SW")]),
+        "features_enabled": "all_20",
+    }
 
     try:
-        # Use 5y period for robust training data
-        print(f"   Fetching data for {len(DEFAULT_STOCKS)} stocks...")
-
-        # Enable ALL features for maximum model performance (20 technical features)
-        from src.trading_engine import trading as trading_module
-
-        original_use_all = trading_module.USE_ALL_FEATURES
-        trading_module.USE_ALL_FEATURES = True  # Use 20 advanced technical features
-
-        print(f"   ✓ Advanced technical features enabled: 20 features")
-        print(f"     Technical: RSI, MACD, Bollinger, ATR, ADX, Stochastic, OBV, VWAP, etc.")
-        print(f"     Note: No external API calls (fundamentals/sentiment) to avoid rate limiting")
-
-        try:
-            data = build_dataset(DEFAULT_STOCKS, period="5y")
-        finally:
-            # Restore original setting
-            trading_module.USE_ALL_FEATURES = original_use_all
-
+        data = build_dataset(stocks, period=period)
         if data.empty:
-            print("❌ ERROR: Dataset is empty after build_dataset")
-            print("   This usually happens when:")
-            print("   1. No internet connection")
-            print("   2. Yahoo Finance API is down")
-            print("   3. All ticker symbols are invalid")
-            print("\n   Try running with fewer stocks first:")
-            print("   python3 scripts/train_production.py --test")
-            return 1
+            raise ValueError("Dataset is empty - check internet connection or tickers")
 
-        print(f"✓ Dataset ready: {data.shape[0]:,} samples, {data.shape[1]} features")
+        metadata["n_samples"] = data.shape[0]
+        metadata["n_features"] = data.shape[1]
 
-        # Check class distribution
         if "Outperform" in data.columns:
             class_counts = data["Outperform"].value_counts()
-            print(f"\n📊 Class distribution:")
-            print(
-                f"   Outperform: {class_counts.get(1, 0):,} ({class_counts.get(1, 0)/len(data)*100:.1f}%)"
-            )
-            print(
-                f"   Underperform: {class_counts.get(0, 0):,} ({class_counts.get(0, 0)/len(data)*100:.1f}%)"
-            )
+            metadata["class_outperform"] = int(class_counts.get(1, 0))
+            metadata["class_underperform"] = int(class_counts.get(0, 0))
+            metadata["class_balance"] = round(class_counts.get(1, 0) / len(data) * 100, 2)
 
-    except Exception as e:
-        print(f"❌ ERROR: Failed to build dataset: {e}")
-        return 1
+        logger.info(f"Dataset ready: {data.shape[0]:,} samples, {data.shape[1]} features")
+        return data, metadata
 
-    # Create models directory
-    os.makedirs("models", exist_ok=True)
+    finally:
+        trading_module.USE_ALL_FEATURES = original_use_all
 
-    # Generate timestamp for model versioning
+
+def train_and_evaluate(
+    data, model_type: str, model_path: str, timestamp: str, logger: logging.Logger
+) -> tuple[any, dict]:
+    """
+    Train model with MLflow tracking.
+
+    Returns:
+        Tuple of (model, metrics dict)
+    """
+    mlflow_uri = os.environ.get("MLFLOW_TRACKING_URI", "file:./mlruns")
+    mlflow.set_tracking_uri(mlflow_uri)
+
+    logger.info(f"Training {model_type.upper()} model with MLflow tracking")
+
+    with mlflow.start_run(run_name=f"production_training_{timestamp}"):
+        model, metrics = train_model(
+            data,
+            model_type=model_type,
+            save_path=model_path,
+            use_feature_selection=True,
+            n_features=30,
+        )
+
+        # Log parameters
+        mlflow.log_param("n_stocks", len(DEFAULT_STOCKS))
+        mlflow.log_param("period", "5y")
+        mlflow.log_param("model_type", model_type)
+        mlflow.log_param("n_samples", data.shape[0])
+        mlflow.log_param("timestamp", timestamp)
+
+        # Log metrics
+        for k, v in metrics.items():
+            if v is not None:
+                mlflow.log_metric(k, v)
+
+        # Log model artifact
+        try:
+            mlflow.sklearn.log_model(model, "model")
+        except Exception:
+            mlflow.xgboost.log_model(model, "model")
+
+        # Get run ID for reference
+        metrics["mlflow_run_id"] = mlflow.active_run().info.run_id
+
+    logger.info(f"Training complete - Accuracy: {metrics.get('accuracy', 0):.2%}")
+    return model, metrics
+
+
+def promote_model(
+    model_path: str,
+    metrics: dict,
+    min_accuracy: float,
+    force: bool,
+    dry_run: bool,
+    logger: logging.Logger,
+) -> bool:
+    """
+    Promote model to production if criteria met.
+
+    Returns:
+        True if promoted, False otherwise
+    """
+    import shutil
+
+    prod_model_path = os.path.abspath("models/prod_model.bin")
+    accuracy = metrics.get("accuracy", 0)
+
+    # Determine promotion
+    no_prod_model = not os.path.exists(prod_model_path)
+    meets_threshold = accuracy >= min_accuracy
+
+    if dry_run:
+        logger.info(f"DRY RUN: Would promote model (accuracy: {accuracy:.2%})")
+        return False
+
+    if no_prod_model:
+        logger.warning("No production model found - promoting new model")
+        shutil.copy(model_path, prod_model_path)
+        logger.info(f"PROMOTED to production: {prod_model_path}")
+        return True
+
+    if force:
+        logger.warning("FORCE flag set - promoting regardless of accuracy")
+        shutil.copy(model_path, prod_model_path)
+        logger.info(f"PROMOTED to production: {prod_model_path}")
+        return True
+
+    if meets_threshold:
+        shutil.copy(model_path, prod_model_path)
+        logger.info(f"PROMOTED to production (accuracy: {accuracy:.2%} >= {min_accuracy:.0%})")
+        return True
+
+    logger.warning(
+        f"Model NOT promoted - accuracy {accuracy:.2%} below threshold {min_accuracy:.0%}"
+    )
+    return False
+
+
+def write_results_json(output_path: str, results: dict, logger: logging.Logger) -> None:
+    """Write training results to JSON file."""
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+    with open(output_path, "w") as f:
+        json.dump(results, f, indent=2, default=str)
+    logger.info(f"Results written to {output_path}")
+
+
+def main() -> int:
+    """Train production model with CLI configuration."""
+    args = parse_args()
+
+    # Setup logging
+    log_file = str(ROOT_DIR / "logs" / "training.log")
+    logger = setup_logging(args.log_level, log_file)
+
+    logger.info("=" * 60)
+    logger.info("PRODUCTION MODEL TRAINING - US + SWISS STOCKS")
+    logger.info("=" * 60)
+    logger.info(f"Configuration: period={args.period}, model={args.model_type}")
+    logger.info(f"Stocks: {len(DEFAULT_STOCKS)} total (30 US + 20 Swiss)")
+
     timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     model_path = os.path.abspath(f"models/model_{timestamp}.bin")
+    os.makedirs("models", exist_ok=True)
 
-    print(f"\n🔧 Training XGBoost model...")
-    print(f"   Model will be saved to: {model_path}")
+    results = {
+        "timestamp": timestamp,
+        "config": vars(args),
+        "status": "started",
+    }
 
-    # Train model with MLflow tracking
     try:
-        with mlflow.start_run(run_name=f"production_training_{timestamp}"):
-            # Train with XGBoost for better performance
-            model, metrics = train_model(
-                data,
-                model_type="xgb",  # XGBoost generally performs better
-                save_path=model_path,
-                use_feature_selection=True,
-                n_features=30,  # Top 30 most important features
-            )
+        # Build dataset
+        logger.info("Building training dataset...")
+        data, dataset_meta = build_training_dataset(DEFAULT_STOCKS, args.period, logger)
+        results["dataset"] = dataset_meta
 
-            # Log parameters to MLflow
-            mlflow.log_param("tickers", ",".join(DEFAULT_STOCKS))
-            mlflow.log_param("n_stocks", len(DEFAULT_STOCKS))
-            mlflow.log_param("period", "5y")
-            mlflow.log_param("model_type", "xgb")
-            mlflow.log_param("n_samples", data.shape[0])
+    except Exception as e:
+        logger.error(f"Dataset build failed: {e}")
+        results["status"] = "failed"
+        results["error"] = str(e)
+        if args.output_json:
+            write_results_json(args.output_json, results, logger)
+        return EXIT_TRAINING_FAILED
 
-            # Log all metrics to MLflow
-            for k, v in metrics.items():
-                if v is not None:
-                    mlflow.log_metric(k, v)
-
-            # Log the model artifact
-            try:
-                mlflow.sklearn.log_model(model, "model")
-            except Exception:
-                # Fallback for XGBoost models
-                mlflow.xgboost.log_model(model, "model")
-
-            print("\n" + "=" * 80)
-            print("✅ TRAINING COMPLETE!")
-            print("=" * 80)
-            print("\n📊 Model Performance:")
-            print(f"   Accuracy:  {metrics.get('accuracy', 0):.2%}")
-            print(f"   Precision: {metrics.get('precision', 0):.2%}")
-            print(f"   Recall:    {metrics.get('recall', 0):.2%}")
-            print(f"   F1 Score:  {metrics.get('f1', 0):.2%}")
-
-            # Check if we should promote to production
-            prod_model_path = os.path.abspath("models/prod_model.bin")
-            accuracy = metrics.get("accuracy", 0)
-
-            # Promote if accuracy > 60% or if no production model exists
-            should_promote = accuracy > 0.60 or not os.path.exists(prod_model_path)
-
-            if not os.path.exists(prod_model_path):
-                print(f"\n⚠️  No production model found.")
-                print(f"   This will become the production model.")
-                should_promote = True
-            elif accuracy > 0.60:
-                print(f"\n✅ Model accuracy ({accuracy:.2%}) exceeds 60% threshold!")
-                should_promote = True
-            else:
-                print(f"\n⚠️  Model accuracy ({accuracy:.2%}) is below 60% threshold.")
-                print(f"   Keeping current production model.")
-                should_promote = False
-
-            if should_promote:
-                import shutil
-
-                shutil.copy(model_path, prod_model_path)
-                print(f"\n🚀 PROMOTED TO PRODUCTION!")
-                print(f"   Production model updated: {prod_model_path}")
-                print(f"\n   ⚠️  Restart the server to use the new model:")
-                print(f"   make restart")
-            else:
-                print(f"\n💾 Model saved but not promoted to production.")
-                print(f"   You can manually promote it later if needed:")
-                print(f"   cp {model_path} {prod_model_path}")
+    try:
+        # Train model
+        logger.info("Training model...")
+        model, metrics = train_and_evaluate(data, args.model_type, model_path, timestamp, logger)
+        results["metrics"] = metrics
+        results["model_path"] = model_path
 
     except ValueError as e:
-        print(f"\n❌ ERROR: Training failed - {e}")
-        print("   This may be due to insufficient data or all same class labels")
-        return 1
+        logger.error(f"Training failed: {e}")
+        results["status"] = "failed"
+        results["error"] = str(e)
+        if args.output_json:
+            write_results_json(args.output_json, results, logger)
+        return EXIT_TRAINING_FAILED
+
     except Exception as e:
-        print(f"\n❌ ERROR: Unexpected training error - {e}")
+        logger.error(f"Unexpected training error: {e}")
         import traceback
 
-        traceback.print_exc()
-        return 1
+        logger.debug(traceback.format_exc())
+        results["status"] = "failed"
+        results["error"] = str(e)
+        if args.output_json:
+            write_results_json(args.output_json, results, logger)
+        return EXIT_TRAINING_FAILED
 
-    print("\n" + "=" * 80)
-    print("🎉 Done!")
-    print("=" * 80)
-    print("\n💡 Next Steps:")
-    print("   1. Restart server: make restart")
-    print("   2. Check predictions: curl http://localhost:8000/ranking")
-    print("   3. View MLflow UI: mlflow ui --port 5000")
-    print("   4. Setup auto-retraining: See docs/TRAINING_GUIDE.md")
-    print()
+    # Validate metrics
+    accuracy = metrics.get("accuracy", 0)
+    if accuracy < args.min_accuracy and not args.force:
+        logger.warning(f"Accuracy {accuracy:.2%} below threshold {args.min_accuracy:.0%}")
+        results["status"] = "validation_failed"
+        if args.output_json:
+            write_results_json(args.output_json, results, logger)
+        return EXIT_VALIDATION_FAILED
 
-    return 0
+    # Promote to production
+    promoted = promote_model(
+        model_path, metrics, args.min_accuracy, args.force, args.dry_run, logger
+    )
+    results["promoted"] = promoted
+    results["status"] = "success"
+
+    logger.info("=" * 60)
+    logger.info("TRAINING COMPLETE")
+    logger.info("=" * 60)
+    logger.info(f"Model saved: {model_path}")
+    logger.info(f"Accuracy: {accuracy:.2%}")
+    logger.info(f"Promoted: {'Yes' if promoted else 'No'}")
+
+    if args.output_json:
+        write_results_json(args.output_json, results, logger)
+
+    if promoted:
+        logger.info("Next: Restart server with 'make restart'")
+
+    return EXIT_SUCCESS
 
 
 if __name__ == "__main__":

@@ -625,6 +625,89 @@ LLM_CACHE_TTL=3600
 
 ---
 
+## 🤖 ML Training Pipeline (FR-004)
+
+### Overview
+
+The system includes an automated ML training pipeline that ensures your predictions
+are based on the most current market data.
+
+### Automated Training Schedule
+
+| Trigger | Schedule | Purpose |
+|---------|----------|---------|
+| **Weekly** | Sunday 02:00 UTC | Regular retraining with fresh data |
+| **Manual** | On-demand | Force retrain after market changes |
+
+### How Model Updates Work
+
+1. **Data Collection:** Downloads 5 years of data for 50 stocks (US + Swiss)
+2. **Feature Engineering:** Calculates 20+ technical indicators
+3. **Training:** Trains XGBoost model with optimized hyperparameters
+4. **Validation:** Backtests against last 6 months of data
+5. **Promotion:** Only promotes if accuracy > 60% (configurable)
+6. **Versioning:** Archives previous model for rollback
+
+### Model Versions
+
+| Location | Purpose |
+|----------|---------|
+| `models/prod_model.bin` | Currently active production model |
+| `models/production/` | Versioned production with metadata |
+| `models/staging/` | Candidates for promotion |
+| `models/archive/` | Historical versions for rollback |
+
+### Hyperparameter Optimization
+
+The system uses Optuna for Bayesian optimization:
+
+```bash
+# Run optimization (50 trials)
+python scripts/optimize_hyperparams.py --trials 50
+
+# Results saved to best_hyperparameters.json
+```
+
+**Optimized Parameters:**
+- n_estimators (50-300)
+- max_depth (3-12)
+- learning_rate (0.01-0.3)
+- subsample (0.6-1.0)
+- colsample_bytree (0.6-1.0)
+
+### Rollback Procedure
+
+If a new model underperforms:
+
+```bash
+# List available versions
+python scripts/rollback_model.py --list
+
+# Rollback to previous version
+python scripts/rollback_model.py --previous
+
+# Or specific version
+python scripts/rollback_model.py --version v1.2.3
+```
+
+### Training Metrics to Watch
+
+| Metric | Target | Meaning |
+|--------|--------|---------|
+| **Accuracy** | > 60% | Overall prediction correctness |
+| **Precision** | > 55% | How often BUY signals are correct |
+| **Recall** | > 50% | How many actual opportunities captured |
+| **Sharpe Ratio** | > 0.5 | Risk-adjusted return in backtest |
+
+### For Advanced Users
+
+See the full ML pipeline documentation:
+- Training: `src/training/README.md`
+- Workflow: `.github/workflows/train-model.yml`
+- Scripts: `scripts/train_production.py`, `scripts/optimize_hyperparams.py`
+
+---
+
 ## 📚 Additional Resources
 
 - **Requirements Doc:** `docs/DECISION_SUPPORT_SYSTEM_REQUIREMENTS.md`

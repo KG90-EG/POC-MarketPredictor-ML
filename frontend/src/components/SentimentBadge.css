@@ -14,7 +14,9 @@
   border: none;
   border-radius: 16px;
   font-weight: 600;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .sentiment-badge:hover {

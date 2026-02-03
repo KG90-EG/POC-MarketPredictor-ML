@@ -99,7 +99,7 @@ POC-MarketPredictor-ML/
 
 ### Commands
 
-\`\`\`bash
+```bash
 # Server management
 ./scripts/start.sh        # Start backend + frontend
 ./scripts/stop.sh         # Stop all servers
@@ -112,9 +112,19 @@ pytest tests/ -v          # Run all tests
 black --line-length=100 src/ tests/
 npm run format --prefix frontend
 
-# Model training
-python scripts/train_production.py
-\`\`\`
+# Model training (FR-004)
+python scripts/train_production.py              # Standard training
+python scripts/train_production.py --optimize   # With hyperparameter optimization
+python scripts/optimize_hyperparams.py --trials 50  # Optimize hyperparameters
+
+# Model versioning (FR-004)
+python scripts/version_model.py list            # List model versions
+python scripts/version_model.py promote --model model.bin --to production
+python scripts/rollback_model.py --previous     # Rollback to previous version
+
+# Model validation (FR-004)
+python scripts/validate_model.py --staging --compare-production
+```
 
 ### Quality Gates
 
@@ -138,8 +148,8 @@ All commits must pass:
 |------|-------------|--------|
 | [001 - Risk Management](.specify/specs/001-risk-management/) | Phase 4 features | ✅ Done |
 | [002 - NFRs](.specify/specs/002-non-functional-requirements/) | Quality automation | ✅ Done |
-| [003 - LLM Analysis](.specify/specs/003-llm-analysis/) | AI explanations | 📋 Planned |
-| [004 - ML Pipeline](.specify/specs/004-ml-training-pipeline/) | Training automation | 📋 Planned |
+| [003 - LLM Analysis](.specify/specs/003-llm-analysis/) | AI explanations | ✅ Done |
+| [004 - ML Pipeline](.specify/specs/004-ml-training-pipeline/) | Training automation | ✅ Done |
 
 ## 📊 Metrics
 

@@ -5,20 +5,20 @@
  * Shows explanation text, factor chips, and sentiment indicator.
  */
 
-import React from 'react';
-import PropTypes from 'prop-types';
-import './ExplanationCard.css';
+import React from "react";
+import PropTypes from "prop-types";
+import "./ExplanationCard.css";
 
 const SENTIMENT_COLORS = {
-  bullish: '#22c55e',
-  bearish: '#ef4444',
-  neutral: '#6b7280',
+  bullish: "#22c55e",
+  bearish: "#ef4444",
+  neutral: "#6b7280",
 };
 
 const SENTIMENT_ICONS = {
-  bullish: '📈',
-  bearish: '📉',
-  neutral: '➡️',
+  bullish: "📈",
+  bearish: "📉",
+  neutral: "➡️",
 };
 
 export function ExplanationCard({
@@ -26,7 +26,7 @@ export function ExplanationCard({
   signal,
   explanation,
   factors = [],
-  sentiment = 'neutral',
+  sentiment = "neutral",
   confidence,
   cached = false,
   fallback = false,
@@ -69,16 +69,15 @@ export function ExplanationCard({
             </span>
           )}
           {fallback && (
-            <span className="explanation-badge explanation-badge--fallback" title="Fallback response">
+            <span
+              className="explanation-badge explanation-badge--fallback"
+              title="Fallback response"
+            >
               ⚠️ Basic
             </span>
           )}
           {onRefresh && (
-            <button
-              className="explanation-refresh"
-              onClick={onRefresh}
-              title="Refresh explanation"
-            >
+            <button className="explanation-refresh" onClick={onRefresh} title="Refresh explanation">
               🔄
             </button>
           )}
@@ -88,23 +87,15 @@ export function ExplanationCard({
       {/* Signal and Confidence */}
       {signal && (
         <div className="explanation-signal">
-          <span
-            className={`signal-badge signal-badge--${signal.toLowerCase()}`}
-          >
-            {signal}
-          </span>
+          <span className={`signal-badge signal-badge--${signal.toLowerCase()}`}>{signal}</span>
           {confidence !== undefined && (
-            <span className="signal-confidence">
-              {Math.round(confidence)}% confidence
-            </span>
+            <span className="signal-confidence">{Math.round(confidence)}% confidence</span>
           )}
         </div>
       )}
 
       {/* Explanation Text */}
-      <div className="explanation-text">
-        {explanation || 'No explanation available.'}
-      </div>
+      <div className="explanation-text">{explanation || "No explanation available."}</div>
 
       {/* Factors */}
       {factors.length > 0 && (
@@ -139,10 +130,10 @@ export function ExplanationCard({
 
 ExplanationCard.propTypes = {
   ticker: PropTypes.string,
-  signal: PropTypes.oneOf(['BUY', 'SELL', 'HOLD']),
+  signal: PropTypes.oneOf(["BUY", "SELL", "HOLD"]),
   explanation: PropTypes.string,
   factors: PropTypes.arrayOf(PropTypes.string),
-  sentiment: PropTypes.oneOf(['bullish', 'bearish', 'neutral']),
+  sentiment: PropTypes.oneOf(["bullish", "bearish", "neutral"]),
   confidence: PropTypes.number,
   cached: PropTypes.bool,
   fallback: PropTypes.bool,
