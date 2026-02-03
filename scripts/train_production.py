@@ -46,14 +46,13 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import mlflow
+
 # Add project root to path FIRST
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
 
-import mlflow  # noqa: E402
-
 from src.trading_engine.trading import build_dataset, train_model  # noqa: E402
-
 
 # Exit codes
 EXIT_SUCCESS = 0
