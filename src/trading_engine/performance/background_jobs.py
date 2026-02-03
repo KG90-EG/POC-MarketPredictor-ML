@@ -21,13 +21,13 @@ Usage:
 """
 
 import logging
-from datetime import datetime
-from typing import List, Dict, Any
 import traceback
+from datetime import datetime
+from typing import Any, Dict, List
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 
 logger = logging.getLogger(__name__)
 
@@ -94,9 +94,10 @@ def update_rankings_job():
         logger.info("Background job: Starting ranking update")
 
         # Import here to avoid circular dependencies
-        from ..performance import parallel_stock_ranking, get_parallel_processor
-        from ..ml.trading import MODEL, features_legacy
         from ..core.cache import cache
+        from ..ml.trading import MODEL, features_legacy
+        from ..performance import (get_parallel_processor,
+                                   parallel_stock_ranking)
 
         for country in POPULAR_COUNTRIES:
             try:
@@ -148,9 +149,10 @@ def warm_cache_job():
         logger.info("Background job: Starting cache warmup")
 
         # Import here to avoid circular dependencies
-        from ..performance.feature_cache import get_feature_cache
-        from ..ml.feature_engineering import add_all_features
         import yfinance as yf
+
+        from ..ml.feature_engineering import add_all_features
+        from ..performance.feature_cache import get_feature_cache
 
         feature_cache = get_feature_cache()
         stocks_warmed = 0

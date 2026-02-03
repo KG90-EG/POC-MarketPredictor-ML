@@ -137,10 +137,8 @@ def _process_single_ticker(args: tuple) -> Optional[Dict[str, Any]]:
     import pandas as pd
     import yfinance as yf
 
-    from ..ml.feature_engineering import (
-        add_technical_features_only,
-        get_technical_feature_names,
-    )
+    from ..ml.feature_engineering import (add_technical_features_only,
+                                          get_technical_feature_names)
 
     ticker, model_pickle = args
 

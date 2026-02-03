@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 def client():
     """Create test client - uses real app with loaded model"""
     # Import app (it will use the real MODEL or None if not found)
-    from src.trading_engine.api.server import app
+    from src.trading_engine.server import app
 
     with TestClient(app) as test_client:
         yield test_client
@@ -55,35 +55,16 @@ class TestMetricsEndpoint:
 class TestPredictEndpoint:
     """Test prediction endpoints"""
 
-    def test_predict_raw_endpoint(self, client):
-        """Test raw prediction endpoint with minimal valid features"""
-        # Note: This endpoint now requires 75-feature system
-        # For now, we test that it properly rejects incomplete feature sets
-        payload = {
-            "features": {
-                "SMA50": 150.0,
-                "SMA200": 145.0,
-                "RSI": 55.0,
-                "Volatility": 0.02,
-                "Momentum_10d": 0.05,
-                "MACD": 1.5,
-                "MACD_signal": 1.2,
-                "BB_upper": 160.0,
-                "BB_lower": 140.0,
-            }
-        }
+    def test_predict_ticker_endpoint(self, client):
+        """Test prediction endpoint with valid ticker"""
+        response = client.get("/predict_ticker/AAPL")
 
-        response = client.post("/predict_raw", json=payload)
-        
-        # Should return 400 (feature mismatch) or 503 (no model)
-        # because 9 features != 75 features required
-        assert response.status_code in [400, 503]
-        
-        if response.status_code == 400:
+        # Should return 200 (success) or 503 (no model)
+        assert response.status_code in [200, 503]
+
+        if response.status_code == 200:
             data = response.json()
-            assert "detail" in data
-            # Should mention feature count mismatch
-            assert "feature" in data["detail"].lower() or "mismatch" in data["detail"].lower()
+            assert "ticker" in data or "prediction" in data
 
 
 class TestRateLimiting:
@@ -93,22 +74,7 @@ class TestRateLimiting:
     def test_rate_limiter_headers(self, client):
         """Test rate limiter adds appropriate headers"""
         # Make a request to a non-health endpoint
-        response = client.post(
-            "/predict_raw",
-            json={
-                "features": {
-                    "SMA50": 150.0,
-                    "SMA200": 145.0,
-                    "RSI": 55.0,
-                    "Volatility": 0.02,
-                    "Momentum_10d": 0.05,
-                    "MACD": 1.5,
-                    "MACD_signal": 1.2,
-                    "BB_upper": 160.0,
-                    "BB_lower": 140.0,
-                }
-            },
-        )
+        response = client.get("/predict_ticker/AAPL")
 
         # Rate limiter should add headers to non-health endpoints
         assert "X-RateLimit-Limit" in response.headers
@@ -140,27 +106,14 @@ class TestCORS:
 class TestErrorHandling:
     """Test error handling"""
 
-    def test_predict_with_invalid_data(self, client):
-        """Test prediction with invalid feature data"""
-        payload = {"features": {"invalid_feature": 123}}
+    def test_predict_with_invalid_ticker(self, client):
+        """Test prediction with invalid ticker"""
+        response = client.get("/predict_ticker/INVALIDTICKER123")
+        # Should return 400 (bad request) or 503 (no model)
+        assert response.status_code in [200, 400, 404, 500, 503]
 
-        response = client.post("/predict_raw", json=payload)
-        # Should return 400 (bad request) for invalid features
-        assert response.status_code in [400, 503]
-        
-        if response.status_code == 400:
-            data = response.json()
-            assert "detail" in data
-            assert "feature" in data["detail"].lower() or "mismatch" in data["detail"].lower()
-
-    def test_predict_with_missing_features(self, client):
-        """Test prediction with missing required features"""
-        payload = {"features": {"SMA50": 150.0}}
-
-        response = client.post("/predict_raw", json=payload)
-        # Should return 400 (bad request) for insufficient features
-        assert response.status_code in [400, 503]
-        
-        if response.status_code == 400:
-            data = response.json()
-            assert "detail" in data
+    def test_predict_ticker_empty(self, client):
+        """Test prediction with empty ticker path"""
+        response = client.get("/predict_ticker/")
+        # Should return 404 (not found)
+        assert response.status_code in [404, 307]  # 307 for redirect

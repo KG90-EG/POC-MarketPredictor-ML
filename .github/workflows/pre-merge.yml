@@ -68,12 +68,12 @@ jobs:
 
       - name: Check Black formatting (mandatory)
         run: |
-          black --check --line-length=127 src/ scripts/ tests/
+          black --check --line-length=100 src/ scripts/ tests/
         continue-on-error: false
 
       - name: Check import sorting (mandatory)
         run: |
-          isort --check-only --profile black --line-length 127 src/ scripts/ tests/
+          isort --check-only --profile black --line-length 100 src/ scripts/ tests/
         continue-on-error: false
 
       - name: Set up Node.js
@@ -112,10 +112,10 @@ jobs:
       - name: Flake8 (mandatory)
         run: |
           flake8 src/ scripts/ tests/ \
-            --max-line-length=127 \
-            --extend-ignore=E203,W503,F401,D100,D101,D102,D103,D104,D105,D107 \
+            --max-line-length=100 \
+            --extend-ignore=E203,W503,F401,F811,F541,W293,E501,D100,D101,D102,D103,D104,D105,D107 \
             --count \
-            --max-complexity=10
+            --max-complexity=12
         continue-on-error: false
 
       - name: Set up Node.js

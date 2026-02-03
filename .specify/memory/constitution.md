@@ -2,118 +2,159 @@
 
 ## Core Principles
 
-### I. Decision Support Only - NIEMALS Empfehlungen
-Das System ist ein **Entscheidungsunterstützungssystem**, KEIN Beratungssystem.
-- NIEMALS direkte Kauf/Verkauf-Empfehlungen ausgeben
-- Immer als "Signal" oder "Score" formulieren, nie als "Empfehlung"
-- User trifft finale Entscheidung - System liefert nur Daten
-- Disclaimer bei jeder Ausgabe: "Dies ist keine Anlageberatung"
+### I. Decision Support Only - NEVER Recommendations
+The system is a **Decision Support System**, NOT an advisory system.
+- NEVER provide direct buy/sell recommendations
+- Always express as "Signal" or "Score", never as "Recommendation"
+- User makes the final decision - system provides data only
+- Disclaimer on every output: "This is not investment advice"
 
-### II. Quantitative Signals Dominieren
-Scoring-Formel ist unveränderlich:
+### II. Quantitative Signals Dominate
+The scoring formula is immutable:
 - **Technical Signals: 40%** (RSI, MACD, Bollinger, ADX)
 - **ML Probability: 30%** (Random Forest Prediction)
 - **Momentum: 20%** (Multi-Period: 10d, 30d, 60d)
 - **Market Regime: 10%** (VIX + S&P 500 Trend)
 
-Diese Gewichtung darf NUR durch Constitution-Amendment geändert werden.
+These weights may ONLY be changed via a Constitution Amendment.
 
-### III. LLM als Kontext-Provider - Strikte Grenzen
-LLM (OpenAI) darf:
-- ✅ News zusammenfassen (max. 3 Sätze)
-- ✅ Risiko-Events identifizieren
-- ✅ Score um **±5% maximum** anpassen
+### III. LLM as Context Provider - Strict Boundaries
+LLM (OpenAI) MAY:
+- ✅ Summarize news (max 3 sentences)
+- ✅ Identify risk events
+- ✅ Adjust score by **±5% maximum**
 
-LLM darf NICHT:
-- ❌ Scores überschreiben oder ignorieren
-- ❌ Direkte Kauf/Verkauf-Aussagen machen
-- ❌ Quantitative Signale widersprechen
+LLM may NOT:
+- ❌ Override or ignore scores
+- ❌ Make direct buy/sell statements
+- ❌ Contradict quantitative signals
 
-### IV. Market Regime Hat Veto-Recht
-Wenn Market Regime = "RISK_OFF":
-- **Alle BUY-Signale werden blockiert**
-- UI zeigt "DEFENSIVE MODE ACTIVE"
-- Position Limits werden auf 50% reduziert
+### IV. Market Regime Has Veto Power
+When Market Regime = "RISK_OFF":
+- **All BUY signals are blocked**
+- UI displays "DEFENSIVE MODE ACTIVE"
+- Position limits are reduced by 50%
 
-Keine Ausnahmen. Kapitalschutz > Gewinnchancen.
+No exceptions. Capital protection > profit opportunities.
 
-### V. Position Limits Sind Unverletzlich
-- **Einzelaktie**: Maximum 10% des Portfolios
-- **Einzelcrypto**: Maximum 5% des Portfolios
-- **Gesamtaktien**: Maximum 70% des Portfolios
-- **Gesamtcrypto**: Maximum 20% des Portfolios
-- **Cash Reserve**: Minimum 10% des Portfolios
+### V. Position Limits Are Inviolable
+- **Single Stock**: Maximum 10% of portfolio
+- **Single Crypto**: Maximum 5% of portfolio
+- **Total Stocks**: Maximum 70% of portfolio
+- **Total Crypto**: Maximum 20% of portfolio
+- **Cash Reserve**: Minimum 10% of portfolio
 
-Bei Risk-Off werden alle Limits auf 50% reduziert.
+During Risk-Off, all limits are reduced by 50%.
 
-### VI. Explainability Ist Pflicht
-Jeder Score muss erklärbar sein:
-- Top 3 positive Faktoren anzeigen
-- Top 3 Risiko-Faktoren anzeigen
-- User muss verstehen WARUM ein Score hoch/niedrig ist
-- "Black Box" Ausgaben sind verboten
+### VI. Explainability Is Mandatory
+Every score must be explainable:
+- Display top 3 positive factors
+- Display top 3 risk factors
+- User must understand WHY a score is high/low
+- "Black Box" outputs are forbidden
 
 ### VII. Test-First Development
-- Jedes neue Feature braucht Tests VOR dem Merge
-- Minimum 80% Test-Coverage für neue Code-Paths
-- Tests müssen grün sein bevor PR merged wird
-- Integration Tests für alle API-Endpoints
+- Every new feature requires tests BEFORE merge
+- Minimum 80% test coverage for new code paths
+- Tests must pass before PR is merged
+- Integration tests for all API endpoints
 
 ### VIII. Clean Codebase
-- Unused Code wird täglich archiviert (23:00 Cron)
-- Keine Backup-Files im Repository (.bak, .tmp, ~)
-- Jede neue Datei wird auf Duplikate geprüft
-- Stale Files (>90 Tage ohne Änderung) werden reviewed
+- Unused code is archived daily (23:00 cron)
+- No backup files in repository (.bak, .tmp, ~)
+- Every new file is checked for duplicates
+- Stale files (>90 days without changes) are reviewed
 
-### IX. Pre-Commit Validation - Keine Broken Builds
-**Vor JEDEM Commit müssen folgende Checks bestehen:**
+### IX. Pre-Commit Validation - No Broken Builds
+**Before EVERY commit, the following checks must pass:**
 
 1. **Backend Validation**
-   - `python3 -m pytest tests/` - Alle Tests grün
-   - `flake8 src/` - Keine Linting-Fehler
-   - `black --check src/` - Code korrekt formatiert
+   - `python3 -m pytest tests/` - All tests green
+   - `flake8 src/` - No linting errors
+   - `black --check src/` - Code correctly formatted
 
 2. **Frontend Validation**
-   - `npx eslint src/` - Keine ESLint-Fehler (Errors = Blocker)
-   - `npm run build` - Build muss erfolgreich sein
-   - JSX Syntax korrekt (kein unescaptes `<` oder `>`)
+   - `npx eslint src/` - No ESLint errors (Errors = Blocker)
+   - `npm run build` - Build must succeed
+   - JSX syntax correct (no unescaped `<` or `>`)
 
 3. **Integration Check**
-   - Backend startet ohne Fehler
-   - Frontend startet ohne Fehler
-   - Health-Endpoint erreichbar
+   - Backend starts without errors
+   - Frontend starts without errors
+   - Health endpoint reachable
 
-**Warum?** 
-- CI/CD Pipelines dürfen NIEMALS wegen vermeidbarer Fehler failen
-- Broken UI ist inakzeptabel für Production
-- Zeit für Debugging = Zeit für Features verloren
+**Why?**
+- CI/CD pipelines must NEVER fail due to avoidable errors
+- Broken UI is unacceptable for production
+- Time for debugging = time lost for features
 
-**Konsequenz bei Verstoß:**
-- Commit wird revertiert
-- Issue wird erstellt für Root Cause Analysis
-- Kein Blame, aber Prozess wird verbessert
+**Consequence of violation:**
+- Commit is reverted
+- Issue is created for Root Cause Analysis
+- No blame, but process is improved
 
 ### X. Living Documentation
-Nach jedem Feature-Commit müssen relevante Docs aktualisiert werden:
+After every feature commit, relevant docs must be updated:
 
-1. **README.md** - Bei neuen Features, Commands, oder API-Änderungen
-2. **TRADER_GUIDE.md** - Bei user-facing Features
-3. **openapi.json** - Bei API-Endpoint Änderungen (auto-generiert)
-4. **ADR erstellen** - Bei Architektur-Entscheidungen
+1. **README.md** - For new features, commands, or API changes
+2. **TRADER_GUIDE.md** - For user-facing features
+3. **openapi.json** - For API endpoint changes (auto-generated)
+4. **Create ADR** - For architectural decisions
 
-**Regel:** Code ohne aktuelle Doku ist nicht fertig.
+**Rule:** Code without current documentation is not finished.
 
-**Ausnahmen:**
-- Reine Bugfixes (kein neues Feature)
-- Refactoring ohne Funktionsänderung
-- Test-Only Commits
+**Exceptions:**
+- Pure bugfixes (no new feature)
+- Refactoring without functional changes
+- Test-only commits
+
+### XI. Clean Repository Structure
+The repository must follow a clear, defined structure:
+
+**Allowed Root-Level Files:**
+- README.md, LICENSE, Makefile, Dockerfile
+- requirements.txt, pyproject.toml, pytest.ini
+- docker-compose.yml, .env.example
+- Configuration files: .gitignore, .flake8, .pre-commit-config.yaml
+
+**Folder Structure (mandatory):**
+```
+POC-MarketPredictor-ML/
+├── src/                  # Python Source Code
+│   ├── trading_engine/   # Backend API
+│   ├── training/         # ML Training
+│   ├── backtest/         # Backtesting
+│   └── data/             # Data Processing
+├── frontend/             # React Frontend
+├── tests/                # Test Suite
+├── docs/                 # Documentation
+│   ├── architecture/     # ADRs, Specs
+│   └── TRADER_GUIDE.md   # User Documentation
+├── scripts/              # Shell Scripts
+├── config/               # Deployment Configs
+├── models/               # Trained ML Models
+└── .specify/             # Spec-Kit Specs
+```
+
+**Forbidden in Root:**
+- No temporary files (.bak, .tmp, ~)
+- No changelog files (use Git History)
+- No orphaned Markdown files
+- No duplicates of config files
+
+**Rule:** Every new file must be created in the correct folder.
+
+**Verification:**
+- Pre-commit hook validates structure
+- CI/CD checks `structure-check.yml`
+- Weekly cleanup script
 
 ## Technology Constraints
 
 ### Backend
 - **Framework**: FastAPI (Python 3.11+)
 - **ML**: scikit-learn Random Forest
-- **Data**: yfinance für Marktdaten
+- **Data**: yfinance for market data
 - **Cache**: In-Memory (InMemoryCache)
 - **LLM**: OpenAI GPT-4o-mini
 
@@ -121,7 +162,7 @@ Nach jedem Feature-Commit müssen relevante Docs aktualisiert werden:
 - **Framework**: React 18 + Vite
 - **Styling**: CSS Modules
 - **Charts**: Recharts
-- **State**: React hooks (kein Redux)
+- **State**: React hooks (no Redux)
 
 ### Infrastructure
 - **VCS**: Git + GitHub
@@ -159,4 +200,4 @@ Nach jedem Feature-Commit müssen relevante Docs aktualisiert werden:
 - All code reviews must verify Constitution compliance
 - Violations are blockers - no exceptions
 
-**Version**: 1.2.0 | **Updated**: 2026-02-02 | **Owner**: Kevin Garcia
+**Version**: 1.4.0 | **Updated**: 2026-02-03 | **Owner**: Kevin Garcia

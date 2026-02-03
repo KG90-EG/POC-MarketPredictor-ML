@@ -9,17 +9,15 @@ Tests:
 - Fallback handling
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import Mock, patch, MagicMock
-import pandas as pd
-import numpy as np
+from unittest.mock import MagicMock, Mock, patch
 
-from src.trading_engine.risk_scoring import (
-    RiskScorer,
-    RiskBreakdown,
-    get_risk_scorer,
-)
+import numpy as np
+import pandas as pd
+import pytest
+
+from src.trading_engine.risk_scoring import (RiskBreakdown, RiskScorer,
+                                             get_risk_scorer)
 
 
 class TestRiskBreakdown:

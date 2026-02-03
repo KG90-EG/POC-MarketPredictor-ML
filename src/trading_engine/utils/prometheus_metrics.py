@@ -14,13 +14,7 @@ import time
 from functools import wraps
 from typing import Any, Callable, Dict
 
-from prometheus_client import (
-    Counter,
-    Gauge,
-    Histogram,
-    Info,
-    generate_latest,
-)
+from prometheus_client import Counter, Gauge, Histogram, Info, generate_latest
 
 logger = logging.getLogger(__name__)
 

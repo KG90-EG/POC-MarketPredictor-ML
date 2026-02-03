@@ -22,7 +22,7 @@ This starts:
 Make sure your FastAPI application is running to expose metrics:
 
 ```bash
-uvicorn src.trading_engine.api.server:app --reload
+uvicorn src.trading_engine.server:app --reload
 ```
 
 ### 3. Access Dashboards

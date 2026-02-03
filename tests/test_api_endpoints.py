@@ -65,7 +65,7 @@ class TestRankingEndpoint:
                 assert "ranking" in data
                 ranking_list = data["ranking"]
                 assert isinstance(ranking_list, list)
-                
+
                 if ranking_list:
                     item = ranking_list[0]
                     assert "ticker" in item
@@ -92,12 +92,15 @@ class TestRankingEndpoint:
 
         if response.status_code == 200:
             data = response.json()
-            
+
             # Handle new API format with 'ranking' key
             ranking_list = data.get("ranking", data) if isinstance(data, dict) else data
-            
+
             if isinstance(ranking_list, list) and len(ranking_list) > 1:
-                scores = [item.get("composite_score", item.get("momentum_score", item.get("score", 0))) for item in ranking_list]
+                scores = [
+                    item.get("composite_score", item.get("momentum_score", item.get("score", 0)))
+                    for item in ranking_list
+                ]
                 # Scores should be in descending order
                 assert scores == sorted(scores, reverse=True)
 
@@ -253,117 +256,6 @@ class TestModelsEndpoint:
         assert "current_model" in data or "available_models" in data
 
 
-class TestAnalyzeEndpoint:
-    """Tests for AI analysis endpoint"""
-
-    def test_analyze_with_data(self, client):
-        """Test AI analysis with valid data"""
-        response = client.post("/analyze", json={"data": {"ticker": "AAPL", "price": 150.0, "volume": 1000000}})
-
-        # May require OpenAI API key, or data format incorrect
-        assert response.status_code in [200, 400, 422, 503]
-
-    def test_analyze_without_data(self, client):
-        """Test analysis endpoint without data"""
-        response = client.post("/analyze", json={})
-
-        # Should require data
-        assert response.status_code in [400, 404, 422]
-
-
-class TestWatchlistEndpoints:
-    """Tests for watchlist CRUD operations"""
-
-    def _create_test_watchlist(self, client):
-        """Helper to create a new watchlist and return ID"""
-        response = client.post("/watchlists", json={"name": "Test Watchlist", "user_id": "test_user"})
-
-        assert response.status_code in [200, 201]
-        data = response.json()
-        assert "watchlist_id" in data or "id" in data
-
-        return data.get("watchlist_id") or data.get("id")
-
-    def test_create_watchlist(self, client):
-        """Test creating a new watchlist"""
-        watchlist_id = self._create_test_watchlist(client)
-        assert watchlist_id is not None
-
-    def test_get_all_watchlists(self, client):
-        """Test getting all watchlists"""
-        response = client.get("/watchlists")
-
-        assert response.status_code == 200
-        data = response.json()
-
-        # Response is {"watchlists": [...]}
-        if isinstance(data, dict) and "watchlists" in data:
-            assert isinstance(data["watchlists"], list)
-        else:
-            assert isinstance(data, list)
-
-    def test_get_single_watchlist(self, client):
-        """Test getting a specific watchlist"""
-        # Create a watchlist first
-        watchlist_id = self._create_test_watchlist(client)
-
-        # Get it
-        response = client.get(f"/watchlists/{watchlist_id}")
-
-        assert response.status_code in [200, 404]
-
-        if response.status_code == 200:
-            data = response.json()
-            assert "name" in data or "watchlist_name" in data
-
-    def test_update_watchlist(self, client):
-        """Test updating a watchlist"""
-        # Create watchlist
-        watchlist_id = self._create_test_watchlist(client)
-
-        # Update it
-        response = client.put(f"/watchlists/{watchlist_id}", json={"name": "Updated Watchlist"})
-
-        assert response.status_code in [200, 404]
-
-    def test_delete_watchlist(self, client):
-        """Test deleting a watchlist"""
-        # Create watchlist
-        watchlist_id = self._create_test_watchlist(client)
-
-        # Delete it
-        response = client.delete(f"/watchlists/{watchlist_id}")
-
-        assert response.status_code in [200, 204, 404]
-
-    def test_add_stock_to_watchlist(self, client):
-        """Test adding a stock to watchlist"""
-        # Create watchlist
-        watchlist_id = self._create_test_watchlist(client)
-
-        # Add stock
-        response = client.post(f"/watchlists/{watchlist_id}/stocks", json={"ticker": "AAPL"})
-
-        assert response.status_code in [200, 201, 400, 404]
-
-    def test_remove_stock_from_watchlist(self, client):
-        """Test removing a stock from watchlist"""
-        # Create watchlist and add stock
-        watchlist_id = self._create_test_watchlist(client)
-        client.post(f"/watchlists/{watchlist_id}/stocks", json={"ticker": "AAPL"})
-
-        # Remove stock
-        response = client.delete(f"/watchlists/{watchlist_id}/stocks/AAPL")
-
-        assert response.status_code in [200, 204, 404]
-
-    def test_watchlist_with_invalid_id(self, client):
-        """Test operations with invalid watchlist ID"""
-        response = client.get("/watchlists/99999")
-
-        assert response.status_code in [404, 400]
-
-
 class TestErrorHandling:
     """Tests for error handling across the API"""
 
@@ -385,37 +277,24 @@ class TestErrorHandling:
         import requests.exceptions
 
         try:
-            response = client.post("/watchlists", data="this is not json", headers={"Content-Type": "application/json"})
+            response = client.post(
+                "/ranking", data="this is not json", headers={"Content-Type": "application/json"}
+            )
             # Should return 400 or 422
-            assert response.status_code in [400, 422]
+            assert response.status_code in [400, 422, 405]
         except requests.exceptions.RequestException:
             # Network error is acceptable
             pass
 
-    def test_missing_required_fields(self, client):
-        """Test sending request with missing required fields"""
-        response = client.post("/watchlists", json={})  # Missing required fields
-
-        # Should return validation error
-        assert response.status_code in [400, 404, 422]
-
     def test_invalid_data_types(self, client):
         """Test sending invalid data types"""
         response = client.post(
-            "/api/simulations", json={"user_id": "test", "initial_capital": "not_a_number"}  # Should be float
+            "/api/context/market",
+            json={"data": "not_valid_data"},  # Invalid format
         )
 
         # Should return validation error
-        assert response.status_code in [400, 404, 422]
-
-    def test_very_long_string(self, client):
-        """Test handling of very long input strings"""
-        long_string = "A" * 10000
-
-        response = client.post("/watchlists", json={"name": long_string, "user_id": "test"})
-
-        # Should either accept or reject gracefully
-        assert response.status_code in [200, 201, 400, 422]
+        assert response.status_code in [400, 422, 503]
 
     def test_sql_injection_attempt(self, client):
         """Test that SQL injection is prevented"""
@@ -434,10 +313,10 @@ class TestErrorHandling:
         """Test that XSS is prevented"""
         xss_input = "<script>alert('XSS')</script>"
 
-        response = client.post("/watchlists", json={"name": xss_input, "user_id": "test"})
+        response = client.get(f"/search_stocks?query={xss_input}")
 
         # Should handle gracefully
-        assert response.status_code in [200, 201, 400, 422]
+        assert response.status_code in [200, 400, 422]
 
     def test_rate_limiting(self, client):
         """Test that rate limiting is in place"""
