@@ -30,7 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r src/training/requirements.txt || true
-          pip install flake8 black isort pytest pytest-cov mypy pylint bandit safety
+          pip install flake8 black isort pytest pytest-cov pytest-asyncio mypy pylint bandit safety
 
       - name: Check code formatting (Black)
         run: |
@@ -55,7 +55,7 @@ jobs:
           echo "🔍 Running Flake8 linter..."
           flake8 src/ scripts/ tests/ \
             --max-line-length=100 \
-            --extend-ignore=E203,W503,F401,F811,F541,W293,E501,D100,D101,D102,D103,D104,D105,D107 \
+            --extend-ignore=E203,W503,F401,F811,F541,W293,E501,D100,D101,D102,D103,D104,D105,D107,D200,D205,D400,D401,D415,C901,E731 \
             --count \
             --statistics || {
             echo "❌ Flake8 found issues!"

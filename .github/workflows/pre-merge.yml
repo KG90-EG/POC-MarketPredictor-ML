@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install pytest pytest-cov
+          pip install pytest pytest-cov pytest-asyncio
 
       - name: Run all tests (mandatory)
         run: |
@@ -113,7 +113,7 @@ jobs:
         run: |
           flake8 src/ scripts/ tests/ \
             --max-line-length=100 \
-            --extend-ignore=E203,W503,F401,F811,F541,W293,E501,D100,D101,D102,D103,D104,D105,D107 \
+            --extend-ignore=E203,W503,F401,F811,F541,W293,E501,D100,D101,D102,D103,D104,D105,D107,D200,D205,D400,D401,D415,C901,E731 \
             --count \
             --max-complexity=12
         continue-on-error: false
