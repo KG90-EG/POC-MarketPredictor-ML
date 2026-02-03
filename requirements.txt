@@ -16,7 +16,7 @@ flake8==6.0.0
 black==24.3.0
 isort==5.13.2  # Import sorting
 bandit==1.8.1  # Security scanning
-safety==3.0.1  # Dependency vulnerability check
+safety>=3.2.0  # Dependency vulnerability check (>=3.2.0 supports pydantic 2.x)
 boto3==1.35.67
 openai==1.57.4
 python-dotenv==1.0.0
