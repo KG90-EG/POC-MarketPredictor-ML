@@ -27,16 +27,17 @@ Output:
 
 import os
 import sys
+import sys
 from datetime import datetime
 from pathlib import Path
-
-# Add project root to path
-ROOT_DIR = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT_DIR))
 
 import mlflow
 
 from src.trading_engine.trading import build_dataset, train_model
+
+# Add project root to path
+ROOT_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT_DIR))
 
 # Global stocks - US + Swiss coverage for worldwide trading
 # 30 US stocks + 20 Swiss SMI stocks = 50 total

@@ -51,7 +51,6 @@ def test_market_context_success(client: TestClient, monkeypatch):
 
         # Response should NOT contain recommendation keywords
         context_text = data.get("context", "").lower()
-        forbidden_words = ["buy", "sell", "purchase", "sell off", "strong buy"]
 
         # Allow informational mentions but no direct recommendations
         assert not any(f"recommend {word}" in context_text for word in ["buy", "sell"])

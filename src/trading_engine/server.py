@@ -1823,7 +1823,6 @@ def get_popular_cryptos(
         filtered = []
         for crypto in data:
             crypto_id = crypto.get("id", "").lower()
-            symbol = crypto.get("symbol", "").lower()
 
             # Apply filters
             if exclude_stablecoins and crypto_id in stablecoins:
