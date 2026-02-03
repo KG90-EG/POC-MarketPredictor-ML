@@ -1,7 +1,8 @@
 # FR-003: LLM-Powered Market Analysis
 
-> **Status:** Draft  
+> **Status:** ✅ Completed  
 > **Created:** 2026-02-02  
+> **Completed:** 2026-02-03  
 > **Author:** Kevin Garcia  
 > **Priority:** Medium  
 > **Type:** Functional Requirement
@@ -16,16 +17,16 @@ Integration von Large Language Models (LLM) für intelligente Marktanalyse, Sent
 
 ## 🎯 User Stories
 
-### FR-3.1: AI-Erklärungen für Trading-Signale
+### FR-3.1: AI-Erklärungen für Trading-Signale ✅
 **Als** Trader  
 **möchte ich** verstehen WARUM die AI BUY/SELL empfiehlt  
 **damit** ich fundierte Entscheidungen treffen kann
 
 **Akzeptanzkriterien:**
-- [ ] Jedes Signal hat eine menschenlesbare Erklärung
-- [ ] Erklärung nennt 3-5 Hauptfaktoren
-- [ ] Erklärung ist in 2-3 Sätzen zusammengefasst
-- [ ] Keine halluzinierten Fakten (LLM-Guardrails)
+- [x] Jedes Signal hat eine menschenlesbare Erklärung
+- [x] Erklärung nennt 3-5 Hauptfaktoren
+- [x] Erklärung ist in 2-3 Sätzen zusammengefasst
+- [x] Keine halluzinierten Fakten (LLM-Guardrails)
 
 **Beispiel:**
 ```
@@ -37,32 +38,34 @@ Volumen 20% über Durchschnitt signalisiert Kaufinteresse."
 
 ---
 
-### FR-3.2: News Sentiment-Analyse
+### FR-3.2: News Sentiment-Analyse ⏳
 **Als** Trader  
 **möchte ich** die Marktstimmung zu einem Asset sehen  
 **damit** ich News-getriebene Bewegungen verstehe
 
 **Akzeptanzkriterien:**
-- [ ] Sentiment-Score: Bullish / Neutral / Bearish
-- [ ] Top 3 relevante News-Headlines anzeigen
-- [ ] Sentiment aktualisiert sich mindestens täglich
-- [ ] Quellen werden angegeben
+- [x] Sentiment-Score: Bullish / Neutral / Bearish
+- [ ] Top 3 relevante News-Headlines anzeigen (deferred)
+- [ ] Sentiment aktualisiert sich mindestens täglich (deferred)
+- [ ] Quellen werden angegeben (deferred)
+
+**Note:** Basic sentiment based on technical analysis implemented. Full news integration planned for future.
 
 ---
 
-### FR-3.3: Marktregime-Erklärung
+### FR-3.3: Marktregime-Erklärung ✅
 **Als** Trader  
 **möchte ich** verstehen warum wir in RISK_ON/RISK_OFF sind  
 **damit** ich meine Strategie anpassen kann
 
 **Akzeptanzkriterien:**
-- [ ] LLM erklärt aktuelles Marktregime
-- [ ] Nennt makroökonomische Faktoren
-- [ ] Vergleicht mit historischen Situationen (optional)
+- [x] LLM erklärt aktuelles Marktregime
+- [x] Nennt makroökonomische Faktoren
+- [ ] Vergleicht mit historischen Situationen (optional - deferred)
 
 ---
 
-### FR-3.4: Chat-Interface (Optional/Future)
+### FR-3.4: Chat-Interface (Optional/Future) ⏳
 **Als** Trader  
 **möchte ich** Fragen zur Marktlage stellen können  
 **damit** ich schnell Antworten bekomme

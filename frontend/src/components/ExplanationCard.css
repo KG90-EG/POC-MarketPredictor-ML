@@ -1,0 +1,302 @@
+/**
+ * ExplanationCard Styles
+ *
+ * Clean, readable design with factor chips and sentiment indicators.
+ * Supports dark mode.
+ */
+
+.explanation-card {
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 8px 0;
+  transition: box-shadow 0.2s ease;
+}
+
+.explanation-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.explanation-card--loading {
+  min-height: 180px;
+}
+
+/* Header */
+.explanation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.explanation-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary, #1f2937);
+}
+
+.explanation-icon {
+  font-size: 18px;
+}
+
+.explanation-ticker {
+  background: var(--bg-secondary, #f3f4f6);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.explanation-badges {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.explanation-badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.explanation-badge--cached {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.explanation-badge--fallback {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.explanation-refresh {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.explanation-refresh:hover {
+  background: var(--bg-secondary, #f3f4f6);
+}
+
+/* Signal */
+.explanation-signal {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.signal-badge {
+  font-weight: 700;
+  font-size: 14px;
+  padding: 4px 12px;
+  border-radius: 6px;
+}
+
+.signal-badge--buy {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.signal-badge--sell {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.signal-badge--hold {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.signal-confidence {
+  font-size: 13px;
+  color: var(--text-secondary, #6b7280);
+}
+
+/* Explanation Text */
+.explanation-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-primary, #374151);
+  margin-bottom: 16px;
+}
+
+/* Factors */
+.explanation-factors {
+  margin-bottom: 12px;
+}
+
+.factors-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.factors-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.factor-chip {
+  background: var(--bg-secondary, #f3f4f6);
+  color: var(--text-primary, #374151);
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color, #e5e7eb);
+}
+
+/* Sentiment */
+.explanation-sentiment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-secondary, #f9fafb);
+  border-radius: 8px;
+  border-left: 3px solid;
+  margin-bottom: 12px;
+}
+
+.sentiment-icon {
+  font-size: 16px;
+}
+
+.sentiment-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Disclaimer */
+.explanation-disclaimer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted, #9ca3af);
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.disclaimer-icon {
+  font-size: 12px;
+}
+
+/* Skeleton Loading */
+.explanation-skeleton {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.skeleton-line {
+  height: 12px;
+  background: var(--bg-secondary, #e5e7eb);
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.skeleton-line--title {
+  width: 40%;
+  height: 16px;
+}
+
+.skeleton-line--text {
+  width: 100%;
+}
+
+.skeleton-line--short {
+  width: 70%;
+}
+
+.skeleton-factors {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.skeleton-chip {
+  width: 80px;
+  height: 24px;
+  background: var(--bg-secondary, #e5e7eb);
+  border-radius: 12px;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+  .explanation-card {
+    --card-bg: #1f2937;
+    --border-color: #374151;
+    --text-primary: #f3f4f6;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
+    --bg-secondary: #374151;
+  }
+
+  .signal-badge--buy {
+    background: #166534;
+    color: #dcfce7;
+  }
+
+  .signal-badge--sell {
+    background: #991b1b;
+    color: #fee2e2;
+  }
+
+  .signal-badge--hold {
+    background: #4b5563;
+    color: #e5e7eb;
+  }
+
+  .explanation-badge--cached {
+    background: #1e3a5f;
+    color: #93c5fd;
+  }
+
+  .explanation-badge--fallback {
+    background: #78350f;
+    color: #fde68a;
+  }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .explanation-card {
+    padding: 12px;
+  }
+
+  .explanation-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .factors-list {
+    gap: 4px;
+  }
+
+  .factor-chip {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+}

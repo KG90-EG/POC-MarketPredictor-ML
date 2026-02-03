@@ -466,6 +466,15 @@ async def lifespan(app_instance: FastAPI):
     # Shutdown
     logger.info("Application shutting down")
 
+    # Cleanup LLM service
+    try:
+        from .llm_service import cleanup_llm_service
+
+        await cleanup_llm_service()
+        logger.info("LLM service cleaned up")
+    except Exception as e:
+        logger.warning(f"LLM service cleanup failed: {e}")
+
     # Stop background jobs gracefully
     try:
         from .performance import stop_background_jobs
@@ -2556,6 +2565,198 @@ async def get_asset_context(ticker: str) -> Dict[str, Any]:
             "llm_enabled": False,
             "error": str(e),
         }
+
+
+# ============================================
+# LLM-Powered Analysis Endpoints (FR-003)
+# ============================================
+
+
+class ExplainRequest(BaseModel):
+    """Request model for explanation endpoint."""
+
+    include_indicators: bool = True
+
+
+@app.get("/api/explain/{ticker}", tags=["LLM Analysis"])
+async def get_signal_explanation(ticker: str, include_indicators: bool = True):
+    """
+    Get AI-powered explanation for a trading signal.
+
+    Returns a human-readable explanation of why the AI recommends
+    BUY/SELL/HOLD for the given ticker.
+
+    Args:
+        ticker: Stock ticker symbol (1-5 uppercase letters)
+        include_indicators: Include technical indicators in analysis
+
+    Returns:
+        JSON with explanation, factors, sentiment, and metadata
+    """
+    from .llm_service import get_llm_service
+
+    # Validate ticker format
+    ticker = ticker.upper().strip()
+    if not ticker or len(ticker) > 5 or not ticker.isalpha():
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid ticker format. Must be 1-5 uppercase letters.",
+        )
+
+    try:
+        # Get current prediction for the ticker
+        stock_service = StockService()
+        prediction = stock_service.get_prediction(ticker, MODEL)
+
+        if not prediction:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Could not generate prediction for {ticker}",
+            )
+
+        # Extract signal info
+        signal = prediction.get("signal", "HOLD")
+        confidence = prediction.get("confidence", 50)
+
+        # Get technical indicators if requested
+        indicators = None
+        if include_indicators:
+            indicators = {
+                "RSI": prediction.get("rsi", "N/A"),
+                "MACD": prediction.get("macd", "N/A"),
+                "Momentum": prediction.get("momentum", "N/A"),
+                "Volume Trend": prediction.get("volume_trend", "N/A"),
+            }
+
+        # Get LLM explanation
+        llm = get_llm_service()
+        result = await llm.explain_signal(
+            ticker=ticker,
+            signal=signal,
+            confidence=confidence,
+            indicators=indicators,
+        )
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to generate explanation for {ticker}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate explanation: {str(e)}",
+        )
+
+
+@app.get("/api/regime/explain", tags=["LLM Analysis"])
+async def get_regime_explanation():
+    """
+    Get AI-powered explanation for the current market regime.
+
+    Returns a human-readable explanation of why the market is
+    currently in RISK_ON, RISK_OFF, or NEUTRAL mode.
+
+    Returns:
+        JSON with regime, explanation, factors, and metadata
+    """
+    from .llm_service import get_llm_service
+
+    try:
+        # Get current regime
+        regime_detector = get_regime_detector()
+        regime_info = regime_detector.get_current_regime()
+
+        regime = regime_info.get("regime", "NEUTRAL")
+        regime_data = {
+            "VIX Level": regime_info.get("vix", "N/A"),
+            "Market Breadth": regime_info.get("breadth", "N/A"),
+            "Trend": regime_info.get("trend", "N/A"),
+            "Confidence": regime_info.get("confidence", "N/A"),
+        }
+
+        # Get LLM explanation
+        llm = get_llm_service()
+        result = await llm.explain_regime(
+            regime=regime,
+            regime_data=regime_data,
+        )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Failed to generate regime explanation: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate regime explanation: {str(e)}",
+        )
+
+
+@app.get("/api/sentiment/{ticker}", tags=["LLM Analysis"])
+async def get_ticker_sentiment(ticker: str):
+    """
+    Get sentiment analysis for a ticker.
+
+    Returns sentiment score and label based on recent news and market data.
+    Note: Full news integration planned for future release.
+
+    Args:
+        ticker: Stock ticker symbol
+
+    Returns:
+        JSON with sentiment score, label, and metadata
+    """
+    # Validate ticker
+    ticker = ticker.upper().strip()
+    if not ticker or len(ticker) > 5 or not ticker.isalpha():
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid ticker format. Must be 1-5 uppercase letters.",
+        )
+
+    try:
+        # Get current prediction for sentiment proxy
+        stock_service = StockService()
+        prediction = stock_service.get_prediction(ticker, MODEL)
+
+        if not prediction:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Could not get data for {ticker}",
+            )
+
+        # Derive sentiment from signal and confidence
+        signal = prediction.get("signal", "HOLD")
+        confidence = prediction.get("confidence", 50)
+
+        if signal == "BUY":
+            score = min(1.0, confidence / 100 * 1.2)
+            label = "bullish"
+        elif signal == "SELL":
+            score = max(-1.0, -(confidence / 100 * 1.2))
+            label = "bearish"
+        else:
+            score = 0.0
+            label = "neutral"
+
+        return {
+            "ticker": ticker,
+            "score": round(score, 2),
+            "label": label,
+            "headlines": [],  # Placeholder for future news integration
+            "source": "technical_analysis",
+            "generated_at": datetime.utcnow().isoformat() + "Z",
+            "note": "News sentiment integration planned for future release",
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get sentiment for {ticker}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get sentiment: {str(e)}",
+        )
 
 
 @app.websocket("/ws/{client_id}")

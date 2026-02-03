@@ -108,6 +108,17 @@ export const api = {
 
   getCryptoDetails: (cryptoId) => apiClient.get(`/crypto/details/${cryptoId}`),
 
+  // LLM Analysis endpoints (FR-003)
+  getExplanation: (ticker, includeIndicators = true) => {
+    const params = new URLSearchParams();
+    params.append("include_indicators", includeIndicators);
+    return apiClient.get(`/api/explain/${ticker}?${params.toString()}`);
+  },
+
+  getRegimeExplanation: () => apiClient.get("/api/regime/explain"),
+
+  getSentiment: (ticker) => apiClient.get(`/api/sentiment/${ticker}`),
+
   // Watchlist endpoints
   getWatchlists: (userId = CURRENT_USER_ID) => apiClient.get(`/watchlists?user_id=${userId}`),
 

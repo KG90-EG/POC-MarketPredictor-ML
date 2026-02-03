@@ -557,6 +557,74 @@ A: You're the boss! System provides data, you make decisions. But track your ove
 
 ---
 
+## 🤖 AI-Powered Explanations (NEW)
+
+### What Are AI Explanations?
+
+The system now provides **human-readable explanations** for trading signals, powered by Large Language Models (LLMs).
+
+Instead of just seeing "BUY AAPL - Score 78", you'll see:
+
+```
+BUY AAPL (78% Confidence)
+"Apple shows strong momentum after breaking above the 50-day moving average.
+RSI at 58 indicates healthy buying pressure without being overbought.
+Volume is 15% above average, confirming institutional interest."
+
+Key Factors:
+• Positive momentum indicators
+• Price above 50-day MA
+• Strong volume confirmation
+```
+
+### New Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/explain/{ticker}` | Get AI explanation for any ticker's signal |
+| `GET /api/regime/explain` | Understand why we're in current regime |
+| `GET /api/sentiment/{ticker}` | Get sentiment analysis for a ticker |
+
+### Setup (Optional)
+
+AI explanations work out of the box with **fallback mode** (no API key needed).
+
+For enhanced explanations, set up an LLM provider:
+
+```bash
+# In your .env file:
+
+# Option 1: Groq (Recommended - Fast & Free tier available)
+LLM_PROVIDER=groq
+GROQ_API_KEY=gsk_your-key-here
+
+# Option 2: OpenAI (GPT-4)
+LLM_PROVIDER=openai
+OPENAI_API_KEY=sk-your-key-here
+
+# Option 3: Anthropic (Claude)
+LLM_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-your-key-here
+
+# Cache duration (default: 1 hour)
+LLM_CACHE_TTL=3600
+```
+
+### How to Use AI Explanations
+
+1. **In the Dashboard:** Click "Explain" next to any stock
+2. **Via API:** `GET /api/explain/AAPL`
+3. **Regime Context:** Check "Why This Regime?" in the header
+
+### Important Notes
+
+- ⚡ Responses are **cached for 1 hour** to reduce costs
+- 🔄 Works without API key (uses fallback explanations)
+- ⚠️ **Not financial advice** - AI-generated analysis only
+- 💰 Keep an eye on LLM costs if using premium providers
+
+---
+
 ## 📚 Additional Resources
 
 - **Requirements Doc:** `docs/DECISION_SUPPORT_SYSTEM_REQUIREMENTS.md`
