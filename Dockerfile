@@ -1,6 +1,6 @@
 # Multi-stage build for optimized production image
 # Stage 1: Backend build
-FROM python:3.11-slim as backend-builder
+FROM python:3.14-slim as backend-builder
 
 WORKDIR /app
 
@@ -35,7 +35,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 3: Production image
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 WORKDIR /app
 
