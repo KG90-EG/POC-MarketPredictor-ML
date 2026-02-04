@@ -149,6 +149,34 @@ POC-MarketPredictor-ML/
 - CI/CD checks `structure-check.yml`
 - Weekly cleanup script
 
+### XII. Configuration Management - Single Source of Truth
+All tool configurations MUST be defined in ONE canonical location.
+
+**Python Tooling** → `pyproject.toml`
+- `[tool.black]` - Code formatting (line-length=100)
+- `[tool.isort]` - Import sorting (profile=black)
+- `[tool.pytest.ini_options]` - Test configuration
+
+**Linting** → `.flake8`
+- All ignore rules documented with REASON
+- max-line-length=100
+- Excludes: venv, node_modules, __pycache__
+
+**Frontend Tooling** → `frontend/`
+- `eslint.config.js` - JavaScript linting
+- `.prettierrc.json` (root) - Prettier config (printWidth=100)
+- `package.json` - Dependencies + npm scripts
+
+**FORBIDDEN:**
+- ❌ Hardcoded CLI flags in scripts (use config files)
+- ❌ Duplicate settings across multiple files
+- ❌ Overriding configs with --flag in CI/CD
+
+**Rule:** When adding a new tool:
+1. Add config to appropriate file above
+2. Reference config in scripts (no hardcoded flags)
+3. Document in this section if globally applicable
+
 ## Technology Constraints
 
 ### Backend
@@ -200,4 +228,13 @@ POC-MarketPredictor-ML/
 - All code reviews must verify Constitution compliance
 - Violations are blockers - no exceptions
 
-**Version**: 1.4.0 | **Updated**: 2026-02-03 | **Owner**: Kevin Garcia
+**Version**: 1.5.0 | **Updated**: 2026-02-05 | **Owner**: Kevin Garcia
+
+---
+## Changelog
+
+### v1.5.0 (2026-02-05)
+- Added Section XII: Configuration Management - Single Source of Truth
+- Consolidated all Python tool configs to pyproject.toml
+- Documented .flake8, .prettierrc.json as canonical sources
+- Removed hardcoded flags from scripts and CI/CD

@@ -97,6 +97,21 @@ POC-MarketPredictor-ML/
 
 ## 🛠️ Development
 
+### Configuration (Single Source of Truth)
+
+All tool settings are centralized:
+
+| Tool | Config File | Purpose |
+|------|-------------|---------|
+| Black | `pyproject.toml` | Python formatting |
+| isort | `pyproject.toml` | Import sorting |
+| pytest | `pyproject.toml` | Test configuration |
+| Flake8 | `.flake8` | Python linting |
+| Prettier | `.prettierrc.json` | JS/JSON formatting |
+| ESLint | `frontend/eslint.config.js` | JavaScript linting |
+
+See [Configuration Guide](docs/development/CONFIGURATION_GUIDE.md) for details.
+
 ### Commands
 
 ```bash
@@ -108,9 +123,14 @@ POC-MarketPredictor-ML/
 # Testing
 pytest tests/ -v          # Run all tests
 
-# Formatting
-black --line-length=100 src/ tests/
+# Formatting (uses config files - no flags needed)
+black src/ scripts/ tests/
+isort src/ scripts/ tests/
 npm run format --prefix frontend
+
+# Linting (uses config files)
+flake8 src/ scripts/ tests/
+npm run lint --prefix frontend
 
 # Model training (FR-004)
 python scripts/train_production.py              # Standard training
@@ -150,6 +170,7 @@ All commits must pass:
 | [002 - NFRs](.specify/specs/002-non-functional-requirements/) | Quality automation | ✅ Done |
 | [003 - LLM Analysis](.specify/specs/003-llm-analysis/) | AI explanations | ✅ Done |
 | [004 - ML Pipeline](.specify/specs/004-ml-training-pipeline/) | Training automation | ✅ Done |
+| [005 - Config Consolidation](.specify/specs/005-constitution-config-consolidation/) | Single Source of Truth | ✅ Done |
 
 ## 📊 Metrics
 

@@ -12,13 +12,11 @@ NC='\033[0m' # No Color
 # Track if any check fails
 CHECKS_FAILED=0
 
-# 1. Python linting
+# 1. Python linting (uses .flake8 config)
 echo "\n${YELLOW}Running Python linting...${NC}"
 if command -v flake8 >/dev/null 2>&1; then
-    if flake8 src/trading_engine/ src/backtest/ scripts/ \
-        --max-line-length=100 \
-        --extend-ignore=C901,E203,W503,F401,F811,F541,W293,E501,D100,D101,D102,D103,D104,D105,D107,D200,D205,D400,D401,D403,E731 \
-        --count --statistics 2>&1 | grep -v "^0$" > /dev/null; then
+    # All options are in .flake8 - Single Source of Truth
+    if flake8 src/ scripts/ tests/ --count --statistics 2>&1 | grep -v "^0$" > /dev/null; then
         echo "${RED}✗ Flake8 found issues${NC}"
         CHECKS_FAILED=1
     else
@@ -28,12 +26,13 @@ else
     echo "${YELLOW}⚠ flake8 not installed, skipping${NC}"
 fi
 
-# 2. Python formatting check
+# 2. Python formatting check (uses pyproject.toml config)
 echo "\n${YELLOW}Checking Python formatting...${NC}"
 if command -v black >/dev/null 2>&1; then
-    if ! black --check --line-length=100 src/trading_engine/ src/backtest/ scripts/ >/dev/null 2>&1; then
+    # All options are in pyproject.toml [tool.black] - Single Source of Truth
+    if ! black --check src/ scripts/ tests/ >/dev/null 2>&1; then
         echo "${RED}✗ Black formatting issues found${NC}"
-        echo "${YELLOW}Run 'black --line-length=100 src/trading_engine/ src/backtest/ scripts/' to fix${NC}"
+        echo "${YELLOW}Run 'black src/ scripts/ tests/' to fix${NC}"
         CHECKS_FAILED=1
     else
         echo "${GREEN}✓ Black formatting OK${NC}"

@@ -1,12 +1,27 @@
+# POC-MarketPredictor-ML Configuration
+# Single source of truth for Python tooling
+#
+# Used by: black, isort, pytest
+# Referenced by: .husky/pre-commit, scripts/pre-push.sh, GitHub Actions
+#
+# Last Updated: 2026-02-04
+# Constitution: v1.5.0 (XII. Configuration Management)
+
 [build-system]
-requires = ["setuptools>=61", "wheel"]
+requires = ["setuptools>=65.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "market_predictor"
-version = "0.1.0"
-description = "Simple trading helper package"
-authors = [ {name = "Kevin"} ]
+name = "poc-marketpredictor-ml"
+version = "1.0.0"
+description = "ML-powered stock market decision support system"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.12"
+authors = [
+    {name = "Kevin Garcia"}
+]
+keywords = ["machine-learning", "trading", "stocks", "fastapi", "decision-support"]
 dependencies = [
     "yfinance",
     "pandas",
@@ -21,42 +36,124 @@ dependencies = [
     "openai",
 ]
 
+# =============================================================================
+# BLACK - Code Formatter
+# =============================================================================
+# Documentation: https://black.readthedocs.io/en/stable/usage_and_configuration/
+#
+# WHY these settings:
+# - line-length=100: Matches .flake8, ESLint, Prettier (Constitution standard)
+# - target-version=py312: CI uses Python 3.12, ensures compatibility
+# - extend-exclude: Skip generated files, virtual envs, build artifacts
+#
 [tool.black]
 line-length = 100
 target-version = ["py312"]
-extend-exclude = "(frontend|mlruns|\.eggs)"
+extend-exclude = '''
+/(
+    \.git
+    | \.venv
+    | \.venv-1
+    | venv
+    | __pycache__
+    | build
+    | dist
+    | \.egg-info
+    | \.eggs
+    | mlruns
+    | models
+    | node_modules
+    | frontend
+)/
+'''
 
+# =============================================================================
+# ISORT - Import Sorter
+# =============================================================================
+# Documentation: https://pycqa.github.io/isort/docs/configuration/options.html
+#
+# WHY these settings:
+# - profile=black: Ensures compatibility with Black formatter
+# - line_length=100: Matches Black and .flake8
+# - skip_gitignore=true: Don't touch ignored files
+# - known_first_party: Our source code modules
+#
 [tool.isort]
 profile = "black"
 line_length = 100
+skip_gitignore = true
+skip = [".git", ".venv", ".venv-1", "venv", "__pycache__", "node_modules", "frontend"]
+known_first_party = ["src", "tests"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+default_section = "THIRDPARTY"
 
-[tool.flake8]
-max-line-length = 100
-max-complexity = 15
-exclude = [
-    ".git",
-    "__pycache__",
-    ".venv",
-    "venv",
-    "build",
-    "dist",
-    "*.egg-info",
-    ".eggs",
-    ".mypy_cache",
-    ".pytest_cache",
-    "mlruns",
-    "node_modules",
-    "frontend",
-    "archive",
+# =============================================================================
+# PYTEST - Test Framework
+# =============================================================================
+# Documentation: https://docs.pytest.org/en/stable/reference/customize.html
+#
+# WHY these settings:
+# - testpaths: Only run tests in tests/ directory
+# - python_files: Standard test file naming
+# - addopts: Short traceback for readability, strict markers
+# - markers: Define custom markers for test categorization
+# - asyncio_mode: Support async tests with pytest-asyncio
+#
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--tb=short --strict-markers -v"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
 ]
-ignore = [
-    "E203",  # whitespace before ':' (Black compatibility)
-    "E231",  # missing whitespace after ':' (f-string format specs)
-    "W503",  # line break before binary operator (Black compatibility)
-    "D100", "D101", "D102", "D103", "D104", "D105", "D107",  # docstrings
-    "D200", "D205", "D400", "D401", "D403",  # docstring formatting
-    "F401",  # module imported but unused (handled during cleanup)
-    "E501",  # line too long (sometimes unavoidable)
-    "C901",  # function too complex (existing code)
-    "F811",  # redefinition of unused name (API endpoints)
+asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
 ]
+
+# =============================================================================
+# COVERAGE - Test Coverage
+# =============================================================================
+# Documentation: https://coverage.readthedocs.io/en/latest/config.html
+#
+# WHY these settings:
+# - source: Measure coverage for our source code only
+# - omit: Skip test files and config files from coverage
+# - fail_under: Minimum coverage threshold (Constitution: 80% for new code)
+#
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/conftest.py",
+]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
+fail_under = 0
+show_missing = true
+
+# =============================================================================
+# MYPY - Type Checker (Optional)
+# =============================================================================
+# Not currently enforced, but available for gradual adoption
+#
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true

@@ -45,20 +45,20 @@ fi
 echo "📦 Backend Checks"
 echo "═══════════════════"
 
-# Check Python formatting
-if ! run_check "Black formatting" "black --check --line-length=100 src/ scripts/ tests/ 2>&1"; then
-    echo -e "     ${YELLOW}Fix with: black --line-length=100 src/ scripts/ tests/${NC}"
+# Check Python formatting (uses pyproject.toml [tool.black])
+if ! run_check "Black formatting" "black --check src/ scripts/ tests/ 2>&1"; then
+    echo -e "     ${YELLOW}Fix with: black src/ scripts/ tests/${NC}"
     FAILED=1
 fi
 
-# Check import sorting
-if ! run_check "Import sorting" "isort --check-only --profile black --line-length 100 src/ scripts/ tests/ 2>&1"; then
-    echo -e "     ${YELLOW}Fix with: isort --profile black --line-length 100 src/ scripts/ tests/${NC}"
+# Check import sorting (uses pyproject.toml [tool.isort])
+if ! run_check "Import sorting" "isort --check-only src/ scripts/ tests/ 2>&1"; then
+    echo -e "     ${YELLOW}Fix with: isort src/ scripts/ tests/${NC}"
     FAILED=1
 fi
 
-# Run flake8
-if ! run_check "Flake8 linting" "flake8 src/ scripts/ tests/ --max-line-length=100 --extend-ignore=E203,W503,F401,F811,F541,W293,E501,D100,D101,D102,D103,D104,D105,D107,C901,E731 --count 2>&1"; then
+# Run flake8 (uses .flake8 config - Single Source of Truth)
+if ! run_check "Flake8 linting" "flake8 src/ scripts/ tests/ --count 2>&1"; then
     echo -e "     ${YELLOW}Fix linting errors manually${NC}"
     FAILED=1
 fi
