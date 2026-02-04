@@ -20,3 +20,43 @@ dependencies = [
     "boto3",
     "openai",
 ]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+extend-exclude = "(frontend|mlruns|\.eggs)"
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.flake8]
+max-line-length = 100
+max-complexity = 15
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "build",
+    "dist",
+    "*.egg-info",
+    ".eggs",
+    ".mypy_cache",
+    ".pytest_cache",
+    "mlruns",
+    "node_modules",
+    "frontend",
+    "archive",
+]
+ignore = [
+    "E203",  # whitespace before ':' (Black compatibility)
+    "E231",  # missing whitespace after ':' (f-string format specs)
+    "W503",  # line break before binary operator (Black compatibility)
+    "D100", "D101", "D102", "D103", "D104", "D105", "D107",  # docstrings
+    "D200", "D205", "D400", "D401", "D403",  # docstring formatting
+    "F401",  # module imported but unused (handled during cleanup)
+    "E501",  # line too long (sometimes unavoidable)
+    "C901",  # function too complex (existing code)
+    "F811",  # redefinition of unused name (API endpoints)
+]
