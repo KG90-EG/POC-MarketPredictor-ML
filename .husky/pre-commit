@@ -44,7 +44,7 @@ fi
 # 3. Python tests (quick smoke test)
 echo "\n${YELLOW}Running Python tests...${NC}"
 if command -v pytest >/dev/null 2>&1; then
-    if ! python -m pytest tests/ \
+    if ! python3 -m pytest tests/ \
         --ignore=tests/phase1/ \
         --ignore=tests/phase2/ \
         --ignore=tests/test_crypto.py \

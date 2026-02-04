@@ -152,7 +152,7 @@ class AlertDB:
 
         placeholders = ",".join("?" * len(alert_ids))
         cursor.execute(
-            f"""
+            f"""  -- nosec B608 - Safe: placeholders are ? and values are parameterized
             UPDATE alerts
             SET is_read = 1, read_at = ?
             WHERE alert_id IN ({placeholders})
