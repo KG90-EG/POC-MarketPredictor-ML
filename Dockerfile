@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Frontend build
-FROM node:18-alpine as frontend-builder
+FROM node:25-alpine as frontend-builder
 
 WORKDIR /app/frontend
 
