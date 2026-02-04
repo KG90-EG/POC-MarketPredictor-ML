@@ -37,11 +37,7 @@ jobs:
         run: isort --check-only --profile black --line-length 100 src/ scripts/ tests/
 
       - name: Flake8 linting
-        run: |
-          flake8 src/ scripts/ tests/ \
-            --max-line-length=100 \
-            --extend-ignore=E203,W503,F401,F811,F541,W293,E501,D100,D101,D102,D103,D104,D105,D107,D200,D205,D400,D401,D415,C901,E731 \
-            --count
+        run: flake8 src/ scripts/ tests/ --count
 
       - name: Security scan
         run: bandit -r src/ -ll -f screen
