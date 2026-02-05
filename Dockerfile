@@ -1,6 +1,6 @@
 # Multi-stage build for optimized production image
 # Stage 1: Backend build
-FROM python:3.12-slim as backend-builder
+from python:3.12-slim as backend-builder
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Frontend build
-FROM node:25-alpine as frontend-builder
+from node:25-alpine as frontend-builder
 
 WORKDIR /app/frontend
 
@@ -35,7 +35,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # Stage 3: Production image
-FROM python:3.12-slim
+from python:3.12-slim
 
 WORKDIR /app
 
@@ -50,7 +50,7 @@ RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
 
 # Copy Python dependencies from builder
-COPY --from=backend-builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=backend-builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=backend-builder /usr/local/bin /usr/local/bin
 
 # Copy application code

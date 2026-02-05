@@ -191,10 +191,10 @@ class ModelRetrainingService:
                 Tickers: {len(tickers)}
 
                 Metrics:
-                - F1 Score:  {metrics['f1_score']:.3f} (prev: {self.current_metrics.get('f1_score', 0):.3f})
-                - Accuracy:  {metrics['accuracy']:.3f} (prev: {self.current_metrics.get('accuracy', 0):.3f})
+                - F1 Score: {metrics['f1_score']:.3f} (prev: {self.current_metrics.get('f1_score', 0):.3f})
+                - Accuracy: {metrics['accuracy']:.3f} (prev: {self.current_metrics.get('accuracy', 0):.3f})
                 - Precision: {metrics['precision']:.3f}
-                - Recall:    {metrics['recall']:.3f}
+                - Recall: {metrics['recall']:.3f}
 
                 Model Path: {PROD_MODEL_PATH}
                 Backup: {BACKUP_MODEL_PATH}
