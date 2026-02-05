@@ -1,34 +1,34 @@
 yfinance==0.2.66
 pandas==2.2.3
-numpy==2.4.2
+numpy>=1.26.0,<2.0.0  # mlflow 2.10.0 requires numpy<2
 scikit-learn==1.5.2
 xgboost==2.1.3
-mlflow==2.10.0
+mlflow==2.10.0  # Pin to 2.10.0 due to numpy<2 constraint
 setuptools==75.1.0  # Required by mlflow for pkg_resources
-joblib==1.5.3
-scipy==1.14.1
+joblib==1.5.2
+scipy>=1.13.0,<1.15.0  # Compatible with numpy<2 and Python 3.12
 fastapi==0.115.0
 pydantic==2.9.0
 uvicorn==0.32.0
 pytest==8.4.0
 pytest-asyncio==0.24.0  # For async test support
 pytest-cov==5.0.0  # For code coverage reporting
-flake8==7.3.0
+flake8==6.0.0
 black==24.3.0
 isort==5.13.2  # Import sorting
 bandit==1.8.1  # Security scanning
 safety>=3.2.0  # Dependency vulnerability check (>=3.2.0 supports pydantic 2.x)
 boto3==1.35.67
 openai==1.57.4
-python-dotenv==1.2.1
+python-dotenv==1.0.0
 redis==5.0.1  # For production caching (optional, fallback to in-memory)
 websockets==15.0.1  # Required by yfinance for live data features
 requests==2.32.5  # For HTTP calls (crypto API, etc.)
 prometheus-client==0.21.0  # For metrics collection and monitoring
 apscheduler==3.10.4  # For automated model retraining scheduler
 optuna==3.5.0  # Hyperparameter optimization (Week 4)
-lightgbm==4.6.0  # Additional ensemble model (Week 3-4)
-matplotlib==3.10.8  # For MLflow visualizations
+lightgbm==4.3.0  # Additional ensemble model (Week 3-4)
+matplotlib==3.8.2  # For MLflow visualizations
 seaborn==0.13.0  # For confusion matrix plotting
 # Optional: xgboost & pyarrow may require system deps (libomp, cmake) on macOS. If installing on macOS, run
 # `brew install libomp cmake` or use a container with wheels available. If you prefer to avoid compilation, comment out xgboost
