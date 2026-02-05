@@ -27,26 +27,37 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install -r src/training/requirements.txt
           python -m pip install boto3  # For S3 upload (optional)
-      - name: Run drift check
+      - name: Run drift check (if available)
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          python src/training/drift_check.py --tickers AAPL,MSFT,NVDA || \
-            echo "::warning::Drift check failed or detected drift, continuing with training"
-      - name: Train new model
+          if [ -f "src/training/drift_check.py" ]; then
+            python src/training/drift_check.py --tickers AAPL,MSFT,NVDA || \
+              echo "::warning::Drift check failed or detected drift, continuing"
+          else
+            echo "::notice::drift_check.py not found, skipping"
+          fi
+      - name: Train new model (if available)
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
-          python src/training/trainer.py || \
-            echo "::warning::Training failed, may be due to insufficient data or network issues"
-      - name: Evaluate and Promote
+          if [ -f "src/training/trainer.py" ]; then
+            python src/training/trainer.py || \
+              echo "::warning::Training failed, may be due to insufficient data or network issues"
+          else
+            echo "::notice::trainer.py not found, skipping"
+          fi
+      - name: Evaluate and Promote (if available)
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: |
+          if [ ! -f "src/training/evaluate_and_promote.py" ]; then
+            echo "::notice::evaluate_and_promote.py not found, skipping model promotion"
+            exit 0
+          fi
           NEWMODEL=$(ls -t models/model_*.bin 2>/dev/null | head -n1)
           if [ -z "$NEWMODEL" ]; then
-            echo "::warning::No new model found to evaluate - training may have failed"
-            echo "Using existing prod model if available"
+            echo "::warning::No new model found to evaluate"
             exit 0
           fi
           python src/training/evaluate_and_promote.py \
