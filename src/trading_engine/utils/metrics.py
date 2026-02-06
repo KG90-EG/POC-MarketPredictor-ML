@@ -54,6 +54,31 @@ simulation_portfolio_value = Gauge(
     ["simulation_id"],
 )
 
+# Multi-Asset Metrics (NFR-011)
+asset_rankings_total = Counter(
+    "asset_rankings_total",
+    "Total number of asset ranking requests",
+    ["asset_type"],  # shares, digital_assets, commodities
+)
+
+asset_ranking_duration_seconds = Histogram(
+    "asset_ranking_duration_seconds",
+    "Asset ranking request duration in seconds",
+    ["asset_type"],
+)
+
+commodity_data_fetches_total = Counter(
+    "commodity_data_fetches_total",
+    "Total number of commodity data fetches",
+    ["ticker", "status"],  # status: success, error, cached
+)
+
+unified_api_requests_total = Counter(
+    "unified_api_requests_total",
+    "Total requests to unified ranking API",
+    ["asset_type", "legacy_name_used"],  # legacy_name_used: true/false
+)
+
 
 def initialize_metrics(model_is_loaded: bool, openai_is_configured: bool):
     """Initialize gauge metrics on startup."""
@@ -78,3 +103,22 @@ def track_ranking_generation(country: str, stock_count: int, duration: float):
     """Track ranking generation metrics (stub for backward compatibility)."""
     # Currently just logs, can be extended with specific metrics later
     pass
+
+
+def track_asset_ranking(asset_type: str, duration: float, count: int = 0):
+    """Track multi-asset ranking metrics."""
+    asset_rankings_total.labels(asset_type=asset_type).inc()
+    asset_ranking_duration_seconds.labels(asset_type=asset_type).observe(duration)
+
+
+def track_commodity_fetch(ticker: str, status: str):
+    """Track commodity data fetch metrics."""
+    commodity_data_fetches_total.labels(ticker=ticker, status=status).inc()
+
+
+def track_unified_api_request(asset_type: str, legacy_name_used: bool):
+    """Track unified API usage metrics."""
+    unified_api_requests_total.labels(
+        asset_type=asset_type,
+        legacy_name_used=str(legacy_name_used).lower(),
+    ).inc()

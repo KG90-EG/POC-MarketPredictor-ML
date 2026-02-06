@@ -1403,119 +1403,9 @@ def get_portfolio_exposure():
         raise HTTPException(status_code=500, detail=f"Failed to fetch portfolio exposure: {str(e)}")
 
 
-@app.post(
-    "/api/portfolio/validate-legacy",
-    tags=["Portfolio"],
-    summary="Validate Portfolio Allocation (Legacy)",
-    description="""
-    Validate a proposed portfolio allocation against risk limits.
-
-    **Input:** Proposed allocation (ticker, percentage)
-    **Output:** Validation result with warnings/errors
-
-    Checks:
-    - Individual position size limits
-    - Asset class exposure limits
-    - Cash reserve requirements
-    - Regime-based restrictions
-
-    **Requirements Reference:** Section 5.6 - Risk Management
-    """,
-)
-def validate_portfolio_allocation(allocation: Dict[str, Any]):
-    """
-    Validate proposed portfolio allocation.
-
-    Args:
-        allocation: Dict with proposed positions
-            {
-                "positions": [
-                    {"ticker": "AAPL", "percentage": 8.5},
-                    {"ticker": "BTC-USD", "percentage": 4.5}
-                ]
-            }
-
-    Returns:
-        Validation result with compliance check
-    """
-    try:
-        # Get current limits
-        regime_detector = get_regime_detector()
-        regime = regime_detector.get_regime()
-
-        positions = allocation.get("positions", [])
-
-        # Calculate totals
-        stock_total = 0.0
-        crypto_total = 0.0
-        errors = []
-        warnings = []
-
-        for pos in positions:
-            ticker = pos.get("ticker", "")
-            percentage = pos.get("percentage", 0.0)
-
-            # Determine asset type
-            is_crypto = "-USD" in ticker or ticker in [
-                "BTC",
-                "ETH",
-                "BNB",
-                "XRP",
-                "ADA",
-            ]
-
-            if is_crypto:
-                crypto_total += percentage
-                max_single = 5.0 if regime.regime_status == "RISK_ON" else 2.0
-                if percentage > max_single:
-                    errors.append(
-                        f"{ticker}: {percentage}% exceeds single crypto limit ({max_single}%)"
-                    )
-            else:
-                stock_total += percentage
-                max_single = 10.0 if regime.regime_status == "RISK_ON" else 5.0
-                if percentage > max_single:
-                    errors.append(
-                        f"{ticker}: {percentage}% exceeds single stock limit ({max_single}%)"
-                    )
-
-        # Check total limits
-        max_stocks = 70.0 if regime.regime_status == "RISK_ON" else 50.0
-        max_crypto = 20.0 if regime.regime_status == "RISK_ON" else 10.0
-
-        if stock_total > max_stocks:
-            errors.append(f"Total stocks {stock_total}% exceeds limit ({max_stocks}%)")
-
-        if crypto_total > max_crypto:
-            errors.append(f"Total crypto {crypto_total}% exceeds limit ({max_crypto}%)")
-
-        cash_percentage = 100.0 - stock_total - crypto_total
-        min_cash = 10.0 if regime.regime_status == "RISK_ON" else 30.0
-
-        if cash_percentage < min_cash:
-            errors.append(f"Cash reserve {cash_percentage}% below minimum ({min_cash}%)")
-
-        # Warnings for high concentration
-        if stock_total > 60.0 and regime.regime_status == "NEUTRAL":
-            warnings.append("High equity exposure in Neutral regime - consider reducing")
-
-        is_valid = len(errors) == 0
-
-        return {
-            "valid": is_valid,
-            "allocation_summary": {
-                "stocks": stock_total,
-                "crypto": crypto_total,
-                "cash": cash_percentage,
-            },
-            "regime": regime.regime_status,
-            "errors": errors,
-            "warnings": warnings,
-            "timestamp": datetime.now().isoformat(),
-        }
-    except Exception as e:
-        logger.error(f"Error validating portfolio: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to validate portfolio: {str(e)}")
+# ❌ REMOVED: /api/portfolio/validate-legacy endpoint
+# Reason: Replaced by /api/portfolio/validate with better validation logic
+# Migration: Use /api/portfolio/validate with same payload format
 
 
 @app.get(
@@ -1785,11 +1675,19 @@ def unified_ranking(
         country: Country filter (for shares only)
         category: Category filter (for commodities only)
     """
-    from .utils.asset_mapper import resolve_asset_type, is_valid_asset_type, get_display_name
+    import time as time_module
+
+    from .utils.asset_mapper import get_display_name, is_valid_asset_type, resolve_asset_type
+
+    start_time = time_module.time()
 
     with RequestLogger(f"GET /api/ranking/{asset_type}"):
         # Resolve legacy asset type names
         canonical_type = resolve_asset_type(asset_type)
+        legacy_name_used = asset_type.lower() != canonical_type
+
+        # Track unified API usage
+        prom_metrics.track_unified_api_request(canonical_type, legacy_name_used)
 
         if not is_valid_asset_type(canonical_type):
             raise HTTPException(
@@ -1799,16 +1697,21 @@ def unified_ranking(
 
         try:
             if canonical_type == "shares":
-                # Use existing stock ranking logic
-                return _get_shares_ranking(limit, min_score, country)
+                result = _get_shares_ranking(limit, min_score, country)
 
             elif canonical_type == "digital_assets":
-                # Use existing crypto ranking logic
-                return _get_digital_assets_ranking(limit, min_score)
+                result = _get_digital_assets_ranking(limit, min_score)
 
             elif canonical_type == "commodities":
-                # Use commodity service
-                return _get_commodities_ranking(limit, min_score, category)
+                result = _get_commodities_ranking(limit, min_score, category)
+
+            # Track metrics
+            duration = time_module.time() - start_time
+            prom_metrics.track_asset_ranking(
+                canonical_type, duration, len(result.get("ranking", []))
+            )
+
+            return result
 
         except HTTPException:
             raise
