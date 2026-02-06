@@ -12,8 +12,10 @@
 | Phase | Status | Completed |
 |-------|--------|-----------|
 | Phase 1: Dashboard Layout | ✅ COMPLETED | 6/6 |
-| Phase 2: Asset Components | ⬜ NOT STARTED | 0/? |
+| Phase 2: Asset Components | ✅ COMPLETED | 3/3 (P0 tasks) |
 | Phase 3: Data Integration | ⬜ NOT STARTED | 0/? |
+
+**Note:** P1/P2 tasks (virtualization, skeleton, swipe gestures) deferred for later optimization.
 
 ---
 
@@ -165,21 +167,23 @@ Set up testing on real devices and browsers.
 
 ## 📊 Phase 2: Top Assets with Tabs (Week 2)
 
-### TASK-007-008: Create Generic Tabs Component
+### TASK-007-008: Create Generic Tabs Component ✅
 **Priority:** P0 | **Effort:** 3h | **Owner:** -
 
 **Description:**
 Create reusable Tabs component for asset type switching.
 
 **Acceptance Criteria:**
-- [ ] Accepts array of tab definitions
-- [ ] Active tab styling
-- [ ] Keyboard navigation (←→ arrows, Enter)
-- [ ] ARIA roles (tablist, tab, tabpanel)
-- [ ] Optional badge/counter per tab
-- [ ] Swipe support on mobile
+- [x] Accepts array of tab definitions
+- [x] Active tab styling
+- [x] Keyboard navigation (←→ arrows, Enter, Home, End)
+- [x] ARIA roles (tablist, tab, tabpanel)
+- [x] Optional badge/counter per tab
+- [x] Swipe support on mobile
 
 **Code Location:** `frontend/src/components/shared/Tabs.jsx`
+
+**Completed:** 2026-02-06
 
 **Usage:**
 ```jsx
@@ -196,38 +200,42 @@ Create reusable Tabs component for asset type switching.
 
 ---
 
-### TASK-007-009: Create TopAssetsPanel Component
+### TASK-007-009: Create TopAssetsPanel Component ✅
 **Priority:** P0 | **Effort:** 4h | **Owner:** -
 
 **Description:**
 Create the main Top Assets panel with integrated tabs.
 
 **Acceptance Criteria:**
-- [ ] Tabs for Shares/Digital Assets/Commodities
-- [ ] Fetches data from unified API
-- [ ] Loading skeleton state
-- [ ] Error state with retry
-- [ ] URL-driven tab state
+- [x] Tabs for Shares/Digital Assets/Commodities
+- [x] Fetches data from unified API (/api/ranking/{asset_type})
+- [x] Loading skeleton state
+- [x] Error state with retry
+- [ ] URL-driven tab state (deferred to Phase 3)
 
 **Code Location:** `frontend/src/components/assets/TopAssetsPanel.jsx`
 
+**Completed:** 2026-02-06
+
 ---
 
-### TASK-007-010: Create AssetCard Component
+### TASK-007-010: Create AssetCard Component ✅
 **Priority:** P0 | **Effort:** 3h | **Owner:** -
 
 **Description:**
 Create card component for displaying asset ranking.
 
 **Acceptance Criteria:**
-- [ ] Shows: ticker, name, price, change, score, signal
-- [ ] Color-coded signal badges
-- [ ] Sparkline chart (7-day)
-- [ ] Risk indicator
-- [ ] Click to expand details
-- [ ] Hover state
+- [x] Shows: ticker, name, price, change, score, signal
+- [x] Color-coded signal badges
+- [ ] Sparkline chart (7-day) - deferred
+- [x] Risk indicator
+- [x] Click to expand details
+- [x] Hover state
 
 **Code Location:** `frontend/src/components/assets/AssetCard.jsx`
+
+**Completed:** 2026-02-06
 
 **Card Layout:**
 ```
