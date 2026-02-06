@@ -30,6 +30,7 @@ from .api.websocket import manager as ws_manager
 from .composite_scoring import get_composite_scorer
 
 # Import new modules
+from .commodity import get_commodity_service, warm_commodity_cache
 from .core.cache import cache
 from .core.config import config as app_config
 from .crypto import get_crypto_details, get_crypto_ranking, search_crypto
@@ -1574,6 +1575,153 @@ def crypto_ranking(
     except Exception as e:
         logger.error(f"Error in crypto_ranking endpoint: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch crypto rankings: {str(e)}")
+
+
+# ============================================
+# Commodity Endpoints (NFR-011)
+# ============================================
+
+
+@app.get(
+    "/commodity/ranking",
+    tags=["Commodities"],
+    summary="Commodity Rankings",
+    description="""
+    Get ranked commodities based on momentum and volatility scoring.
+
+    **Scoring considers:**
+    - 24h, 7d, 30d price momentum
+    - Historical volatility (lower = better for commodities)
+    - Risk multiplier (0.8x for commodities)
+
+    **Categories:**
+    - precious_metals: Gold, Silver, Platinum, Palladium
+    - energy: Crude Oil, Natural Gas, Brent, Heating Oil
+    - industrial_metals: Copper, Aluminum
+    - agriculture: Wheat, Corn, Soybeans, Coffee, Sugar, Cotton
+
+    Data sourced from yfinance (commodity futures).
+    """,
+)
+def commodity_ranking(
+    category: Optional[str] = None,
+    min_score: float = 0.0,
+    limit: int = 50,
+):
+    """
+    Rank commodities by composite momentum/volatility score.
+
+    Query Parameters:
+    - category: Filter by category (precious_metals, energy, industrial_metals, agriculture)
+    - min_score: Minimum composite score threshold (default: 0.0)
+    - limit: Maximum number of results (default: 50)
+
+    Returns:
+    - JSON with ranked list of commodities with trading signals
+    """
+    with RequestLogger("GET /commodity/ranking"):
+        try:
+            service = get_commodity_service()
+            rankings = service.get_commodity_ranking(
+                category=category,
+                min_score=min_score,
+                limit=limit,
+            )
+
+            return {
+                "ranking": rankings,
+                "count": len(rankings),
+                "category": category or "all",
+                "asset_type": "commodities",
+                "timestamp": datetime.now().isoformat(),
+            }
+
+        except Exception as e:
+            logger.error(f"Error in commodity_ranking endpoint: {e}")
+            raise HTTPException(
+                status_code=500, detail=f"Failed to fetch commodity rankings: {str(e)}"
+            )
+
+
+@app.get(
+    "/commodity/categories",
+    tags=["Commodities"],
+    summary="List Commodity Categories",
+    description="Get list of available commodity categories.",
+)
+def list_commodity_categories():
+    """Get available commodity categories with their tickers."""
+    with RequestLogger("GET /commodity/categories"):
+        try:
+            from .core.config_loader import get_config_loader
+
+            config = get_config_loader()
+            categories = config.get_commodity_categories()
+
+            result = []
+            for cat_name, cat_data in categories.items():
+                tickers = [t["ticker"] for t in cat_data.get("tickers", [])]
+                result.append(
+                    {
+                        "id": cat_name,
+                        "name": cat_data.get("display_name", cat_name),
+                        "name_de": cat_data.get("display_name_de", ""),
+                        "ticker_count": len(tickers),
+                        "tickers": tickers,
+                    }
+                )
+
+            return {"categories": result, "count": len(result)}
+
+        except Exception as e:
+            logger.error(f"Error listing commodity categories: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to list categories: {str(e)}")
+
+
+@app.get(
+    "/commodity/{ticker}",
+    tags=["Commodities"],
+    summary="Get Commodity Details",
+    description="Get detailed information for a specific commodity.",
+)
+def get_commodity_detail(ticker: str):
+    """Get detailed data for a single commodity."""
+    with RequestLogger(f"GET /commodity/{ticker}"):
+        try:
+            service = get_commodity_service()
+            data = service.get_commodity_data(ticker.upper())
+
+            if not data:
+                raise HTTPException(status_code=404, detail=f"Commodity not found: {ticker}")
+
+            ranking = service.compute_commodity_scores(data)
+
+            return {
+                "ticker": data.ticker,
+                "name": data.name,
+                "category": data.category,
+                "unit": data.unit,
+                "price": round(data.price, 2),
+                "change_24h": round(data.change_24h, 2),
+                "change_7d": round(data.change_7d, 2),
+                "change_30d": round(data.change_30d, 2),
+                "volume": data.volume,
+                "high_52w": round(data.high_52w, 2) if data.high_52w else None,
+                "low_52w": round(data.low_52w, 2) if data.low_52w else None,
+                "momentum_score": round(ranking.momentum_score, 1),
+                "volatility_score": round(ranking.volatility_score, 1),
+                "composite_score": round(ranking.composite_score, 1),
+                "signal": ranking.signal,
+                "risk_level": ranking.risk_level,
+                "asset_type": "commodity",
+                "last_updated": data.last_updated.isoformat(),
+            }
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error fetching commodity {ticker}: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to fetch commodity: {str(e)}")
 
 
 @app.get(
