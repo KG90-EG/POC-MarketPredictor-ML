@@ -9,6 +9,88 @@ const ASSET_TYPES = [
   { id: 'commodities', label: 'Commodities', icon: '🛢️' }
 ]
 
+// Company name mapping for common tickers
+const TICKER_NAMES = {
+  // US Tech
+  AAPL: 'Apple Inc.',
+  MSFT: 'Microsoft',
+  GOOGL: 'Alphabet (Google)',
+  AMZN: 'Amazon',
+  META: 'Meta (Facebook)',
+  TSLA: 'Tesla',
+  NVDA: 'NVIDIA',
+  NFLX: 'Netflix',
+  ADBE: 'Adobe',
+  CRM: 'Salesforce',
+  PYPL: 'PayPal',
+  // US Finance
+  JPM: 'JPMorgan Chase',
+  BAC: 'Bank of America',
+  WFC: 'Wells Fargo',
+  GS: 'Goldman Sachs',
+  MS: 'Morgan Stanley',
+  V: 'Visa',
+  MA: 'Mastercard',
+  // US Consumer
+  WMT: 'Walmart',
+  HD: 'Home Depot',
+  MCD: "McDonald's",
+  NKE: 'Nike',
+  COST: 'Costco',
+  // US Healthcare & Energy
+  JNJ: 'Johnson & Johnson',
+  PFE: 'Pfizer',
+  UNH: 'UnitedHealth',
+  ABBV: 'AbbVie',
+  XOM: 'Exxon Mobil',
+  CVX: 'Chevron',
+  BA: 'Boeing',
+  // Swiss (SIX)
+  'NESN.SW': 'Nestlé',
+  'NOVN.SW': 'Novartis',
+  'ROG.SW': 'Roche',
+  'UBSG.SW': 'UBS',
+  'ABBN.SW': 'ABB',
+  'SIKA.SW': 'Sika',
+  'ZURN.SW': 'Zurich Insurance',
+  'SREN.SW': 'Swiss Re',
+  'PGHN.SW': 'Partners Group',
+  'GEBN.SW': 'Geberit',
+  'GIVN.SW': 'Givaudan',
+  'LONN.SW': 'Lonza',
+  'SGSN.SW': 'SGS',
+  'CFR.SW': 'Richemont',
+  'ALC.SW': 'Alcon',
+  'HOLN.SW': 'Holcim',
+  'SCMN.SW': 'Swisscom',
+  'KNIN.SW': 'Kuehne+Nagel',
+  'ADEN.SW': 'Adecco',
+  'UHR.SW': 'Swatch',
+  // Crypto
+  BTC: 'Bitcoin',
+  ETH: 'Ethereum',
+  BNB: 'Binance Coin',
+  XRP: 'Ripple',
+  ADA: 'Cardano',
+  SOL: 'Solana',
+  DOGE: 'Dogecoin',
+  DOT: 'Polkadot',
+  MATIC: 'Polygon',
+  AVAX: 'Avalanche',
+  // Commodities
+  GOLD: 'Gold',
+  SILVER: 'Silver',
+  OIL: 'Crude Oil',
+  GAS: 'Natural Gas',
+  WHEAT: 'Wheat',
+  CORN: 'Corn',
+}
+
+// Get display name for ticker
+function getTickerName(ticker) {
+  return TICKER_NAMES[ticker] || TICKER_NAMES[ticker?.toUpperCase()] || ticker
+}
+
 // Signal color helper
 function getSignalColor(score) {
   if (score >= 65) return '#22c55e' // green
@@ -49,12 +131,16 @@ export default function App() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${API_BASE}/api/ranking/${assetType}?limit=20`)
+      // Use /ranking for shares, /api/ranking/{type} for others
+      const url = assetType === 'shares' 
+        ? `${API_BASE}/ranking?limit=20`
+        : `${API_BASE}/api/ranking/${assetType}?limit=20`
+      const res = await fetch(url)
       if (!res.ok) throw new Error('Failed to fetch')
       const data = await res.json()
-      // Normalize response
-      const items = data.rankings || data.assets || data || []
-      setAssets(items)
+      // Normalize response - API returns "ranking" not "rankings"
+      const items = Array.isArray(data) ? data : (data.ranking || data.rankings || data.assets || [])
+      setAssets(Array.isArray(items) ? items : [])
     } catch (e) {
       setError(e.message)
       setAssets([])
@@ -67,10 +153,10 @@ export default function App() {
     fetchAssets()
   }, [fetchAssets])
 
-  // Filter by search
-  const filteredAssets = assets.filter(a => {
+  // Filter by search (with safety check) - also search in our name mapping
+  const filteredAssets = (Array.isArray(assets) ? assets : []).filter(a => {
     const ticker = a.ticker || a.symbol || ''
-    const name = a.name || a.company_name || ''
+    const name = a.name || a.company_name || getTickerName(ticker)
     const q = searchQuery.toLowerCase()
     return ticker.toLowerCase().includes(q) || name.toLowerCase().includes(q)
   })
@@ -157,9 +243,9 @@ export default function App() {
           <div className="asset-list">
             {filteredAssets.map((asset, i) => {
               const ticker = asset.ticker || asset.symbol || 'N/A'
-              const name = asset.name || asset.company_name || ticker
-              const score = Math.round((asset.score || asset.prob || 0.5) * 100) / 100
-              const displayScore = score > 1 ? score : Math.round(score * 100)
+              const name = asset.name || asset.company_name || getTickerName(ticker)
+              const score = Math.round((asset.composite_score || asset.score || asset.prob || 0.5) * 100) / 100
+              const displayScore = score > 1 ? Math.round(score) : Math.round(score * 100)
               const change = asset.change_percent || asset.price_change_24h || 0
               
               return (
@@ -193,19 +279,19 @@ export default function App() {
           <div className="sidebar" onClick={e => e.stopPropagation()}>
             <button className="close-btn" onClick={() => setSelectedAsset(null)}>✕</button>
             <h2>{selectedAsset.ticker || selectedAsset.symbol}</h2>
-            <p className="sidebar-name">{selectedAsset.name || selectedAsset.company_name}</p>
+            <p className="sidebar-name">{selectedAsset.name || selectedAsset.company_name || getTickerName(selectedAsset.ticker || selectedAsset.symbol)}</p>
             
             <div className="sidebar-stats">
               <div className="stat">
                 <span className="stat-label">Score</span>
                 <span className="stat-value" style={{ color: getSignalColor(
-                  (selectedAsset.score || selectedAsset.prob || 0.5) > 1 
-                    ? (selectedAsset.score || selectedAsset.prob)
-                    : Math.round((selectedAsset.score || selectedAsset.prob || 0.5) * 100)
+                  (selectedAsset.composite_score || selectedAsset.score || selectedAsset.prob || 0.5) > 1 
+                    ? (selectedAsset.composite_score || selectedAsset.score || selectedAsset.prob)
+                    : Math.round((selectedAsset.composite_score || selectedAsset.score || selectedAsset.prob || 0.5) * 100)
                 )}}>
-                  {(selectedAsset.score || selectedAsset.prob || 0.5) > 1 
-                    ? Math.round(selectedAsset.score || selectedAsset.prob)
-                    : Math.round((selectedAsset.score || selectedAsset.prob || 0.5) * 100)}
+                  {(selectedAsset.composite_score || selectedAsset.score || selectedAsset.prob || 0.5) > 1 
+                    ? Math.round(selectedAsset.composite_score || selectedAsset.score || selectedAsset.prob)
+                    : Math.round((selectedAsset.composite_score || selectedAsset.score || selectedAsset.prob || 0.5) * 100)}
                 </span>
               </div>
               <div className="stat">
