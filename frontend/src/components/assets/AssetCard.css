@@ -1,0 +1,315 @@
+/* AssetCard - Individual Asset Display Component */
+
+.asset-card {
+  display: grid;
+  grid-template-columns: 40px 1fr 100px 70px 60px 70px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-surface, white);
+  border-radius: 10px;
+  border: 1px solid var(--border-color, #e1e5eb);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+body.dark-mode .asset-card {
+  background: var(--bg-surface-dark, #1a1d23);
+  border-color: var(--border-color-dark, #2d3139);
+}
+
+.asset-card:hover {
+  border-color: var(--primary-color, #667eea);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  transform: translateY(-1px);
+}
+
+body.dark-mode .asset-card:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+}
+
+.asset-card:focus {
+  outline: 2px solid var(--focus-color, #667eea);
+  outline-offset: 2px;
+}
+
+.asset-card:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.asset-card--selected {
+  border-color: var(--primary-color, #667eea);
+  background: var(--bg-selected, #f0f4ff);
+}
+
+body.dark-mode .asset-card--selected {
+  background: var(--bg-selected-dark, #1e2433);
+}
+
+/* Rank */
+.asset-card__rank {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary, #6b7280);
+  text-align: center;
+}
+
+body.dark-mode .asset-card__rank {
+  color: var(--text-secondary-dark, #9ca3af);
+}
+
+/* Asset Info */
+.asset-card__info {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.asset-card__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.asset-card__icon {
+  font-size: 1rem;
+}
+
+.asset-card__ticker {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary, #1a1d23);
+}
+
+body.dark-mode .asset-card__ticker {
+  color: var(--text-primary-dark, #e6e8ec);
+}
+
+.asset-card__risk {
+  font-size: 0.7rem;
+  margin-left: auto;
+}
+
+.asset-card__name {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6b7280);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+body.dark-mode .asset-card__name {
+  color: var(--text-secondary-dark, #9ca3af);
+}
+
+/* Price Section */
+.asset-card__price-section {
+  text-align: right;
+}
+
+.asset-card__price {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary, #1a1d23);
+}
+
+body.dark-mode .asset-card__price {
+  color: var(--text-primary-dark, #e6e8ec);
+}
+
+.asset-card__change {
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.asset-card__change--positive {
+  color: #10b981;
+}
+
+.asset-card__change--negative {
+  color: #ef4444;
+}
+
+/* Sparkline */
+.asset-card__sparkline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sparkline {
+  display: block;
+}
+
+/* Score */
+.asset-card__score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--bg-score, #f0f1f3);
+}
+
+body.dark-mode .asset-card__score {
+  background: var(--bg-score-dark, #262b33);
+}
+
+.asset-card__score-value {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.asset-card__score-label {
+  font-size: 0.65rem;
+  color: var(--text-secondary, #6b7280);
+  margin-top: 2px;
+}
+
+body.dark-mode .asset-card__score-label {
+  color: var(--text-secondary-dark, #9ca3af);
+}
+
+.asset-card__score--high .asset-card__score-value {
+  color: #10b981;
+}
+
+.asset-card__score--medium .asset-card__score-value {
+  color: #f59e0b;
+}
+
+.asset-card__score--low .asset-card__score-value {
+  color: #ef4444;
+}
+
+/* Signal Badge */
+.asset-card__signal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.asset-card__signal--buy {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+body.dark-mode .asset-card__signal--buy {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.asset-card__signal--sell {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+body.dark-mode .asset-card__signal--sell {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.asset-card__signal--hold {
+  background: rgba(107, 114, 128, 0.15);
+  color: #6b7280;
+}
+
+body.dark-mode .asset-card__signal--hold {
+  background: rgba(156, 163, 175, 0.2);
+  color: #9ca3af;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 900px) {
+  .asset-card {
+    grid-template-columns: 35px 1fr 80px 50px 60px;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  /* Hide sparkline on smaller screens */
+  .asset-card__sparkline {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .asset-card {
+    grid-template-columns: 30px 1fr 60px 50px;
+    gap: 6px;
+    padding: 10px;
+  }
+
+  /* Hide score on mobile, show only signal */
+  .asset-card__score {
+    display: none;
+  }
+
+  .asset-card__ticker {
+    font-size: 0.9rem;
+  }
+
+  .asset-card__price {
+    font-size: 0.85rem;
+  }
+
+  .asset-card__signal {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+}
+
+/* Loading State */
+.asset-card--loading {
+  pointer-events: none;
+}
+
+.asset-card--loading .asset-card__ticker,
+.asset-card--loading .asset-card__name,
+.asset-card--loading .asset-card__price,
+.asset-card--loading .asset-card__change,
+.asset-card--loading .asset-card__score-value,
+.asset-card--loading .asset-card__signal {
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base, #e5e7eb) 25%,
+    var(--skeleton-shine, #f3f4f6) 50%,
+    var(--skeleton-base, #e5e7eb) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  color: transparent !important;
+  border-radius: 4px;
+}
+
+body.dark-mode .asset-card--loading .asset-card__ticker,
+body.dark-mode .asset-card--loading .asset-card__name,
+body.dark-mode .asset-card--loading .asset-card__price,
+body.dark-mode .asset-card--loading .asset-card__change,
+body.dark-mode .asset-card--loading .asset-card__score-value,
+body.dark-mode .asset-card--loading .asset-card__signal {
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base-dark, #2d3139) 25%,
+    var(--skeleton-shine-dark, #3d4450) 50%,
+    var(--skeleton-base-dark, #2d3139) 75%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
