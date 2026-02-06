@@ -1,14 +1,10 @@
-import React from "react";
-import { createRoot } from "react-dom/client";
-import App from "./App";
-import "./styles.css";
-import { initSentry, SentryErrorBoundary } from "./sentry";
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './styles.css'
 
-// Initialize Sentry error tracking
-initSentry();
-
-createRoot(document.getElementById("root")).render(
-  <SentryErrorBoundary fallback={<div>An error occurred. Please refresh the page.</div>}>
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
     <App />
-  </SentryErrorBoundary>
-);
+  </React.StrictMode>
+)
