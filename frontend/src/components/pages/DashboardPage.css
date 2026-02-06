@@ -1,0 +1,135 @@
+/* DashboardPage - Main dashboard page styles */
+
+/* Placeholder content styling */
+.placeholder-content {
+  padding: 16px;
+  text-align: center;
+}
+
+.placeholder-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: var(--text-primary, #1a1d23);
+}
+
+body.dark-mode .placeholder-text {
+  color: var(--text-primary-dark, #e6e8ec);
+}
+
+.placeholder-subtext {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0 0 20px 0;
+}
+
+body.dark-mode .placeholder-subtext {
+  color: var(--text-secondary-dark, #9ca3af);
+}
+
+/* Signal items */
+.placeholder-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.placeholder-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--bg-item, #f8f9fa);
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+body.dark-mode .placeholder-item {
+  background: var(--bg-item-dark, #1f232a);
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge--buy {
+  background: #d1fae5;
+  color: #059669;
+}
+
+body.dark-mode .badge--buy {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.badge--sell {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+body.dark-mode .badge--sell {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.badge--hold {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+body.dark-mode .badge--hold {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+/* Stats grid */
+.placeholder-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  background: var(--bg-item, #f8f9fa);
+  border-radius: 8px;
+}
+
+body.dark-mode .stat {
+  background: var(--bg-item-dark, #1f232a);
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary, #1a1d23);
+}
+
+body.dark-mode .stat-value {
+  color: var(--text-primary-dark, #e6e8ec);
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  color: var(--text-secondary, #6b7280);
+  margin-top: 4px;
+}
+
+body.dark-mode .stat-label {
+  color: var(--text-secondary-dark, #9ca3af);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .placeholder-stats {
+    grid-template-columns: 1fr;
+  }
+}

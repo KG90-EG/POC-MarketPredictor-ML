@@ -12,8 +12,8 @@
 | Phase | Status | Completed |
 |-------|--------|-----------|
 | Phase 1: Dashboard Layout | ✅ COMPLETED | 6/6 |
-| Phase 2: Asset Components | ✅ COMPLETED | 3/3 (P0 tasks) |
-| Phase 3: Data Integration | ⬜ NOT STARTED | 0/? |
+| Phase 2: Asset Components | ✅ COMPLETED | 4/4 (P0 tasks) |
+| Phase 3: Data Integration | ⏳ IN PROGRESS | 1/? |
 
 **Note:** P1/P2 tasks (virtualization, skeleton, swipe gestures) deferred for later optimization.
 
@@ -265,20 +265,22 @@ Create virtualized list for efficient rendering of many assets.
 
 ---
 
-### TASK-007-012: Create useAssets Hook
+### TASK-007-012: Create useAssets Hook ✅
 **Priority:** P0 | **Effort:** 2h | **Owner:** -
 
 **Description:**
 Create data fetching hook for asset rankings.
 
 **Acceptance Criteria:**
-- [ ] Fetches from `/api/ranking/{asset_type}`
-- [ ] Caches results (1 min stale time)
-- [ ] Auto-refresh (5 min interval)
-- [ ] Returns loading/error states
-- [ ] Uses React Query (or similar)
+- [x] Fetches from `/api/ranking/{asset_type}`
+- [x] Caches results (1 min stale time)
+- [x] Auto-refresh (5 min interval)
+- [x] Returns loading/error states
+- [x] Uses custom caching (React Query not needed)
 
 **Code Location:** `frontend/src/hooks/useAssets.js`
+
+**Completed:** 2026-02-06
 
 ---
 
