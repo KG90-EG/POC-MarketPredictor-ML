@@ -1,26 +1,54 @@
 # FR-007: Multi-Asset Trading Dashboard - Tasks
 
-> **Status:** ⏳ IN PROGRESS  
+> **Status:** ✅ COMPLETED (v2.0 Rewrite)  
 > **Created:** 2026-02-06  
 > **Updated:** 2026-02-06  
 > **Plan:** [plan.md](./plan.md)
 
 ---
 
-## 📊 Progress Summary
+## 🎉 Final Status: Minimal Frontend v2.0
+
+The original phased approach (Phase 1-4) was **superseded** by a complete rewrite.
+
+### Completed Tasks (v2.0)
+
+| Task | Description | Status |
+|------|-------------|--------|
+| Minimal App | Single-file React app (~350 lines) | ✅ |
+| Asset Tabs | Stocks / Crypto / Commodities | ✅ |
+| Ranking API | Fetch from /ranking endpoint | ✅ |
+| Search | Filter by ticker or company name | ✅ |
+| Name Mapping | 70+ ticker → company name mappings | ✅ |
+| Detail Sidebar | Click to show asset details | ✅ |
+| Dark Mode | Toggle theme | ✅ |
+| Market Regime | Risk-On/Off badge | ✅ |
+| Mobile CSS | Responsive design | ✅ |
+| Delete Legacy | Removed old 50+ component frontend | ✅ |
+
+### Key Files
+
+- `frontend/src/App.jsx` - Complete application
+- `frontend/src/styles.css` - All styling
+- `frontend/README.md` - Documentation
+
+---
+
+## 📊 Original Progress Summary (SUPERSEDED)
 
 | Phase | Status | Completed |
 |-------|--------|-----------|
 | Phase 1: Dashboard Layout | ✅ COMPLETED | 6/6 |
 | Phase 2: Asset Components | ✅ COMPLETED | 5/5 (P0 tasks) |
-| Phase 3: Tutorial System | 🔲 NOT STARTED | 0/6 |
-| Phase 4: Settings Panel | 🔲 NOT STARTED | 0/? |
+| Phase 3: Tutorial System | ❌ SUPERSEDED | N/A |
+| Phase 4: Settings Panel | ❌ SUPERSEDED | N/A |
 
-**Note:** P1/P2 tasks (virtualization, skeleton, swipe gestures) deferred for later optimization.
-
-**App Integration:** DashboardPage is now integrated into App.jsx as the default landing view.
+**Note:** Phases 1-2 were completed but then replaced by v2.0 minimal rewrite.
+The original frontend-legacy was deleted.
 
 ---
+
+## 📜 Original Tasks (For Reference)
 
 ## 🎯 Phase 1: Dashboard Layout (Week 1)
 

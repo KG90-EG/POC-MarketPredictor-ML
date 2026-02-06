@@ -58,11 +58,20 @@ cp .env.example .env
 | **Risk Management** | Position limits, exposure tracking | ✅ |
 | **Defensive Mode** | BUY signals blocked in Risk-Off | ✅ |
 
-### 📊 Frontend Views (4 Active)
-1. **Trading Signals** - Stock rankings with composite scores
-2. **Top Stocks** - Filtered view of best opportunities
-3. **Crypto** - Cryptocurrency rankings
-4. **Backtest** - Historical performance validation
+### 📊 Frontend (v2.0 - Minimal Design)
+
+Single-page application focused on **predictions**:
+
+| Feature | Description |
+|---------|-------------|
+| **Asset Tabs** | Stocks / Crypto / Commodities |
+| **Ranking List** | Top 20 assets sorted by ML score |
+| **Search** | Filter by ticker or company name |
+| **Detail Sidebar** | Click asset for full details |
+| **Dark Mode** | Toggle theme |
+| **Market Regime** | Risk-On/Off indicator |
+
+**Tech Stack:** React 18, Vite 5, ~350 lines of code
 
 ### 🔌 API Endpoints (Core)
 \`\`\`
@@ -98,7 +107,10 @@ POC-MarketPredictor-ML/
 │   ├── training/         # ML model training
 │   ├── backtest/         # Backtesting engine
 │   └── data/             # Data processing
-├── frontend/             # React + Vite
+├── frontend/             # React + Vite (minimal v2.0)
+│   ├── src/App.jsx       # Single-file app (~350 lines)
+│   ├── src/styles.css    # Complete styling
+│   └── package.json      # Minimal dependencies
 ├── tests/                # pytest test suite
 ├── docs/                 # Documentation
 │   ├── TRADER_GUIDE.md   # User guide

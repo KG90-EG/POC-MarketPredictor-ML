@@ -1,6 +1,6 @@
 # FR-007: Multi-Asset Trading Dashboard - Specification
 
-> **Status:** IN PROGRESS  
+> **Status:** ✅ COMPLETED (v2.0 Rewrite)  
 > **Created:** 2026-02-06  
 > **Updated:** 2026-02-06  
 > **Type:** Feature Request  
@@ -9,55 +9,71 @@
 
 ---
 
-## 📊 Implementation Status
+## 🎉 Final Implementation: Minimal Frontend v2.0
+
+After completing Phase 1-2 of the original plan, we decided to **completely rewrite** the frontend with a minimal, focused design.
+
+### Why the Rewrite?
+
+The original frontend was too complex:
+- 1400+ lines in App.jsx
+- 50+ components
+- 5 navigation views
+- Complex state management
+
+The new frontend is simple:
+- ~350 lines in App.jsx
+- Single-page design
+- 3 asset tabs (Stocks/Crypto/Commodities)
+- Click for detail sidebar
+
+### What Was Delivered
+
+| Feature | Status |
+|---------|--------|
+| Single-page app | ✅ |
+| Asset type tabs (Stocks/Crypto/Commodities) | ✅ |
+| Ranking list with ML scores | ✅ |
+| Company name mapping (70+ tickers) | ✅ |
+| Search by ticker or name | ✅ |
+| Detail sidebar on click | ✅ |
+| Market regime indicator | ✅ |
+| Dark mode toggle | ✅ |
+| Mobile responsive | ✅ |
+
+### Files
+
+```
+frontend/
+├── src/
+│   ├── App.jsx      # Complete app (~350 lines)
+│   ├── main.jsx     # Entry point
+│   └── styles.css   # All styling
+├── index.html
+├── package.json     # 2 dependencies (react, vite)
+└── vite.config.js   # Proxy config
+```
+
+### Commits
+
+| Hash | Description |
+|------|-------------|
+| f16e54e | Complete frontend rewrite with minimal UI |
+| 9a06513 | Add company name mapping for 70+ tickers |
+
+---
+
+## 📊 Original Implementation Status (Superseded)
 
 | Phase | Status | Description |
 |-------|--------|-------------|
 | Phase 1: Dashboard Layout | ✅ COMPLETED | Grid layout, Panel, Header, Footer components |
-| Phase 2: Asset Components | ✅ COMPLETED | Tabs, AssetCard, TopAssetsPanel, useAssets hook, App integration |
-| Phase 3: Tutorial System | 🔲 NOT STARTED | 5-step onboarding tutorial |
-| Phase 4: Settings Panel | 🔲 NOT STARTED | Comprehensive settings modal |
+| Phase 2: Asset Components | ✅ COMPLETED | Tabs, AssetCard, TopAssetsPanel, useAssets hook |
+| Phase 3: Tutorial System | ❌ SUPERSEDED | Not needed with minimal UI |
+| Phase 4: Settings Panel | ❌ SUPERSEDED | Not needed with minimal UI |
 
----
-
-## 🏗️ Architecture Decision: Simplified Navigation
-
-**Decision:** Reduce from 5 views to 3 views in the main navigation.
-
-**Previous Structure (5 views):**
-- Dashboard, Trading Signals, Top Stocks, Crypto, Backtest
-
-**New Structure (3 views):**
-| View | Description |
-|------|-------------|
-| 🏠 Dashboard | Multi-asset overview with tabbed navigation (Shares/Crypto/Commodities) |
-| 🎯 Trading Signals | Detailed BUY/SELL opportunities with filters |
-| 📊 Backtest | Historical performance analysis |
-
-**Rationale:**
-- Dashboard now serves as the unified asset explorer (tabs for asset types)
-- Clicking an asset in Dashboard opens the detail sidebar
-- Reduces cognitive load and simplifies navigation
-- Separate "Top Stocks" and "Crypto" pages are redundant with Dashboard tabs
-
----
-
-## 📋 Executive Summary
-
-This specification defines the frontend architecture for a unified multi-asset trading dashboard. The dashboard consolidates three asset classes (Shares, Digital Assets, Raw Materials/Commodities) into a streamlined, mobile-responsive interface with a merged "Top Assets" panel featuring tabbed navigation.
-
-**Key Deliverables:**
-1. **Three-Panel Layout:** Trading Signals, Top Assets (merged), Backtest
-2. **Tabbed Navigation:** Asset class switcher within Top Assets panel
-3. **5-Step Tutorial:** Guided onboarding (1 step per main feature)
-4. **Settings Audit:** Comprehensive settings panel with all configuration options
-5. **Mobile-First Design:** Responsive grid layout
-
----
-
-## 🎯 Goals & Non-Goals
-
-### Goals
+**Note:** Phases 1-2 were completed but then superseded by the v2.0 minimal rewrite.
+The original complex frontend was archived and then deleted.
 - ✅ Unified dashboard for all asset types
 - ✅ Intuitive tabbed navigation for asset switching
 - ✅ Mobile-responsive layout (breakpoints: 320px, 768px, 1024px, 1440px)
