@@ -1,0 +1,109 @@
+{
+  "$schema": "./schemas/risk_limits.schema.json",
+  "schema_version": "1.0.0",
+  "description": "Portfolio risk limits and constraints",
+  "last_updated": "2026-02-06",
+
+  "position_limits": {
+    "shares": {
+      "max_position_pct": 10.0,
+      "min_position_pct": 1.0,
+      "description": "Max 10% per individual stock"
+    },
+    "digital_assets": {
+      "max_position_pct": 5.0,
+      "min_position_pct": 0.5,
+      "description": "Max 5% per individual crypto (higher volatility)"
+    },
+    "commodities": {
+      "max_position_pct": 8.0,
+      "min_position_pct": 1.0,
+      "description": "Max 8% per individual commodity"
+    }
+  },
+
+  "asset_class_limits": {
+    "shares": {
+      "max_exposure_pct": 70.0,
+      "min_exposure_pct": 0.0,
+      "description": "Maximum equity exposure"
+    },
+    "digital_assets": {
+      "max_exposure_pct": 20.0,
+      "min_exposure_pct": 0.0,
+      "description": "Maximum crypto exposure (high risk)"
+    },
+    "commodities": {
+      "max_exposure_pct": 25.0,
+      "min_exposure_pct": 0.0,
+      "description": "Maximum commodity exposure"
+    },
+    "cash": {
+      "min_reserve_pct": 10.0,
+      "description": "Minimum cash reserve for liquidity"
+    }
+  },
+
+  "risk_limits": {
+    "max_correlation": 0.7,
+    "max_concentrated_positions": 3,
+    "max_sector_exposure_pct": 30.0,
+    "max_country_exposure_pct": 50.0,
+    "max_single_category_pct": 40.0
+  },
+
+  "regime_adjustments": {
+    "RISK_ON": {
+      "description": "Bullish market - normal limits apply",
+      "equity_multiplier": 1.0,
+      "crypto_multiplier": 1.0,
+      "commodity_multiplier": 1.0,
+      "cash_requirement": 10.0
+    },
+    "NEUTRAL": {
+      "description": "Mixed signals - moderate adjustments",
+      "equity_multiplier": 0.9,
+      "crypto_multiplier": 0.8,
+      "commodity_multiplier": 1.0,
+      "cash_requirement": 15.0
+    },
+    "RISK_OFF": {
+      "description": "Defensive mode - reduce exposure",
+      "equity_multiplier": 0.7,
+      "crypto_multiplier": 0.5,
+      "commodity_multiplier": 0.8,
+      "cash_requirement": 25.0
+    }
+  },
+
+  "scoring_thresholds": {
+    "strong_buy": {
+      "min_score": 85,
+      "signal": "STRONG_BUY"
+    },
+    "buy": {
+      "min_score": 65,
+      "signal": "BUY"
+    },
+    "hold": {
+      "min_score": 45,
+      "signal": "HOLD"
+    },
+    "consider_selling": {
+      "min_score": 35,
+      "signal": "CONSIDER_SELLING"
+    },
+    "sell": {
+      "min_score": 0,
+      "signal": "SELL"
+    }
+  },
+
+  "diversification": {
+    "min_positions": 5,
+    "max_positions": 25,
+    "target_positions": 15,
+    "min_asset_types": 2,
+    "description": "Diversification requirements for balanced portfolio"
+  }
+}

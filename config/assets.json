@@ -1,0 +1,133 @@
+{
+  "$schema": "./schemas/assets.schema.json",
+  "schema_version": "1.0.0",
+  "description": "Multi-asset configuration for MarketPredictor",
+  "last_updated": "2026-02-06",
+  
+  "asset_types": {
+    "shares": {
+      "display_name": "Shares",
+      "display_name_de": "Aktien",
+      "legacy_name": "stock",
+      "enabled": true,
+      "icon": "📈",
+      "color": "#3B82F6",
+      "risk_multiplier": 1.0,
+      "data_source": "yfinance",
+      "cache_ttl_seconds": 300,
+      "min_market_cap": 1000000000,
+      "scoring": {
+        "momentum_weight": 0.4,
+        "technical_weight": 0.3,
+        "fundamental_weight": 0.3
+      },
+      "popular_tickers": [
+        "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "NFLX",
+        "JPM", "V", "MA", "BAC", "GS",
+        "JNJ", "UNH", "PFE", "ABBV",
+        "WMT", "COST", "HD", "NKE", "MCD"
+      ]
+    },
+    
+    "digital_assets": {
+      "display_name": "Digital Assets",
+      "display_name_de": "Kryptowährungen",
+      "legacy_name": "crypto",
+      "enabled": true,
+      "icon": "₿",
+      "color": "#F59E0B",
+      "risk_multiplier": 1.5,
+      "data_source": "coingecko",
+      "cache_ttl_seconds": 120,
+      "min_market_cap": 100000000,
+      "scoring": {
+        "momentum_weight": 0.5,
+        "technical_weight": 0.3,
+        "fundamental_weight": 0.2
+      },
+      "popular_ids": [
+        "bitcoin", "ethereum", "binancecoin", "ripple", "cardano",
+        "solana", "polkadot", "dogecoin", "matic-network", "avalanche-2",
+        "chainlink", "uniswap", "litecoin", "cosmos", "algorand"
+      ],
+      "nft_tokens": [
+        "decentraland", "the-sandbox", "axie-infinity", "enjincoin", "apecoin"
+      ]
+    },
+    
+    "commodities": {
+      "display_name": "Commodities",
+      "display_name_de": "Rohstoffe",
+      "legacy_name": null,
+      "enabled": true,
+      "icon": "🛢️",
+      "color": "#8B5CF6",
+      "risk_multiplier": 0.8,
+      "data_source": "yfinance",
+      "cache_ttl_seconds": 300,
+      "scoring": {
+        "momentum_weight": 0.5,
+        "technical_weight": 0.4,
+        "fundamental_weight": 0.1
+      },
+      "categories": {
+        "precious_metals": {
+          "display_name": "Precious Metals",
+          "display_name_de": "Edelmetalle",
+          "tickers": [
+            {"ticker": "GC=F", "name": "Gold", "unit": "oz"},
+            {"ticker": "SI=F", "name": "Silver", "unit": "oz"},
+            {"ticker": "PL=F", "name": "Platinum", "unit": "oz"},
+            {"ticker": "PA=F", "name": "Palladium", "unit": "oz"}
+          ]
+        },
+        "energy": {
+          "display_name": "Energy",
+          "display_name_de": "Energie",
+          "tickers": [
+            {"ticker": "CL=F", "name": "Crude Oil (WTI)", "unit": "barrel"},
+            {"ticker": "BZ=F", "name": "Brent Crude Oil", "unit": "barrel"},
+            {"ticker": "NG=F", "name": "Natural Gas", "unit": "MMBtu"},
+            {"ticker": "HO=F", "name": "Heating Oil", "unit": "gallon"}
+          ]
+        },
+        "industrial_metals": {
+          "display_name": "Industrial Metals",
+          "display_name_de": "Industriemetalle",
+          "tickers": [
+            {"ticker": "HG=F", "name": "Copper", "unit": "lb"},
+            {"ticker": "ALI=F", "name": "Aluminum", "unit": "lb"}
+          ]
+        },
+        "agriculture": {
+          "display_name": "Agriculture",
+          "display_name_de": "Agrarprodukte",
+          "tickers": [
+            {"ticker": "ZW=F", "name": "Wheat", "unit": "bushel"},
+            {"ticker": "ZC=F", "name": "Corn", "unit": "bushel"},
+            {"ticker": "ZS=F", "name": "Soybeans", "unit": "bushel"},
+            {"ticker": "KC=F", "name": "Coffee", "unit": "lb"},
+            {"ticker": "SB=F", "name": "Sugar", "unit": "lb"},
+            {"ticker": "CT=F", "name": "Cotton", "unit": "lb"}
+          ]
+        }
+      }
+    }
+  },
+  
+  "asset_type_aliases": {
+    "stock": "shares",
+    "stocks": "shares",
+    "equity": "shares",
+    "crypto": "digital_assets",
+    "cryptocurrency": "digital_assets",
+    "raw_materials": "commodities",
+    "commodity": "commodities"
+  },
+  
+  "defaults": {
+    "primary_asset_type": "shares",
+    "items_per_page": 10,
+    "max_items": 50
+  }
+}

@@ -1403,9 +1403,9 @@ def get_portfolio_exposure():
 
 
 @app.post(
-    "/api/portfolio/validate",
+    "/api/portfolio/validate-legacy",
     tags=["Portfolio"],
-    summary="Validate Portfolio Allocation",
+    summary="Validate Portfolio Allocation (Legacy)",
     description="""
     Validate a proposed portfolio allocation against risk limits.
 
@@ -2298,6 +2298,57 @@ class StockRanking(BaseModel):
                 "current_price": 150.25,
                 "market_cap": 2400000000000,
                 "sector": "Technology",
+            }
+        }
+    }
+
+
+class PortfolioPosition(BaseModel):
+    """Portfolio position for validation"""
+
+    ticker: str
+    allocation: float
+    asset_type: str  # "stock" or "crypto"
+    score: float = 0.0
+    signal: str = "HOLD"
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "ticker": "AAPL",
+                "allocation": 10.0,
+                "asset_type": "stock",
+                "score": 85.0,
+                "signal": "BUY",
+            }
+        }
+    }
+
+
+class PortfolioValidationRequest(BaseModel):
+    """Request body for portfolio validation"""
+
+    positions: List[PortfolioPosition]
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "positions": [
+                    {
+                        "ticker": "AAPL",
+                        "allocation": 10.0,
+                        "asset_type": "stock",
+                        "score": 85.0,
+                        "signal": "BUY",
+                    },
+                    {
+                        "ticker": "BTC-USD",
+                        "allocation": 5.0,
+                        "asset_type": "crypto",
+                        "score": 78.0,
+                        "signal": "BUY",
+                    },
+                ]
             }
         }
     }
@@ -3214,16 +3265,18 @@ async def get_model_info():
 
 
 @app.post("/api/portfolio/validate", tags=["Portfolio"])
-async def validate_portfolio(positions: List[Dict]):
+async def validate_portfolio(request: PortfolioValidationRequest):
     """
     Validate portfolio allocation against limits.
 
     Request body:
     ```json
-    [
+    {
+      "positions": [
         {"ticker": "AAPL", "allocation": 10.0, "asset_type": "stock", "score": 85},
         {"ticker": "BTC-USD", "allocation": 5.0, "asset_type": "crypto", "score": 78}
-    ]
+      ]
+    }
     ```
 
     Returns:
@@ -3235,13 +3288,16 @@ async def validate_portfolio(positions: List[Dict]):
     try:
         portfolio_mgr = get_portfolio_manager()
 
+        # Convert Pydantic models to dicts for portfolio manager
+        positions_dict = [pos.model_dump() for pos in request.positions]
+
         # Validate allocations
-        analysis = portfolio_mgr.validate_allocation(positions)
+        analysis = portfolio_mgr.validate_allocation(positions_dict)
 
         # Get rebalancing suggestions if needed
         suggestions = []
         if analysis.violations or analysis.warnings:
-            suggestions = portfolio_mgr.suggest_rebalancing(positions)
+            suggestions = portfolio_mgr.suggest_rebalancing(positions_dict)
 
         return {
             "valid": len(analysis.violations) == 0,

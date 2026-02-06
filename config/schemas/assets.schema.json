@@ -1,0 +1,178 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://marketpredictor.io/schemas/assets.schema.json",
+  "title": "Asset Configuration Schema",
+  "description": "Schema for validating assets.json configuration",
+  "type": "object",
+  "required": ["schema_version", "asset_types"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "description": {
+      "type": "string"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date"
+    },
+    "asset_types": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/asset_type"
+      },
+      "minProperties": 1
+    },
+    "asset_type_aliases": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "properties": {
+        "primary_asset_type": {
+          "type": "string"
+        },
+        "items_per_page": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "max_items": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 500
+        }
+      }
+    }
+  },
+  "definitions": {
+    "asset_type": {
+      "type": "object",
+      "required": ["display_name", "enabled", "data_source", "cache_ttl_seconds"],
+      "properties": {
+        "display_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "display_name_de": {
+          "type": "string"
+        },
+        "legacy_name": {
+          "type": ["string", "null"]
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "risk_multiplier": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 5.0
+        },
+        "data_source": {
+          "type": "string",
+          "enum": ["yfinance", "coingecko", "alpha_vantage", "polygon"]
+        },
+        "cache_ttl_seconds": {
+          "type": "integer",
+          "minimum": 30,
+          "maximum": 86400
+        },
+        "min_market_cap": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "scoring": {
+          "$ref": "#/definitions/scoring_weights"
+        },
+        "popular_tickers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "popular_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "nft_tokens": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "categories": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/commodity_category"
+          }
+        }
+      }
+    },
+    "scoring_weights": {
+      "type": "object",
+      "properties": {
+        "momentum_weight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "technical_weight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "fundamental_weight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "commodity_category": {
+      "type": "object",
+      "required": ["display_name", "tickers"],
+      "properties": {
+        "display_name": {
+          "type": "string"
+        },
+        "display_name_de": {
+          "type": "string"
+        },
+        "tickers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["ticker", "name"],
+            "properties": {
+              "ticker": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "unit": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

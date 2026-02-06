@@ -35,3 +35,4 @@ seaborn==0.13.0  # For confusion matrix plotting
 # and pyarrow.
 river==0.21.0  # Online learning & drift detection (Phase 2 Week 5)
 httpx==0.27.0  # Async HTTP client for LLM service
+jsonschema==4.21.1  # JSON Schema validation for config files (NFR-011)

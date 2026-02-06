@@ -1,0 +1,187 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://marketpredictor.io/schemas/risk_limits.schema.json",
+  "title": "Risk Limits Schema",
+  "description": "Schema for validating risk_limits.json configuration",
+  "type": "object",
+  "required": ["schema_version", "position_limits", "asset_class_limits"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "description": {
+      "type": "string"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date"
+    },
+    "position_limits": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/position_limit"
+      }
+    },
+    "asset_class_limits": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/exposure_limit"
+      }
+    },
+    "risk_limits": {
+      "type": "object",
+      "properties": {
+        "max_correlation": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "max_concentrated_positions": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_sector_exposure_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "max_country_exposure_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "max_single_category_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "regime_adjustments": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/regime_adjustment"
+      }
+    },
+    "scoring_thresholds": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/scoring_threshold"
+      }
+    },
+    "diversification": {
+      "type": "object",
+      "properties": {
+        "min_positions": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_positions": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "target_positions": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "min_asset_types": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "position_limit": {
+      "type": "object",
+      "required": ["max_position_pct"],
+      "properties": {
+        "max_position_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "min_position_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "exposure_limit": {
+      "type": "object",
+      "properties": {
+        "max_exposure_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "min_exposure_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "min_reserve_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "regime_adjustment": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "equity_multiplier": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "crypto_multiplier": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "commodity_multiplier": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "cash_requirement": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "scoring_threshold": {
+      "type": "object",
+      "required": ["min_score", "signal"],
+      "properties": {
+        "min_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "signal": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

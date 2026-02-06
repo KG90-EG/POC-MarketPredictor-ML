@@ -619,7 +619,7 @@ function AppContent() {
       const resp = await fetch("http://localhost:8000/api/portfolio/validate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(positions),
+        body: JSON.stringify({ positions }),
       });
 
       if (resp.ok) {

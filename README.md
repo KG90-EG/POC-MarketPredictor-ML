@@ -71,7 +71,20 @@ GET  /api/ranking         - Stock rankings with scores
 GET  /api/market-regime   - Current regime (RISK_ON/OFF/NEUTRAL)
 GET  /api/crypto/ranking  - Crypto rankings
 GET  /api/portfolio/exposure - Portfolio exposure tracking
-POST /api/portfolio/validate - Validate allocation
+POST /api/portfolio/validate - Validate portfolio allocation
+\`\`\`
+
+**Example: Validate Portfolio**
+\`\`\`bash
+curl -X POST http://localhost:8000/api/portfolio/validate \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "positions": [
+      {"ticker": "AAPL", "allocation": 10.0, "asset_type": "stock", "score": 85.0, "signal": "BUY"},
+      {"ticker": "MSFT", "allocation": 8.0, "asset_type": "stock", "score": 80.0, "signal": "BUY"},
+      {"ticker": "BTC-USD", "allocation": 5.0, "asset_type": "crypto", "score": 75.0, "signal": "BUY"}
+    ]
+  }'
 \`\`\`
 
 Full API documentation: http://localhost:8000/docs
