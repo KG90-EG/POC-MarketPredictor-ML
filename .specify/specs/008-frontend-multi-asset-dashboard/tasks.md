@@ -12,10 +12,13 @@
 | Phase | Status | Completed |
 |-------|--------|-----------|
 | Phase 1: Dashboard Layout | ✅ COMPLETED | 6/6 |
-| Phase 2: Asset Components | ✅ COMPLETED | 4/4 (P0 tasks) |
-| Phase 3: Data Integration | ⏳ IN PROGRESS | 1/? |
+| Phase 2: Asset Components | ✅ COMPLETED | 5/5 (P0 tasks) |
+| Phase 3: Tutorial System | 🔲 NOT STARTED | 0/6 |
+| Phase 4: Settings Panel | 🔲 NOT STARTED | 0/? |
 
 **Note:** P1/P2 tasks (virtualization, skeleton, swipe gestures) deferred for later optimization.
+
+**App Integration:** DashboardPage is now integrated into App.jsx as the default landing view.
 
 ---
 
@@ -279,6 +282,28 @@ Create data fetching hook for asset rankings.
 - [x] Uses custom caching (React Query not needed)
 
 **Code Location:** `frontend/src/hooks/useAssets.js`
+
+**Completed:** 2026-02-06
+
+---
+
+### TASK-007-012b: Create DashboardPage and Integrate with App ✅
+**Priority:** P0 | **Effort:** 2h | **Owner:** -
+
+**Description:**
+Create DashboardPage component that assembles the full dashboard layout and integrate it into the main App.jsx.
+
+**Acceptance Criteria:**
+- [x] DashboardPage combines Header, Footer, Panel, TopAssetsPanel
+- [x] SignalsPlaceholder and BacktestPlaceholder for future content
+- [x] Import DashboardPage in App.jsx
+- [x] Add 'dashboard' view to ViewSelectorMenu
+- [x] Dashboard is default view on app load
+- [x] Pass darkMode, toggleDarkMode, onOpenHelp, marketRegime props
+
+**Code Location:** 
+- `frontend/src/components/pages/DashboardPage.jsx`
+- `frontend/src/App.jsx`
 
 **Completed:** 2026-02-06
 
