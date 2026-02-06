@@ -1,8 +1,105 @@
 # Constitution Configuration Audit (Critical Review)
 
 **Date:** 2026-02-04  
+**Last Updated:** 2026-02-06  
 **Reviewer:** Code Analysis  
-**Status:** ACTION REQUIRED
+**Status:** IN PROGRESS
+
+---
+
+## 🔍 Audit Framework
+
+### Standard Audit Types
+
+This project uses **5 standard audit types** that should be performed regularly:
+
+| Audit Type | Scope | Frequency | Trigger |
+|------------|-------|-----------|---------|
+| **Test Audit** | All test files | After major features | New feature complete |
+| **Backend Audit** | All endpoints, services | Quarterly | Before releases |
+| **Frontend Audit** | Components, hooks, API calls | Quarterly | Before releases |
+| **Document Audit** | README, specs, guides | Monthly | After major changes |
+| **Config Audit** | Linting, CI/CD, formatting | On config changes | New tools/rules |
+
+### Audit Checklists
+
+#### 1. Test Audit Checklist
+```
+□ All tests pass (no permanent skips without reason)
+□ No duplicate test coverage
+□ Test naming follows convention: test_{what}_{scenario}
+□ Mocks are properly cleaned up
+□ No hardcoded test data that could break
+□ Coverage >= 80% for new code
+□ Integration tests exist for critical paths
+□ Performance tests for heavy operations
+```
+
+**Output:** Remove unused tests, document skipped tests, improve coverage
+
+#### 2. Backend Audit Checklist
+```
+□ All endpoints are documented (OpenAPI/Swagger)
+□ No duplicate endpoints (aliases documented)
+□ Deprecated endpoints marked or removed
+□ Error handling consistent (HTTPException with codes)
+□ Logging present for all operations
+□ Rate limiting where needed
+□ Authentication/Authorization correct
+□ No unused imports or dead code
+□ All TODOs tracked in specs
+```
+
+**Output:** Remove deprecated endpoints, document decisions, create cleanup tasks
+
+#### 3. Frontend Audit Checklist
+```
+□ No unused components
+□ No duplicate API calls
+□ Proper error handling in UI
+□ Loading states for async operations
+□ Accessibility compliance (WCAG 2.1)
+□ Mobile responsiveness
+□ Console free of warnings/errors
+□ Bundle size reasonable (<500KB)
+```
+
+**Output:** Remove unused components, improve UX, fix accessibility issues
+
+#### 4. Document Audit Checklist
+```
+□ README up-to-date with current features
+□ API documentation matches implementation
+□ Setup instructions work for new developers
+□ Architecture docs reflect current state
+□ Specs marked complete/open correctly
+□ No broken links
+□ Changelogs maintained
+```
+
+**Output:** Update outdated docs, archive obsolete docs, create missing docs
+
+#### 5. Config Audit Checklist
+```
+□ Single source of truth for each config
+□ No hardcoded rules in scripts/workflows
+□ Config files documented
+□ Version constraints specified
+□ CI/CD matches local development
+□ Pre-commit hooks work correctly
+```
+
+**Output:** Fix duplication, document config, improve consistency
+
+---
+
+## 📊 Audit History
+
+| Date | Audit Type | Result | Actions Taken |
+|------|------------|--------|---------------|
+| 2026-02-04 | Config Audit | ⚠️ Issues Found | Documented in this file |
+| 2026-02-06 | Test Audit | ✅ Clean | Removed 1 skipped test, 163 tests pass |
+| 2026-02-06 | Backend Audit | ✅ Clean | Removed 1 deprecated endpoint (validate-legacy) |
 
 ---
 

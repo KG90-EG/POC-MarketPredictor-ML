@@ -1,0 +1,198 @@
+/* Dashboard - Multi-Asset Trading Dashboard Layout */
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  background: var(--bg-primary, #f5f7fa);
+  transition: background 0.3s ease;
+}
+
+body.dark-mode .dashboard {
+  background: var(--bg-primary-dark, #0f1419);
+}
+
+/* Header */
+.dashboard__header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg-surface, white);
+  border-bottom: 1px solid var(--border-color, #e1e5eb);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+body.dark-mode .dashboard__header {
+  background: var(--bg-surface-dark, #1a1d23);
+  border-bottom-color: var(--border-color-dark, #2d3139);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Content Area - 3-Column Grid */
+.dashboard__content {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(400px, 2fr) minmax(280px, 1fr);
+  grid-template-areas: "signals assets backtest";
+  gap: 20px;
+  padding: 20px;
+  flex: 1;
+  max-width: 1800px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Panel Base Styles */
+.dashboard__signals,
+.dashboard__assets,
+.dashboard__backtest {
+  background: var(--bg-surface, white);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+body.dark-mode .dashboard__signals,
+body.dark-mode .dashboard__assets,
+body.dark-mode .dashboard__backtest {
+  background: var(--bg-surface-dark, #1a1d23);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Signals Panel (Left) */
+.dashboard__signals {
+  grid-area: signals;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+}
+
+/* Assets Panel (Center - Main) */
+.dashboard__assets {
+  grid-area: assets;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+}
+
+/* Backtest Panel (Right) */
+.dashboard__backtest {
+  grid-area: backtest;
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+}
+
+/* Footer */
+.dashboard__footer {
+  background: var(--bg-surface, white);
+  border-top: 1px solid var(--border-color, #e1e5eb);
+  padding: 12px 20px;
+  transition: all 0.3s ease;
+}
+
+body.dark-mode .dashboard__footer {
+  background: var(--bg-surface-dark, #1a1d23);
+  border-top-color: var(--border-color-dark, #2d3139);
+}
+
+/* Scrollbar Styling */
+.dashboard__signals::-webkit-scrollbar,
+.dashboard__assets::-webkit-scrollbar,
+.dashboard__backtest::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dashboard__signals::-webkit-scrollbar-track,
+.dashboard__assets::-webkit-scrollbar-track,
+.dashboard__backtest::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard__signals::-webkit-scrollbar-thumb,
+.dashboard__assets::-webkit-scrollbar-thumb,
+.dashboard__backtest::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb, #c1c4c8);
+  border-radius: 3px;
+}
+
+body.dark-mode .dashboard__signals::-webkit-scrollbar-thumb,
+body.dark-mode .dashboard__assets::-webkit-scrollbar-thumb,
+body.dark-mode .dashboard__backtest::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-dark, #3d4450);
+}
+
+/* ===== RESPONSIVE BREAKPOINTS ===== */
+
+/* Tablet (2 columns) */
+@media (max-width: 1200px) {
+  .dashboard__content {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "signals assets"
+      "backtest assets";
+  }
+
+  .dashboard__backtest {
+    max-height: 400px;
+  }
+}
+
+/* Mobile (single column) */
+@media (max-width: 768px) {
+  .dashboard__content {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "signals"
+      "assets"
+      "backtest";
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .dashboard__signals,
+  .dashboard__assets,
+  .dashboard__backtest {
+    max-height: none;
+  }
+
+  .dashboard__header {
+    position: relative; /* Not sticky on mobile */
+  }
+}
+
+/* Large Desktop */
+@media (min-width: 1600px) {
+  .dashboard__content {
+    grid-template-columns: minmax(320px, 1fr) minmax(500px, 2.5fr) minmax(320px, 1fr);
+    gap: 24px;
+    padding: 24px;
+  }
+}
+
+/* Focus Styles for Accessibility */
+.dashboard__signals:focus-within,
+.dashboard__assets:focus-within,
+.dashboard__backtest:focus-within {
+  outline: 2px solid var(--focus-color, #667eea);
+  outline-offset: 2px;
+}
+
+/* Print Styles */
+@media print {
+  .dashboard__header,
+  .dashboard__footer {
+    display: none;
+  }
+
+  .dashboard__content {
+    display: block;
+  }
+
+  .dashboard__signals,
+  .dashboard__assets,
+  .dashboard__backtest {
+    max-height: none;
+    page-break-inside: avoid;
+    margin-bottom: 20px;
+  }
+}
