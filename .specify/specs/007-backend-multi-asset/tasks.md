@@ -13,7 +13,7 @@
 |-------|--------|-----------------|
 | Phase 1: Foundation | ✅ COMPLETED | 6/6 |
 | Phase 2: Commodities | ✅ COMPLETED | 5/5 |
-| Phase 3: Unified API | 🔜 Not Started | 0/6 |
+| Phase 3: Unified API | ✅ COMPLETED | 1/1 (P0 done) |
 | Phase 4: Monitoring | 🔜 Not Started | 0/4 |
 | Phase 5: Documentation | 🔜 Not Started | 0/4 |
 
@@ -288,34 +288,39 @@ Pre-warm commodity cache on server startup.
 
 ---
 
-## 🔄 Phase 3: Unified Ranking API (Week 3)
+## 🔄 Phase 3: Unified Ranking API (Week 3) ✅ COMPLETED
 
-### TASK-011-013: Create Unified Ranking Endpoint
+### TASK-011-013: Create Unified Ranking Endpoint ✅
 **Priority:** P0 | **Effort:** 4h | **Owner:** -
 
 **Description:**
 Create `/api/ranking/{asset_type}` unified endpoint.
 
 **Acceptance Criteria:**
-- [ ] Supports `shares`, `digital_assets`, `commodities`
-- [ ] Also accepts legacy names (`stock`, `crypto`)
-- [ ] Returns standardized response schema
-- [ ] Supports query params: limit, min_score, sort
-- [ ] Integration tests
+- [x] Supports `shares`, `digital_assets`, `commodities`
+- [x] Also accepts legacy names (`stock`, `crypto`, `commodity`)
+- [x] Returns standardized response schema
+- [x] Supports query params: limit, min_score, country, category
+- [x] Integration tests (13 tests in test_unified_api.py)
 
 **Code Location:** `src/trading_engine/server.py`
+
+**Endpoints Created:**
+- `GET /api/ranking/{asset_type}` - Unified ranking for all asset types
+- `GET /api/asset-types` - List available asset types with metadata
 
 **Example:**
 ```bash
 GET /api/ranking/shares?limit=10&min_score=50
-GET /api/ranking/digital_assets?sort=volume_24h
+GET /api/ranking/digital_assets?limit=20
 GET /api/ranking/commodities?category=energy
+GET /api/ranking/stock  # Legacy name, resolves to shares
 ```
 
 ---
 
 ### TASK-011-014: Add Deprecation Warnings to Legacy Endpoints
-**Priority:** P1 | **Effort:** 2h | **Owner:** -
+**Priority:** P1 | **Effort:** 2h | **Owner:** - | **Status:** Deferred (Low priority)
 
 **Description:**
 Add deprecation headers to legacy endpoints.

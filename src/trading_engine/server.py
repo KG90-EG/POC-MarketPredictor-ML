@@ -1724,6 +1724,248 @@ def get_commodity_detail(ticker: str):
             raise HTTPException(status_code=500, detail=f"Failed to fetch commodity: {str(e)}")
 
 
+# ============================================
+# Unified Ranking API (NFR-011 Phase 3)
+# ============================================
+
+
+@app.get(
+    "/api/ranking/{asset_type}",
+    tags=["Unified API"],
+    summary="Unified Asset Rankings",
+    description="""
+    **Unified endpoint for ranking all asset types.**
+
+    Supports:
+    - `shares` (or legacy: `stock`, `stocks`, `equity`)
+    - `digital_assets` (or legacy: `crypto`, `cryptocurrency`)
+    - `commodities` (or legacy: `commodity`, `raw_materials`)
+
+    **Response Schema (standardized across all asset types):**
+    ```json
+    {
+      "asset_type": "shares",
+      "ranking": [
+        {
+          "ticker": "AAPL",
+          "name": "Apple Inc.",
+          "composite_score": 85.5,
+          "signal": "BUY",
+          "risk_level": "LOW",
+          "change_24h": 1.5,
+          "change_7d": 3.2
+        }
+      ],
+      "count": 10,
+      "timestamp": "2026-02-06T10:30:00Z"
+    }
+    ```
+
+    **Query Parameters:**
+    - `limit`: Maximum results (default: 20)
+    - `min_score`: Minimum composite score filter (default: 0)
+    - `country`: Country filter for shares (default: Global)
+    - `category`: Category filter for commodities (e.g., precious_metals)
+    """,
+)
+def unified_ranking(
+    asset_type: str,
+    limit: int = 20,
+    min_score: float = 0.0,
+    country: str = "Global",
+    category: Optional[str] = None,
+):
+    """
+    Unified ranking endpoint for all asset types.
+
+    Args:
+        asset_type: Asset type (shares, digital_assets, commodities) or legacy names
+        limit: Maximum number of results
+        min_score: Minimum composite score threshold
+        country: Country filter (for shares only)
+        category: Category filter (for commodities only)
+    """
+    from .utils.asset_mapper import resolve_asset_type, is_valid_asset_type, get_display_name
+
+    with RequestLogger(f"GET /api/ranking/{asset_type}"):
+        # Resolve legacy asset type names
+        canonical_type = resolve_asset_type(asset_type)
+
+        if not is_valid_asset_type(canonical_type):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid asset type: {asset_type}. Valid types: shares, digital_assets, commodities",
+            )
+
+        try:
+            if canonical_type == "shares":
+                # Use existing stock ranking logic
+                return _get_shares_ranking(limit, min_score, country)
+
+            elif canonical_type == "digital_assets":
+                # Use existing crypto ranking logic
+                return _get_digital_assets_ranking(limit, min_score)
+
+            elif canonical_type == "commodities":
+                # Use commodity service
+                return _get_commodities_ranking(limit, min_score, category)
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error in unified ranking for {asset_type}: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to fetch {canonical_type} rankings: {str(e)}",
+            )
+
+
+def _get_shares_ranking(limit: int, min_score: float, country: str) -> dict:
+    """Get standardized shares ranking."""
+    from datetime import datetime
+
+    if MODEL is None:
+        raise HTTPException(status_code=503, detail="No model available")
+
+    chosen = get_country_stocks(country)[:limit]
+
+    # Simple sequential processing for unified API
+    results = []
+    scorer = get_composite_scorer()
+
+    for ticker in chosen:
+        try:
+            result = scorer.get_composite_score(ticker)
+            if result and result.get("composite_score", 0) >= min_score:
+                results.append(
+                    {
+                        "ticker": ticker,
+                        "name": result.get("company_name", ticker),
+                        "composite_score": round(result.get("composite_score", 0), 1),
+                        "signal": result.get("signal", "HOLD"),
+                        "risk_level": result.get("risk_level", "MEDIUM"),
+                        "change_24h": round(result.get("change_1d", 0), 2),
+                        "change_7d": round(result.get("change_7d", 0), 2),
+                        "asset_type": "shares",
+                    }
+                )
+        except Exception as e:
+            logger.warning(f"Failed to score {ticker}: {e}")
+            continue
+
+    # Sort by composite score
+    results.sort(key=lambda x: x["composite_score"], reverse=True)
+
+    return {
+        "asset_type": "shares",
+        "asset_type_display": "Shares",
+        "ranking": results[:limit],
+        "count": len(results[:limit]),
+        "country": country,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+def _get_digital_assets_ranking(limit: int, min_score: float) -> dict:
+    """Get standardized digital assets ranking."""
+    from datetime import datetime
+
+    rankings = get_crypto_ranking(
+        min_probability=min_score / 100,  # Convert to 0-1 range
+        limit=limit,
+    )
+
+    # Standardize response format
+    results = []
+    for item in rankings:
+        results.append(
+            {
+                "ticker": item.get("id", item.get("symbol", "")),
+                "name": item.get("name", ""),
+                "composite_score": round(item.get("composite_score", 0), 1),
+                "signal": item.get("signal", "HOLD"),
+                "risk_level": item.get("risk_level", "MEDIUM"),
+                "change_24h": round(item.get("price_change_24h", 0), 2),
+                "change_7d": round(item.get("price_change_7d", 0), 2),
+                "asset_type": "digital_assets",
+            }
+        )
+
+    return {
+        "asset_type": "digital_assets",
+        "asset_type_display": "Digital Assets",
+        "ranking": results,
+        "count": len(results),
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+def _get_commodities_ranking(limit: int, min_score: float, category: Optional[str]) -> dict:
+    """Get standardized commodities ranking."""
+    from datetime import datetime
+
+    service = get_commodity_service()
+    rankings = service.get_commodity_ranking(
+        category=category,
+        min_score=min_score,
+        limit=limit,
+    )
+
+    # Already in standardized format from commodity service
+    results = []
+    for item in rankings:
+        results.append(
+            {
+                "ticker": item.get("ticker", ""),
+                "name": item.get("name", ""),
+                "composite_score": round(item.get("composite_score", 0), 1),
+                "signal": item.get("signal", "HOLD"),
+                "risk_level": item.get("risk_level", "MEDIUM"),
+                "change_24h": round(item.get("change_24h", 0), 2),
+                "change_7d": round(item.get("change_7d", 0), 2),
+                "asset_type": "commodities",
+                "category": item.get("category", ""),
+            }
+        )
+
+    return {
+        "asset_type": "commodities",
+        "asset_type_display": "Commodities",
+        "ranking": results,
+        "count": len(results),
+        "category": category or "all",
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@app.get(
+    "/api/asset-types",
+    tags=["Unified API"],
+    summary="List Available Asset Types",
+    description="Get list of all supported asset types with metadata.",
+)
+def list_asset_types():
+    """List all available asset types."""
+    from .utils.asset_mapper import get_all_asset_types, get_display_name, get_icon
+
+    asset_types = []
+    for asset_type in get_all_asset_types():
+        asset_types.append(
+            {
+                "id": asset_type,
+                "display_name": get_display_name(asset_type, "en"),
+                "display_name_de": get_display_name(asset_type, "de"),
+                "icon": get_icon(asset_type),
+                "endpoint": f"/api/ranking/{asset_type}",
+            }
+        )
+
+    return {
+        "asset_types": asset_types,
+        "count": len(asset_types),
+    }
+
+
 @app.get(
     "/search_stocks",
     tags=["Stocks"],

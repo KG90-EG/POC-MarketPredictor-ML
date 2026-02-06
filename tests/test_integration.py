@@ -7,52 +7,6 @@ import pytest
 
 
 @pytest.mark.integration
-class TestEndToEndPrediction:
-    """Test end-to-end prediction flow"""
-
-    @patch("yfinance.download")
-    def test_full_prediction_flow(self, mock_download, sample_stock_data):
-        """Test complete prediction flow from data download to prediction"""
-        pytest.skip(
-            "Test uses outdated feature list - needs update to match current 75-feature system"
-        )
-
-        from src.trading_engine.trading import (
-            compute_bollinger,
-            compute_macd,
-            compute_momentum,
-            compute_rsi,
-            features,
-        )
-
-        # Compute indicators
-        df = sample_stock_data.copy()
-        df["SMA50"] = df["Adj Close"].rolling(50).mean()
-        df["SMA200"] = df["Adj Close"].rolling(200).mean()
-        df["RSI"] = compute_rsi(df["Adj Close"])
-        df["Volatility"] = df["Adj Close"].pct_change().rolling(30).std()
-        df["Momentum_10d"] = compute_momentum(df["Adj Close"], 10)
-        macd, macd_sig = compute_macd(df["Adj Close"])
-        df["MACD"] = macd
-        df["MACD_signal"] = macd_sig
-        bb_up, bb_low = compute_bollinger(df["Adj Close"])
-        df["BB_upper"] = bb_up
-        df["BB_lower"] = bb_low
-
-        df = df.dropna()
-
-        # Check that we have all features
-        assert not df.empty
-        for feat in features:
-            assert feat in df.columns
-
-        # Check that last row has valid values
-        last_row = df.iloc[-1]
-        for feat in features:
-            assert not pd.isna(last_row[feat])
-
-
-@pytest.mark.integration
 class TestCaching:
     """Test caching functionality"""
 
