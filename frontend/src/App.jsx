@@ -33,6 +33,7 @@ import MarketContextModal from "./components/MarketContextModal";
 import BacktestDashboard from "./components/BacktestDashboard";
 import DefensiveModeBar from "./components/DefensiveModeBar";
 import ExposureChart from "./components/ExposureChart";
+import { DashboardPage } from "./components/pages";
 import "./components/ViewSelectorMenu.css";
 import "./components/SettingsMenu.css";
 import "./styles.css";
@@ -56,6 +57,12 @@ function ViewSelectorMenu({ currentView, onViewChange }) {
   const menuRef = React.useRef(null);
 
   const views = [
+    {
+      id: "dashboard",
+      icon: "🏠",
+      label: "Dashboard",
+      description: "Multi-asset overview",
+    },
     {
       id: "buy-opportunities",
       icon: "🎯",
@@ -336,7 +343,7 @@ function AppContent() {
   };
 
   // Digital Assets / Crypto state
-  const [portfolioView, setPortfolioView] = useState("buy-opportunities"); // 'stocks', 'crypto', 'watchlists', 'simulation', 'backtest', or 'buy-opportunities'
+  const [portfolioView, setPortfolioView] = useState("dashboard"); // 'dashboard', 'stocks', 'crypto', 'backtest', or 'buy-opportunities'
   const [cryptoResults, setCryptoResults] = useState([]);
   const [cryptoLoading, setCryptoLoading] = useState(false);
   const [includeNFT] = useState(true); // Always include NFTs
@@ -1142,6 +1149,16 @@ function AppContent() {
 
         {/* Backtest Dashboard View */}
         {portfolioView === "backtest" && <BacktestDashboard />}
+
+        {/* Multi-Asset Dashboard View */}
+        {portfolioView === "dashboard" && (
+          <DashboardPage
+            darkMode={darkMode}
+            onToggleDarkMode={toggleDarkMode}
+            onOpenHelp={() => setShowHelp(true)}
+            marketRegime={marketRegime?.market?.regime || "neutral"}
+          />
+        )}
 
         {/* Buy Opportunities View */}
         {portfolioView === "buy-opportunities" && (
