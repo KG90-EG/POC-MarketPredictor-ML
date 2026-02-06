@@ -61,7 +61,7 @@ DEFAULT_STOCKS = [
     "NVDA",
     "META",
     "TSLA",
-    "BRK.B",
+    "BRK-B",
     "V",
     "JNJ",
     "WMT",
