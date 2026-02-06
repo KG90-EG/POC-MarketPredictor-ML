@@ -69,8 +69,6 @@ function ViewSelectorMenu({ currentView, onViewChange }) {
       label: "Trading Signals",
       description: "Today's best opportunities",
     },
-    { id: "stocks", icon: "💹", label: "Top Stocks", description: "AI-ranked stocks" },
-    { id: "crypto", icon: "🪙", label: "Crypto", description: "Digital assets" },
     { id: "backtest", icon: "📊", label: "Backtest", description: "Historical analysis" },
   ];
 
@@ -343,7 +341,7 @@ function AppContent() {
   };
 
   // Digital Assets / Crypto state
-  const [portfolioView, setPortfolioView] = useState("dashboard"); // 'dashboard', 'stocks', 'crypto', 'backtest', or 'buy-opportunities'
+  const [portfolioView, setPortfolioView] = useState("dashboard"); // 'dashboard', 'buy-opportunities', or 'backtest'
   const [cryptoResults, setCryptoResults] = useState([]);
   const [cryptoLoading, setCryptoLoading] = useState(false);
   const [includeNFT] = useState(true); // Always include NFTs
@@ -1157,6 +1155,13 @@ function AppContent() {
             onToggleDarkMode={toggleDarkMode}
             onOpenHelp={() => setShowHelp(true)}
             marketRegime={marketRegime?.market?.regime || "neutral"}
+            onAssetClick={(asset) => {
+              if (asset.asset_type === "digital_assets" || asset.asset_type === "crypto") {
+                openCryptoDetail(asset);
+              } else {
+                openCompanyDetail(asset.ticker || asset.symbol);
+              }
+            }}
           />
         )}
 

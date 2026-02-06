@@ -20,6 +20,28 @@
 
 ---
 
+## 🏗️ Architecture Decision: Simplified Navigation
+
+**Decision:** Reduce from 5 views to 3 views in the main navigation.
+
+**Previous Structure (5 views):**
+- Dashboard, Trading Signals, Top Stocks, Crypto, Backtest
+
+**New Structure (3 views):**
+| View | Description |
+|------|-------------|
+| 🏠 Dashboard | Multi-asset overview with tabbed navigation (Shares/Crypto/Commodities) |
+| 🎯 Trading Signals | Detailed BUY/SELL opportunities with filters |
+| 📊 Backtest | Historical performance analysis |
+
+**Rationale:**
+- Dashboard now serves as the unified asset explorer (tabs for asset types)
+- Clicking an asset in Dashboard opens the detail sidebar
+- Reduces cognitive load and simplifies navigation
+- Separate "Top Stocks" and "Crypto" pages are redundant with Dashboard tabs
+
+---
+
 ## 📋 Executive Summary
 
 This specification defines the frontend architecture for a unified multi-asset trading dashboard. The dashboard consolidates three asset classes (Shares, Digital Assets, Raw Materials/Commodities) into a streamlined, mobile-responsive interface with a merged "Top Assets" panel featuring tabbed navigation.
