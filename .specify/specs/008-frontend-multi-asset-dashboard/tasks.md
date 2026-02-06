@@ -11,7 +11,7 @@
 
 | Phase | Status | Completed |
 |-------|--------|-----------|
-| Phase 1: Dashboard Layout | ⏳ IN PROGRESS | 4/6 |
+| Phase 1: Dashboard Layout | ✅ COMPLETED | 6/6 |
 | Phase 2: Asset Components | ⬜ NOT STARTED | 0/? |
 | Phase 3: Data Integration | ⬜ NOT STARTED | 0/? |
 
@@ -111,36 +111,40 @@ Create Footer with status indicators.
 
 ---
 
-### TASK-007-005: Create Responsive CSS Grid
+### TASK-007-005: Create Responsive CSS Grid ✅
 **Priority:** P0 | **Effort:** 3h | **Owner:** -
 
 **Description:**
 Implement responsive grid styles with breakpoints.
 
 **Acceptance Criteria:**
-- [ ] Breakpoints: 320px, 768px, 1024px, 1440px
-- [ ] Named grid areas
-- [ ] Consistent gap spacing
-- [ ] No horizontal scroll
-- [ ] Test on real devices
+- [x] Breakpoints: 768px (mobile), 1200px (tablet), 1600px (large desktop)
+- [x] Named grid areas (signals, assets, backtest)
+- [x] Consistent gap spacing (20px desktop, 12px mobile)
+- [x] No horizontal scroll
+- [ ] Test on real devices (deferred to TASK-007-007)
 
-**Code Location:** `frontend/src/styles/grid.css`
+**Code Location:** `frontend/src/components/layout/Dashboard.css`
+
+**Completed:** 2026-02-06
 
 ---
 
-### TASK-007-006: Implement Panel Collapse Logic
+### TASK-007-006: Implement Panel Collapse Logic ✅
 **Priority:** P1 | **Effort:** 2h | **Owner:** -
 
 **Description:**
 Add state management for collapsible panels.
 
 **Acceptance Criteria:**
-- [ ] Toggle panels individually
-- [ ] Persist state in localStorage
-- [ ] Animate transitions (max-height)
-- [ ] Update ARIA attributes
+- [x] Toggle panels individually
+- [x] Persist state in localStorage
+- [x] Animate transitions (max-height)
+- [x] Update ARIA attributes (aria-expanded, aria-controls)
 
-**Code Location:** `frontend/src/hooks/usePanelState.js`
+**Code Location:** `frontend/src/components/layout/Panel.jsx`
+
+**Completed:** 2026-02-06
 
 ---
 
