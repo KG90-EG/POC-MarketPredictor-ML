@@ -21,7 +21,7 @@ requests==2.32.5  # For HTTP calls (crypto API, etc.)
 prometheus-client==0.21.0  # For metrics collection and monitoring
 apscheduler==3.10.4  # For automated model retraining scheduler
 optuna==3.5.0  # Hyperparameter optimization (Week 4)
-lightgbm==4.3.0  # Additional ensemble model (Week 3-4)
+lightgbm==4.6.0  # Additional ensemble model (Week 3-4)
 matplotlib==3.8.2  # For MLflow visualizations
 seaborn==0.13.0  # For confusion matrix plotting
 # Optional: xgboost & pyarrow may require system deps (libomp, cmake) on macOS. If installing on macOS, run
