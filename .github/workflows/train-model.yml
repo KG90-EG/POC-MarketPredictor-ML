@@ -92,7 +92,7 @@ jobs:
             --bump patch
 
       - name: Upload model artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: model-${{ github.run_number }}
           path: |
@@ -103,7 +103,7 @@ jobs:
 
       - name: Upload comparison report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: validation-report-${{ github.run_number }}
           path: reports/model_comparison.md
