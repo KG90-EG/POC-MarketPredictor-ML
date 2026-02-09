@@ -16,7 +16,7 @@ boto3==1.35.67
 openai==1.57.4
 python-dotenv==1.0.0
 redis==5.0.1  # For production caching (optional, fallback to in-memory)
-websockets==15.0.1  # Required by yfinance for live data features
+websockets==16.0  # Required by yfinance for live data features
 requests==2.32.5  # For HTTP calls (crypto API, etc.)
 prometheus-client==0.21.0  # For metrics collection and monitoring
 apscheduler==3.10.4  # For automated model retraining scheduler
