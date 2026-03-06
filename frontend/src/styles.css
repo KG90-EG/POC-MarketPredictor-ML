@@ -10,7 +10,7 @@
   --positive: #22c55e;
   --negative: #ef4444;
   --radius: 12px;
-  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 body.dark {
@@ -19,11 +19,13 @@ body.dark {
   --text: #f1f5f9;
   --text-muted: #94a3b8;
   --border: #334155;
-  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 /* Reset */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -77,8 +79,12 @@ body {
   border: 1px solid var(--border);
 }
 
-.regime-badge.risk_on { color: var(--positive); }
-.regime-badge.risk_off { color: var(--negative); }
+.regime-badge.risk_on {
+  color: var(--positive);
+}
+.regime-badge.risk_off {
+  color: var(--negative);
+}
 
 .icon-btn {
   background: none;
@@ -109,7 +115,9 @@ body {
   background: var(--bg-card);
   color: var(--text);
   font-size: 1rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .search-bar input:focus {
@@ -202,7 +210,9 @@ body {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Error State */
@@ -303,8 +313,12 @@ body {
   text-align: right;
 }
 
-.asset-change.positive { color: var(--positive); }
-.asset-change.negative { color: var(--negative); }
+.asset-change.positive {
+  color: var(--positive);
+}
+.asset-change.negative {
+  color: var(--negative);
+}
 
 /* Sidebar */
 .sidebar-overlay {
@@ -318,8 +332,12 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .sidebar {
@@ -332,8 +350,12 @@ body {
 }
 
 @keyframes slideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 .sidebar h2 {
@@ -383,8 +405,12 @@ body {
   font-weight: 700;
 }
 
-.stat-value.positive { color: var(--positive); }
-.stat-value.negative { color: var(--negative); }
+.stat-value.positive {
+  color: var(--positive);
+}
+.stat-value.negative {
+  color: var(--negative);
+}
 
 /* Footer */
 .footer {
@@ -402,15 +428,15 @@ body {
   .header h1 {
     font-size: 1.25rem;
   }
-  
+
   .asset-card {
     padding: 12px;
   }
-  
+
   .asset-name {
     max-width: 100px;
   }
-  
+
   .sidebar {
     max-width: 100%;
   }
