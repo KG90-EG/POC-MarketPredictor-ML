@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const API_BASE = '';
+// In dev: empty (Vite proxy handles it). In production: set VITE_API_URL env var
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 // Asset type tabs
 const ASSET_TYPES = [

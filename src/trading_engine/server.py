@@ -503,10 +503,10 @@ app.add_middleware(
         "http://localhost:5174",
         "http://localhost:3000",
         "null",  # For file:// protocol
-        # Production - Add your deployed frontend URLs below:
-        # "https://your-app.vercel.app",
-        # "https://your-app.netlify.app",
-        # "https://yourdomain.com",
+        # Production - Netlify frontend
+        "https://poc-marketpredictor.netlify.app",
+        # Allow all Netlify deploy previews
+        "https://*.netlify.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],

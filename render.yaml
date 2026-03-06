@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: poc-marketpredictor-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: frankfurt
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: MODEL_PATH
+        value: /app/models/random_forest.joblib

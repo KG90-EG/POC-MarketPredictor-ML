@@ -3,7 +3,38 @@
   command = "npm ci && npm run build"
   publish = "dist"
 
-# SPA-Routing: alle Pfade auf index.html
+# API Proxy: forward API calls to backend
+[[redirects]]
+  from = "/api/*"
+  to = "https://YOUR_BACKEND_URL/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/ranking"
+  to = "https://YOUR_BACKEND_URL/ranking"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/ranking/*"
+  to = "https://YOUR_BACKEND_URL/ranking/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/regime"
+  to = "https://YOUR_BACKEND_URL/regime"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/health"
+  to = "https://YOUR_BACKEND_URL/health"
+  status = 200
+  force = true
+
+# SPA-Routing: alle anderen Pfade auf index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
