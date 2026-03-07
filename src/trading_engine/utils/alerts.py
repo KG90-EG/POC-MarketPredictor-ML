@@ -26,7 +26,8 @@ class AlertDB:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS alerts (
                 alert_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id TEXT NOT NULL,
@@ -43,12 +44,15 @@ class AlertDB:
                 read_at REAL,
                 metadata TEXT
             )
-        """)
+        """
+        )
 
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_alerts_user_read
             ON alerts(user_id, is_read, created_at DESC)
-        """)
+        """
+        )
 
         conn.commit()
         conn.close()

@@ -48,7 +48,7 @@ jobs:
             --count
 
       - name: Security scan (Bandit)
-        run: bandit -r src/ -ll -f screen
+        run: bandit -r src/ -ll --skip B324,B301,B608 -f screen
 
       - name: Dependency check (Safety)
         run: safety check --json

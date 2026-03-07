@@ -4,14 +4,15 @@ Tests for Commodity Service and Endpoints.
 Tests NFR-011 Phase 2: Commodities Integration.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
 from datetime import datetime
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from src.trading_engine.commodity import (
-    CommodityService,
     CommodityData,
     CommodityRanking,
+    CommodityService,
     get_commodity_service,
 )
 
@@ -93,6 +94,7 @@ class TestCommodityEndpoints:
     def client(self):
         """Create test client."""
         from fastapi.testclient import TestClient
+
         from src.trading_engine.server import app
 
         return TestClient(app)

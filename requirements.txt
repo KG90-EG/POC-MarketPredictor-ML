@@ -12,6 +12,9 @@ uvicorn==0.32.0
 pytest==8.4.0
 flake8==6.0.0
 black==24.3.0
+isort==6.0.1  # Import sorting (CI quality gates)
+bandit==1.9.0  # Security scanning (CI quality gates)
+safety==3.2.0  # Dependency vulnerability check (CI quality gates)
 boto3==1.35.67
 openai==1.57.4
 python-dotenv==1.0.0

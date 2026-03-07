@@ -26,9 +26,7 @@ from src.trading_engine.utils.asset_mapper import (
     is_equity,
     is_valid_asset_type,
 )
-from src.trading_engine.utils.asset_mapper import (
-    resolve_asset_type as mapper_resolve,
-)
+from src.trading_engine.utils.asset_mapper import resolve_asset_type as mapper_resolve
 
 
 class TestConfigLoader:

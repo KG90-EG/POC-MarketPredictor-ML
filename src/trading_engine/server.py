@@ -27,10 +27,10 @@ from pydantic import BaseModel
 
 from .api.analytics_routes import router as analytics_router
 from .api.websocket import manager as ws_manager
-from .composite_scoring import get_composite_scorer
 
 # Import new modules
 from .commodity import get_commodity_service, warm_commodity_cache
+from .composite_scoring import get_composite_scorer
 from .core.cache import cache
 from .core.config import config as app_config
 from .crypto import get_crypto_details, get_crypto_ranking, search_crypto
@@ -430,6 +430,10 @@ app = FastAPI(
 @asynccontextmanager
 async def lifespan(app_instance: FastAPI):
     """Application lifespan handler for startup/shutdown events."""
+    import os
+
+    is_testing = os.environ.get("TESTING") == "1"
+
     # Startup
     prom_metrics.initialize_metrics(
         model_is_loaded=MODEL is not None,
@@ -437,31 +441,34 @@ async def lifespan(app_instance: FastAPI):
     )
     logger.info("Prometheus metrics initialized")
 
-    # Warm up feature cache with popular tickers
-    try:
-        from .performance import cache_warmup
+    if is_testing:
+        logger.info("TESTING mode: skipping cache warmup, schedulers, background jobs")
+    else:
+        # Warm up feature cache with popular tickers
+        try:
+            from .performance import cache_warmup
 
-        popular_tickers = DEFAULT_STOCKS[:10]  # Top 10 most popular
-        cache_warmup(popular_tickers)
-        logger.info(f"Feature cache warmed up with {len(popular_tickers)} tickers")
-    except Exception as e:
-        logger.warning(f"Cache warmup failed: {e}")
+            popular_tickers = DEFAULT_STOCKS[:10]  # Top 10 most popular
+            cache_warmup(popular_tickers)
+            logger.info(f"Feature cache warmed up with {len(popular_tickers)} tickers")
+        except Exception as e:
+            logger.warning(f"Cache warmup failed: {e}")
 
-    # Start automated model retraining scheduler
-    try:
-        start_retraining_scheduler()
-        logger.info("Model retraining scheduler started successfully")
-    except Exception as e:
-        logger.error(f"Failed to start retraining scheduler: {e}", exc_info=True)
+        # Start automated model retraining scheduler
+        try:
+            start_retraining_scheduler()
+            logger.info("Model retraining scheduler started successfully")
+        except Exception as e:
+            logger.error(f"Failed to start retraining scheduler: {e}", exc_info=True)
 
-    # Start background jobs for pre-computation
-    try:
-        from .performance import start_background_jobs
+        # Start background jobs for pre-computation
+        try:
+            from .performance import start_background_jobs
 
-        start_background_jobs()
-        logger.info("Background jobs started successfully")
-    except Exception as e:
-        logger.error(f"Failed to start background jobs: {e}", exc_info=True)
+            start_background_jobs()
+            logger.info("Background jobs started successfully")
+        except Exception as e:
+            logger.error(f"Failed to start background jobs: {e}", exc_info=True)
 
     yield
     # Shutdown

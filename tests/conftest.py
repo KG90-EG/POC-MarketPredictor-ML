@@ -1,10 +1,14 @@
 """Pytest configuration and fixtures"""
 
+import os
 import sys
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+
+# Signal to server lifespan to skip heavy startup (yfinance, schedulers)
+os.environ["TESTING"] = "1"
 
 # Add project root to Python path
 project_root = Path(__file__).parent.parent
